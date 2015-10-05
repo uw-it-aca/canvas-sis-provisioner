@@ -5,6 +5,7 @@ PyCrypto
 PyOpenSSL
 python-dateutil
 oauth>=1.0.1
+nameparser>=0.2.8
 -e git+https://github.com/uw-it-aca/canvas-support-tools.git#egg=canvas_admin
 -e git+https://github.com/uw-it-aca/library-guides-lti#egg=libguide
 -e git+https://github.com/uw-it-aca/uw-groups-lti#egg=groups
