@@ -191,21 +191,23 @@ class GroupPolicy(object):
                     #    member.error = "Unsupported member type: %s" % member.member_type
                     #    invalid_members[member.name] = member
 
-                except (UserPolicyException, GroupPolicyException,
-                        GroupNotFoundException, GroupUnauthorizedException) as err:
+                except (GroupNotFoundException, GroupUnauthorizedException,
+                        UserPolicyException, GroupPolicyException) as err:
                     member.error = err
                     invalid_members[member.name] = member
 
-        except DataFailureException, err:
+        except DataFailureException as err:
             # Group not found or access denied is ok
             if err.status == 404:
                 raise GroupNotFoundException("Group not found: %s" % group_id)
             elif err.status == 401:
-                raise GroupUnauthorizedException("Not permitted for use: %s" % group_id)
+                raise GroupUnauthorizedException(
+                    "Group not permitted for %s: %s" % (self._gws.actas,
+                                                        group_id))
             else:
                 raise
 
-        except GroupPolicyException, err:
+        except GroupPolicyException as err:
             raise
 
         return (valid_members, invalid_members, member_group_ids)
