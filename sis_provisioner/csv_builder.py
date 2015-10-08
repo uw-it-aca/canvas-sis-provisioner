@@ -118,7 +118,7 @@ class CSVBuilder():
                             # Skip members already in academic course sections,
                             # removing from -group section
                             if canvas_enrollments:
-                                match = next((m for m in canvas_enrollments if (m.login_id == member.name)), None)
+                                match = next((m for m in canvas_enrollments if (m.login_id.lower() == member.name.lower())), None)
                                 if match:
                                     self._log.info("Skip group member %s (present in %s)" % (
                                         member.name, match.sis_section_id))
