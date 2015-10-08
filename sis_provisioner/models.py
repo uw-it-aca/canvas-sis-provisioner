@@ -525,16 +525,16 @@ class CourseMember(models.Model):
     objects = CourseMemberManager()
 
     def is_uwnetid(self):
-        return self.member_type == self.UWNETID_TYPE
+        return self.member_type.lower() == self.UWNETID_TYPE
 
     def is_eppn(self):
-        return self.member_type == self.EPPN_TYPE
+        return self.member_type.lower() == self.EPPN_TYPE
 
     def __eq__(self, other):
         return (self.course_id == other.course_id and
-                self.name == other.name and
-                self.member_type == other.member_type and
-                self.role == other.role)
+                self.name.lower() == other.name.lower() and
+                self.member_type.lower() == other.member_type.lower() and
+                self.role.lower() == other.role.lower())
 
 
 class CurriculumManager(models.Manager):
