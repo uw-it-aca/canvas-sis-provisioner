@@ -23,3 +23,4 @@ nameparser>=0.2.8
 -e git+https://github.com/uw-it-aca/django-blti#egg=django_blti
 -e git+https://github.com/uw-it-aca/django-aws-message#egg=django_aws_message
 -e git+https://github.com/uw-it-aca/canvas-eos-import#egg=canvas-eos-import
+-e git+https://github.com/uw-it-aca/course-roster-lti#egg=course-roster-lti
