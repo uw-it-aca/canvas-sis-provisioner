@@ -519,11 +519,8 @@ class CSVBuilder():
 
         self._update_course_model(section)
 
+        primary_instructors = section.get_instructors()
         if len(section.linked_section_urls):
-            # Add primary section instructors to each linked section
-            primary_instructors = section.get_instructors()
-
-            # Iterate over linked sections
             for url in section.linked_section_urls:
                 try:
                     linked_section = get_section_by_url(url)
@@ -531,6 +528,7 @@ class CSVBuilder():
                 except:
                     continue
 
+                # Add primary section instructors to each linked section
                 self.generate_linked_section_csv(linked_section,
                                                  primary_instructors,
                                                  include_enrollment)
@@ -588,7 +586,7 @@ class CSVBuilder():
 
         self.generate_xlists_csv(section)
 
-    def generate_linked_section_csv(self, section, primary_instructors=[],
+    def generate_linked_section_csv(self, section, primary_instructors,
                                     include_enrollment=False):
         """
         Generates the full csv for a non-independent study linked section.
@@ -632,9 +630,6 @@ class CSVBuilder():
             instructor = Instructor(section_id=section_id,
                                     reg_id=person.uwregid)
             if instructor not in current_instructors:
-                if instructor not in cached_instructors:
-                    instructor.save()
-
                 instructor.person = person
                 current_instructors.append(instructor)
 
@@ -642,9 +637,13 @@ class CSVBuilder():
             self.generate_user_csv_for_person(instructor.person)
 
             if instructor.reg_id not in self._invalid_users:
+                self._log.info("ADD instructor %s to %s" % (
+                    instructor.reg_id, section_id))
                 csv_data = csv_for_enrollment(section_id, instructor.person,
                     self.INSTRUCTOR_ROLE, Enrollment.ACTIVE_STATUS)
                 csv.add_enrollment(csv_data)
+                if instructor.pk is None:
+                    instructor.save()
 
         for instructor in cached_instructors:
             if instructor not in current_instructors:
@@ -652,11 +651,15 @@ class CSVBuilder():
                     person = self._user_policy.get_person_by_regid(instructor.reg_id)
                     self.generate_user_csv_for_person(person)
                 except UserPolicyException as err:
-                    self._log.info("Skipped user %s: %s" % (instructor.reg_id, err))
+                    self._log.info("SKIP instructor %s for %s: %s" % (
+                        instructor.reg_id, section_id, err))
+                    continue
 
-                csv_data = csv_for_enrollment(section_id, person,
-                    self.INSTRUCTOR_ROLE, Enrollment.DELETED_STATUS)
-                csv.add_enrollment(csv_data)
+                self._log.info("DELETE instructor %s from %s" % (
+                    instructor.reg_id, section_id))
+                #csv_data = csv_for_enrollment(section_id, person,
+                #    self.INSTRUCTOR_ROLE, Enrollment.DELETED_STATUS)
+                #csv.add_enrollment(csv_data)
                 instructor.delete()
 
     def generate_student_enrollment_csv(self, section):
