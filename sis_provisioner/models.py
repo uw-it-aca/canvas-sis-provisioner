@@ -150,7 +150,10 @@ class Instructor(models.Model):
     """ Represents the provisioned state of a course instructor.
     """
     section_id = models.CharField(max_length=80)
-    reg_id = models.CharField(max_length=32, null=True)
+    reg_id = models.CharField(max_length=32)
+
+    class Meta:
+        unique_together = ('section_id', 'reg_id')
 
     def __eq__(self, other):
         return (self.section_id == other.section_id and
