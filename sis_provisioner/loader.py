@@ -297,30 +297,26 @@ def load_user(person):
     """
     Loads a single user from PWS-returned json
     """
-    if person.uwnetid is None:
+    if person.uwnetid is None or person.uwregid is None:
         return
 
-    try:
-        user = User.objects.get(Q(reg_id=person.uwregid) |
+    users = User.objects.filter(Q(reg_id=person.uwregid) |
                                 Q(net_id=person.uwnetid))
 
-        if (user.reg_id != person.uwregid or
-                user.net_id != person.uwnetid):
-            user.reg_id = person.uwregid
-            user.net_id = person.uwnetid
-            user.priority = PRIORITY_HIGH
-            user.save()
+    user = None
+    if len(users) == 1:
+        user = users[0]
+    elif len(users) > 1:
+        users.delete()
 
-    except User.MultipleObjectsReturned:
-        raise Exception('MultipleObjectsReturned: netid %s, regid %s' % (
-                        person.uwnetid, person.uwregid))
+    if user is None:
+        user = User(added_date=datetime.utcnow().replace(tzinfo=utc))
 
-    except User.DoesNotExist:
-        now = datetime.utcnow().replace(tzinfo=utc)
-        user = User(net_id=person.uwnetid,
-                    reg_id=person.uwregid,
-                    priority=PRIORITY_HIGH,
-                    added_date=now)
+    if (user.reg_id != person.uwregid or
+            user.net_id != person.uwnetid):
+        user.reg_id = person.uwregid
+        user.net_id = person.uwnetid
+        user.priority = PRIORITY_HIGH
         user.save()
 
     return user
