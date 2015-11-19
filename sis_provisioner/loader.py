@@ -262,35 +262,21 @@ class Loader():
         Existing users: PRIORITY_DEFAULT
         Existing users no longer found in groups: PRIORITY_NONE
         """
+        uwnetids = User.objects.all().values_list('net_id', flat=True)
+        existing_netids = dict((u, True) for u in uwnetids)
+
         gws = GWS()
-        netids = {}
+        policy = self._user_policy
         for group_id in settings.SIS_IMPORT_GROUPS:
             members = gws.get_effective_members(group_id)
             for member in members:
-                if member.is_uwnetid():
-                    netids[member.name] = True
-
-        existing_users = User.objects.all()
-
-        for user in existing_users:
-            if user.net_id in netids:
-                if user.priority == PRIORITY_NONE:
-                    user.priority = PRIORITY_DEFAULT
-                    user.save()
-
-                del netids[user.net_id]
-            else:
-                if user.priority != PRIORITY_NONE:
-                    user.priority = PRIORITY_NONE
-                    user.save()
-
-        for netid in netids.keys():
-            try:
-                person = self._user_policy.get_person_by_netid(netid)
-                load_user(person)
-
-            except Exception, err:
-                self._log.info('load_all_users: Skipped netid %s (%s)' % (netid, err))
+                if member.is_uwnetid() and member.name not in existing_netids:
+                    try:
+                        load_user(policy.get_person_by_netid(member.name))
+                        existing_netids[member.name] = True
+                    except Exception, err:
+                        self._log.info('load_all_users: Skipped %s (%s)' % (
+                            netid, err))
 
 
 def load_user(person):
