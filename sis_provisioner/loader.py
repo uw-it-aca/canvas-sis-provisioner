@@ -274,7 +274,7 @@ class Loader():
                     try:
                         load_user(policy.get_person_by_netid(member.name))
                         existing_netids[member.name] = True
-                    except DataFailureException as err:
+                    except Exception as err:
                         self._log.info('load_all_users: Skipped %s (%s)' % (
                             member.name, err))
 
