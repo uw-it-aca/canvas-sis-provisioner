@@ -354,7 +354,12 @@ class CoursePolicy(object):
 
     def canvas_xlist_id(self, section_list):
         xlist_courses = []
+        lms_ownership = {}
         for section in section_list:
+            if section.canvas_course_sis_id() in getattr(settings, 'LMS_XLIST_PRIMARY', []):
+                lms_ownership[section] = section.lms_ownership
+                section.lms_ownership = Section.LMS_OWNER_OL
+
             if self.is_active_section(section):
                 xlist_courses.append(section)
 
@@ -365,4 +370,8 @@ class CoursePolicy(object):
             s.lms_ownership != Section.LMS_OWNER_OL,
             s.canvas_course_sis_id())
         )
+
+        for section in lms_ownership:
+             section.lms_ownership = lms_ownership[section]
+
         return xlist_courses[0].canvas_course_sis_id()
