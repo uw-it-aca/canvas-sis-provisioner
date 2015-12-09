@@ -6,6 +6,7 @@ from sis_provisioner.views.group import GroupView, GroupListView
 from sis_provisioner.views.user import UserView
 from sis_provisioner.views.canvas import CanvasCourseView, CanvasAccountView
 from sis_provisioner.views.imports import ImportView, ImportListView
+from sis_provisioner.views.jobs import JobView, JobListView
 from astra.views import AdminSearch, AccountSearch, AccountSoC
 from groups.views.validate import GWSGroup, GWSGroupMembers
 from events.views import EventListView
@@ -31,4 +32,6 @@ urlpatterns = patterns('',
     url(r'api/v1/admins/?$', AdminSearch().run),
     url(r'api/v1/accounts/?$', AccountSearch().run),
     url(r'api/v1/soc/?$', AccountSoC().run),
+    url(r'api/v1/job/(?P<job_id>[0-9]+)?$', JobView().run),
+    url(r'api/v1/jobs/?$', JobListView().run),
 )
