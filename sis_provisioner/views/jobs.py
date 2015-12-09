@@ -37,7 +37,7 @@ class JobView(RESTDispatch):
                 '{"error":"job %s not found"}' % job_id, status=404)
 
 
-class ImportListView(RESTDispatch):
+class JobListView(RESTDispatch):
     """ Retrieves a list of Jobs.
     """
     def GET(self, request, **kwargs):
