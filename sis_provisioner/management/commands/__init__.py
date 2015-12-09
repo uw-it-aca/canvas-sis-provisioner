@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand, CommandError
 from sis_provisioner.models import Job
+import datetime
 import sys
 
 
@@ -13,6 +14,13 @@ class SISProvisionerCommand(BaseCommand):
     def is_active_job(self, name):
         try:
             job = Job.objects.get(name=name)
-            return True if job.is_active else False
         except Job.DoesNotExist:
-            return False
+            job = Job(name=name, is_active=False)
+            job.save()
+
+        return True if job.is_active else False
+
+    def update_job(self):
+        job = Job.objects.get(name=sys.argv[1])
+        job.last_run_date = datetime.datetime.utcnow().replace(tzinfo=utc)
+        job.save()
