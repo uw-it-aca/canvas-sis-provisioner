@@ -32,12 +32,20 @@ class MissingImportPathException(Exception):
     pass
 
 
-class Trigger(models.Model):
-    """ Represents a trigger to control provisioing commands.
+class Job(models.Model):
+    """ Represents provisioning commands.
     """
     name = models.CharField(max_length=128)
     title = models.CharField(max_length=128)
     is_active = models.NullBooleanField()
+
+    def json_data(self):
+        return {
+            'job_id': self.pk,
+            'name': self.name,
+            'title': self.title,
+            'is_active': self.is_active,
+        }
 
 
 class CourseManager(models.Manager):
