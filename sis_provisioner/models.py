@@ -32,6 +32,14 @@ class MissingImportPathException(Exception):
     pass
 
 
+class Trigger(models.Model):
+    """ Represents a trigger to control provisioing commands.
+    """
+    name = models.CharField(max_length=128)
+    title = models.CharField(max_length=128)
+    is_active = models.NullBooleanField()
+
+
 class CourseManager(models.Manager):
     def get_linked_course_ids(self, course_id):
         return super(CourseManager, self).get_query_set().filter(
