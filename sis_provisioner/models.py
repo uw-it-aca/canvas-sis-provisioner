@@ -32,6 +32,25 @@ class MissingImportPathException(Exception):
     pass
 
 
+class Job(models.Model):
+    """ Represents provisioning commands.
+    """
+    name = models.CharField(max_length=128)
+    title = models.CharField(max_length=128)
+    last_run_date = models.DateTimeField(null=True)
+    is_active = models.NullBooleanField()
+
+    def json_data(self):
+        return {
+            'job_id': self.pk,
+            'name': self.name,
+            'title': self.title,
+            'last_run_date': localtime(self.last_run_date).isoformat() if (
+                self.last_run_date is not None) else None,
+            'is_active': self.is_active,
+        }
+
+
 class CourseManager(models.Manager):
     def get_linked_course_ids(self, course_id):
         return super(CourseManager, self).get_query_set().filter(
