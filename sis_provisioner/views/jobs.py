@@ -41,11 +41,11 @@ class JobListView(RESTDispatch):
     """ Retrieves a list of Jobs.
     """
     def GET(self, request, **kwargs):
-        can_manage_jobs = can_manage_jobs()
+        read_only = False if can_manage_jobs() else True
         jobs = []
         for job in Job.objects.all():
             data = job.json_data()
-            data['read_only'] = False if can_manage_jobs else True
+            data['read_only'] = read_only
             jobs.append(data)
 
         return self.json_response(json.dumps({'jobs': jobs}))
