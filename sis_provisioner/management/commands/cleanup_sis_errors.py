@@ -1,4 +1,4 @@
-from django.core.management.base import BaseCommand, CommandError
+from sis_provisioner.management.commands import SISProvisionerCommand
 from django.utils.timezone import make_aware, localtime, get_default_timezone
 from sis_provisioner.models import Course
 from sis_provisioner.models import PRIORITY_HIGH, PRIORITY_DEFAULT
@@ -6,11 +6,10 @@ from datetime import datetime, timedelta
 import re
 
 
-class Command(BaseCommand):
+class Command(SISProvisionerCommand):
     help = "Handles provisioning errors in sis imports to Canvas."
 
     def handle(self, *args, **options):
-
         courses = Course.objects.filter(provisioned_error__isnull=False,
                                         queue_id__isnull=True,
                                         priority__gte=PRIORITY_DEFAULT)
@@ -30,3 +29,5 @@ class Command(BaseCommand):
                 course.provisioned_status = None
                 course.priority = PRIORITY_HIGH
                 course.save()
+
+        self.update_job()

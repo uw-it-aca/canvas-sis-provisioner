@@ -1,11 +1,12 @@
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import CommandError
+from sis_provisioner.management.commands import SISProvisionerCommand
 from sis_provisioner.models import CourseMember, EmptyQueueException,\
     MissingImportPathException, PRIORITY_DEFAULT, PRIORITY_IMMEDIATE
 from sis_provisioner.csv_builder import CSVBuilder
 import traceback
 
 
-class Command(BaseCommand):
+class Command(SISProvisionerCommand):
     args = "<priority>"
     help = "Builds csv from group events memberships"
 
@@ -20,6 +21,7 @@ class Command(BaseCommand):
         try:
             imp = CourseMember.objects.queue_by_priority(priority)
         except EmptyQueueException:
+            self.update_job()
             return
 
         try:
@@ -34,3 +36,5 @@ class Command(BaseCommand):
         except MissingImportPathException as ex:
             if not imp.csv_errors:
                 imp.delete()
+
+        self.update_job()
