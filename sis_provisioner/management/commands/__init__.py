@@ -15,7 +15,7 @@ class SISProvisionerCommand(BaseCommand):
         try:
             job = Job.objects.get(name=name)
         except Job.DoesNotExist:
-            job = Job(name=name, is_active=False)
+            job = Job(name=name, title=name, is_active=False)
             job.save()
 
         return True if job.is_active else False

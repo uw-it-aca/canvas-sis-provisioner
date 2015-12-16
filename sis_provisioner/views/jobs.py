@@ -1,11 +1,8 @@
-import re
 import json
-import dateutil.parser
-from django.utils.timezone import utc
 from django.utils.log import getLogger
-from django.core.management import call_command
 from sis_provisioner.models import Job
 from sis_provisioner.views.rest_dispatch import RESTDispatch
+from canvas_admin.views import can_manage_jobs
 
 
 class JobView(RESTDispatch):
@@ -26,6 +23,9 @@ class JobView(RESTDispatch):
                 '{"error":"job %s not found"}' % job_id, status=404)
 
     def PUT(self, request, **kwargs):
+        if not can_manage_jobs():
+            return self.json_response('{"error":"Unauthorized"}', status=401)
+
         job_id = kwargs['job_id']
         try:
             job = Job.objects.get(id=job_id)
@@ -41,8 +41,11 @@ class JobListView(RESTDispatch):
     """ Retrieves a list of Jobs.
     """
     def GET(self, request, **kwargs):
+        read_only = False if can_manage_jobs() else True
         jobs = []
         for job in Job.objects.all():
-            jobs.append(job.json_data())
+            data = job.json_data()
+            data['read_only'] = read_only
+            jobs.append(data)
 
         return self.json_response(json.dumps({'jobs': jobs}))
