@@ -1,4 +1,5 @@
 from django.core.management.base import BaseCommand, CommandError
+from django.utils.timezone import utc
 from sis_provisioner.models import Job
 import datetime
 import sys
