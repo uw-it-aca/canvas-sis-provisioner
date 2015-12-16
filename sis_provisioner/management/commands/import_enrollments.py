@@ -1,11 +1,11 @@
-from django.core.management.base import BaseCommand, CommandError
+from sis_provisioner.management.commands import SISProvisionerCommand
 from sis_provisioner.models import Enrollment, EmptyQueueException,\
     MissingImportPathException, PRIORITY_DEFAULT
 from sis_provisioner.csv_builder import CSVBuilder
 import traceback
 
 
-class Command(BaseCommand):
+class Command(SISProvisionerCommand):
     help = "Builds csv files for enrollments."
 
     def handle(self, *args, **options):
@@ -14,6 +14,7 @@ class Command(BaseCommand):
         try:
             imp = Enrollment.objects.queue_by_priority(priority)
         except EmptyQueueException as ex:
+            self.update_job()
             return
 
         try:
@@ -29,3 +30,5 @@ class Command(BaseCommand):
         except MissingImportPathException as ex:
             if not imp.csv_errors:
                 imp.delete()
+
+        self.update_job()

@@ -1,10 +1,10 @@
-from django.core.management.base import BaseCommand, CommandError
+from sis_provisioner.management.commands import SISProvisionerCommand
 from sis_provisioner.models import Import
 from sis_provisioner.csv_builder import CSVBuilder
 import traceback
 
 
-class Command(BaseCommand):
+class Command(SISProvisionerCommand):
     help = "Builds csv files for Canvas accounts."
 
     def handle(self, *args, **options):
@@ -18,3 +18,5 @@ class Command(BaseCommand):
 
         if imp.csv_path:
             imp.import_csv()
+
+        self.update_job()
