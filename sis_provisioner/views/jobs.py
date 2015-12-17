@@ -1,6 +1,7 @@
 from django.utils.log import getLogger
 from sis_provisioner.models import Job
 from sis_provisioner.views.rest_dispatch import RESTDispatch
+from userservice.user import UserService
 from canvas_admin.views import can_manage_jobs
 import json
 
@@ -31,8 +32,9 @@ class JobView(RESTDispatch):
             job = Job.objects.get(id=job_id)
 
             data = json.loads(request.body).get('job', {})
-            if hasattr(data, 'is_active'):
-                job.is_active = True if data.get('is_active') else False
+            if 'is_active' in data:
+                job.is_active = data['is_active']
+                job.changed_by = UserService().get_original_user()
                 job.save()
 
             return self.json_response(json.dumps(job.json_data()))
@@ -47,7 +49,7 @@ class JobListView(RESTDispatch):
     def GET(self, request, **kwargs):
         read_only = False if can_manage_jobs() else True
         jobs = []
-        for job in Job.objects.all():
+        for job in Job.objects.all().order_by('title'):
             data = job.json_data()
             data['read_only'] = read_only
             jobs.append(data)
