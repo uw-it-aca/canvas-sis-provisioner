@@ -1,210 +1,249 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
+from south.utils import datetime_utils as datetime
+from south.db import db
+from south.v2 import SchemaMigration
+from django.db import models
 
-from django.db import models, migrations
+
+class Migration(SchemaMigration):
+
+    def forwards(self, orm):
+        # Adding model 'Course'
+        db.create_table('sis_provisioner_course', (
+            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('course_id', self.gf('django.db.models.fields.CharField')(unique=True, max_length=80)),
+            ('course_type', self.gf('django.db.models.fields.CharField')(max_length=16)),
+            ('term_id', self.gf('django.db.models.fields.CharField')(max_length=20, db_index=True)),
+            ('primary_id', self.gf('django.db.models.fields.CharField')(max_length=80, null=True)),
+            ('xlist_id', self.gf('django.db.models.fields.CharField')(max_length=80, null=True)),
+            ('added_date', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
+            ('provisioned_date', self.gf('django.db.models.fields.DateTimeField')(null=True)),
+            ('provisioned_error', self.gf('django.db.models.fields.NullBooleanField')(null=True, blank=True)),
+            ('provisioned_status', self.gf('django.db.models.fields.CharField')(max_length=512, null=True)),
+            ('priority', self.gf('django.db.models.fields.SmallIntegerField')(default=1)),
+            ('queue_id', self.gf('django.db.models.fields.CharField')(max_length=30, null=True)),
+        ))
+        db.send_create_signal('sis_provisioner', ['Course'])
+
+        # Adding model 'Enrollment'
+        db.create_table('sis_provisioner_enrollment', (
+            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('reg_id', self.gf('django.db.models.fields.CharField')(max_length=32, null=True)),
+            ('status', self.gf('django.db.models.fields.CharField')(max_length=16)),
+            ('course_id', self.gf('django.db.models.fields.CharField')(max_length=80)),
+            ('last_modified', self.gf('django.db.models.fields.DateTimeField')()),
+            ('primary_course_id', self.gf('django.db.models.fields.CharField')(max_length=80, null=True)),
+            ('instructor_reg_id', self.gf('django.db.models.fields.CharField')(max_length=32, null=True)),
+            ('priority', self.gf('django.db.models.fields.SmallIntegerField')(default=1)),
+            ('queue_id', self.gf('django.db.models.fields.CharField')(max_length=30, null=True)),
+        ))
+        db.send_create_signal('sis_provisioner', ['Enrollment'])
+
+        # Adding unique constraint on 'Enrollment', fields ['course_id', 'reg_id']
+        db.create_unique('sis_provisioner_enrollment', ['course_id', 'reg_id'])
+
+        # Adding model 'User'
+        db.create_table('sis_provisioner_user', (
+            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('net_id', self.gf('django.db.models.fields.CharField')(unique=True, max_length=20)),
+            ('reg_id', self.gf('django.db.models.fields.CharField')(unique=True, max_length=32)),
+            ('added_date', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
+            ('provisioned_date', self.gf('django.db.models.fields.DateTimeField')(null=True)),
+            ('priority', self.gf('django.db.models.fields.SmallIntegerField')(default=1)),
+            ('queue_id', self.gf('django.db.models.fields.CharField')(max_length=30, null=True)),
+        ))
+        db.send_create_signal('sis_provisioner', ['User'])
+
+        # Adding model 'Group'
+        db.create_table('sis_provisioner_group', (
+            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('course_id', self.gf('django.db.models.fields.CharField')(max_length=80)),
+            ('group_id', self.gf('django.db.models.fields.CharField')(max_length=256)),
+            ('role', self.gf('django.db.models.fields.CharField')(max_length=80)),
+            ('added_by', self.gf('django.db.models.fields.CharField')(max_length=20)),
+            ('added_date', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, null=True, blank=True)),
+            ('is_deleted', self.gf('django.db.models.fields.NullBooleanField')(null=True, blank=True)),
+            ('deleted_by', self.gf('django.db.models.fields.CharField')(max_length=20, null=True)),
+            ('deleted_date', self.gf('django.db.models.fields.DateTimeField')(null=True)),
+            ('provisioned_date', self.gf('django.db.models.fields.DateTimeField')(null=True)),
+            ('priority', self.gf('django.db.models.fields.SmallIntegerField')(default=1)),
+            ('queue_id', self.gf('django.db.models.fields.CharField')(max_length=30, null=True)),
+        ))
+        db.send_create_signal('sis_provisioner', ['Group'])
+
+        # Adding unique constraint on 'Group', fields ['course_id', 'group_id', 'role']
+        db.create_unique('sis_provisioner_group', ['course_id', 'group_id', 'role'])
+
+        # Adding model 'CourseMember'
+        db.create_table('sis_provisioner_coursemember', (
+            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('course_id', self.gf('django.db.models.fields.CharField')(max_length=80)),
+            ('name', self.gf('django.db.models.fields.CharField')(max_length=256)),
+            ('member_type', self.gf('django.db.models.fields.SlugField')(max_length=16)),
+            ('role', self.gf('django.db.models.fields.CharField')(max_length=80)),
+        ))
+        db.send_create_signal('sis_provisioner', ['CourseMember'])
+
+        # Adding model 'Curriculum'
+        db.create_table('sis_provisioner_curriculum', (
+            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('curriculum_abbr', self.gf('django.db.models.fields.SlugField')(unique=True, max_length=20)),
+            ('full_name', self.gf('django.db.models.fields.CharField')(max_length=100)),
+            ('subaccount_id', self.gf('django.db.models.fields.CharField')(unique=True, max_length=100)),
+        ))
+        db.send_create_signal('sis_provisioner', ['Curriculum'])
+
+        # Adding model 'Import'
+        db.create_table('sis_provisioner_import', (
+            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('csv_type', self.gf('django.db.models.fields.SlugField')(max_length=20)),
+            ('csv_path', self.gf('django.db.models.fields.CharField')(max_length=80, null=True)),
+            ('csv_errors', self.gf('django.db.models.fields.TextField')(null=True)),
+            ('added_date', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
+            ('priority', self.gf('django.db.models.fields.SmallIntegerField')(default=1)),
+            ('post_status', self.gf('django.db.models.fields.SmallIntegerField')(max_length=3, null=True)),
+            ('monitor_date', self.gf('django.db.models.fields.DateTimeField')(null=True)),
+            ('monitor_status', self.gf('django.db.models.fields.SmallIntegerField')(max_length=3, null=True)),
+            ('canvas_id', self.gf('django.db.models.fields.CharField')(max_length=30, null=True)),
+            ('canvas_state', self.gf('django.db.models.fields.CharField')(max_length=80, null=True)),
+            ('canvas_progress', self.gf('django.db.models.fields.SmallIntegerField')(default=0, max_length=3)),
+            ('canvas_errors', self.gf('django.db.models.fields.TextField')(null=True)),
+        ))
+        db.send_create_signal('sis_provisioner', ['Import'])
+
+        # Adding model 'SubAccountOverride'
+        db.create_table('sis_provisioner_subaccountoverride', (
+            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('course_id', self.gf('django.db.models.fields.CharField')(max_length=80)),
+            ('subaccount_id', self.gf('django.db.models.fields.CharField')(max_length=100)),
+            ('reference_date', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
+        ))
+        db.send_create_signal('sis_provisioner', ['SubAccountOverride'])
 
 
-class Migration(migrations.Migration):
+    def backwards(self, orm):
+        # Removing unique constraint on 'Group', fields ['course_id', 'group_id', 'role']
+        db.delete_unique('sis_provisioner_group', ['course_id', 'group_id', 'role'])
 
-    dependencies = [
-    ]
+        # Removing unique constraint on 'Enrollment', fields ['course_id', 'reg_id']
+        db.delete_unique('sis_provisioner_enrollment', ['course_id', 'reg_id'])
 
-    operations = [
-        migrations.CreateModel(
-            name='Course',
-            fields=[
-                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('course_id', models.CharField(unique=True, max_length=80)),
-                ('course_type', models.CharField(max_length=16, choices=[(b'sdb', b'SDB'), (b'adhoc', b'Ad Hoc')])),
-                ('term_id', models.CharField(max_length=20, db_index=True)),
-                ('primary_id', models.CharField(max_length=80, null=True)),
-                ('xlist_id', models.CharField(max_length=80, null=True)),
-                ('added_date', models.DateTimeField(auto_now_add=True)),
-                ('provisioned_date', models.DateTimeField(null=True)),
-                ('provisioned_error', models.NullBooleanField()),
-                ('provisioned_status', models.CharField(max_length=512, null=True)),
-                ('priority', models.SmallIntegerField(default=1, choices=[(0, b'none'), (1, b'normal'), (2, b'high'), (3, b'immediate')])),
-                ('queue_id', models.CharField(max_length=30, null=True)),
-            ],
-            options={
-            },
-            bases=(models.Model,),
-        ),
-        migrations.CreateModel(
-            name='CourseMember',
-            fields=[
-                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('course_id', models.CharField(max_length=80)),
-                ('name', models.CharField(max_length=256)),
-                ('member_type', models.SlugField(max_length=16, choices=[(b'uwnetid', b'UWNetID'), (b'eppn', b'ePPN')])),
-                ('role', models.CharField(max_length=80)),
-                ('is_deleted', models.NullBooleanField()),
-                ('deleted_date', models.DateTimeField(null=True, blank=True)),
-                ('priority', models.SmallIntegerField(default=0, choices=[(0, b'none'), (1, b'normal'), (2, b'high'), (3, b'immediate')])),
-                ('queue_id', models.CharField(max_length=30, null=True)),
-            ],
-            options={
-            },
-            bases=(models.Model,),
-        ),
-        migrations.CreateModel(
-            name='Curriculum',
-            fields=[
-                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('curriculum_abbr', models.SlugField(unique=True, max_length=20)),
-                ('full_name', models.CharField(max_length=100)),
-                ('subaccount_id', models.CharField(unique=True, max_length=100)),
-            ],
-            options={
-            },
-            bases=(models.Model,),
-        ),
-        migrations.CreateModel(
-            name='Enrollment',
-            fields=[
-                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('reg_id', models.CharField(max_length=32, null=True)),
-                ('status', models.CharField(max_length=16, choices=[(b'active', b'Active'), (b'deleted', b'Deleted'), (b'completed', b'Completed')])),
-                ('course_id', models.CharField(max_length=80)),
-                ('last_modified', models.DateTimeField()),
-                ('primary_course_id', models.CharField(max_length=80, null=True)),
-                ('instructor_reg_id', models.CharField(max_length=32, null=True)),
-                ('priority', models.SmallIntegerField(default=1, choices=[(0, b'none'), (1, b'normal'), (2, b'high'), (3, b'immediate')])),
-                ('queue_id', models.CharField(max_length=30, null=True)),
-            ],
-            options={
-            },
-            bases=(models.Model,),
-        ),
-        migrations.CreateModel(
-            name='Group',
-            fields=[
-                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('course_id', models.CharField(max_length=80)),
-                ('group_id', models.CharField(max_length=256)),
-                ('role', models.CharField(max_length=80)),
-                ('added_by', models.CharField(max_length=20)),
-                ('added_date', models.DateTimeField(auto_now_add=True, null=True)),
-                ('is_deleted', models.NullBooleanField()),
-                ('deleted_by', models.CharField(max_length=20, null=True)),
-                ('deleted_date', models.DateTimeField(null=True)),
-                ('provisioned_date', models.DateTimeField(null=True)),
-                ('priority', models.SmallIntegerField(default=1, choices=[(0, b'none'), (1, b'normal'), (2, b'high'), (3, b'immediate')])),
-                ('queue_id', models.CharField(max_length=30, null=True)),
-            ],
-            options={
-            },
-            bases=(models.Model,),
-        ),
-        migrations.CreateModel(
-            name='GroupMemberGroup',
-            fields=[
-                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('group_id', models.CharField(max_length=256)),
-                ('root_group_id', models.CharField(max_length=256)),
-                ('is_deleted', models.NullBooleanField()),
-            ],
-            options={
-            },
-            bases=(models.Model,),
-        ),
-        migrations.CreateModel(
-            name='Import',
-            fields=[
-                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('csv_type', models.SlugField(max_length=20, choices=[(b'account', b'Curriculum'), (b'user', b'User'), (b'course', b'Course'), (b'coursemember', b'CourseMember'), (b'enrollment', b'Enrollment'), (b'group', b'Group'), (b'eoscourse', b'EOSCourseDelta')])),
-                ('csv_path', models.CharField(max_length=80, null=True)),
-                ('csv_errors', models.TextField(null=True)),
-                ('added_date', models.DateTimeField(auto_now_add=True)),
-                ('priority', models.SmallIntegerField(default=1, choices=[(0, b'none'), (1, b'normal'), (2, b'high'), (3, b'immediate')])),
-                ('post_status', models.SmallIntegerField(max_length=3, null=True)),
-                ('monitor_date', models.DateTimeField(null=True)),
-                ('monitor_status', models.SmallIntegerField(max_length=3, null=True)),
-                ('canvas_id', models.CharField(max_length=30, null=True)),
-                ('canvas_state', models.CharField(max_length=80, null=True)),
-                ('canvas_progress', models.SmallIntegerField(default=0, max_length=3)),
-                ('canvas_errors', models.TextField(null=True)),
-            ],
-            options={
-            },
-            bases=(models.Model,),
-        ),
-        migrations.CreateModel(
-            name='Instructor',
-            fields=[
-                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('section_id', models.CharField(max_length=80)),
-                ('reg_id', models.CharField(max_length=32)),
-            ],
-            options={
-            },
-            bases=(models.Model,),
-        ),
-        migrations.CreateModel(
-            name='Job',
-            fields=[
-                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('name', models.CharField(max_length=128)),
-                ('title', models.CharField(max_length=128)),
-                ('changed_by', models.CharField(max_length=32)),
-                ('changed_date', models.DateTimeField(auto_now=True)),
-                ('last_run_date', models.DateTimeField(null=True)),
-                ('is_active', models.NullBooleanField()),
-            ],
-            options={
-            },
-            bases=(models.Model,),
-        ),
-        migrations.CreateModel(
-            name='SubAccountOverride',
-            fields=[
-                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('course_id', models.CharField(max_length=80)),
-                ('subaccount_id', models.CharField(max_length=100)),
-                ('reference_date', models.DateTimeField(auto_now_add=True)),
-            ],
-            options={
-            },
-            bases=(models.Model,),
-        ),
-        migrations.CreateModel(
-            name='TermOverride',
-            fields=[
-                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('course_id', models.CharField(max_length=80)),
-                ('term_sis_id', models.CharField(max_length=24)),
-                ('term_name', models.CharField(max_length=24)),
-                ('reference_date', models.DateTimeField(auto_now_add=True)),
-            ],
-            options={
-            },
-            bases=(models.Model,),
-        ),
-        migrations.CreateModel(
-            name='User',
-            fields=[
-                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('net_id', models.CharField(unique=True, max_length=20)),
-                ('reg_id', models.CharField(unique=True, max_length=32)),
-                ('added_date', models.DateTimeField(auto_now_add=True)),
-                ('provisioned_date', models.DateTimeField(null=True)),
-                ('priority', models.SmallIntegerField(default=1, choices=[(0, b'none'), (1, b'normal'), (2, b'high'), (3, b'immediate')])),
-                ('queue_id', models.CharField(max_length=30, null=True)),
-            ],
-            options={
-            },
-            bases=(models.Model,),
-        ),
-        migrations.AlterUniqueTogether(
-            name='instructor',
-            unique_together=set([('section_id', 'reg_id')]),
-        ),
-        migrations.AlterUniqueTogether(
-            name='group',
-            unique_together=set([('course_id', 'group_id', 'role')]),
-        ),
-        migrations.AlterUniqueTogether(
-            name='enrollment',
-            unique_together=set([('course_id', 'reg_id')]),
-        ),
-    ]
+        # Deleting model 'Course'
+        db.delete_table('sis_provisioner_course')
+
+        # Deleting model 'Enrollment'
+        db.delete_table('sis_provisioner_enrollment')
+
+        # Deleting model 'User'
+        db.delete_table('sis_provisioner_user')
+
+        # Deleting model 'Group'
+        db.delete_table('sis_provisioner_group')
+
+        # Deleting model 'CourseMember'
+        db.delete_table('sis_provisioner_coursemember')
+
+        # Deleting model 'Curriculum'
+        db.delete_table('sis_provisioner_curriculum')
+
+        # Deleting model 'Import'
+        db.delete_table('sis_provisioner_import')
+
+        # Deleting model 'SubAccountOverride'
+        db.delete_table('sis_provisioner_subaccountoverride')
+
+
+    models = {
+        'sis_provisioner.course': {
+            'Meta': {'object_name': 'Course'},
+            'added_date': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            'course_id': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '80'}),
+            'course_type': ('django.db.models.fields.CharField', [], {'max_length': '16'}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'primary_id': ('django.db.models.fields.CharField', [], {'max_length': '80', 'null': 'True'}),
+            'priority': ('django.db.models.fields.SmallIntegerField', [], {'default': '1'}),
+            'provisioned_date': ('django.db.models.fields.DateTimeField', [], {'null': 'True'}),
+            'provisioned_error': ('django.db.models.fields.NullBooleanField', [], {'null': 'True', 'blank': 'True'}),
+            'provisioned_status': ('django.db.models.fields.CharField', [], {'max_length': '512', 'null': 'True'}),
+            'queue_id': ('django.db.models.fields.CharField', [], {'max_length': '30', 'null': 'True'}),
+            'term_id': ('django.db.models.fields.CharField', [], {'max_length': '20', 'db_index': 'True'}),
+            'xlist_id': ('django.db.models.fields.CharField', [], {'max_length': '80', 'null': 'True'})
+        },
+        'sis_provisioner.coursemember': {
+            'Meta': {'object_name': 'CourseMember'},
+            'course_id': ('django.db.models.fields.CharField', [], {'max_length': '80'}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'member_type': ('django.db.models.fields.SlugField', [], {'max_length': '16'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '256'}),
+            'role': ('django.db.models.fields.CharField', [], {'max_length': '80'})
+        },
+        'sis_provisioner.curriculum': {
+            'Meta': {'object_name': 'Curriculum'},
+            'curriculum_abbr': ('django.db.models.fields.SlugField', [], {'unique': 'True', 'max_length': '20'}),
+            'full_name': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'subaccount_id': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '100'})
+        },
+        'sis_provisioner.enrollment': {
+            'Meta': {'unique_together': "(('course_id', 'reg_id'),)", 'object_name': 'Enrollment'},
+            'course_id': ('django.db.models.fields.CharField', [], {'max_length': '80'}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'instructor_reg_id': ('django.db.models.fields.CharField', [], {'max_length': '32', 'null': 'True'}),
+            'last_modified': ('django.db.models.fields.DateTimeField', [], {}),
+            'primary_course_id': ('django.db.models.fields.CharField', [], {'max_length': '80', 'null': 'True'}),
+            'priority': ('django.db.models.fields.SmallIntegerField', [], {'default': '1'}),
+            'queue_id': ('django.db.models.fields.CharField', [], {'max_length': '30', 'null': 'True'}),
+            'reg_id': ('django.db.models.fields.CharField', [], {'max_length': '32', 'null': 'True'}),
+            'status': ('django.db.models.fields.CharField', [], {'max_length': '16'})
+        },
+        'sis_provisioner.group': {
+            'Meta': {'unique_together': "(('course_id', 'group_id', 'role'),)", 'object_name': 'Group'},
+            'added_by': ('django.db.models.fields.CharField', [], {'max_length': '20'}),
+            'added_date': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'null': 'True', 'blank': 'True'}),
+            'course_id': ('django.db.models.fields.CharField', [], {'max_length': '80'}),
+            'deleted_by': ('django.db.models.fields.CharField', [], {'max_length': '20', 'null': 'True'}),
+            'deleted_date': ('django.db.models.fields.DateTimeField', [], {'null': 'True'}),
+            'group_id': ('django.db.models.fields.CharField', [], {'max_length': '256'}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'is_deleted': ('django.db.models.fields.NullBooleanField', [], {'null': 'True', 'blank': 'True'}),
+            'priority': ('django.db.models.fields.SmallIntegerField', [], {'default': '1'}),
+            'provisioned_date': ('django.db.models.fields.DateTimeField', [], {'null': 'True'}),
+            'queue_id': ('django.db.models.fields.CharField', [], {'max_length': '30', 'null': 'True'}),
+            'role': ('django.db.models.fields.CharField', [], {'max_length': '80'})
+        },
+        'sis_provisioner.import': {
+            'Meta': {'object_name': 'Import'},
+            'added_date': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            'canvas_errors': ('django.db.models.fields.TextField', [], {'null': 'True'}),
+            'canvas_id': ('django.db.models.fields.CharField', [], {'max_length': '30', 'null': 'True'}),
+            'canvas_progress': ('django.db.models.fields.SmallIntegerField', [], {'default': '0', 'max_length': '3'}),
+            'canvas_state': ('django.db.models.fields.CharField', [], {'max_length': '80', 'null': 'True'}),
+            'csv_errors': ('django.db.models.fields.TextField', [], {'null': 'True'}),
+            'csv_path': ('django.db.models.fields.CharField', [], {'max_length': '80', 'null': 'True'}),
+            'csv_type': ('django.db.models.fields.SlugField', [], {'max_length': '20'}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'monitor_date': ('django.db.models.fields.DateTimeField', [], {'null': 'True'}),
+            'monitor_status': ('django.db.models.fields.SmallIntegerField', [], {'max_length': '3', 'null': 'True'}),
+            'post_status': ('django.db.models.fields.SmallIntegerField', [], {'max_length': '3', 'null': 'True'}),
+            'priority': ('django.db.models.fields.SmallIntegerField', [], {'default': '1'})
+        },
+        'sis_provisioner.subaccountoverride': {
+            'Meta': {'object_name': 'SubAccountOverride'},
+            'course_id': ('django.db.models.fields.CharField', [], {'max_length': '80'}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'reference_date': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            'subaccount_id': ('django.db.models.fields.CharField', [], {'max_length': '100'})
+        },
+        'sis_provisioner.user': {
+            'Meta': {'object_name': 'User'},
+            'added_date': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'net_id': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '20'}),
+            'priority': ('django.db.models.fields.SmallIntegerField', [], {'default': '1'}),
+            'provisioned_date': ('django.db.models.fields.DateTimeField', [], {'null': 'True'}),
+            'queue_id': ('django.db.models.fields.CharField', [], {'max_length': '30', 'null': 'True'}),
+            'reg_id': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '32'})
+        }
+    }
+
+    complete_apps = ['sis_provisioner']
