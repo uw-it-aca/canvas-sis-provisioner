@@ -1,8 +1,8 @@
-import json
 from django.utils.log import getLogger
 from sis_provisioner.models import Job
 from sis_provisioner.views.rest_dispatch import RESTDispatch
 from canvas_admin.views import can_manage_jobs
+import json
 
 
 class JobView(RESTDispatch):
@@ -29,8 +29,12 @@ class JobView(RESTDispatch):
         job_id = kwargs['job_id']
         try:
             job = Job.objects.get(id=job_id)
-            job.is_active = False if (job.is_active is True) else True
-            job.save()
+
+            data = json.loads(request.body).get('job', {})
+            if hasattr(data, 'is_active'):
+                job.is_active = True if data.get('is_active') else False
+                job.save()
+
             return self.json_response(json.dumps(job.json_data()))
         except Job.DoesNotExist:
             return self.json_response(
