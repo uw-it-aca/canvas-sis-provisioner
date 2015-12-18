@@ -38,7 +38,7 @@ class Job(models.Model):
     name = models.CharField(max_length=128)
     title = models.CharField(max_length=128)
     changed_by = models.CharField(max_length=32)
-    changed_date = models.DateTimeField(auto_now=True)
+    changed_date = models.DateTimeField()
     last_run_date = models.DateTimeField(null=True)
     is_active = models.NullBooleanField()
 
