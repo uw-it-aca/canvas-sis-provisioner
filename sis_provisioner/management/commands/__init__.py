@@ -18,6 +18,7 @@ class SISProvisionerCommand(BaseCommand):
         except Job.DoesNotExist:
             title = ' '.join(w.capitalize() for w in name.split('_'))
             job = Job(name=name, title=title, is_active=False)
+            job.changed_date = datetime.datetime.utcnow().replace(tzinfo=utc)
             job.save()
 
         return True if job.is_active else False
