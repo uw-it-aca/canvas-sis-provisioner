@@ -3,6 +3,8 @@ from sis_provisioner.models import Job
 from sis_provisioner.views.rest_dispatch import RESTDispatch
 from userservice.user import UserService
 from canvas_admin.views import can_manage_jobs
+from django.utils.timezone import utc
+import datetime
 import json
 
 
@@ -35,6 +37,7 @@ class JobView(RESTDispatch):
             if 'is_active' in data:
                 job.is_active = data['is_active']
                 job.changed_by = UserService().get_original_user()
+                job.changed_date = datetime.datetime.utcnow().replace(tzinfo=utc)
                 job.save()
 
             return self.json_response(json.dumps(job.json_data()))
