@@ -642,7 +642,7 @@ class CSVBuilder():
                 csv_data = csv_for_enrollment(section_id, instructor.person,
                     self.INSTRUCTOR_ROLE, Enrollment.ACTIVE_STATUS)
                 csv.add_enrollment(csv_data)
-                if instructor.pk is None:
+                if instructor not in cached_instructors:
                     instructor.save()
 
         for instructor in cached_instructors:
