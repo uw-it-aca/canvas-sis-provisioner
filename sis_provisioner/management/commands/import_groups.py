@@ -1,4 +1,5 @@
 from django.core.management.base import BaseCommand, CommandError
+from sis_provisioner.management.commands import SISProvisionerCommand
 from optparse import make_option
 from django.utils.timezone import utc
 from sis_provisioner.models import Group, EmptyQueueException,\
@@ -10,7 +11,7 @@ import traceback
 import re
 
 
-class Command(BaseCommand):
+class Command(SISProvisionerCommand):
     args = "<priority>"
     help = "Builds csv files for group membership."
 
@@ -56,6 +57,7 @@ class Command(BaseCommand):
             else:
                 imp = Group.objects.queue_by_priority(priority)
         except EmptyQueueException:
+            self.update_job()
             return
 
         try:
@@ -74,3 +76,5 @@ class Command(BaseCommand):
                 Group.objects.dequeue(imp.pk,
                     provisioned_date=datetime.utcnow().replace(tzinfo=utc))
                 imp.delete()
+
+        self.update_job()

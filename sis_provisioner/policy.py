@@ -154,7 +154,7 @@ class GroupPolicy(object):
             raise GroupPolicyException("Invalid Group ID: %s" % group_id)
 
         elif self._policy_restricted.match(group_id):
-            raise GroupPolicyException("This group cannot be used in Canvas.")
+            raise GroupPolicyException("This group cannot be used in Canvas: %s" % group_id)
 
     def get_effective_members(self, group_id, act_as=None):
         self._gws = GWS()
