@@ -9,15 +9,17 @@ class SISProvisionerCommand(BaseCommand):
     def __init__(self, *args, **kwargs):
         super(SISProvisionerCommand, self).__init__(*args, **kwargs)
 
-        if not self.is_active_job(name=sys.argv[1]):
+        if not self.is_active_job():
             sys.exit(0)
 
-    def is_active_job(self, name):
+    def is_active_job(self):
+        name = self.name_from_argv()
         try:
             job = Job.objects.get(name=name)
         except Job.DoesNotExist:
-            title = ' '.join(w.capitalize() for w in name.split('_'))
-            job = Job(name=name, title=title, is_active=False)
+            job = Job(name=name,
+                      title=self.title_from_name(name),
+                      is_active=False)
             job.changed_date = datetime.datetime.utcnow().replace(tzinfo=utc)
             job.save()
 
@@ -27,3 +29,18 @@ class SISProvisionerCommand(BaseCommand):
         job = Job.objects.get(name=sys.argv[1])
         job.last_run_date = datetime.datetime.utcnow().replace(tzinfo=utc)
         job.save()
+
+    def name_from_argv(self):
+        name = sys.argv[1]
+        args = sys.argv[2:]
+        if len(args):
+            name += ':' + ':'.join(args).replace('--', '')
+        return name
+
+    def title_from_name(self, name):
+        parts = name.split(':')
+        title = ' '.join(w.capitalize() for w in parts[0].split('_'))
+        args = parts[1:]
+        if len(args):
+            title += ' (' + ', '.join(args) + ')'
+        return title
