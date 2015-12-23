@@ -26,7 +26,7 @@ class SISProvisionerCommand(BaseCommand):
         return True if job.is_active else False
 
     def update_job(self):
-        job = Job.objects.get(name=sys.argv[1])
+        job = Job.objects.get(name=self.name_from_argv())
         job.last_run_date = datetime.datetime.utcnow().replace(tzinfo=utc)
         job.save()
 
