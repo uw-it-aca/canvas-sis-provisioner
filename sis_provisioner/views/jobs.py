@@ -4,7 +4,7 @@ from sis_provisioner.views.rest_dispatch import RESTDispatch
 from userservice.user import UserService
 from canvas_admin.views import can_manage_jobs
 from django.utils.timezone import utc
-import datetime
+from datetime import datetime
 import json
 
 
@@ -37,10 +37,30 @@ class JobView(RESTDispatch):
             if 'is_active' in data:
                 job.is_active = data['is_active']
                 job.changed_by = UserService().get_original_user()
-                job.changed_date = datetime.datetime.utcnow().replace(tzinfo=utc)
+                job.changed_date = datetime.utcnow().replace(tzinfo=utc)
                 job.save()
 
+                self._log.info('%s %s Job "%s"' % (
+                    job.changed_by,
+                    'enabled' if job.is_active else 'disabled',
+                    job.name))
+
             return self.json_response(json.dumps(job.json_data()))
+        except Job.DoesNotExist:
+            return self.json_response(
+                '{"error":"job %s not found"}' % job_id, status=404)
+
+    def DELETE(self, request, **kwargs):
+        if not can_manage_jobs():
+            return self.json_response('{"error":"Unauthorized"}', status=401)
+
+        job_id = kwargs['job_id']
+        try:
+            job = Job.objects.get(id=job_id)
+            job.delete()
+
+            self._log.info('%s deleted Job "%s"' % (job.changed_by, job.name))
+
         except Job.DoesNotExist:
             return self.json_response(
                 '{"error":"job %s not found"}' % job_id, status=404)
