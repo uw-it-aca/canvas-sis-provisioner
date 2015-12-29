@@ -60,7 +60,8 @@ class JobView(RESTDispatch):
             job.delete()
 
             self._log.info('%s deleted Job "%s"' % (job.changed_by, job.name))
-
+            
+            return self.json_response(json.dumps({'job': job.json_data()}))
         except Job.DoesNotExist:
             return self.json_response(
                 '{"error":"job %s not found"}' % job_id, status=404)
