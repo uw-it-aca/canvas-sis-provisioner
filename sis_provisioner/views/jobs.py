@@ -45,7 +45,7 @@ class JobView(RESTDispatch):
                     'enabled' if job.is_active else 'disabled',
                     job.name))
 
-            return self.json_response(json.dumps(job.json_data()))
+            return self.json_response(json.dumps({'job': job.json_data()}))
         except Job.DoesNotExist:
             return self.json_response(
                 '{"error":"job %s not found"}' % job_id, status=404)
