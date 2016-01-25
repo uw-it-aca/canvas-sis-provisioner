@@ -40,7 +40,7 @@ class RestClientsCache(TimedCache):
         self.deleteCache('kws', self.kws_url_current_key % resource_type)
 
     def delete_cached_kws_key(self, key_id):
-        self.deleteCache('kws', self.kws_url_current_key % resource_type)
+        self.deleteCache('kws', self.kws_url_key % key_id)
 
     def _get_cache_policy(self, service, url):
         for policy in RestClientsCache.url_policies.get(service, []):
