@@ -1,4 +1,5 @@
 from restclients.cache_implementation import TimedCache
+from restclients.models import CacheEntryTimed
 import re
 
 
