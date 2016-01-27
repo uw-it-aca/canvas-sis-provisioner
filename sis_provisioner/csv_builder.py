@@ -324,8 +324,14 @@ class CSVBuilder():
         Generates the full csv for each of the passed sis_provisioner.Course
         objects.
         """
+        self._include_enrollment = include_enrollment
+        self._process_course_models(courses)
+        return self._csv.write_files()
+
+    def _process_course_models(self, courses):
         for course in courses:
-            self._queue_id = course.queue_id
+            if course.queue_id is not None:
+                self._queue_id = course.queue_id
 
             # Primary sections only
             if course.primary_id:
@@ -345,8 +351,7 @@ class CSVBuilder():
                     continue
 
             if section.is_independent_study:
-                self.generate_independent_study_section_csv(section,
-                                                            include_enrollment)
+                self.generate_independent_study_section_csv(section)
 
                 # This handles ind. study sections that were initially created
                 # in the sdb without the ind. study flag set
@@ -354,9 +359,7 @@ class CSVBuilder():
                     course.priority = PRIORITY_NONE
                     course.save()
             else:
-                self.generate_primary_section_csv(section, include_enrollment)
-
-        return self._csv.write_files()
+                self.generate_primary_section_csv(section)
 
     def generate_account_csv(self):
         """
@@ -442,8 +445,7 @@ class CSVBuilder():
 
         return self._csv.write_files()
 
-    def generate_independent_study_section_csv(self, section,
-                                               include_enrollment=False):
+    def generate_independent_study_section_csv(self, section):
         """
         Generates the full csv for an independent study section. This method
         will create course/section csv for each instructor of the section,
@@ -487,10 +489,10 @@ class CSVBuilder():
                 csv.add_enrollment(csv_data)
 
             # Add the student enrollments
-            if include_enrollment:
+            if self._include_enrollment:
                 self.generate_student_enrollment_csv(section)
 
-    def generate_primary_section_csv(self, section, include_enrollment=False):
+    def generate_primary_section_csv(self, section):
         """
         Generates the full csv for a non-independent study primary section.
         Primary sections are added to courses.csv, linked (secondary)
@@ -530,9 +532,7 @@ class CSVBuilder():
 
                 # Add primary section instructors to each linked section
                 self.generate_linked_section_csv(linked_section,
-                                                 primary_instructors,
-                                                 include_enrollment)
-
+                                                 primary_instructors)
         else:
             section_id = section.canvas_section_sis_id()
 
@@ -540,7 +540,7 @@ class CSVBuilder():
 
             self.generate_teacher_enrollment_csv(section)
 
-            if include_enrollment:
+            if self._include_enrollment:
                 self.generate_student_enrollment_csv(section)
 
         # Check for linked sections already in the Course table
@@ -552,8 +552,7 @@ class CSVBuilder():
                 linked_section = self.get_section_resource_by_id(linked_course_id)
                 self._add_to_queue(linked_section)
                 self.generate_linked_section_csv(linked_section,
-                                                 primary_instructors,
-                                                 include_enrollment)
+                                                 primary_instructors)
             except Exception as ex:
                 self._remove_from_queue(linked_course_id, ex)
                 continue
@@ -567,8 +566,8 @@ class CSVBuilder():
                 continue
 
             try:
-                self.generate_primary_section_csv(joint_section,
-                                                  include_enrollment)
+                self.generate_primary_section_csv(joint_section)
+
             except Exception as ex:
                 self._remove_from_queue(model.course_id, ex)
                 continue
@@ -578,16 +577,31 @@ class CSVBuilder():
             try:
                 joint_section = self.get_section_resource_by_id(joint_course_id)
                 self._add_to_queue(joint_section)
-                self.generate_primary_section_csv(joint_section,
-                                                  include_enrollment)
+                self.generate_primary_section_csv(joint_section)
+
             except Exception as ex:
                 self._remove_from_queue(joint_course_id, ex)
                 continue
 
         self.generate_xlists_csv(section)
 
-    def generate_linked_section_csv(self, section, primary_instructors,
-                                    include_enrollment=False):
+        # Find any sections that are manually cross-listed to this course,
+        # so we can update enrollments for those
+        course_models = []
+        for s in self.get_canvas_sections_for_course(course_id):
+            if csv.has_section(s.sis_section_id):
+                continue
+
+            try:
+                course = Course.objects.get(course_id=s.sis_section_id)
+                course_models.append(course)
+            except Course.DoesNotExist:
+                continue
+
+            self._process_course_models(course_models)
+
+    def generate_linked_section_csv(self, section, primary_instructors):
+
         """
         Generates the full csv for a non-independent study linked section.
         Linked (secondary) sections are added to sections.csv
@@ -610,7 +624,7 @@ class CSVBuilder():
 
         self.generate_teacher_enrollment_csv(section, primary_instructors)
 
-        if include_enrollment:
+        if self._include_enrollment:
             self.generate_student_enrollment_csv(section)
 
         self._update_course_model(section)
@@ -834,19 +848,33 @@ class CSVBuilder():
             self._log.info("Skipping section %s: %s" % (label, err))
             raise
 
-    def get_canvas_enrollments_for_course(self, course_sis_id):
-        canvas = CanvasEnrollments()
+    def get_canvas_sections_for_course(self, course_sis_id):
+        canvas = CanvasSections()
+        try:
+            sections = canvas.get_sections_in_course_by_sis_id(course_sis_id)
+        except DataFailureException as err:
+            if err.status == 404:
+                sections = []
+            else:
+                raise
 
-        enrollments = []
-        sections = CanvasSections().get_sections_in_course_by_sis_id(course_sis_id)
+        academic_sections = []
+        policy = self._course_policy
         for section in sections:
             try:
-                self._course_policy.valid_academic_section_sis_id(section.sis_section_id)
+                policy.valid_academic_section_sis_id(section.sis_section_id)
+                academic_sections.append(section)
             except:
                 continue
 
+        return academic_sections
+
+    def get_canvas_enrollments_for_course(self, course_sis_id):
+        canvas = CanvasEnrollments()
+        enrollments = []
+        for section in self.get_canvas_sections_for_course(course_sis_id):
             enrollments.extend(
-                canvas.get_enrollments_for_section_by_sis_id(section.sis_section_id)
+                canvas.get_enrollments_for_section(section.section_id)
             )
         return enrollments
 
