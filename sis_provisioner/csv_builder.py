@@ -593,7 +593,8 @@ class CSVBuilder():
                 continue
 
             try:
-                course = Course.objects.get(course_id=s.sis_section_id)
+                course_model_id = re.sub(r'--$', '', s.sis_section_id)
+                course = Course.objects.get(course_id=course_model_id)
                 course_models.append(course)
             except Course.DoesNotExist:
                 continue
@@ -680,31 +681,8 @@ class CSVBuilder():
         """
         Generates the full student enrollments csv for the passed section.
         """
-        csv = self._csv
-        registrations = None
         section_id = section.canvas_section_sis_id()
-
-        try:
-            section_model_id = re.sub(r'--$', '', section_id)
-            section_model = Course.objects.get(course_id=section_model_id)
-        except Course.DoesNotExist:
-            section_model = Course(course_id=section_model_id)
-
-        try:
-            if section_model.provisioned_date is None:
-                registrations = get_active_registrations_by_section(section)
-            else:
-                registrations = get_all_registrations_by_section(section)
-        except DataFailureException as err:
-            if err.status == 400:
-                data = json.loads(err.msg)
-                if re.match(r'.* prior quarter not available', data["StatusDescription"]):
-                    self._log.info("Skipped registrations for section in prior term: %s"
-                                   % (section_id))
-                    return
-            raise
-
-        for registration in registrations:
+        for registration in get_all_registrations_by_section(section):
             # Add the student user csv
             self.generate_user_csv_for_person(registration.person)
 
@@ -714,7 +692,7 @@ class CSVBuilder():
                     registration.is_active) else Enrollment.DELETED_STATUS
                 csv_data = csv_for_enrollment(section_id, registration.person,
                                               self.STUDENT_ROLE, status)
-                csv.add_enrollment(csv_data)
+                self._csv.add_enrollment(csv_data)
 
     def generate_xlists_csv(self, section):
         """
