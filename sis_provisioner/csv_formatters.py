@@ -82,16 +82,22 @@ def _csv_for_enrollment(section_id, user, role, status):
     return [None, None, user_id, role, None, section_id, status, None]
 
 
-def csv_for_sis_student_enrollment(section, user, status):
+def csv_for_sis_student_enrollment(registration):
     """
     Returns a list of data for creating a line of csv for an SIS Student.
     """
-    if (status == Enrollment.DELETED_STATUS and
-            datetime.now() > section.term.get_eod_census_day()):
-        status = Enrollment.INACTIVE_STATUS
+    role = Enrollment.STUDENT_ROLE
 
-    return _csv_for_enrollment(section.canvas_section_sis_id(), user,
-                               Enrollment.STUDENT_ROLE, status)
+    if registration.is_active:
+        status = Enrollment.ACTIVE_STATUS
+    else:
+        if datetime.now() > registration.section.term.get_eod_census_day():
+            status = Enrollment.INACTIVE_STATUS
+        else:
+            status = Enrollment.DELETED_STATUS
+
+    return _csv_for_enrollment(registration.section.canvas_section_sis_id(),
+        registration.person, role, status)
 
 
 def csv_for_sis_instructor_enrollment(section, user, status):

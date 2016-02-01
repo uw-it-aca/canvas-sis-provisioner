@@ -13,7 +13,7 @@ from restclients.sws.term import get_term_by_year_and_quarter
 from restclients.canvas.courses import Courses as CanvasCourses
 from restclients.canvas.sections import Sections as CanvasSections
 from restclients.canvas.enrollments import Enrollments as CanvasEnrollments
-from restclients.models.sws import Section
+from restclients.models.sws import Section, Registration
 from restclients.exceptions import DataFailureException, \
     InvalidCanvasIndependentStudyCourse
 
@@ -240,7 +240,8 @@ class CSVBuilder():
                     reg_id) = self._section_data_from_id(enrollment.course_id)
 
                 try:
-                    term = self.get_term_resource_by_year_and_quarter(year, quarter)
+                    term = self.get_term_resource_by_year_and_quarter(year,
+                                                                      quarter)
                 except:
                     continue
 
@@ -263,7 +264,8 @@ class CSVBuilder():
                         enrollment.primary_course_id)
 
                 try:
-                    term = self.get_term_resource_by_year_and_quarter(pr_year, pr_quarter)
+                    term = self.get_term_resource_by_year_and_quarter(
+                        pr_year, pr_quarter)
                 except:
                     continue
 
@@ -280,7 +282,8 @@ class CSVBuilder():
             else:
                 # Do not create student enrollments for primary sections
                 try:
-                    section = self.get_section_resource_by_id(enrollment.course_id)
+                    section = self.get_section_resource_by_id(
+                        enrollment.course_id)
                 except:
                     continue
 
@@ -304,8 +307,10 @@ class CSVBuilder():
                 csv.add_section(course_section_id, csv_for_section(section))
 
             # Add the student enrollment csv
-            csv_data = csv_for_sis_student_enrollment(section, person,
-                                                      enrollment.status)
+            registration = Registration(section=section,
+                                        person=person,
+                                        is_active=enrollment.is_active())
+            csv_data = csv_for_sis_student_enrollment(registration)
             csv.add_enrollment(csv_data)
 
         return csv.write_files()
@@ -696,10 +701,7 @@ class CSVBuilder():
 
             # Add the student enrollment csv
             if registration.person.uwregid not in self._invalid_users:
-                status = Enrollment.ACTIVE_STATUS if (
-                    registration.is_active) else Enrollment.DELETED_STATUS
-                csv_data = csv_for_sis_student_enrollment(section,
-                    registration.person, status)
+                csv_data = csv_for_sis_student_enrollment(registration)
                 self._csv.add_enrollment(csv_data)
 
     def generate_xlists_csv(self, section):

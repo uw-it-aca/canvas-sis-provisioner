@@ -262,6 +262,9 @@ class Enrollment(models.Model):
 
     objects = EnrollmentManager()
 
+    def is_active(self):
+        return self.status == ACTIVE_STATUS
+
     def json_data(self):
         return {
             "reg_id": self.reg_id,
