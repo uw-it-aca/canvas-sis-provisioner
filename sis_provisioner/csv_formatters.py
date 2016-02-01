@@ -3,6 +3,7 @@ from sis_provisioner.policy import CoursePolicy
 from restclients.models.sws import Person, Entity
 from restclients.models.canvas import CanvasUser
 from nameparser import HumanName
+from datetime import datetime
 import string
 import re
 
@@ -61,7 +62,7 @@ def csv_for_term(section):
             end_date]
 
 
-def csv_for_enrollment(section_id, user, role, status=Enrollment.ACTIVE_STATUS):
+def _csv_for_enrollment(section_id, user, role, status):
     """
     Returns a list of data for creating a line of csv for an enrollment:
         course_id, root_account, user_id, role, role_id, section_id, status,
@@ -81,6 +82,33 @@ def csv_for_enrollment(section_id, user, role, status=Enrollment.ACTIVE_STATUS):
     return [None, None, user_id, role, None, section_id, status, None]
 
 
+def csv_for_sis_student_enrollment(section, user, status):
+    """
+    Returns a list of data for creating a line of csv for an SIS Student.
+    """
+    if (status == Enrollment.DELETED_STATUS and
+            datetime.now() > section.term.get_eod_census_day()):
+        status = Enrollment.INACTIVE_STATUS
+
+    return _csv_for_enrollment(section.canvas_section_sis_id(), user,
+                               Enrollment.STUDENT_ROLE, status)
+
+
+def csv_for_sis_instructor_enrollment(section, user, status):
+    """
+    Returns a list of data for creating a line of csv for an SIS Instructor.
+    """
+    return _csv_for_enrollment(section.canvas_section_sis_id(), user,
+                               Enrollment.INSTRUCTOR_ROLE, status)
+
+
+def csv_for_group_enrollment(section_id, user, role, status):
+    """
+    Returns a list of data for creating a line of csv for a group member.
+    """
+    return _csv_for_enrollment(section_id, user, role, status)
+
+
 def csv_for_section(section):
     """
     Returns a list of data for creating a line of csv for a section:
@@ -93,7 +121,8 @@ def csv_for_section(section):
     return [section.canvas_section_sis_id(),
             section.canvas_course_sis_id(),
             section_name,
-            "active" if CoursePolicy().is_active_section(section) else "deleted",
+            "active" if (
+                CoursePolicy().is_active_section(section)) else "deleted",
             None, None]
 
 
@@ -118,8 +147,8 @@ def csv_for_course(section):
                            section.section_id])
 
     if section.course_title_long is not None:
-        long_name = "%s: %s" % (short_name,
-            titleize(section.course_title_long.encode("ascii", "ignore")))
+        long_name = "%s: %s" % (short_name, titleize(
+            section.course_title_long.encode("ascii", "ignore")))
     else:
         long_name = short_name
 

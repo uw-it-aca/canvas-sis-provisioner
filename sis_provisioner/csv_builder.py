@@ -9,10 +9,11 @@ from restclients.sws.department import get_departments_by_college
 from restclients.sws.section import get_section_by_label, get_section_by_url
 from restclients.sws.registration import get_active_registrations_by_section,\
     get_all_registrations_by_section
+from restclients.sws.term import get_term_by_year_and_quarter
 from restclients.canvas.courses import Courses as CanvasCourses
 from restclients.canvas.sections import Sections as CanvasSections
 from restclients.canvas.enrollments import Enrollments as CanvasEnrollments
-from restclients.models.sws import Section, Term
+from restclients.models.sws import Section
 from restclients.exceptions import DataFailureException, \
     InvalidCanvasIndependentStudyCourse
 
@@ -26,8 +27,9 @@ from sis_provisioner.csv_data import CSVData
 
 from sis_provisioner.csv_formatters import csv_for_user, csv_for_term,\
     csv_for_course, csv_for_section, csv_for_group_section,\
-    csv_for_enrollment, csv_for_xlist, csv_for_account, sisid_for_account,\
-    header_for_accounts, titleize
+    csv_for_group_enrollment, csv_for_sis_instructor_enrollment,\
+    csv_for_sis_student_enrollment, csv_for_xlist, csv_for_account,\
+    sisid_for_account, header_for_accounts, titleize
 
 from datetime import datetime
 import re
@@ -39,9 +41,6 @@ class CSVBuilder():
 
     # Define provisioned status LMS cue
     LMS_STATUS_PREFIX = "Primary LMS:"
-
-    INSTRUCTOR_ROLE = "Teacher"
-    STUDENT_ROLE = "Student"
 
     def __init__(self):
         self._csv = CSVData()
@@ -207,7 +206,7 @@ class CSVBuilder():
         else:
             return
 
-        csv_data = csv_for_enrollment(section_id, person, role, status)
+        csv_data = csv_for_group_enrollment(section_id, person, role, status)
         self._csv.add_enrollment(csv_data)
 
     def generate_csv_for_enrollment_events(self, enrollments):
@@ -240,7 +239,12 @@ class CSVBuilder():
                 (year, quarter, curr_abbr, course_num, section_id,
                     reg_id) = self._section_data_from_id(enrollment.course_id)
 
-                section = Section(term=Term(year=year, quarter=quarter),
+                try:
+                    term = self.get_term_resource_by_year_and_quarter(year, quarter)
+                except:
+                    continue
+
+                section = Section(term=term,
                                   curriculum_abbr=curr_abbr,
                                   course_number=course_num,
                                   section_id=section_id,
@@ -258,7 +262,12 @@ class CSVBuilder():
                     pr_section_id, pr_reg_id) = self._section_data_from_id(
                         enrollment.primary_course_id)
 
-                section = Section(term=Term(year=year, quarter=quarter),
+                try:
+                    term = self.get_term_resource_by_year_and_quarter(pr_year, pr_quarter)
+                except:
+                    continue
+
+                section = Section(term=term,
                                   curriculum_abbr=curr_abbr,
                                   course_number=course_num,
                                   section_id=section_id,
@@ -295,8 +304,8 @@ class CSVBuilder():
                 csv.add_section(course_section_id, csv_for_section(section))
 
             # Add the student enrollment csv
-            csv_data = csv_for_enrollment(course_section_id, person,
-                                          self.STUDENT_ROLE, enrollment.status)
+            csv_data = csv_for_sis_student_enrollment(section, person,
+                                                      enrollment.status)
             csv.add_enrollment(csv_data)
 
         return csv.write_files()
@@ -484,8 +493,8 @@ class CSVBuilder():
 
             self.generate_user_csv_for_person(instructor)
             if instructor.uwregid not in self._invalid_users:
-                csv_data = csv_for_enrollment(section_id, instructor,
-                                              self.INSTRUCTOR_ROLE)
+                csv_data = csv_for_sis_instructor_enrollment(section,
+                    instructor, Enrollment.ACTIVE_STATUS)
                 csv.add_enrollment(csv_data)
 
             # Add the student enrollments
@@ -654,8 +663,8 @@ class CSVBuilder():
             if instructor.reg_id not in self._invalid_users:
                 self._log.info("ADD instructor %s to %s" % (
                     instructor.reg_id, section_id))
-                csv_data = csv_for_enrollment(section_id, instructor.person,
-                    self.INSTRUCTOR_ROLE, Enrollment.ACTIVE_STATUS)
+                csv_data = csv_for_sis_instructor_enrollment(section,
+                    instructor.person, Enrollment.ACTIVE_STATUS)
                 csv.add_enrollment(csv_data)
                 if instructor not in cached_instructors:
                     instructor.save()
@@ -672,8 +681,8 @@ class CSVBuilder():
 
                 self._log.info("DELETE instructor %s from %s" % (
                     instructor.reg_id, section_id))
-                #csv_data = csv_for_enrollment(section_id, person,
-                #    self.INSTRUCTOR_ROLE, Enrollment.DELETED_STATUS)
+                #csv_data = csv_for_sis_instructor_enrollment(section, person,
+                #    Enrollment.DELETED_STATUS)
                 #csv.add_enrollment(csv_data)
                 instructor.delete()
 
@@ -681,7 +690,6 @@ class CSVBuilder():
         """
         Generates the full student enrollments csv for the passed section.
         """
-        section_id = section.canvas_section_sis_id()
         for registration in get_all_registrations_by_section(section):
             # Add the student user csv
             self.generate_user_csv_for_person(registration.person)
@@ -690,8 +698,8 @@ class CSVBuilder():
             if registration.person.uwregid not in self._invalid_users:
                 status = Enrollment.ACTIVE_STATUS if (
                     registration.is_active) else Enrollment.DELETED_STATUS
-                csv_data = csv_for_enrollment(section_id, registration.person,
-                                              self.STUDENT_ROLE, status)
+                csv_data = csv_for_sis_student_enrollment(section,
+                    registration.person, status)
                 self._csv.add_enrollment(csv_data)
 
     def generate_xlists_csv(self, section):
@@ -793,6 +801,17 @@ class CSVBuilder():
                 if user.queue_id is None:
                     user.queue_id = self._queue_id
                     user.save()
+
+    def get_term_resource_by_year_and_quarter(self, year, quarter):
+        term_key = "%s%s" % (year, quarter)
+        try:
+            if term_key in self.terms:
+                return self.terms[term_key]
+        except AttributeError:
+            self.terms = {}
+
+        self.terms[term_key] = get_term_by_year_and_quarter(year, quarter)
+        return self.terms[term_key]
 
     def get_section_resource_by_id(self, section_id):
         """

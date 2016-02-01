@@ -236,14 +236,20 @@ class Enrollment(models.Model):
     """ Represents the provisioned state of an enrollment.
     """
     ACTIVE_STATUS = "active"
+    INACTIVE_STATUS = "inactive"
     DELETED_STATUS = "deleted"
     COMPLETED_STATUS = "completed"
 
     STATUS_CHOICES = (
         (ACTIVE_STATUS, "Active"),
+        (INACTIVE_STATUS, "Inactive"),
         (DELETED_STATUS, "Deleted"),
         (COMPLETED_STATUS, "Completed")
     )
+
+    STUDENT_ROLE = "Student"
+    AUDITOR_ROLE = "Auditor"
+    INSTRUCTOR_ROLE = "Teacher"
 
     reg_id = models.CharField(max_length=32, null=True)
     status = models.CharField(max_length=16, choices=STATUS_CHOICES)
