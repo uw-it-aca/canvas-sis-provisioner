@@ -1,6 +1,5 @@
-Django==1.6.7
+Django==1.7
 django-compressor<2.0
-south>=1.0
 urllib3==1.10.2
 PyCrypto
 PyOpenSSL
