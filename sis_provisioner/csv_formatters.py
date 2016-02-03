@@ -3,7 +3,6 @@ from sis_provisioner.policy import CoursePolicy
 from restclients.models.sws import Person, Entity
 from restclients.models.canvas import CanvasUser
 from nameparser import HumanName
-from datetime import datetime
 import string
 import re
 
@@ -91,13 +90,13 @@ def csv_for_sis_student_enrollment(registration):
     if registration.is_active:
         status = Enrollment.ACTIVE_STATUS
     else:
-        if datetime.now() > registration.section.term.get_eod_census_day():
-            status = Enrollment.INACTIVE_STATUS
-        else:
+        if registration.request_date < registration.section.term.census_day:
             status = Enrollment.DELETED_STATUS
+        else:
+            status = Enrollment.INACTIVE_STATUS
 
     return _csv_for_enrollment(registration.section.canvas_section_sis_id(),
-        registration.person, role, status)
+                               registration.person, role, status)
 
 
 def csv_for_sis_instructor_enrollment(section, user, status):

@@ -14,7 +14,7 @@ from restclients.canvas.courses import Courses as CanvasCourses
 from restclients.canvas.sections import Sections as CanvasSections
 from restclients.canvas.enrollments import Enrollments as CanvasEnrollments
 from restclients.models.sws import Section, Registration
-from restclients.exceptions import DataFailureException, \
+from restclients.exceptions import DataFailureException,\
     InvalidCanvasIndependentStudyCourse
 
 from sis_provisioner.models import Course, Curriculum, Enrollment, Instructor,\
@@ -307,8 +307,10 @@ class CSVBuilder():
                 csv.add_section(course_section_id, csv_for_section(section))
 
             # Add the student enrollment csv
+            # XXX: Use actual request_date, not current date 
             registration = Registration(section=section,
                                         person=person,
+                                        request_date=datetime.now().date(),
                                         is_active=enrollment.is_active())
             csv_data = csv_for_sis_student_enrollment(registration)
             csv.add_enrollment(csv_data)
@@ -695,14 +697,21 @@ class CSVBuilder():
         """
         Generates the full student enrollments csv for the passed section.
         """
-        for registration in get_all_registrations_by_section(section):
-            # Add the student user csv
-            self.generate_user_csv_for_person(registration.person)
+        registrations = get_all_registrations_by_section(section)
+        registrations.reverse()  # Newest registrations first
+        seen_students = {}
+        for registration in registrations:
+            if registration.person.uwregid not in seen_students:
+                # Skip earlier registrations for this student
+                seen_students[registration.person.uwregid] = True
 
-            # Add the student enrollment csv
-            if registration.person.uwregid not in self._invalid_users:
-                csv_data = csv_for_sis_student_enrollment(registration)
-                self._csv.add_enrollment(csv_data)
+                # Add the student user csv
+                self.generate_user_csv_for_person(registration.person)
+
+                # Add the student enrollment csv
+                if registration.person.uwregid not in self._invalid_users:
+                    csv_data = csv_for_sis_student_enrollment(registration)
+                    self._csv.add_enrollment(csv_data)
 
     def generate_xlists_csv(self, section):
         """
