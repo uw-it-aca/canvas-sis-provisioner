@@ -90,10 +90,10 @@ def csv_for_sis_student_enrollment(registration):
     if registration.is_active:
         status = Enrollment.ACTIVE_STATUS
     else:
-        if registration.request_date < registration.section.term.census_day:
-            status = Enrollment.DELETED_STATUS
-        else:
+        if registration.request_date > registration.section.term.census_day:
             status = Enrollment.INACTIVE_STATUS
+        else:
+            status = Enrollment.DELETED_STATUS
 
     return _csv_for_enrollment(registration.section.canvas_section_sis_id(),
                                registration.person, role, status)
