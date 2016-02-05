@@ -4,6 +4,7 @@ from django.utils.timezone import utc, localtime
 from restclients.canvas.sis_import import SISImport
 from restclients.models.canvas import SISImport as SISImportModel
 from restclients.gws import GWS
+from restclients.sws.section import course_res_url_prefix
 from restclients.exceptions import DataFailureException
 from eos.models import EOSCourseDelta
 import datetime
@@ -136,8 +137,10 @@ class Course(models.Model):
 
     def sws_url(self):
         try:
-            (year, quarter, curr_abbr, course_num, section_id) = self.course_id.split('-', 4)
-            sws_url = "/restclients/view/sws/student/v5/course/%s,%s,%s,%s/%s.json" % (
+            (year, quarter, curr_abbr, course_num,
+                section_id) = self.course_id.split('-', 4)
+            sws_url = "%s%s/%s,%s,%s,%s/%s.json" % (
+                "/restclients/view/sws", course_res_url_prefix,
                 year, quarter, curr_abbr, course_num, section_id)
         except ValueError:
             sws_url = None
@@ -159,14 +162,16 @@ class Course(models.Model):
             "is_sdb_type": self.is_sdb(),
             "added_date": localtime(self.added_date).isoformat() if (
                 self.added_date is not None) else None,
-            "provisioned_date": localtime(self.provisioned_date).isoformat() if (
-                self.provisioned_date is not None) else None,
+            "provisioned_date": localtime(
+                self.provisioned_date).isoformat() if (
+                    self.provisioned_date is not None) else None,
             "priority": PRIORITY_CHOICES[self.priority][1],
             "provisioned_error": self.provisioned_error,
             "provisioned_status": self.provisioned_status,
             "queue_id": self.queue_id,
             "groups": groups,
-            "sws_url": self.sws_url() if include_sws_url and self.is_sdb() else None,
+            "sws_url": self.sws_url() if (
+                include_sws_url and self.is_sdb()) else None,
         }
 
 
@@ -181,7 +186,7 @@ class Instructor(models.Model):
 
     def __eq__(self, other):
         return (self.section_id == other.section_id and
-            self.reg_id == other.reg_id)
+                self.reg_id == other.reg_id)
 
 
 class EnrollmentManager(models.Manager):
@@ -340,8 +345,9 @@ class User(models.Model):
             "net_id": self.net_id,
             "reg_id": self.reg_id,
             "added_date": localtime(self.added_date).isoformat(),
-            "provisioned_date": localtime(self.provisioned_date).isoformat() if (
-                self.provisioned_date is not None) else None,
+            "provisioned_date": localtime(
+                self.provisioned_date).isoformat() if (
+                    self.provisioned_date is not None) else None,
             "priority": PRIORITY_CHOICES[self.priority][1],
             "queue_id": self.queue_id,
         }
@@ -474,8 +480,9 @@ class Group(models.Model):
             "is_deleted": True if self.is_deleted else None,
             "deleted_date": localtime(self.deleted_date).isoformat() if (
                 self.deleted_date is not None) else None,
-            "provisioned_date": localtime(self.provisioned_date).isoformat() if (
-                self.provisioned_date is not None) else None,
+            "provisioned_date": localtime(
+                self.provisioned_date).isoformat() if (
+                    self.provisioned_date is not None) else None,
             "priority": PRIORITY_CHOICES[self.priority][1],
             "queue_id": self.queue_id,
         }
@@ -669,7 +676,8 @@ class Import(models.Model):
                 self.canvas_progress = sis_import.progress
 
                 if len(sis_import.processing_warnings):
-                    self.canvas_errors = json.dumps(sis_import.processing_warnings)
+                    canvas_errors = json.dumps(sis_import.processing_warnings)
+                    self.canvas_errors = canvas_errors
 
             except DataFailureException as ex:
                 self.monitor_status = ex.status
