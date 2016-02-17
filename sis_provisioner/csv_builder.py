@@ -2,6 +2,7 @@ from django.conf import settings
 from django.utils.log import getLogger
 from django.utils.timezone import utc
 
+from restclients.util.retry import retry
 from restclients.sws.campus import get_all_campuses
 from restclients.sws.college import get_all_colleges
 from restclients.sws.curriculum import get_curricula_by_department
@@ -37,6 +38,9 @@ import copy
 import json
 
 
+logger = getLogger(__name__)
+
+
 class CSVBuilder():
 
     # Define provisioned status LMS cue
@@ -48,7 +52,6 @@ class CSVBuilder():
         self._invalid_users = {}
         self._user_policy = UserPolicy()
         self._course_policy = CoursePolicy()
-        self._log = getLogger(__name__)
 
     def generate_csv_for_group_memberships(self, course_ids, delta=True):
         """
@@ -102,7 +105,7 @@ class CSVBuilder():
                                 gmg.save()
 
                         for member in invalid_members:
-                            self._log.info("Skipped group member %s (%s)" % (
+                            logger.info("Skipped group member %s (%s)" % (
                                 member.name, member.error))
 
                         for member in members:
@@ -119,7 +122,7 @@ class CSVBuilder():
                             if canvas_enrollments:
                                 match = next((m for m in canvas_enrollments if (m.login_id.lower() == member.name.lower())), None)
                                 if match:
-                                    self._log.info("Skip group member %s (present in %s)" % (
+                                    logger.info("Skip group member %s (present in %s)" % (
                                         member.name, match.sis_section_id))
                                     continue
 
@@ -135,7 +138,8 @@ class CSVBuilder():
 
                     except (GroupPolicyException, GroupNotFoundException,
                             GroupUnauthorizedException) as err:
-                        self._log.info("Skipped group %s (%s)" % (group.group_id, err))
+                        logger.info("Skipped group %s (%s)" % (
+                            group.group_id, err))
 
             except DataFailureException as err:
                 Group.objects.filter(course_id=course_id).update(queue_id=None)
@@ -192,8 +196,8 @@ class CSVBuilder():
                 self.generate_user_csv_for_person(person)
 
             except Exception as err:
-                self._log.info("Skipped group member %s (%s)" % (member.name,
-                                                                 err))
+                logger.info("Skipped group member %s (%s)" % (
+                    member.name, err))
                 return
 
         elif member.is_eppn():
@@ -219,13 +223,13 @@ class CSVBuilder():
             try:
                 person = self._user_policy.get_person_by_regid(enrollment.reg_id)
             except UserPolicyException as err:
-                self._log.info("Skip enrollment %s in %s: %s" % (
+                logger.info("Skip enrollment %s in %s: %s" % (
                     enrollment.reg_id, enrollment.course_id, err))
                 continue
             except Exception as err:
                 enrollment.queue_id = None
                 enrollment.save()
-                self._log.info("Defer enrollment %s in %s: %s" % (
+                logger.info("Defer enrollment %s in %s: %s" % (
                     enrollment.reg_id, enrollment.course_id, err))
                 continue
 
@@ -291,13 +295,13 @@ class CSVBuilder():
                     enrollment.queue_id = None
                     enrollment.priority = PRIORITY_NONE
                     enrollment.save()
-                    self._log.info("Skip enrollment %s in %s: %s" % (
+                    logger.info("Skip enrollment %s in %s: %s" % (
                         enrollment.reg_id, enrollment.course_id,
                         'Independent study missing instructor regid'))
                     continue
 
                 if len(section.linked_section_urls):
-                    self._log.info("Skip enrollment %s in %s: %s" % (
+                    logger.info("Skip enrollment %s in %s: %s" % (
                         enrollment.reg_id, enrollment.course_id,
                         'Section has linked sections'))
                     continue
@@ -455,7 +459,7 @@ class CSVBuilder():
                 person = self._user_policy.get_person_by_netid(user.net_id)
                 self.generate_user_csv_for_person(person, force=True)
             except UserPolicyException as err:
-                self._log.info("Skipped user %s: %s" % (user.reg_id, err))
+                logger.info("Skipped user %s: %s" % (user.reg_id, err))
 
         return self._csv.write_files()
 
@@ -498,8 +502,8 @@ class CSVBuilder():
 
             self.generate_user_csv_for_person(instructor)
             if instructor.uwregid not in self._invalid_users:
-                csv_data = csv_for_sis_instructor_enrollment(section,
-                    instructor, Enrollment.ACTIVE_STATUS)
+                csv_data = csv_for_sis_instructor_enrollment(
+                    section, instructor, Enrollment.ACTIVE_STATUS)
                 csv.add_enrollment(csv_data)
 
             # Add the student enrollments
@@ -666,10 +670,10 @@ class CSVBuilder():
             self.generate_user_csv_for_person(instructor.person)
 
             if instructor.reg_id not in self._invalid_users:
-                self._log.info("ADD instructor %s to %s" % (
+                logger.info("ADD instructor %s to %s" % (
                     instructor.reg_id, section_id))
-                csv_data = csv_for_sis_instructor_enrollment(section,
-                    instructor.person, Enrollment.ACTIVE_STATUS)
+                csv_data = csv_for_sis_instructor_enrollment(
+                    section, instructor.person, Enrollment.ACTIVE_STATUS)
                 csv.add_enrollment(csv_data)
                 if instructor not in cached_instructors:
                     instructor.save()
@@ -680,11 +684,11 @@ class CSVBuilder():
                     person = self._user_policy.get_person_by_regid(instructor.reg_id)
                     self.generate_user_csv_for_person(person)
                 except UserPolicyException as err:
-                    self._log.info("SKIP instructor %s for %s: %s" % (
+                    logger.info("SKIP instructor %s for %s: %s" % (
                         instructor.reg_id, section_id, err))
                     continue
 
-                self._log.info("DELETE instructor %s from %s" % (
+                logger.info("DELETE instructor %s from %s" % (
                     instructor.reg_id, section_id))
                 #csv_data = csv_for_sis_instructor_enrollment(section, person,
                 #    Enrollment.DELETED_STATUS)
@@ -735,7 +739,7 @@ class CSVBuilder():
             try:
                 new_xlist_id = self._course_policy.canvas_xlist_id(joint_sections)
             except Exception as err:
-                self._log.info("Unable to generate xlist_id for %s: %s" % (
+                logger.info("Unable to generate xlist_id for %s: %s" % (
                     course_id, err))
 
         if existing_xlist_id is None and new_xlist_id is None:
@@ -790,7 +794,7 @@ class CSVBuilder():
             self._user_policy.valid_net_id(person.uwnetid)
         except UserPolicyException as err:
             self._invalid_users[person.uwregid] = True
-            self._log.info("Skipped user %s: %s" % (person.uwregid, err))
+            logger.info("Skipped user %s: %s" % (person.uwregid, err))
             return
 
         if force is True:
@@ -838,30 +842,34 @@ class CSVBuilder():
             data = json.loads(err.msg)
             self._remove_from_queue(section_id, "%s: %s %s" % (
                 err.url, err.status, data["StatusDescription"]))
-            self._log.info("Skipping section %s: %s %s" % (
+            logger.info("Skipping section %s: %s %s" % (
                 label, err.status, data["StatusDescription"]))
             raise
 
         except ValueError as err:
             self._remove_from_queue(section_id, err)
-            self._log.info("Skipping section %s: %s" % (label, err))
+            logger.info("Skipping section %s: %s" % (label, err))
             raise
 
     def get_canvas_sections_for_course(self, course_sis_id):
-        canvas = CanvasSections()
-        try:
-            sections = canvas.get_sections_in_course_by_sis_id(course_sis_id)
-        except DataFailureException as err:
-            if err.status == 404:
-                sections = []
-            else:
-                raise
+
+        @retry(DataFailureException, status_codes=[408, 500, 502, 503, 504],
+               tries=5, delay=3, logger=logger)
+        def _get_sections(course_sis_id):
+            try:
+                return CanvasSections().get_sections_in_course_by_sis_id(
+                    course_sis_id)
+            except DataFailureException as err:
+                if err.status == 404:
+                    return []
+                else:
+                    raise
 
         academic_sections = []
-        policy = self._course_policy
-        for section in sections:
+        for section in _get_sections(course_sis_id):
             try:
-                policy.valid_academic_section_sis_id(section.sis_section_id)
+                self._course_policy.valid_academic_section_sis_id(
+                    section.sis_section_id)
                 academic_sections.append(section)
             except:
                 continue
