@@ -18,9 +18,6 @@ setup(
         'django',
         'nameparser>=0.2.8'
     ],
-    dependency_links = [
-        'http://github.com/uw-it-aca/uw-restclients#egg=RestClients'
-    ],
     license='Apache License, Version 2.0',  # example license
     description='An application that manages SIS imports to Canvas',
     long_description=README,
