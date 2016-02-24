@@ -384,12 +384,3 @@ class CoursePolicy(object):
             section.lms_ownership = lms_ownership[section]
 
         return xlist_courses[0].canvas_course_sis_id()
-
-
-class EnrollmentPolicy(object):
-    def __init__(self):
-        self._re_active_status = re.compile(
-            r"^(added to class|changed|reinstated)$", re.I)
-
-    def is_active(status):
-        return True if self._re_active_status.match(status) else False
