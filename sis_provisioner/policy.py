@@ -89,7 +89,7 @@ class UserPolicy(object):
         except:
             raise UserPolicyException("Invalid Gmail username: %s" % login_id)
 
-        if domain not in settings.LOGIN_DOMAIN_WHITELIST:
+        if domain not in getattr(settings, 'LOGIN_DOMAIN_WHITELIST', []):
             raise UserPolicyException("Invalid Gmail domain: %s" % login_id)
 
         return "%s@%s" % (username, domain)
@@ -150,7 +150,8 @@ class GroupPolicy(object):
     def __init__(self):
         self._re_group_id = re.compile(r"^[a-z0-9][\w\.-]+$", re.I)
 
-        policy = r'^(%s).*$' % ('|'.join(settings.UW_GROUP_BLACKLIST))
+        policy = r'^(%s).*$' % ('|'.join(
+            getattr(settings, 'UW_GROUP_BLACKLIST', []))
         self._policy_restricted = re.compile(policy, re.I)
 
     def valid(self, group_id):
@@ -271,7 +272,8 @@ class CoursePolicy(object):
         return "%s-groups" % sis_id
 
     def group_section_name(self):
-        return settings.DEFAULT_GROUP_SECTION_NAME
+        return getattr(settings, 'DEFAULT_GROUP_SECTION_NAME',
+                       'UW Group members')
 
     def valid_canvas_section(self, section):
         course_id = section.canvas_course_sis_id()
@@ -342,12 +344,12 @@ class CoursePolicy(object):
         except Curriculum.DoesNotExist:
             account_id = None
 
+        lms_owner_accounts = getattr(settings, 'LMS_OWNERSHIP_SUBACCOUNT', {})
         try:
-            lms_ownership = section.lms_ownership
-            account_id = settings.LMS_OWNERSHIP_SUBACCOUNT[lms_ownership]
+            account_id = lms_owner_accounts[section.lms_ownership]
         except (AttributeError, KeyError):
             if account_id is None and section.course_campus == "PCE":
-                account_id = settings.LMS_OWNERSHIP_SUBACCOUNT["PCE_NONE"]
+                account_id = lms_owner_accounts["PCE_NONE"]
 
         try:
             override = SubAccountOverride.objects.get(course_id=course_id)
