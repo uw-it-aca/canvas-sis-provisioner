@@ -130,17 +130,16 @@ class CSVData():
             shutil.rmtree(filepath)
             filepath = None
 
-        if settings.SIS_IMPORT_CSV_DEBUG:
-            print "CSV PATH: %s" % filepath
+        if getattr(settings, 'SIS_IMPORT_CSV_DEBUG', False):
+            print 'CSV PATH: %s' % filepath
         else:
             return filepath
 
-    def filepath(self, root=settings.SIS_IMPORT_CSV_ROOT):
+    def filepath(self):
         """
         Create a fresh directory for the csv files
         """
-
-        base = os.path.join(root,
+        base = os.path.join(getattr(settings, 'SIS_IMPORT_CSV_ROOT', ''),
                             datetime.datetime.now().strftime('%Y%m%d-%H%M%S'))
 
         # ugo+x
