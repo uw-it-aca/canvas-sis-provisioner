@@ -4,7 +4,6 @@ from django.utils.timezone import utc, localtime
 from restclients.canvas.sis_import import SISImport
 from restclients.models.canvas import SISImport as SISImportModel
 from restclients.gws import GWS
-from restclients.sws.section import course_res_url_prefix
 from restclients.exceptions import DataFailureException
 from eos.models import EOSCourseDelta
 import datetime
@@ -139,8 +138,8 @@ class Course(models.Model):
         try:
             (year, quarter, curr_abbr, course_num,
                 section_id) = self.course_id.split('-', 4)
-            sws_url = "%s%s/%s,%s,%s,%s/%s.json" % (
-                "/restclients/view/sws", course_res_url_prefix,
+            sws_url = "%s/%s,%s,%s,%s/%s.json" % (
+                "/restclients/view/sws/student/v5/course",
                 year, quarter, curr_abbr, course_num, section_id)
         except ValueError:
             sws_url = None
