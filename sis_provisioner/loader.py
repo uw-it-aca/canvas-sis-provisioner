@@ -64,11 +64,12 @@ class Loader():
     def queue_active_courses_for_term(self, term):
         client = Reports()
         canvas_term = client.get_term_by_sis_id(term.canvas_sis_id())
+        canvas_account_id = getattr(settings, 'RESTCLIENTS_CANVAS_ACCOUNT_ID',
+                                    None)
 
         # Canvas report of "unused" courses for the term
         unused_course_report = client.create_unused_courses_report(
-            settings.RESTCLIENTS_CANVAS_ACCOUNT_ID,
-            term_id=canvas_term.term_id)
+            canvas_account_id, term_id=canvas_term.term_id)
 
         unused_courses = {}
         for row in csv.reader(client.get_report_data(unused_course_report)):
@@ -80,8 +81,7 @@ class Loader():
 
         # Canvas report of all courses for the term
         all_course_report = client.create_course_provisioning_report(
-            settings.RESTCLIENTS_CANVAS_ACCOUNT_ID,
-            term_id=canvas_term.term_id)
+            canvas_account_id, term_id=canvas_term.term_id)
 
         for row in csv.reader(client.get_report_data(all_course_report)):
             try:
@@ -275,7 +275,7 @@ class Loader():
 
         gws = GWS()
         policy = self._user_policy
-        for group_id in settings.SIS_IMPORT_GROUPS:
+        for group_id in getattr(settings, 'SIS_IMPORT_GROUPS', []):
             members = gws.get_effective_members(group_id)
             for member in members:
                 if member.is_uwnetid() and member.name not in existing_netids:

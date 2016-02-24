@@ -151,7 +151,7 @@ class GroupPolicy(object):
         self._re_group_id = re.compile(r"^[a-z0-9][\w\.-]+$", re.I)
 
         policy = r'^(%s).*$' % ('|'.join(
-            getattr(settings, 'UW_GROUP_BLACKLIST', []))
+            getattr(settings, 'UW_GROUP_BLACKLIST', [])))
         self._policy_restricted = re.compile(policy, re.I)
 
     def valid(self, group_id):
