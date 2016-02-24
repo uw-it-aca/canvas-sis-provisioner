@@ -212,9 +212,9 @@ class Loader():
             if course.provisioned_date:
                 enrollment = Enrollment.objects.get(course_id=course_id,
                                                     reg_id=reg_id)
-                if (last_modified > enrollment.last_modified
-                    or (last_modified == enrollment.last_modified
-                        and status == Enrollment.ACTIVE_STATUS)):
+                if (last_modified > enrollment.last_modified or (
+                        last_modified == enrollment.last_modified and
+                        status == Enrollment.ACTIVE_STATUS)):
                     self._log.info('UPDATE: %s %s on %s status %s' % (
                         course_id, reg_id, last_modified, status))
 

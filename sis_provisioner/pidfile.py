@@ -4,9 +4,9 @@ import errno
 import os
 
 
-## modified from:
-## http://stackoverflow.com/questions/1444790/python-module-for-creating-pid-
-## based-lockfile
+# modified from:
+# http://stackoverflow.com/questions/1444790/python-module-for-creating-pid-
+# based-lockfile
 class Pidfile():
     def __init__(self, path=None, directory='/tmp', filename=None,
                  logger=None):
