@@ -4,9 +4,12 @@ import errno
 import os
 
 
-## modified from: http://stackoverflow.com/questions/1444790/python-module-for-creating-pid-based-lockfile
+## modified from:
+## http://stackoverflow.com/questions/1444790/python-module-for-creating-pid-
+## based-lockfile
 class Pidfile():
-    def __init__(self, path=None, directory='/tmp', filename=None, logger=None):
+    def __init__(self, path=None, directory='/tmp', filename=None,
+                 logger=None):
         caller = getmodule(stack()[1][0]).__name__
         if path:
             self.pidfile = path
@@ -26,12 +29,14 @@ class Pidfile():
                 pid = self._check()
                 if pid:
                     self.pidfd = None
-                    msg = 'process already running pid = %s (%s)' % (pid, self.pidfile)
+                    msg = 'process already running pid = %s (%s)' % (
+                        pid, self.pidfile)
                     self.logger.info(msg)
-                    raise ProcessRunningException(msg);
+                    raise ProcessRunningException(msg)
                 else:
                     os.remove(self.pidfile)
-                    self.logger.info('removed stale lockfile %s' % (self.pidfile))
+                    self.logger.info('removed stale lockfile %s' % (
+                        self.pidfile))
                     self._create()
             else:
                 raise
@@ -57,7 +62,8 @@ class Pidfile():
             return False
 
     def _create(self):
-        self.pidfd = os.open(self.pidfile, os.O_CREAT|os.O_WRONLY|os.O_EXCL)
+        self.pidfd = os.open(self.pidfile,
+                             os.O_CREAT | os.O_WRONLY | os.O_EXCL)
 
     def _remove(self):
         os.remove(self.pidfile)
@@ -80,6 +86,6 @@ class Pidfile():
 
             return False
 
+
 class ProcessRunningException(Exception):
     pass
-    

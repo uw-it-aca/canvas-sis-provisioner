@@ -34,8 +34,8 @@ class CSVData():
             'enrollments': header_for_enrollments(),
             'xlists': header_for_xlists(),
         }
-        self.filemode = (stat.S_IRUSR|stat.S_IWUSR|   
-                         stat.S_IRGRP|stat.S_IWGRP|
+        self.filemode = (stat.S_IRUSR | stat.S_IWUSR |
+                         stat.S_IRGRP | stat.S_IWGRP |
                          stat.S_IROTH)
 
     def add_account(self, account_id, csv_data):
@@ -143,13 +143,15 @@ class CSVData():
         base = os.path.join(root,
                             datetime.datetime.now().strftime('%Y%m%d-%H%M%S'))
 
-        mode = self.filemode | (stat.S_IXUSR|stat.S_IXGRP|stat.S_IXOTH)  # ugo+x
+        # ugo+x
+        mode = self.filemode | (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
         max_collisions = 100
 
         for collision in range(max_collisions):
             try:
-                filepath = base if collision < 1 else '%s-%03d' % (base, collision)
+                filepath = base if collision < 1 else '%s-%03d' % (base,
+                                                                   collision)
                 os.makedirs(filepath)
                 os.chmod(filepath, mode)
                 return filepath
@@ -157,4 +159,5 @@ class CSVData():
                 if err.errno != errno.EEXIST:
                     raise
 
-        raise Exception('Cannot create CSV directory: too many attempts (%d)' % max_collisions)
+        raise Exception('Cannot create CSV dir: Too many attempts (%d)' % (
+            max_collisions))

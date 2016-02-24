@@ -3,7 +3,6 @@ from sis_provisioner.policy import CoursePolicy
 from restclients.models.sws import Person, Entity
 from restclients.models.canvas import CanvasUser
 from nameparser import HumanName
-from datetime import datetime
 import string
 import re
 
@@ -94,7 +93,7 @@ def csv_for_sis_student_enrollment(registration):
         status = Enrollment.DELETED_STATUS
 
     return _csv_for_enrollment(registration.section.canvas_section_sis_id(),
-        registration.person, role, status)
+                               registration.person, role, status)
 
 
 def csv_for_sis_instructor_enrollment(section, user, status):
