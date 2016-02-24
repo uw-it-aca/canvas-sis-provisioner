@@ -307,10 +307,8 @@ class CSVBuilder():
                 csv.add_section(course_section_id, csv_for_section(section))
 
             # Add the student enrollment csv
-            # XXX: Use actual request_date, not current date 
             registration = Registration(section=section,
                                         person=person,
-                                        request_date=datetime.now().date(),
                                         is_active=enrollment.is_active())
             csv_data = csv_for_sis_student_enrollment(registration)
             csv.add_enrollment(csv_data)
