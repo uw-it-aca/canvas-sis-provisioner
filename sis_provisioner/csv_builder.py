@@ -697,21 +697,14 @@ class CSVBuilder():
         """
         Generates the full student enrollments csv for the passed section.
         """
-        registrations = get_all_registrations_by_section(section)
-        registrations.reverse()  # Newest registrations first
-        seen_students = {}
-        for registration in registrations:
-            if registration.person.uwregid not in seen_students:
-                # Skip earlier registrations for this student
-                seen_students[registration.person.uwregid] = True
+        for registration in get_all_registrations_by_section(section):
+            # Add the student user csv
+            self.generate_user_csv_for_person(registration.person)
 
-                # Add the student user csv
-                self.generate_user_csv_for_person(registration.person)
-
-                # Add the student enrollment csv
-                if registration.person.uwregid not in self._invalid_users:
-                    csv_data = csv_for_sis_student_enrollment(registration)
-                    self._csv.add_enrollment(csv_data)
+            # Add the student enrollment csv
+            if registration.person.uwregid not in self._invalid_users:
+                csv_data = csv_for_sis_student_enrollment(registration)
+                self._csv.add_enrollment(csv_data)
 
     def generate_xlists_csv(self, section):
         """
