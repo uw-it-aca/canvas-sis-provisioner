@@ -89,7 +89,8 @@ class UserPolicy(object):
         except:
             raise UserPolicyException("Invalid Gmail username: %s" % login_id)
 
-        if domain not in getattr(settings, 'LOGIN_DOMAIN_WHITELIST', []):
+        if domain not in getattr(settings, 'LOGIN_DOMAIN_WHITELIST',
+                ['gmail.com']):
             raise UserPolicyException("Invalid Gmail domain: %s" % login_id)
 
         return "%s@%s" % (username, domain)
