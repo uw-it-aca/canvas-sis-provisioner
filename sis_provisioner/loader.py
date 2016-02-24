@@ -1,5 +1,6 @@
 from sis_provisioner.models import Course, User, Enrollment, Curriculum
-from sis_provisioner.models import PRIORITY_NONE, PRIORITY_DEFAULT, PRIORITY_HIGH
+from sis_provisioner.models import PRIORITY_NONE, PRIORITY_DEFAULT,\
+    PRIORITY_HIGH
 from sis_provisioner.policy import UserPolicy, CoursePolicy
 from restclients.sws.term import get_term_by_date, get_term_after
 from restclients.sws.section import get_sections_by_curriculum_and_term
@@ -63,10 +64,12 @@ class Loader():
     def queue_active_courses_for_term(self, term):
         client = Reports()
         canvas_term = client.get_term_by_sis_id(term.canvas_sis_id())
+        canvas_account_id = getattr(settings, 'RESTCLIENTS_CANVAS_ACCOUNT_ID',
+                                    None)
 
         # Canvas report of "unused" courses for the term
         unused_course_report = client.create_unused_courses_report(
-            settings.RESTCLIENTS_CANVAS_ACCOUNT_ID, term_id=canvas_term.term_id)
+            canvas_account_id, term_id=canvas_term.term_id)
 
         unused_courses = {}
         for row in csv.reader(client.get_report_data(unused_course_report)):
@@ -78,7 +81,7 @@ class Loader():
 
         # Canvas report of all courses for the term
         all_course_report = client.create_course_provisioning_report(
-            settings.RESTCLIENTS_CANVAS_ACCOUNT_ID, term_id=canvas_term.term_id)
+            canvas_account_id, term_id=canvas_term.term_id)
 
         for row in csv.reader(client.get_report_data(all_course_report)):
             try:
@@ -112,7 +115,8 @@ class Loader():
         curricula = Curriculum.objects.all().values_list("curriculum_abbr",
                                                          flat=True)
 
-        tsc = dict((t.campus.lower(), t.is_on) for t in term.time_schedule_construction)
+        tsc = dict((t.campus.lower(),
+                    t.is_on) for t in term.time_schedule_construction)
 
         for curriculum_abbr in curricula:
             new_courses = []
@@ -127,7 +131,8 @@ class Loader():
 
                 if course_id in existing_course_ids:
                     if existing_course_ids[course_id] == PRIORITY_NONE:
-                        Course.objects.filter(course_id=course_id).update(priority=PRIORITY_HIGH)
+                        Course.objects.filter(course_id=course_id).update(
+                            priority=PRIORITY_HIGH)
 
                     continue
 
@@ -198,21 +203,21 @@ class Loader():
         primary_course_id = None
         if not section.is_primary_section:
             primary_course_id = generate_primary_course_id(section)
-        instructor_reg_id = data.get('InstructorUWRegID') if 'InstructorUWRegID' in data else None
-        full_course_id = '-'.join([course_id, instructor_reg_id]) if instructor_reg_id else course_id
+        instructor_reg_id = data.get('InstructorUWRegID', None)
+        full_course_id = '-'.join([course_id, instructor_reg_id]) if (
+            instructor_reg_id is not None) else course_id
 
         try:
             course = Course.objects.get(course_id=full_course_id)
             if course.provisioned_date:
                 enrollment = Enrollment.objects.get(course_id=course_id,
                                                     reg_id=reg_id)
-                if (last_modified > enrollment.last_modified
-                    or (last_modified == enrollment.last_modified
-                        and status == Enrollment.ACTIVE_STATUS)):
-                    self._log.info('UPDATE: %s %s on %s status %s' % (course_id,
-                                                                      reg_id,
-                                                                      last_modified,
-                                                                      status))
+                if (last_modified > enrollment.last_modified or (
+                        last_modified == enrollment.last_modified and
+                        status == Enrollment.ACTIVE_STATUS)):
+                    self._log.info('UPDATE: %s %s on %s status %s' % (
+                        course_id, reg_id, last_modified, status))
+
                     enrollment.status = status
                     enrollment.last_modified = last_modified
                     enrollment.primary_course_id = primary_course_id
@@ -222,21 +227,24 @@ class Loader():
                         enrollment.priority = PRIORITY_DEFAULT
                     else:
                         enrollment.priority = PRIORITY_HIGH
-                        self._log.info('IN QUEUE: %s %s status %s, queue_id %s' % (course_id,
-                                                                                   reg_id,
-                                                                                   status,
-                                                                                   enrollment.queue_id))
+                        self._log.info(
+                            'IN QUEUE: %s %s status %s, queue_id %s' % (
+                                course_id, reg_id, status, enrollment.queue_id)
+                        )
 
                     enrollment.save()
                 else:
-                    self._log.info('LATE: %s before %s' % (last_modified, enrollment.last_modified))
+                    self._log.info('LATE: %s before %s' % (
+                        last_modified, enrollment.last_modified))
             else:
-                self._log.info('DROP: %s %s status %s' % (full_course_id, reg_id, status))
+                self._log.info('DROP: %s %s status %s' % (
+                    full_course_id, reg_id, status))
                 course.priority = PRIORITY_HIGH
                 course.save()
 
         except Enrollment.DoesNotExist:
-            self._log.info('LOAD: %s %s on %s status %s' % (course_id, reg_id, last_modified, status))
+            self._log.info('LOAD: %s %s on %s status %s' % (
+                course_id, reg_id, last_modified, status))
             enrollment = Enrollment(course_id=course_id, reg_id=reg_id,
                                     last_modified=last_modified,
                                     status=status,
@@ -245,8 +253,8 @@ class Loader():
             enrollment.save()
         except Course.DoesNotExist:
             # course provision effectively picks up event
-            self._log.info('NO COURSE: %s %s status %s' % (full_course_id,
-                                                           reg_id, status))
+            self._log.info('NO COURSE: %s %s status %s' % (
+                full_course_id, reg_id, status))
             course = Course(course_id=full_course_id,
                             course_type=Course.SDB_TYPE,
                             term_id=self._course_policy.term_sis_id(section),
@@ -267,7 +275,7 @@ class Loader():
 
         gws = GWS()
         policy = self._user_policy
-        for group_id in settings.SIS_IMPORT_GROUPS:
+        for group_id in getattr(settings, 'SIS_IMPORT_GROUPS', []):
             members = gws.get_effective_members(group_id)
             for member in members:
                 if member.is_uwnetid() and member.name not in existing_netids:

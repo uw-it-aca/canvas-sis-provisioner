@@ -18,7 +18,6 @@ class RestClientsCache(TimedCache):
     url_policies["pws"] = (
         (re.compile(r"^/identity/v1/person/"), 60 * 60),
         (re.compile(r"^/identity/v1/entity/"), 60 * 60),
-        #(re.compile(r"^/idcard/v1/photo/"), 60 * 60 * 24 * 7),
     )
     url_policies["kws"] = (
         (re.compile(r"^%s" % (

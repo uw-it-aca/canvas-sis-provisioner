@@ -15,7 +15,7 @@ from restclients.canvas.courses import Courses as CanvasCourses
 from restclients.canvas.sections import Sections as CanvasSections
 from restclients.canvas.enrollments import Enrollments as CanvasEnrollments
 from restclients.models.sws import Section, Registration
-from restclients.exceptions import DataFailureException, \
+from restclients.exceptions import DataFailureException,\
     InvalidCanvasIndependentStudyCourse
 
 from sis_provisioner.models import Course, Curriculum, Enrollment, Instructor,\
