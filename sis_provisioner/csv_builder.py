@@ -386,7 +386,7 @@ class CSVBuilder():
         department, curriculum.
         """
         csv = self._csv
-        root_id = settings.SIS_IMPORT_ROOT_ACCOUNT_ID
+        root_id = getattr(settings, 'SIS_IMPORT_ROOT_ACCOUNT_ID', None)
 
         campuses = get_all_campuses()
         for campus in campuses:
