@@ -2,8 +2,7 @@ import re
 import json
 from django.utils.log import getLogger
 from restclients.sws import SWS
-from sis_provisioner.models import PRIORITY_NONE
-from sis_provisioner.models import Enrollment
+from sis_provisioner.models import Enrollment, PRIORITY_NONE
 from sis_provisioner.views.rest_dispatch import RESTDispatch
 from sis_provisioner.views import regid_from_request, netid_from_request
 from sis_provisioner.policy import UserPolicy
@@ -15,7 +14,8 @@ class EnrollmentInvalidException(Exception):
 
 
 class EnrollmentListView(RESTDispatch):
-    """ Retrieves a list of Enrollments at /api/v1/enrollments/?<criteria[&criteria]>.
+    """ Retrieves a list of Enrollments at
+        /api/v1/enrollments/?<criteria[&criteria]>.
         GET returns 200 with Enrollment details.
     """
     def __init__(self):
@@ -29,7 +29,8 @@ class EnrollmentListView(RESTDispatch):
             },
             {
                 'term': 'quarter',
-                'test': re.compile(r'^(?:winter|spring|summer|autumn)+$', re.I).match,
+                'test': re.compile(
+                    r'^(?:winter|spring|summer|autumn)+$', re.I).match,
                 'required': True,
                 'case': 'lower'
             },
@@ -63,31 +64,34 @@ class EnrollmentListView(RESTDispatch):
             if re.match(r'^[0-9]+$', str(queue_id)):
                 filt_kwargs = {'queue_id': queue_id}
             else:
-                errstr = 'invalid queue_id: %s' % queue_id
-                self._log.error(errstr)
-                return self.json_response('{"error":"%s"}' % errstr, status=400)
+                err = 'invalid queue_id: %s' % queue_id
+                self._log.error(err)
+                return self.json_response('{"error":"%s"}' % err, status=400)
         else:
             provisioned_error = request.GET.get('provisioned_error')
             if provisioned_error:
-                filt_kwargs = {'provisioned_error': True if self._is_true(provisioned_error) else None,
-                               'queue_id__isnull': True}
+                filt_kwargs = {
+                    'provisioned_error': self._is_true(provisioned_error),
+                    'queue_id__isnull': True
+                }
 
         if filt_kwargs:
             try:
                 filt_kwargs['priority__gt'] = PRIORITY_NONE
-                enrollment_list = list(Enrollment.objects.filter(**filt_kwargs))
-                for enrollment in enrollment_list:
+                enrollments = list(Enrollment.objects.filter(**filt_kwargs))
+                for enrollment in enrollments:
                     json_rep['enrollments'].append(enrollment.json_data())
 
                 return self.json_response(json.dumps(json_rep))
-            except Exception, err:
-                self._log.error('enrollment kwargs search fail: ' + str(err))
-                return self.json_response('{"error":"' + str(err) + '"}', status=400)
+            except Exception as err:
+                self._log.error('enrollment kwargs search fail: %s' % err)
+                return self.json_response('{"error":"%s"}' % err, status=400)
 
         reg_id = None
         try:
             if 'net_id' in request.GET:
-                reg_id = self._pws.get_person_by_netid(netid_from_request(request.GET)).uwregid
+                reg_id = self._pws.get_person_by_netid(
+                    netid_from_request(request.GET)).uwregid
             elif 'reg_id' in request.GET:
                 reg_id = regid_from_request(request.GET)
             else:
@@ -95,13 +99,14 @@ class EnrollmentListView(RESTDispatch):
 
             filter_terms = self._validEnrollmentFilter(request)
             filter_prefix = '-'.join(filter_terms)
-            enrollment_list = list(Enrollment.objects.filter(course_id__startswith=filter_prefix,
-                                                             reg_id=reg_id))
-        except EnrollmentInvalidException, err:
-            return self.json_response('{"error":"' + str(err) + '"}', status=400)
-        except Exception, err:
-            self._log.error('course filter fail: ' + str(err))
-            return self.json_response('{"error":"' + str(err) + '"}', status=400)
+            enrollment_list = list(Enrollment.objects.filter(
+                course_id__startswith=filter_prefix, reg_id=reg_id))
+
+        except EnrollmentInvalidException as err:
+            return self.json_response('{"error":"%s"}' % err, status=400)
+        except Exception as err:
+            self._log.error('course filter fail: %s' % err)
+            return self.json_response('{"error":"%s"}' % err, status=400)
 
         return self.json_response(json.dumps(json_rep))
 
@@ -111,7 +116,8 @@ class EnrollmentListView(RESTDispatch):
             value = request.GET.get(filter['term'], '').strip()
             if value is None or not len(value):
                 if 'required' in filter and filter['required'] is True:
-                    raise EnrollmentInvalidException(filter['term'] + ' query term is required')
+                    raise EnrollmentInvalidException(
+                        '%s query term is required' % filter['term'])
                 else:
                     break
             elif filter['test'](value):
@@ -123,10 +129,11 @@ class EnrollmentListView(RESTDispatch):
 
                 values.append(value)
             else:
-                raise EnrollmentInvalidException(filter['term'] + ' is invalid')
+                raise EnrollmentInvalidException('%s is invalid' % (
+                    filter['term']))
 
         return values
 
     def _is_true(self, val):
-        return True if (val == '1' or re.match(r'^(yes|true)$', val, re.I)) else False
-
+        return True if (
+            val == '1' or re.match(r'^(yes|true)$', val, re.I)) else False

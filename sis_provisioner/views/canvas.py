@@ -37,8 +37,9 @@ class CanvasCourseView(RESTDispatch):
                     'name': course.term.name
                 },
                 'course_name': course.name,
-                'course_url': "%s/courses/%s" % (settings.RESTCLIENTS_CANVAS_HOST,
-                                                 course.course_id),
+                'course_url': "%s/courses/%s" % (
+                    getattr(settings, 'RESTCLIENTS_CANVAS_HOST', ''),
+                    course.course_id),
                 'workflow_state': course.workflow_state,
                 'public_syllabus': course.public_syllabus,
                 'syllabus_body': course.syllabus_body
@@ -53,7 +54,9 @@ class CanvasCourseView(RESTDispatch):
 
             return self.json_response(json.dumps(course_rep))
         except Exception as e:
-            return self.json_response('{"error": "Unable to retrieve course data: %s"' % (e) + ' }', status=400)
+            return self.json_response(
+                '{"error": "Unable to retrieve course data: %s"' % (e) + ' }',
+                status=400)
 
 
 class CanvasAccountView(RESTDispatch):
@@ -72,9 +75,12 @@ class CanvasAccountView(RESTDispatch):
                 'name': account.name,
                 'parent_account_id': account.parent_account_id,
                 'root_account_id': account.root_account_id,
-                'account_url': "%s/accounts/%s" % (settings.RESTCLIENTS_CANVAS_HOST,
-                                                   account.account_id)
+                'account_url': "%s/accounts/%s" % (
+                    getattr(settings, 'RESTCLIENTS_CANVAS_HOST', ''),
+                    account.account_id)
             }))
 
         except Exception as e:
-            return self.json_response('{"error": "Unable to retrieve account: %s"' % (e) + ' }', status=400)
+            return self.json_response(
+                '{"error": "Unable to retrieve account: %s"' % (e) + ' }',
+                status=400)

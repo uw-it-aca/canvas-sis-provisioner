@@ -1,15 +1,15 @@
 import re
 import json
-import datetime
+from datetime import datetime
 from django.utils.timezone import utc
 from django.http import HttpResponse
 from django.utils.log import getLogger
 from django.core.exceptions import ValidationError
-from sis_provisioner.models import Course, Group, GroupMemberGroup
-from sis_provisioner.models import PRIORITY_NONE, PRIORITY_IMMEDIATE
+from sis_provisioner.models import Course, Group, GroupMemberGroup,\
+    PRIORITY_NONE, PRIORITY_IMMEDIATE
 from sis_provisioner.views.rest_dispatch import RESTDispatch
-from sis_provisioner.policy import GroupPolicy, GroupPolicyException
-from sis_provisioner.policy import CoursePolicy, CoursePolicyException
+from sis_provisioner.policy import GroupPolicy, GroupPolicyException,\
+    CoursePolicy, CoursePolicyException
 from blti import BLTI, BLTIException
 
 
@@ -50,7 +50,8 @@ class GroupView(RESTDispatch):
 
         try:
             post_json = json.loads(request.read())
-            course_id, canvas_id, group_id, role = self._validate_post(post_json)
+            course_id, canvas_id, group_id, role = self._validate_post(
+                post_json)
             user_id = self._blti['user_id']
 
             group = Group.objects.get(course_id=course_id,
@@ -61,9 +62,11 @@ class GroupView(RESTDispatch):
                 group.deleted_by = None
                 group.deleted_date = None
                 group.provisioned_date = None
-                group.added_date = datetime.datetime.utcnow().replace(tzinfo=utc)
+                group.added_date = datetime.utcnow().replace(tzinfo=utc)
             else:
-                return self.json_response('{"error":" %s has duplicate role in course"}' % (group_id), status=400)
+                return self.json_response(
+                    '{"error":" %s has duplicate role in course"}' % group_id,
+                    status=400)
         except Group.DoesNotExist:
             try:
                 self._group_policy.valid(group_id)
@@ -77,7 +80,7 @@ class GroupView(RESTDispatch):
             self._log.error('POST: error: %s' % (ex))
             return self.json_response('{"error": "%s"}' % (ex), status=400)
 
-        group.priority=PRIORITY_IMMEDIATE
+        group.priority = PRIORITY_IMMEDIATE
         group.added_by = user_id
         group.save()
 
@@ -93,26 +96,27 @@ class GroupView(RESTDispatch):
             id = self._valid_id(kwargs['id'])
             group = Group.objects.get(id=id)
             group.is_deleted = True
-            group.deleted_date = datetime.datetime.utcnow().replace(tzinfo=utc)
+            group.deleted_date = datetime.utcnow().replace(tzinfo=utc)
             group.priority = PRIORITY_IMMEDIATE
             group.deleted_by = self._blti['user_id']
             group.save()
 
             ## only group use? mark member groups deleted too
             reused = Group.objects.filter(
-                group_id=group.group_id,is_deleted__isnull=True).count()
+                group_id=group.group_id, is_deleted__isnull=True).count()
             if reused == 0:
-                for gmg in GroupMemberGroup.objects.filter(root_group_id=group.group_id,
-                                                           is_deleted__isnull=True):
+                for gmg in GroupMemberGroup.objects.filter(
+                        root_group_id=group.group_id, is_deleted__isnull=True):
                     gmg.is_deleted = True
                     gmg.save()
 
-        except Exception, err:
+        except Exception as err:
             self._log.error('DELETE: %s' % (err))
             return self.json_response('{"error":"%s"}' % (err), status=400)
         except Course.DoesNotExist:
-            self._log.error('DELETE: group id not found: %s' % (id))
-            return self.json_response('{"error":"Group not found: %s"}' % (id), status=404)
+            self._log.error('DELETE: group id not found (%s)' % (id))
+            return self.json_response('{"error":"Group not found (%s)"}' % (
+                id), status=404)
 
         return HttpResponse('')
 
@@ -120,9 +124,10 @@ class GroupView(RESTDispatch):
         try:
             group = Group.objects.get(id=id).exclude(is_deleted=True)
             return self.json_response(json.dumps(group.json_data()))
-        except Exception:
+        except Exception as err:
             self._log.error('group id not found: %s' % (id))
-            return self.json_response('{"error":"Group id %s not found"}' % (id), status=404)
+            return self.json_response('{"error":"Group id %s not found"}' % (
+                id), status=404)
 
     def _getGroupsByQuery(self, request):
         json_rep = {
@@ -144,16 +149,18 @@ class GroupView(RESTDispatch):
                 if value:
                     filter[t[0]] = t[1](value)
 
-        except Exception, err:
+        except Exception as err:
             self._log.error('group query failure: %s' % (err))
-            return self.json_response('{"error":"group query failure: %s"}' % (err), status=400)
+            return self.json_response('{"error":"group query failure: %s"}' % (
+                err), status=400)
 
         if len(filter) > 0:
             try:
-                group_list = list(Group.objects.filter(**filter).exclude(is_deleted=True))
+                group_list = list(Group.objects.filter(**filter).exclude(
+                    is_deleted=True))
                 for group in group_list:
                     json_rep['groups'].append(group.json_data())
-            except Exception, err:
+            except Exception as err:
                 self._log.error('group by queue_id fail: %s' % (err))
                 return self.json_response('{"error":"%s"}' % (err), status=400)
 
@@ -172,11 +179,12 @@ class GroupView(RESTDispatch):
         try:
             course = Course.objects.get(course_id=sis_id)
         except Course.DoesNotExist:
-            course = Course(course_id=sis_id,
-                            course_type=Course.ADHOC_TYPE,
-                            term_id='',
-                            added_date=datetime.datetime.utcnow().replace(tzinfo=utc),
-                            priority=PRIORITY_NONE)
+            course = Course(
+                course_id=sis_id,
+                course_type=Course.ADHOC_TYPE,
+                term_id='',
+                added_date=datetime.utcnow().replace(tzinfo=utc),
+                priority=PRIORITY_NONE)
             course.save()
 
         return course.course_id
@@ -196,7 +204,7 @@ class GroupView(RESTDispatch):
         if self._re_id.match(id):
             return id
 
-        raise ValidationError('Invalid id: %s' % (id));
+        raise ValidationError('Invalid id: %s' % (id))
 
 
 class GroupListView(RESTDispatch):
@@ -216,4 +224,3 @@ class GroupListView(RESTDispatch):
             json_rep['groups'].append(group.json_data())
 
         return self.json_response(json.dumps(json_rep))
-
