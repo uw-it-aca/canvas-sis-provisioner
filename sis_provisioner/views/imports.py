@@ -54,8 +54,8 @@ class ImportView(RESTDispatch):
             self._log.info(
                 'imports (%s): DELETE: type: %s, queue_id: %s, '
                 'post_status: %s, canvas_state: %s' % (
-                request.user, imp.csv_type, imp.pk, imp.post_status,
-                imp.canvas_state))
+                    request.user, imp.csv_type, imp.pk, imp.post_status,
+                    imp.canvas_state))
 
             imp.delete()
 

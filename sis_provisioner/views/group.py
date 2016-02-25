@@ -101,7 +101,7 @@ class GroupView(RESTDispatch):
             group.deleted_by = self._blti['user_id']
             group.save()
 
-            ## only group use? mark member groups deleted too
+            # only group use? mark member groups deleted too
             reused = Group.objects.filter(
                 group_id=group.group_id, is_deleted__isnull=True).count()
             if reused == 0:
