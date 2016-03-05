@@ -730,3 +730,98 @@ class TermOverride(models.Model):
     term_sis_id = models.CharField(max_length=24)
     term_name = models.CharField(max_length=24)
     reference_date = models.DateTimeField(auto_now_add=True)
+
+
+class ExternalToolCustomField(models.Model):
+    name = models.IntegerField(max_length=100, unique=True)
+    value = models.IntegerField(max_length=100)
+
+    def json_data(self):
+        return {'id': self.pk, 'name': self.name, 'value': self.value}
+
+
+class ExternalToolSubaccount(models.Model):
+    subaccount_id = models.IntegerField(max_length=15, unique=True)
+    subaccount_sis_id = models.IntegerField(max_length=100)
+
+    def json_data(self):
+        return {
+            'id': self.pk,
+            'subaccount_id': self.subaccount_id,
+            'subaccount_sis_id': self.subaccount_sis_id
+        }
+
+
+class ExternalTool(models.Model):
+    PRIVACY_ANONYMOUS = 'anonymous'
+    PRIVACY_NAMEONLY = 'name_only'
+    PRIVACY_PUBLIC = 'public'
+    PRIVACY_CHOICES = (
+        (PRIVACY_ANONYMOUS, 'Anonymous'),
+        (PRIVACY_NAMEONLY, 'Name Only'),
+        (PRIVACY_PUBLIC, 'Public')
+    )
+
+    VISIBILITY_CHOICES = (
+        ('admins', 'Admins'), ('members', 'Members')
+    )
+
+    name = models.CharField(max_length=100)
+    description = models.CharField(max_length=200)
+    privacy_level = models.CharField(
+        max_length=15, choices=PRIVACY_CHOICES, default=PRIVACY_PUBLIC)
+    consumer_key = models.CharField(max_length=100)
+    shared_secret = models.CharField(max_length=100)
+    url = models.CharField(max_length=100, null=True)
+    domain = models.CharField(max_length=100, null=True)
+    text = models.CharField(max_length=100, null=True)
+    icon_url = models.CharField(max_length=100, null=True)
+    not_selectable = models.NullBooleanField(default=True)
+    custom_fields = models.ManyToManyField(ExternalToolCustomField)
+    account_navigation_enabled = models.NullBooleanField(default=False)
+    account_navigation_url = models.CharField(max_length=100, null=True)
+    user_navigation_enabled = models.NullBooleanField(default=False)
+    user_navigation_url = models.CharField(max_length=100, null=True)
+    course_navigation_enabled = models.NullBooleanField(default=False)
+    course_navigation_url = models.CharField(max_length=100, null=True)
+    course_navigation_visibility = models.CharField(
+        max_length=10, choices=VISIBILITY_CHOICES, null=True)
+    course_navigation_default = models.NullBooleanField(default=True)
+    editor_button_enabled = models.NullBooleanField(default=False)
+    editor_button_url = models.CharField(max_length=100, null=True)
+    resource_selection_enabled = models.NullBooleanField(default=False)
+    resource_selection_url = models.CharField(max_length=100, null=True)
+    subaccounts = models.ManyToManyField(ExternalToolSubaccount)
+    changed_by = models.CharField(max_length=32)
+    changed_date = models.DateTimeField()
+
+    def json_data(self):
+        return {
+            'id': self.pk,
+            'name': self.name,
+            'description': self.description,
+            'privacy_level': self.privacy_level,
+            'consumer_key': self.consumer_key,
+            'url': self.url,
+            'domain': self.domain,
+            'text': self.text,
+            'icon_url': self.icon_url,
+            'not_selectable': self.not_selectable,
+            'custom_fields': self.custom_fields,
+            'account_navigation_enabled': self.account_navigation_enabled,
+            'account_navigation_url': self.account_navigation_url,
+            'user_navigation_enabled': self.user_navigation_enabled,
+            'user_navigation_url': self.user_navigation_url,
+            'course_navigation_enabled': self.course_navigation_enabled,
+            'course_navigation_url': self.course_navigation_url,
+            'course_navigation_visibility': self.course_navigation_visibility,
+            'course_navigation_default': self.course_navigation_default,
+            'editor_button_enabled': self.editor_button_enabled,
+            'editor_button_url': self.editor_button_url,
+            'resource_selection_enabled': self.resource_selection_enabled,
+            'resource_selection_url': self.resource_selection_url,
+            'subaccounts': self.subaccounts,
+            'changed_by': self.changed_by,
+            'changed_date': localtime(self.changed_date).isoformat() if (
+                self.changed_date is not None) else None,
+        }
