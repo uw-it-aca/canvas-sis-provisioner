@@ -32,27 +32,64 @@ class ExternalToolView(RESTDispatch):
 
         external_tool_id = kwargs['external_tool_id']
         try:
+            json_data = json.loads(request.body).get('external_tool', {})
+        except Exception as ex:
+            self._log.error('PUT ExternalTool error: %s' % ex)
+            return self.json_response('{"error": "%s"}' % ex, status=400)
+
+        try:
             external_tool = ExternalTool.objects.get(id=external_tool_id)
-
-            data = json.loads(request.body).get('external_tool', {})
-
-            # TODO: set some attributes
-
-            external_tool.changed_by = UserService().get_original_user()
-            external_tool.changed_date = datetime.utcnow().replace(tzinfo=utc)
-            external_tool.save()
-
-            # TODO: update Canvas
-
-            self._log.info('%s updated External Tool "%s"' % (
-                external_tool.changed_by, external_tool.name))
-
-            return self.json_response(json.dumps({
-                'external_tool': external_tool.json_data()}))
         except ExternalTool.DoesNotExist:
             return self.json_response(
                 '{"error":"external_tool %s not found"}' % external_tool_id,
                 status=404)
+
+        for key, value in json_data.items():
+            if hasattr(external_tool, key):
+                if key != 'canvas_id':
+                    setattr(external_tool, key, value)
+                #TODO: handle subaccounts and custom_fields attributes
+
+        external_tool.changed_by = UserService().get_original_user()
+        external_tool.changed_date = datetime.utcnow().replace(tzinfo=utc)
+        external_tool.save()
+
+        # TODO: update Canvas
+
+        self._log.info('%s updated External Tool "%s"' % (
+            external_tool.changed_by, external_tool.name))
+
+        return self.json_response(json.dumps({
+            'external_tool': external_tool.json_data()}))
+
+    def POST(self, request, **kwargs):
+        if not can_manage_external_tools():
+            return self.json_response('{"error":"Unauthorized"}', status=401)
+
+        try:
+            json_data = json.loads(request.body).get('external_tool', {})
+        except Exception as ex:
+            self._log.error('POST ExternalTool error: %s' % ex)
+            return self.json_response('{"error": "%s"}' % ex, status=400)
+
+        external_tool = ExternalTool()
+
+        for key, value in json_data.items():
+            if hasattr(external_tool, key):
+                setattr(external_tool, key, value)
+                #TODO: handle subaccounts and custom_fields attributes
+
+        external_tool.changed_by = UserService().get_original_user()
+        external_tool.changed_date = datetime.utcnow().replace(tzinfo=utc)
+        external_tool.save()
+
+        # TODO: update Canvas
+
+        self._log.info('%s added External Tool "%s"' % (
+            external_tool.changed_by, external_tool.name))
+
+        return self.json_response(json.dumps({
+            'external_tool': external_tool.json_data()}))
 
     def DELETE(self, request, **kwargs):
         if not can_manage_external_tools():
@@ -65,7 +102,7 @@ class ExternalToolView(RESTDispatch):
 
             # TODO: delete from Canvas
 
-            self._log.info('%s deleted External Tool "%s"' % (
+            self._log.info('%s deleted ExternalTool "%s"' % (
                 external_tool.changed_by, external_tool.name))
 
             return self.json_response(json.dumps({

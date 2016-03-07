@@ -15,6 +15,7 @@ class Migration(migrations.Migration):
             name='ExternalTool',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('canvas_id', models.IntegerField(max_length=15, null=True)),
                 ('name', models.CharField(max_length=100)),
                 ('description', models.CharField(max_length=200)),
                 ('privacy_level', models.CharField(default=b'public', max_length=15, choices=[(b'anonymous', b'Anonymous'), (b'name_only', b'Name Only'), (b'public', b'Public')])),
@@ -39,6 +40,7 @@ class Migration(migrations.Migration):
                 ('resource_selection_url', models.CharField(max_length=100, null=True)),
                 ('changed_by', models.CharField(max_length=32)),
                 ('changed_date', models.DateTimeField()),
+                ('provisioned_date', models.DateTimeField(null=True)),
             ],
             options={
             },

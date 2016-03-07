@@ -766,6 +766,7 @@ class ExternalTool(models.Model):
         ('admins', 'Admins'), ('members', 'Members')
     )
 
+    canvas_id = models.IntegerField(max_length=15, null=True)
     name = models.CharField(max_length=100)
     description = models.CharField(max_length=200)
     privacy_level = models.CharField(
@@ -794,10 +795,12 @@ class ExternalTool(models.Model):
     subaccounts = models.ManyToManyField(ExternalToolSubaccount)
     changed_by = models.CharField(max_length=32)
     changed_date = models.DateTimeField()
+    provisioned_date = models.DateTimeField(null=True)
 
     def json_data(self):
         return {
             'id': self.pk,
+            'canvas_id': self.canvas_id,
             'name': self.name,
             'description': self.description,
             'privacy_level': self.privacy_level,
@@ -824,4 +827,7 @@ class ExternalTool(models.Model):
             'changed_by': self.changed_by,
             'changed_date': localtime(self.changed_date).isoformat() if (
                 self.changed_date is not None) else None,
+            'provisioned_date': localtime(
+                self.provisioned_date).isoformat() if (
+                    self.provisioned_date is not None) else None,
         }
