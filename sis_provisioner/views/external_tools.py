@@ -48,7 +48,7 @@ class ExternalToolView(RESTDispatch):
             if hasattr(external_tool, key):
                 if key != 'canvas_id':
                     setattr(external_tool, key, value)
-                #TODO: handle subaccounts and custom_fields attributes
+                # TODO: handle subaccounts and custom_fields attributes
 
         external_tool.changed_by = UserService().get_original_user()
         external_tool.changed_date = datetime.utcnow().replace(tzinfo=utc)
@@ -77,7 +77,7 @@ class ExternalToolView(RESTDispatch):
         for key, value in json_data.items():
             if hasattr(external_tool, key):
                 setattr(external_tool, key, value)
-                #TODO: handle subaccounts and custom_fields attributes
+                # TODO: handle subaccounts and custom_fields attributes
 
         external_tool.changed_by = UserService().get_original_user()
         external_tool.changed_date = datetime.utcnow().replace(tzinfo=utc)
