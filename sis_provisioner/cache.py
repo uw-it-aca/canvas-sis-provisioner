@@ -28,6 +28,9 @@ class RestClientsCache(TimedCache):
     url_policies["canvas"] = (
         (re.compile(r"^%s" % (canvas_url_roles % '\d+')), 60 * 60 * 4),
     )
+    url_policies["libcurrics"] = (
+        (re.compile(r"^/currics_db/api/v1/data/course/"), 60 * 60 * 4),
+    )
 
     def deleteCache(self, service, url):
         try:
