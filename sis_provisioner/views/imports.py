@@ -28,21 +28,21 @@ class ImportView(RESTDispatch):
             return self.json_response(
                 '{"error":"import %s not found"}' % (kwargs['import_id']),
                 status=404)
-        except ImportInvalidException, err:
-            return self.json_response(
-                '{"error":"' + str(err) + '"}',
-                status=400)
+        except ImportInvalidException as err:
+            return self.json_response('{"error":"%s"}' % err, status=400)
 
     def POST(self, request, **kwargs):
         body = json.loads(request.read())
         mode = body.get('mode', None)
         if mode == 'group':
-            self._log.info('imports (%s): POST: import_group' % (request.user))
+            self._log.info('imports (%s): POST: import_group' % (
+                request.user))
             call_command('import_groups')
-            json_rep = {"import" : "started"}
+            json_rep = {"import": "started"}
             return self.json_response(json.dumps(json_rep))
         else:
-            self._log.info('imports (%s): POST: unknown command' % (request.user))
+            self._log.info('imports (%s): POST: unknown command' % (
+                request.user))
             return self.json_response('{"error":"unknown import mode"}',
                                       status=400)
 
@@ -51,18 +51,21 @@ class ImportView(RESTDispatch):
         try:
             imp = Import.objects.get(id=import_id)
 
-            self._log.info('imports (%s): DELETE: type: %s, queue_id: %s, post_status: %s, canvas_state: %s'
-                          % (request.user, imp.csv_type, imp.pk, imp.post_status, imp.canvas_state))
+            self._log.info(
+                'imports (%s): DELETE: type: %s, queue_id: %s, '
+                'post_status: %s, canvas_state: %s' % (
+                    request.user, imp.csv_type, imp.pk, imp.post_status,
+                    imp.canvas_state))
 
             imp.delete()
 
             return self.json_response('{}')
 
         except Import.DoesNotExist:
-            return self.json_response('{"error":"import %s not found"}' % import_id,
-                                      status=404)
-        except ImportInvalidException, err:
-            return self.json_response('{"error":"' + str(err) + '"}', status=400)
+            return self.json_response('{"error":"import %s not found"}' % (
+                import_id), status=404)
+        except ImportInvalidException as err:
+            return self.json_response('{"error":"%s"}' % err, status=400)
 
 
 class ImportListView(RESTDispatch):
@@ -76,11 +79,10 @@ class ImportListView(RESTDispatch):
 
         try:
             import_list = list(Import.objects.all())
-        except ImportInvalidException, err:
-            return self.json_response('{"error":"' + str(err) + '"}', status=400)
+        except ImportInvalidException as err:
+            return self.json_response('{"error":"%s"}' % err, status=400)
 
         for imp in import_list:
             json_rep['imports'].append(imp.json_data())
 
         return self.json_response(json.dumps(json_rep))
-

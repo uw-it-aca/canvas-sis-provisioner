@@ -35,13 +35,16 @@ class UserPolicy(object):
         Enforce Acceptable User policy: netids and acceptable domains
         """
         # Admin NetIDs
-        self._admin_net_id_whitelist = self._whitelist_regex(['[a-z]adm_[a-z][a-z0-9]{0,7}'])
+        self._admin_net_id_whitelist = self._whitelist_regex(
+            ['[a-z]adm_[a-z][a-z0-9]{0,7}'])
 
         # Application NetIDs
-        self._application_net_id_whitelist = self._whitelist_regex(['a_[\w]{1,18}'])
+        self._application_net_id_whitelist = self._whitelist_regex(
+            ['a_[\w]{1,18}'])
 
         # Temporary NetIDs
-        self._temp_net_id_whitelist = self._whitelist_regex(['(?:css|wire|lib|event)[0-9]{4,}'])
+        self._temp_net_id_whitelist = self._whitelist_regex(
+            ['(?:css|wire|lib|event)[0-9]{4,}'])
         self._re_canvas_id = re.compile(r"^\d+$")
         self._pws = PWS()
 
@@ -81,12 +84,13 @@ class UserPolicy(object):
             (username, domain) = login_id.lower().split("@")
             username = username.split("+", 1)[0].replace(".", "")
             if not len(username):
-                raise UserPolicyException("Invalid Gmail username: %s" % login_id)
+                raise UserPolicyException(
+                    "Invalid username: %s" % login_id)
         except:
-            raise UserPolicyException("Invalid Gmail username: %s" % login_id)
+            raise UserPolicyException("Invalid username: %s" % login_id)
 
-        if domain not in settings.LOGIN_DOMAIN_WHITELIST:
-            raise UserPolicyException("Invalid Gmail domain: %s" % login_id)
+        if domain not in getattr(settings, 'LOGIN_DOMAIN_WHITELIST', []):
+            raise UserPolicyException("Invalid domain: %s" % login_id)
 
         return "%s@%s" % (username, domain)
 
@@ -146,7 +150,8 @@ class GroupPolicy(object):
     def __init__(self):
         self._re_group_id = re.compile(r"^[a-z0-9][\w\.-]+$", re.I)
 
-        policy = r'^(%s).*$' % ('|'.join(settings.UW_GROUP_BLACKLIST))
+        policy = r'^(%s).*$' % ('|'.join(
+            getattr(settings, 'UW_GROUP_BLACKLIST', [])))
         self._policy_restricted = re.compile(policy, re.I)
 
     def valid(self, group_id):
@@ -154,15 +159,18 @@ class GroupPolicy(object):
             raise GroupPolicyException("Invalid Group ID: %s" % group_id)
 
         elif self._policy_restricted.match(group_id):
-            raise GroupPolicyException("This group cannot be used in Canvas: %s" % group_id)
+            raise GroupPolicyException(
+                "This group cannot be used in Canvas: %s" % group_id)
 
     def get_effective_members(self, group_id, act_as=None):
         self._gws = GWS()
         self._gws.actas = act_as
         self._user_policy = UserPolicy()
         self._root_group_id = group_id
-        (valid_members, invalid_members, member_groups) = self._get_members(group_id)
-        return (valid_members.values(), invalid_members.values(), member_groups)
+        (valid_members, invalid_members,
+            member_groups) = self._get_members(group_id)
+        return (valid_members.values(), invalid_members.values(),
+                member_groups)
 
     def _get_members(self, group_id):
         valid_members = {}
@@ -183,13 +191,11 @@ class GroupPolicy(object):
                         valid_members[member.name] = member
 
                     elif member.is_group():
-                        (valid_sub, invalid_sub, member_groups_sub_ids) = self._get_members(member.name)
+                        (valid_sub, invalid_sub,
+                            member_subgroups) = self._get_members(member.name)
                         valid_members.update(valid_sub)
                         invalid_members.update(invalid_sub)
-                        member_group_ids += [member.name] + member_groups_sub_ids
-                    #else:
-                    #    member.error = "Unsupported member type: %s" % member.member_type
-                    #    invalid_members[member.name] = member
+                        member_group_ids += [member.name] + member_subgroups
 
                 except (GroupNotFoundException, GroupUnauthorizedException,
                         UserPolicyException, GroupPolicyException) as err:
@@ -202,8 +208,8 @@ class GroupPolicy(object):
                 raise GroupNotFoundException("Group not found: %s" % group_id)
             elif err.status == 401:
                 raise GroupUnauthorizedException(
-                    "Group not permitted for %s: %s" % (self._gws.actas,
-                                                        group_id))
+                    "Group not permitted for %s: %s" % (
+                        self._gws.actas, group_id))
             else:
                 raise
 
@@ -241,7 +247,8 @@ class CoursePolicy(object):
 
     def valid_academic_course_sis_id(self, sis_id):
         if (self._re_course_sis_id.match(sis_id) is None):
-            raise CoursePolicyException("Invalid academic course SIS ID: %s" % sis_id)
+            raise CoursePolicyException(
+                "Invalid academic course SIS ID: %s" % sis_id)
 
     def valid_adhoc_course_sis_id(self, sis_id):
         if (self._re_adhoc_sis_id.match(sis_id) is None):
@@ -257,14 +264,16 @@ class CoursePolicy(object):
 
     def valid_academic_section_sis_id(self, sis_id):
         if (self._re_section_sis_id.match(sis_id) is None):
-            raise CoursePolicyException("Invalid academic section SIS ID: %s" % sis_id)
+            raise CoursePolicyException(
+                "Invalid academic section SIS ID: %s" % sis_id)
 
     def group_section_sis_id(self, sis_id):
         self.valid_sis_id(sis_id)
         return "%s-groups" % sis_id
 
     def group_section_name(self):
-        return settings.DEFAULT_GROUP_SECTION_NAME
+        return getattr(settings, 'DEFAULT_GROUP_SECTION_NAME',
+                       'UW Group members')
 
     def valid_canvas_section(self, section):
         course_id = section.canvas_course_sis_id()
@@ -335,11 +344,12 @@ class CoursePolicy(object):
         except Curriculum.DoesNotExist:
             account_id = None
 
+        lms_owner_accounts = getattr(settings, 'LMS_OWNERSHIP_SUBACCOUNT', {})
         try:
-            account_id = settings.LMS_OWNERSHIP_SUBACCOUNT[section.lms_ownership]
+            account_id = lms_owner_accounts[section.lms_ownership]
         except (AttributeError, KeyError):
             if account_id is None and section.course_campus == "PCE":
-                account_id = settings.LMS_OWNERSHIP_SUBACCOUNT["PCE_NONE"]
+                account_id = lms_owner_accounts["PCE_NONE"]
 
         try:
             override = SubAccountOverride.objects.get(course_id=course_id)
@@ -356,7 +366,8 @@ class CoursePolicy(object):
         xlist_courses = []
         lms_ownership = {}
         for section in section_list:
-            if section.canvas_course_sis_id() in getattr(settings, 'LMS_XLIST_PRIMARY', []):
+            if section.canvas_course_sis_id() in getattr(
+                    settings, 'LMS_XLIST_PRIMARY', []):
                 lms_ownership[section] = section.lms_ownership
                 section.lms_ownership = Section.LMS_OWNER_OL
 
@@ -372,6 +383,6 @@ class CoursePolicy(object):
         )
 
         for section in lms_ownership:
-             section.lms_ownership = lms_ownership[section]
+            section.lms_ownership = lms_ownership[section]
 
         return xlist_courses[0].canvas_course_sis_id()

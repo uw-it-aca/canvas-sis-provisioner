@@ -1,0 +1,19 @@
+sudo: false
+language: python
+python:
+  - "2.7"
+install: pip install -r requirements.txt
+before_script:
+  - pip install coverage
+  - pip install python-coveralls
+  - pip install pep8
+  - cp travis-ci/manage.py manage.py
+script:
+  - pep8 sis_provisioner/ --exclude=migrations,management,test,csv_builder.py
+  - coverage run --source=sis_provisioner/ manage.py test sis_provisioner
+after_script:
+  - coveralls
+notifications:
+  webhooks:
+      urls:
+        - https://yarn.cac.washington.edu/rest/botalyst/v1/travis-ci

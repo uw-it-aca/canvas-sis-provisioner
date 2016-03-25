@@ -52,13 +52,13 @@ def priority_user_import(sender, **kwargs):
                 imp.import_csv()
             else:
                 user.queue_id = None
-                user.priority=PRIORITY_HIGH
+                user.priority = PRIORITY_HIGH
                 user.save()
                 imp.delete()
 
         except Exception, err:
             log.error('Immediate user provision failed: %s' % (err))
-            user.priority=PRIORITY_HIGH
+            user.priority = PRIORITY_HIGH
             user.save()
 
         post_save.connect(priority_user_import, sender=User)

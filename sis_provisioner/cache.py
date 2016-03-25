@@ -18,7 +18,6 @@ class RestClientsCache(TimedCache):
     url_policies["pws"] = (
         (re.compile(r"^/identity/v1/person/"), 60 * 60),
         (re.compile(r"^/identity/v1/entity/"), 60 * 60),
-        #(re.compile(r"^/idcard/v1/photo/"), 60 * 60 * 24 * 7),
     )
     url_policies["kws"] = (
         (re.compile(r"^%s" % (
@@ -28,6 +27,9 @@ class RestClientsCache(TimedCache):
     )
     url_policies["canvas"] = (
         (re.compile(r"^%s" % (canvas_url_roles % '\d+')), 60 * 60 * 4),
+    )
+    url_policies["libcurrics"] = (
+        (re.compile(r"^/currics_db/api/v1/data/course/"), 60 * 60 * 4),
     )
 
     def deleteCache(self, service, url):

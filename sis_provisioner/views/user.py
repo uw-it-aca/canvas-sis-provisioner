@@ -42,12 +42,12 @@ class UserView(RESTDispatch):
                 return self.json_response('{"error":"Unrecognized user ID"}',
                                           status=400)
 
-        except DataFailureException, err:
+        except DataFailureException as err:
             data = json.loads(err.msg)
-            return self.json_response('{"error":"%s %s"}' % (err.status,
-                data["StatusDescription"]), status=400)
+            return self.json_response('{"error":"%s %s"}' % (
+                err.status, data["StatusDescription"]), status=400)
 
-        except Exception, err:
+        except Exception as err:
             return self.json_response('{"error":"%s"}' % err, status=400)
 
     def POST(self, request, **kwargs):
@@ -72,16 +72,17 @@ class UserView(RESTDispatch):
                 user.save()
                 return HttpResponse()
 
-            except Exception, err:
+            except Exception as err:
                 return self.json_response('{"error": "%s"}' % err, status=400)
 
-        except Exception, err:
+        except Exception as err:
             return self.json_response('{"error": "%s"}' % err, status=400)
 
     def response_for_person(self, person):
         response = {
             'is_valid': True,
-            'display_name': person.full_name if isinstance(person, Person) else person.display_name,
+            'display_name': person.full_name if (
+                isinstance(person, Person)) else person.display_name,
             'net_id': person.uwnetid,
             'reg_id': person.uwregid,
             'gmail_id': None,
@@ -94,8 +95,10 @@ class UserView(RESTDispatch):
         }
 
         if can_view_source_data():
-            response['person_url'] = '/restclients/view/pws/identity/v1/person/%s.json' % person.uwregid
-            response['enrollment_url'] = '/restclients/view/sws/student/v5/enrollment.json?reg_id=%s' % person.uwregid
+            response['person_url'] = '%s/person/%s.json' % (
+                '/restclients/view/pws/identity/v1', person.uwregid)
+            response['enrollment_url'] = '%s/enrollment.json?reg_id=%s' % (
+                '/restclients/view/sws/student/v5', person.uwregid)
 
         try:
             user = User.objects.get(reg_id=person.uwregid)
