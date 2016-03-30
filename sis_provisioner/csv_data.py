@@ -97,8 +97,8 @@ class CSVData():
         Writes all csv files. Returns a path to the csv files, or None
         if no data was written.
         """
-
-        filepath = self.filepath()
+        root = getattr(settings, 'SIS_IMPORT_CSV_ROOT', '')
+        filepath = self.filepath(root)
         has_csv = False
         for csv_type in self.headers:
             try:
@@ -135,11 +135,11 @@ class CSVData():
         else:
             return filepath
 
-    def filepath(self):
+    def filepath(self, root):
         """
         Create a fresh directory for the csv files
         """
-        base = os.path.join(getattr(settings, 'SIS_IMPORT_CSV_ROOT', ''),
+        base = os.path.join(root,
                             datetime.datetime.now().strftime('%Y%m%d-%H%M%S'))
 
         # ugo+x
