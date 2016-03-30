@@ -5,6 +5,7 @@ from restclients.canvas.sis_import import SISImport
 from restclients.models.canvas import SISImport as SISImportModel
 from restclients.gws import GWS
 from restclients.exceptions import DataFailureException
+from eos.models import EOSCourseDelta
 import datetime
 import json
 import re
