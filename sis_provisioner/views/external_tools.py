@@ -20,7 +20,8 @@ class ExternalToolView(RESTDispatch):
         external_tool_id = kwargs['external_tool_id']
         try:
             external_tool = ExternalTool.objects.get(id=external_tool_id)
-            return self.json_response(json.dumps(external_tool.json_data()))
+            json_data = {'external_tool': external_tool.json_data()}
+            return self.json_response(json.dumps(json_data))
         except ExternalTool.DoesNotExist:
             return self.json_response(
                 '{"error":"external tool %s not found"}' % external_tool_id,
@@ -44,12 +45,8 @@ class ExternalToolView(RESTDispatch):
                 '{"error":"external_tool %s not found"}' % external_tool_id,
                 status=404)
 
-        for key, value in json_data.items():
-            if hasattr(external_tool, key):
-                if key != 'canvas_id':
-                    setattr(external_tool, key, value)
-                # TODO: handle subaccounts and custom_fields attributes
-
+        external_tool.account_id = json_data['account_id']
+        external_tool.config = json_data['config']
         external_tool.changed_by = UserService().get_original_user()
         external_tool.changed_date = datetime.utcnow().replace(tzinfo=utc)
         external_tool.save()
@@ -73,12 +70,8 @@ class ExternalToolView(RESTDispatch):
             return self.json_response('{"error": "%s"}' % ex, status=400)
 
         external_tool = ExternalTool()
-
-        for key, value in json_data.items():
-            if hasattr(external_tool, key):
-                setattr(external_tool, key, value)
-                # TODO: handle subaccounts and custom_fields attributes
-
+        external_tool.account_id = json_data['account_id']
+        external_tool.config = json_data['config']
         external_tool.changed_by = UserService().get_original_user()
         external_tool.changed_date = datetime.utcnow().replace(tzinfo=utc)
         external_tool.save()
