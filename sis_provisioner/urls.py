@@ -7,6 +7,8 @@ from sis_provisioner.views.user import UserView
 from sis_provisioner.views.canvas import CanvasCourseView, CanvasAccountView
 from sis_provisioner.views.imports import ImportView, ImportListView
 from sis_provisioner.views.jobs import JobView, JobListView
+from sis_provisioner.views.external_tools import ExternalToolView,\
+    ExternalToolListView
 from astra.views import AdminSearch, AccountSearch, AccountSoC
 from groups.views.validate import GWSGroup, GWSGroupMembers
 from events.views import EventListView
@@ -41,4 +43,6 @@ urlpatterns = patterns(
     url(r'api/v1/soc/?$', AccountSoC().run),
     url(r'api/v1/job/(?P<job_id>[0-9]+)?$', JobView().run),
     url(r'api/v1/jobs/?$', JobListView().run),
+    url(r'api/v1/external_tool/(?P<tool_id>[0-9]+)?$', ExternalToolView().run),
+    url(r'api/v1/external_tools/?$', ExternalToolListView().run),
 )
