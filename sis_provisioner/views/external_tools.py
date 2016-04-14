@@ -54,7 +54,7 @@ class ExternalToolView(RESTDispatch):
         # TODO: update Canvas
 
         self._log.info('%s updated External Tool "%s"' % (
-            external_tool.changed_by, external_tool.name))
+            external_tool.changed_by, external_tool.id))
 
         return self.json_response(json.dumps({
             'external_tool': external_tool.json_data()}))
@@ -79,7 +79,7 @@ class ExternalToolView(RESTDispatch):
         # TODO: update Canvas
 
         self._log.info('%s added External Tool "%s"' % (
-            external_tool.changed_by, external_tool.name))
+            external_tool.changed_by, external_tool.id))
 
         return self.json_response(json.dumps({
             'external_tool': external_tool.json_data()}))
@@ -96,7 +96,7 @@ class ExternalToolView(RESTDispatch):
             # TODO: delete from Canvas
 
             self._log.info('%s deleted ExternalTool "%s"' % (
-                external_tool.changed_by, external_tool.name))
+                external_tool.changed_by, external_tool.id))
 
             return self.json_response(json.dumps({
                 'external_tool': external_tool.json_data()}))
@@ -112,7 +112,7 @@ class ExternalToolListView(RESTDispatch):
     def GET(self, request, **kwargs):
         read_only = False if can_manage_external_tools() else True
         external_tools = []
-        for external_tool in ExternalTool.objects.all().order_by('name'):
+        for external_tool in ExternalTool.objects.all():
             data = external_tool.json_data()
             data['read_only'] = read_only
             external_tools.append(data)
