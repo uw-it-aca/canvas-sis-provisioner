@@ -731,3 +731,57 @@ class TermOverride(models.Model):
     term_sis_id = models.CharField(max_length=24)
     term_name = models.CharField(max_length=24)
     reference_date = models.DateTimeField(auto_now_add=True)
+
+
+class ExternalToolCustomField(models.Model):
+    name = models.IntegerField(max_length=100, unique=True)
+    value = models.IntegerField(max_length=100)
+
+    def json_data(self):
+        return {'id': self.pk, 'name': self.name, 'value': self.value}
+
+
+class ExternalToolSubaccount(models.Model):
+    subaccount_id = models.IntegerField(max_length=15, unique=True)
+    subaccount_sis_id = models.IntegerField(max_length=100)
+
+    def json_data(self):
+        return {
+            'id': self.pk,
+            'subaccount_id': self.subaccount_id,
+            'subaccount_sis_id': self.subaccount_sis_id
+        }
+
+
+class ExternalTool(models.Model):
+    PRIVACY_ANONYMOUS = 'anonymous'
+    PRIVACY_NAMEONLY = 'name_only'
+    PRIVACY_PUBLIC = 'public'
+    PRIVACY_CHOICES = (
+        (PRIVACY_ANONYMOUS, 'Anonymous'),
+        (PRIVACY_NAMEONLY, 'Name Only'),
+        (PRIVACY_PUBLIC, 'Public')
+    )
+
+    VISIBILITY_CHOICES = (
+        ('admins', 'Admins'), ('members', 'Members')
+    )
+
+    account_id = models.IntegerField(max_length=15)
+    config = models.CharField(max_length=2000)
+    changed_by = models.CharField(max_length=32)
+    changed_date = models.DateTimeField()
+    provisioned_date = models.DateTimeField(null=True)
+
+    def json_data(self):
+        return {
+            'id': self.pk,
+            'account_id': self.account_id,
+            'config': json.loads(self.config),
+            'changed_by': self.changed_by,
+            'changed_date': localtime(self.changed_date).isoformat() if (
+                self.changed_date is not None) else None,
+            'provisioned_date': localtime(
+                self.provisioned_date).isoformat() if (
+                    self.provisioned_date is not None) else None,
+        }
