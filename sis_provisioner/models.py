@@ -774,10 +774,12 @@ class ExternalTool(models.Model):
     provisioned_date = models.DateTimeField(null=True)
 
     def json_data(self):
+        config = json.loads(self.config)
         return {
             'id': self.pk,
             'account_id': self.account_id,
-            'config': json.loads(self.config),
+            'name': config.get('name'),
+            'config': config,
             'changed_by': self.changed_by,
             'changed_date': localtime(self.changed_date).isoformat() if (
                 self.changed_date is not None) else None,
