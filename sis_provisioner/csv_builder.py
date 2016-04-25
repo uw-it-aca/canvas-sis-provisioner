@@ -500,15 +500,15 @@ class CSVBuilder():
             section_id = section.canvas_section_sis_id()
             csv.add_section(section_id, csv_for_section(section))
 
-            self.generate_user_csv_for_person(instructor)
-            if instructor.uwregid not in self._invalid_users:
-                csv_data = csv_for_sis_instructor_enrollment(
-                    section, instructor, Enrollment.ACTIVE_STATUS)
-                csv.add_enrollment(csv_data)
+            if self._course_policy.is_active_section(section):
+                self.generate_user_csv_for_person(instructor)
+                if instructor.uwregid not in self._invalid_users:
+                    csv_data = csv_for_sis_instructor_enrollment(
+                        section, instructor, Enrollment.ACTIVE_STATUS)
+                    csv.add_enrollment(csv_data)
 
-            # Add the student enrollments
-            if self._include_enrollment:
-                self.generate_student_enrollment_csv(section)
+                if self._include_enrollment:
+                    self.generate_student_enrollment_csv(section)
 
     def generate_primary_section_csv(self, section):
         """
@@ -556,10 +556,11 @@ class CSVBuilder():
 
             csv.add_section(section_id, csv_for_section(section))
 
-            self.generate_teacher_enrollment_csv(section)
+            if self._course_policy.is_active_section(section):
+                self.generate_teacher_enrollment_csv(section)
 
-            if self._include_enrollment:
-                self.generate_student_enrollment_csv(section)
+                if self._include_enrollment:
+                    self.generate_student_enrollment_csv(section)
 
         # Check for linked sections already in the Course table
         for linked_course_id in Course.objects.get_linked_course_ids(course_id):
@@ -641,10 +642,11 @@ class CSVBuilder():
 
         csv.add_section(section_id, csv_for_section(section))
 
-        self.generate_teacher_enrollment_csv(section, primary_instructors)
+        if self._course_policy.is_active_section(section):
+            self.generate_teacher_enrollment_csv(section, primary_instructors)
 
-        if self._include_enrollment:
-            self.generate_student_enrollment_csv(section)
+            if self._include_enrollment:
+                self.generate_student_enrollment_csv(section)
 
         self._update_course_model(section)
 
@@ -654,7 +656,8 @@ class CSVBuilder():
         """
         csv = self._csv
         section_id = section.canvas_section_sis_id()
-        cached_instructors = list(Instructor.objects.filter(section_id=section_id))
+        cached_instructors = list(Instructor.objects.filter(
+            section_id=section_id))
         current_instructors = []
 
         instructors = section.get_instructors()
@@ -681,7 +684,8 @@ class CSVBuilder():
         for instructor in cached_instructors:
             if instructor not in current_instructors:
                 try:
-                    person = self._user_policy.get_person_by_regid(instructor.reg_id)
+                    person = self._user_policy.get_person_by_regid(
+                        instructor.reg_id)
                     self.generate_user_csv_for_person(person)
                 except UserPolicyException as err:
                     logger.info("SKIP instructor %s for %s: %s" % (
