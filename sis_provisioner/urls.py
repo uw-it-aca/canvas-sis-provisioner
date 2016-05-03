@@ -2,13 +2,12 @@ from django.conf.urls import patterns, url, include
 from django.views.generic.base import TemplateView
 from sis_provisioner.views.course import CourseView, CourseListView
 from sis_provisioner.views.enrollment import EnrollmentListView
-from sis_provisioner.views.group import GroupView, GroupListView
+from sis_provisioner.views.group import GroupListView
 from sis_provisioner.views.user import UserView
 from sis_provisioner.views.canvas import CanvasCourseView, CanvasAccountView
 from sis_provisioner.views.imports import ImportView, ImportListView
 from sis_provisioner.views.jobs import JobView, JobListView
 from astra.views import AdminSearch, AccountSearch, AccountSoC
-from groups.views.validate import GWSGroup, GWSGroupMembers
 from events.views import EventListView
 
 
@@ -26,11 +25,7 @@ urlpatterns = patterns(
     url(r'api/v1/users/?$', UserView().run),
     url(r'api/v1/import/(?P<import_id>[0-9]+)?$', ImportView().run),
     url(r'api/v1/imports/?$', ImportListView().run),
-    url(r'api/v1/group/(?P<id>[0-9]+)?$', GroupView().run),
     url(r'api/v1/groups/?$', GroupListView().run),
-    url(r'api/v1/uw/group/(?P<group_id>[a-zA-Z0-9\-\_\.]*)$', GWSGroup().run),
-    url(r'api/v1/uw/group/(?P<group_id>[a-zA-Z0-9\-\_\.]+)/membership$',
-        GWSGroupMembers().run),
     url(r'api/v1/enrollments/?$', EnrollmentListView().run),
     url(r'api/v1/events/?(?P<begin>[0-9\-:TZtz]+)'
         r'?(?P<end>[0-9\-:TZtz]+)'
