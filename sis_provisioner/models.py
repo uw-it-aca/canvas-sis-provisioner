@@ -56,8 +56,9 @@ class Job(models.Model):
                 self.last_run_date is not None) else None,
             'is_active': self.is_active,
             'health_status': self.health_status,
-            'last_status_date': localtime(self.last_status_date).isoformat() if (
-                self.last_status_date is not None) else None,
+            'last_status_date': localtime(
+                self.last_status_date).isoformat() if (
+                    self.last_status_date is not None) else None,
         }
 
 
