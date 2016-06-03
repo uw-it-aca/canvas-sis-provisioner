@@ -41,6 +41,8 @@ class Job(models.Model):
     changed_date = models.DateTimeField()
     last_run_date = models.DateTimeField(null=True)
     is_active = models.NullBooleanField()
+    health_status = models.CharField(max_length=512, null=True)
+    last_status_date = models.DateTimeField(null=True)
 
     def json_data(self):
         return {
@@ -53,6 +55,9 @@ class Job(models.Model):
             'last_run_date': localtime(self.last_run_date).isoformat() if (
                 self.last_run_date is not None) else None,
             'is_active': self.is_active,
+            'health_status': self.health_status,
+            'last_status_date': localtime(self.last_status_date).isoformat() if (
+                self.last_status_date is not None) else None,
         }
 
 
