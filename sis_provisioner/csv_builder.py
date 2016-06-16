@@ -18,8 +18,8 @@ from restclients.models.sws import Section, Registration
 from restclients.exceptions import DataFailureException,\
     InvalidCanvasIndependentStudyCourse
 
-from sis_provisioner.models import Course, Curriculum, Enrollment, Instructor,\
-    Group, CourseMember, GroupMemberGroup, PRIORITY_NONE, PRIORITY_DEFAULT
+from sis_provisioner.models import Course, Curriculum, Enrollment, Group,\
+    CourseMember, GroupMemberGroup, PRIORITY_NONE, PRIORITY_DEFAULT
 from sis_provisioner.policy import UserPolicy, UserPolicyException,\
     CoursePolicy, CoursePolicyException, GroupPolicy, GroupPolicyException,\
     GroupNotFoundException, GroupUnauthorizedException
@@ -654,50 +654,17 @@ class CSVBuilder():
         """
         Generates the full teacher enrollments csv for the passed section.
         """
-        csv = self._csv
-        section_id = section.canvas_section_sis_id()
-        cached_instructors = list(Instructor.objects.filter(
-            section_id=section_id))
-        current_instructors = []
-
         instructors = section.get_instructors()
         instructors.extend(default_instructors)
         for person in instructors:
-            instructor = Instructor(section_id=section_id,
-                                    reg_id=person.uwregid)
-            if instructor not in current_instructors:
-                instructor.person = person
-                current_instructors.append(instructor)
+            self.generate_user_csv_for_person(person)
 
-        for instructor in current_instructors:
-            self.generate_user_csv_for_person(instructor.person)
-
-            if instructor.reg_id not in self._invalid_users:
+            if person.uwregid not in self._invalid_users:
                 logger.info("ADD instructor %s to %s" % (
-                    instructor.reg_id, section_id))
+                    person.uwregid, section.canvas_section_sis_id()))
                 csv_data = csv_for_sis_instructor_enrollment(
-                    section, instructor.person, Enrollment.ACTIVE_STATUS)
-                csv.add_enrollment(csv_data)
-                if instructor not in cached_instructors:
-                    instructor.save()
-
-        for instructor in cached_instructors:
-            if instructor not in current_instructors:
-                try:
-                    person = self._user_policy.get_person_by_regid(
-                        instructor.reg_id)
-                    self.generate_user_csv_for_person(person)
-                except UserPolicyException as err:
-                    logger.info("SKIP instructor %s for %s: %s" % (
-                        instructor.reg_id, section_id, err))
-                    continue
-
-                logger.info("DELETE instructor %s from %s" % (
-                    instructor.reg_id, section_id))
-                #csv_data = csv_for_sis_instructor_enrollment(section, person,
-                #    Enrollment.DELETED_STATUS)
-                #csv.add_enrollment(csv_data)
-                instructor.delete()
+                    section, person, Enrollment.ACTIVE_STATUS)
+                self._csv.add_enrollment(csv_data)
 
     def generate_student_enrollment_csv(self, section):
         """

@@ -180,20 +180,6 @@ class Course(models.Model):
         }
 
 
-class Instructor(models.Model):
-    """ Represents the provisioned state of a course instructor.
-    """
-    section_id = models.CharField(max_length=80)
-    reg_id = models.CharField(max_length=32)
-
-    class Meta:
-        unique_together = ('section_id', 'reg_id')
-
-    def __eq__(self, other):
-        return (self.section_id == other.section_id and
-                self.reg_id == other.reg_id)
-
-
 class EnrollmentManager(models.Manager):
     def queue_by_priority(self, priority=PRIORITY_DEFAULT):
         filter_limit = settings.SIS_IMPORT_LIMIT['enrollment']['default']
