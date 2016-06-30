@@ -1,19 +1,17 @@
-from sis_provisioner.models import Course, User, Enrollment, Curriculum
-from sis_provisioner.models import PRIORITY_NONE, PRIORITY_DEFAULT,\
-    PRIORITY_HIGH
+from sis_provisioner.models import Course, CourseDelta, User, Enrollment,\
+    PRIORITY_NONE, PRIORITY_DEFAULT, PRIORITY_HIGH
 from sis_provisioner.policy import UserPolicy, CoursePolicy
 from restclients.sws.term import get_term_by_date, get_term_after
-from restclients.sws.section import get_sections_by_curriculum_and_term
-from restclients.sws.section import get_section_by_label
+from restclients.sws.section import get_changed_sections_by_term,\
+    get_section_by_label
 from restclients.gws import GWS
 from restclients.canvas.reports import Reports
-from restclients.models.sws import Curriculum as SWSCurriculum
 from restclients.exceptions import DataFailureException
-from django.utils.timezone import utc
+from django.utils.timezone import utc, localtime
 from django.conf import settings
 from django.db.models import Q
 from django.utils.log import getLogger
-from datetime import datetime
+from datetime import datetime, timedelta
 import csv
 
 
@@ -112,77 +110,85 @@ class Loader():
             term_id=term_id, course_type=Course.SDB_TYPE
         ).values_list("course_id", "priority"))
 
-        curricula = Curriculum.objects.all().values_list("curriculum_abbr",
-                                                         flat=True)
-
         tsc = dict((t.campus.lower(),
                     t.is_on) for t in term.time_schedule_construction)
 
-        for curriculum_abbr in curricula:
-            new_courses = []
-            try:
-                sections = get_sections_by_curriculum_and_term(
-                    SWSCurriculum(label=curriculum_abbr), term)
-            except DataFailureException:
+        try:
+            delta = CourseDelta.objects.get(term_id=term_id)
+        except CourseDelta.DoesNotExist:
+            delta = CourseDelta(term_id=term_id)
+
+        delta.last_query_date = datetime.utcnow().replace(tzinfo=utc)
+        if delta.changed_since_date is None:
+            delta.changed_since_date = (
+                term.get_bod_first_day() - timedelta(days=120))
+        delta.save()
+
+        sections = get_changed_sections_by_term(
+            localtime(delta.changed_since_date).date(), term,
+            transcriptable_course='all')
+
+        new_courses = []
+        for section_ref in sections:
+            course_id = generate_course_id(section_ref)
+
+            if course_id in existing_course_ids:
+                if existing_course_ids[course_id] == PRIORITY_NONE:
+                    Course.objects.filter(course_id=course_id).update(
+                        priority=PRIORITY_HIGH)
+
                 continue
 
-            for section_ref in sections:
-                course_id = generate_course_id(section_ref)
+            # Get the full section resource
+            try:
+                label = section_ref.section_label()
+                section = get_section_by_label(label)
+            except DataFailureException:
+                continue
+            except ValueError:
+                continue
 
-                if course_id in existing_course_ids:
-                    if existing_course_ids[course_id] == PRIORITY_NONE:
-                        Course.objects.filter(course_id=course_id).update(
-                            priority=PRIORITY_HIGH)
+            # valid time schedule construction for campus
+            campus = section.course_campus.lower()
+            if campus not in tsc or tsc[campus]:
+                continue
 
-                    continue
+            if section.is_independent_study:
+                for meeting in section.meetings:
+                    for instructor in meeting.instructors:
+                        if not instructor.uwregid:
+                            continue
 
-                # Get the full section resource
-                try:
-                    label = section_ref.section_label()
-                    section = get_section_by_label(label)
-                except DataFailureException:
-                    continue
-                except ValueError:
-                    continue
+                        ind_course_id = "-".join([course_id,
+                                                  instructor.uwregid])
 
-                # valid time schedule construction for campus
-                campus = section.course_campus.lower()
-                if campus not in tsc or tsc[campus]:
-                    continue
+                        if ind_course_id in existing_course_ids:
+                            continue
 
-                if section.is_independent_study:
-                    for meeting in section.meetings:
-                        for instructor in meeting.instructors:
-                            if not instructor.uwregid:
-                                continue
+                        course = Course(course_id=ind_course_id,
+                                        course_type=Course.SDB_TYPE,
+                                        term_id=term_id,
+                                        priority=PRIORITY_HIGH)
 
-                            ind_course_id = "-".join([course_id,
-                                                      instructor.uwregid])
-
-                            if ind_course_id in existing_course_ids:
-                                continue
-
-                            course = Course(course_id=ind_course_id,
-                                            course_type=Course.SDB_TYPE,
-                                            term_id=term_id,
-                                            priority=PRIORITY_HIGH)
-
-                            new_courses.append(course)
+                        new_courses.append(course)
+            else:
+                if section.is_primary_section:
+                    primary_id = None
                 else:
-                    if section.is_primary_section:
-                        primary_id = None
-                    else:
-                        primary_id = generate_primary_course_id(section)
+                    primary_id = generate_primary_course_id(section)
 
-                    course = Course(course_id=course_id,
-                                    course_type=Course.SDB_TYPE,
-                                    term_id=term_id,
-                                    primary_id=primary_id,
-                                    priority=PRIORITY_HIGH)
+                course = Course(course_id=course_id,
+                                course_type=Course.SDB_TYPE,
+                                term_id=term_id,
+                                primary_id=primary_id,
+                                priority=PRIORITY_HIGH)
 
-                    new_courses.append(course)
+                new_courses.append(course)
 
-            Course.objects.bulk_create(new_courses)
+        Course.objects.bulk_create(new_courses)
+
+        delta.changed_since_date = datetime.utcnow().replace(tzinfo=utc)
+        delta.save()
 
     def unload_courses_for_term(self, term):
         """

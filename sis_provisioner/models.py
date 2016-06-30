@@ -5,7 +5,6 @@ from restclients.canvas.sis_import import SISImport
 from restclients.models.canvas import SISImport as SISImportModel
 from restclients.gws import GWS
 from restclients.exceptions import DataFailureException
-from eos.models import EOSCourseDelta
 import datetime
 import json
 import re
@@ -178,6 +177,12 @@ class Course(models.Model):
             "sws_url": self.sws_url() if (
                 include_sws_url and self.is_sdb()) else None,
         }
+
+
+class CourseDelta(models.Model):
+    term_id = models.CharField(max_length=20, unique=True)
+    last_query_date = models.DateTimeField()
+    changed_since_date = models.DateTimeField(null=True)
 
 
 class EnrollmentManager(models.Manager):
@@ -598,8 +603,7 @@ class Import(models.Model):
         ('course', 'Course'),
         ('coursemember', 'CourseMember'),
         ('enrollment', 'Enrollment'),
-        ('group', 'Group'),
-        ('eoscourse', 'EOSCourseDelta')
+        ('group', 'Group')
     )
 
     csv_type = models.SlugField(max_length=20, choices=CSV_TYPE_CHOICES)
