@@ -256,8 +256,10 @@ class Enrollment(models.Model):
     status = models.CharField(max_length=16, choices=STATUS_CHOICES)
     course_id = models.CharField(max_length=80)
     last_modified = models.DateTimeField()
+    request_date = models.DateTimeField(null=True)
     primary_course_id = models.CharField(max_length=80, null=True)
     instructor_reg_id = models.CharField(max_length=32, null=True)
+    is_auditor = models.NullBooleanField()
     priority = models.SmallIntegerField(default=1, choices=PRIORITY_CHOICES)
     queue_id = models.CharField(max_length=30, null=True)
 
@@ -273,8 +275,11 @@ class Enrollment(models.Model):
             "course_id": self.course_id,
             "last_modified": localtime(self.last_modified).isoformat() if (
                 self.last_modified is not None) else None,
+            "request_date": localtime(self.request_date).isoformat() if (
+                self.request_date is not None) else None,
             "primary_course_id": self.primary_course_id,
             "instructor_reg_id": self.instructor_reg_id,
+            "is_auditor": self.is_auditor,
             "priority": PRIORITY_CHOICES[self.priority][1],
             "queue_id": self.queue_id,
         }

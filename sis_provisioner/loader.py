@@ -206,6 +206,8 @@ class Loader():
         reg_id = data.get('UWRegID')
         status = data.get('Status').lower()
         last_modified = data.get('LastModified')
+        request_date = data.get('RequestDate')
+        is_auditor = data.get('Auditor')
         primary_course_id = None
         if not section.is_primary_section:
             primary_course_id = generate_primary_course_id(section)
@@ -226,8 +228,10 @@ class Loader():
 
                     enrollment.status = status
                     enrollment.last_modified = last_modified
+                    enrollment.request_date = request_date
                     enrollment.primary_course_id = primary_course_id
                     enrollment.instructor_reg_id = instructor_reg_id
+                    enrollment.is_auditor = is_auditor
 
                     if enrollment.queue_id is None:
                         enrollment.priority = PRIORITY_DEFAULT
