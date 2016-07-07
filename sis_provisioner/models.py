@@ -99,10 +99,12 @@ class Term(models.Model):
     """
     term_id = models.CharField(max_length=20, unique=True)
     added_date = models.DateTimeField(auto_now_add=True)
-    last_course_search_date = models.DateTimeField()
+    last_course_search_date = models.DateTimeField(null=True)
     courses_changed_since_date = models.DateTimeField(null=True)
     deleted_unused_courses_date = models.DateTimeField(null=True)
     queue_id = models.CharField(max_length=30, null=True)
+
+    objects = TermManager()
 
 
 class CourseManager(models.Manager):
