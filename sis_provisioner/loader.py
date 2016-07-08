@@ -115,7 +115,7 @@ class Loader():
 
         try:
             delta = Term.objects.get(term_id=term_id)
-        except CourseDelta.DoesNotExist:
+        except Term.DoesNotExist:
             delta = Term(term_id=term_id)
 
         delta.last_course_search_date = datetime.utcnow().replace(tzinfo=utc)
@@ -137,7 +137,6 @@ class Loader():
                 if existing_course_ids[course_id] == PRIORITY_NONE:
                     Course.objects.filter(course_id=course_id).update(
                         priority=PRIORITY_HIGH)
-
                 continue
 
             # Get the full section resource
