@@ -179,12 +179,6 @@ class Course(models.Model):
         }
 
 
-class CourseDelta(models.Model):
-    term_id = models.CharField(max_length=20, unique=True)
-    last_query_date = models.DateTimeField()
-    changed_since_date = models.DateTimeField(null=True)
-
-
 class EnrollmentManager(models.Manager):
     def queue_by_priority(self, priority=PRIORITY_DEFAULT):
         filter_limit = settings.SIS_IMPORT_LIMIT['enrollment']['default']

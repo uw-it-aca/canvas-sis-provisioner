@@ -1,4 +1,4 @@
-from sis_provisioner.models import Course, CourseDelta, User, Enrollment,\
+from sis_provisioner.models import Course, Term, User, Enrollment,\
     PRIORITY_NONE, PRIORITY_DEFAULT, PRIORITY_HIGH
 from sis_provisioner.policy import UserPolicy, CoursePolicy
 from restclients.sws.term import get_term_by_date, get_term_after
@@ -114,18 +114,19 @@ class Loader():
                     t.is_on) for t in term.time_schedule_construction)
 
         try:
-            delta = CourseDelta.objects.get(term_id=term_id)
+            delta = Term.objects.get(term_id=term_id)
         except CourseDelta.DoesNotExist:
-            delta = CourseDelta(term_id=term_id)
+            delta = Term(term_id=term_id)
 
-        delta.last_query_date = datetime.utcnow().replace(tzinfo=utc)
-        if delta.changed_since_date is None:
-            delta.changed_since_date = (
-                term.get_bod_first_day() - timedelta(days=120))
+        delta.last_course_search_date = datetime.utcnow().replace(tzinfo=utc)
+        if delta.courses_changed_since_date is None:
+            days = getattr(settings, 'COURSES_CHANGED_SINCE_DAYS', 120)
+            delta.courses_changed_since_date = (
+                term.get_bod_first_day() - timedelta(days=days))
         delta.save()
 
         sections = get_changed_sections_by_term(
-            localtime(delta.changed_since_date).date(), term,
+            localtime(delta.courses_changed_since_date).date(), term,
             transcriptable_course='all')
 
         new_courses = []
@@ -187,7 +188,8 @@ class Loader():
 
         Course.objects.bulk_create(new_courses)
 
-        delta.changed_since_date = datetime.utcnow().replace(tzinfo=utc)
+        delta.courses_changed_since_date = datetime.utcnow().replace(
+            tzinfo=utc)
         delta.save()
 
     def unload_courses_for_term(self, term):
