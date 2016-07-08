@@ -291,14 +291,20 @@ class Enrollment(models.Model):
     AUDITOR_ROLE = "Auditor"
     INSTRUCTOR_ROLE = "Teacher"
 
+    ROLE_CHOICES = (
+        (STUDENT_ROLE, "Student"),
+        (INSTRUCTOR_ROLE, "Teacher"),
+        (AUDITOR_ROLE, "Auditor")
+    )
+
     reg_id = models.CharField(max_length=32, null=True)
     status = models.CharField(max_length=16, choices=STATUS_CHOICES)
+    role = models.CharField(max_length=32, choices=ROLE_CHOICES)
     course_id = models.CharField(max_length=80)
     last_modified = models.DateTimeField()
     request_date = models.DateTimeField(null=True)
     primary_course_id = models.CharField(max_length=80, null=True)
     instructor_reg_id = models.CharField(max_length=32, null=True)
-    is_auditor = models.NullBooleanField()
     priority = models.SmallIntegerField(default=1, choices=PRIORITY_CHOICES)
     queue_id = models.CharField(max_length=30, null=True)
 

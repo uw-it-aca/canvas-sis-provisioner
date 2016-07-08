@@ -206,10 +206,11 @@ class Loader():
         section = data.get('Section')
         course_id = generate_course_id(section)
         reg_id = data.get('UWRegID')
+        role = data.get('Role', Enrollment.STUDENT_ROLE)
         status = data.get('Status').lower()
         last_modified = data.get('LastModified')
         request_date = data.get('RequestDate')
-        is_auditor = data.get('Auditor')
+
         primary_course_id = None
         if not section.is_primary_section:
             primary_course_id = generate_primary_course_id(section)
@@ -221,19 +222,19 @@ class Loader():
             course = Course.objects.get(course_id=full_course_id)
             if course.provisioned_date:
                 enrollment = Enrollment.objects.get(course_id=course_id,
-                                                    reg_id=reg_id)
+                                                    reg_id=reg_id,
+                                                    role=role)
                 if (last_modified > enrollment.last_modified or (
                         last_modified == enrollment.last_modified and
                         status == Enrollment.ACTIVE_STATUS)):
-                    self._log.info('UPDATE: %s %s on %s status %s' % (
-                        course_id, reg_id, last_modified, status))
+                    self._log.info('UPDATE: %s %s %s on %s status %s' % (
+                        course_id, reg_id, role, last_modified, status))
 
                     enrollment.status = status
                     enrollment.last_modified = last_modified
                     enrollment.request_date = request_date
                     enrollment.primary_course_id = primary_course_id
                     enrollment.instructor_reg_id = instructor_reg_id
-                    enrollment.is_auditor = is_auditor
 
                     if enrollment.queue_id is None:
                         enrollment.priority = PRIORITY_DEFAULT
@@ -246,11 +247,11 @@ class Loader():
 
                     enrollment.save()
                 else:
-                    self._log.info('LATE: %s before %s' % (
-                        last_modified, enrollment.last_modified))
+                    self._log.info('LATE: %s %s before %s' % (
+                        reg_id, last_modified, enrollment.last_modified))
             else:
-                self._log.info('DROP: %s %s status %s' % (
-                    full_course_id, reg_id, status))
+                self._log.info('DROP: %s %s %s status %s' % (
+                    full_course_id, reg_id, role, status))
                 course.priority = PRIORITY_HIGH
                 course.save()
 
@@ -258,8 +259,8 @@ class Loader():
             self._log.info('LOAD: %s %s on %s status %s' % (
                 course_id, reg_id, last_modified, status))
             enrollment = Enrollment(course_id=course_id, reg_id=reg_id,
+                                    role=role, status=status,
                                     last_modified=last_modified,
-                                    status=status,
                                     primary_course_id=primary_course_id,
                                     instructor_reg_id=instructor_reg_id)
             enrollment.save()
