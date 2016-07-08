@@ -62,6 +62,51 @@ class Job(models.Model):
         }
 
 
+class TermManager(models.Manager):
+    def queue_unused_courses(self, term_id):
+        try:
+            term = Term.objects.get(term_id=term_id)
+            if (term.deleted_unused_courses.date is not None or
+                    term.queue_id is not None):
+                raise EmptyQueueException()
+        except Term.DoesNotExist:
+            term = Term(term_id=term_id)
+            term.save()
+
+        imp = Import(priority=PRIORITY_DEFAULT, csv_type='unused_course')
+        imp.save()
+
+        term.queue_id = imp.pk
+        term.save()
+
+        return imp
+
+    def queued(self, queue_id):
+        return super(TermManager, self).get_query_set().filter(
+            queue_id=queue_id)
+
+    def dequeue(self, queue_id, provisioned_date=None):
+        kwargs = {'queue_id': None}
+        if provisioned_date is not None:
+            # Currently only handles the 'unused_course' type
+            kwargs['deleted_unused_courses_date'] = provisioned_date
+
+        self.queued(queue_id).update(**kwargs)
+
+
+class Term(models.Model):
+    """ Represents the provisioned state of courses for a term.
+    """
+    term_id = models.CharField(max_length=20, unique=True)
+    added_date = models.DateTimeField(auto_now_add=True)
+    last_course_search_date = models.DateTimeField(null=True)
+    courses_changed_since_date = models.DateTimeField(null=True)
+    deleted_unused_courses_date = models.DateTimeField(null=True)
+    queue_id = models.CharField(max_length=30, null=True)
+
+    objects = TermManager()
+
+
 class CourseManager(models.Manager):
     def get_linked_course_ids(self, course_id):
         return super(CourseManager, self).get_query_set().filter(
@@ -178,20 +223,6 @@ class Course(models.Model):
             "sws_url": self.sws_url() if (
                 include_sws_url and self.is_sdb()) else None,
         }
-
-
-class Instructor(models.Model):
-    """ Represents the provisioned state of a course instructor.
-    """
-    section_id = models.CharField(max_length=80)
-    reg_id = models.CharField(max_length=32)
-
-    class Meta:
-        unique_together = ('section_id', 'reg_id')
-
-    def __eq__(self, other):
-        return (self.section_id == other.section_id and
-                self.reg_id == other.reg_id)
 
 
 class EnrollmentManager(models.Manager):
@@ -610,6 +641,7 @@ class Import(models.Model):
         ('account', 'Curriculum'),
         ('user', 'User'),
         ('course', 'Course'),
+        ('unused_course', 'Term'),
         ('coursemember', 'CourseMember'),
         ('enrollment', 'Enrollment'),
         ('group', 'Group'),
