@@ -6,4 +6,3 @@ class SISProvisionerConfig(AppConfig):
 
     def ready(self):
         import sis_provisioner.signals
-
