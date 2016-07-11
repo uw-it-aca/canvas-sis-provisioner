@@ -10,7 +10,7 @@ from restclients.exceptions import DataFailureException
 from django.utils.timezone import utc, localtime
 from django.conf import settings
 from django.db.models import Q
-from logger import getLogger
+from logging import getLogger
 from datetime import datetime, timedelta
 import csv
 
