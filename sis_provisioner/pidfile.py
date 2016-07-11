@@ -1,4 +1,4 @@
-from django.utils.log import getLogger
+from logging import getLogger
 from inspect import stack, getmodule
 import errno
 import os
