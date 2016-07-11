@@ -1,6 +1,6 @@
 import re
 import json
-from django.utils.log import getLogger
+from logging import getLogger
 from restclients.sws import SWS
 from sis_provisioner.models import Enrollment, PRIORITY_NONE
 from sis_provisioner.views.rest_dispatch import RESTDispatch

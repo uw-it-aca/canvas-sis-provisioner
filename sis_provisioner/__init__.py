@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from django.utils.log import getLogger
+from logging import getLogger
 from models import Course, Group, User, Import
 from models import PRIORITY_DEFAULT, PRIORITY_HIGH, PRIORITY_IMMEDIATE
 from csv_builder import CSVBuilder

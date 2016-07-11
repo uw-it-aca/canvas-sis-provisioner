@@ -1,4 +1,4 @@
-from django.utils.log import getLogger
+from logging import getLogger
 from sis_provisioner.models import Job
 from sis_provisioner.views.rest_dispatch import RESTDispatch
 from userservice.user import UserService

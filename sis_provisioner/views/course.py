@@ -1,6 +1,6 @@
 import re
 import json
-from django.utils.log import getLogger
+from logging import getLogger
 from restclients.sws.section import get_sections_by_instructor_and_term
 from restclients.sws.term import get_term_by_year_and_quarter
 from sis_provisioner.models import Course, Group, PRIORITY_NONE,\
