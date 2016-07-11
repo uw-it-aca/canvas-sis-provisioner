@@ -65,7 +65,7 @@ class TermManager(models.Manager):
     def queue_unused_courses(self, term_id):
         try:
             term = Term.objects.get(term_id=term_id)
-            if (term.deleted_unused_courses.date is not None or
+            if (term.deleted_unused_courses_date is not None or
                     term.queue_id is not None):
                 raise EmptyQueueException()
         except Term.DoesNotExist:
