@@ -37,9 +37,22 @@ INSTALLED_APPS = (
     'django.contrib.humanize',
     'compressor',
     'templatetag_handlebars',
+    'sis_provisioner.apps.SISProvisionerConfig',
     'restclients',
     'userservice',
-    'sis_provisioner.apps.SISProvisionerConfig',
+    'authz_group',
+    'blti',
+    'canvas_admin',
+    'astra',
+    'events',
+    'groups',
+    'libguide',
+    'course_roster',
+    'canvas_users',
+    'analytics',
+    'grade_conversion_calculator',
+    'grading_standard',
+    'lti_manager'
 )
 
 MIDDLEWARE_CLASSES = (
