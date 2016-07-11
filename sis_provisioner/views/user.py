@@ -2,7 +2,7 @@ import re
 import json
 import datetime
 from django.http import HttpResponse
-from django.utils.log import getLogger
+from logging import getLogger
 from restclients.canvas.users import Users as CanvasUsers
 from restclients.exceptions import InvalidNetID, InvalidRegID
 from restclients.exceptions import DataFailureException

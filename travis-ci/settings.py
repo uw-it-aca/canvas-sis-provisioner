@@ -39,7 +39,7 @@ INSTALLED_APPS = (
     'templatetag_handlebars',
     'restclients',
     'userservice',
-    'sis_provisioner',
+    'sis_provisioner.apps.SISProvisionerConfig',
 )
 
 MIDDLEWARE_CLASSES = (
