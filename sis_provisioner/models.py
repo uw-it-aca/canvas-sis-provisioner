@@ -653,12 +653,12 @@ class Import(models.Model):
     csv_errors = models.TextField(null=True)
     added_date = models.DateTimeField(auto_now_add=True)
     priority = models.SmallIntegerField(default=1, choices=PRIORITY_CHOICES)
-    post_status = models.SmallIntegerField(max_length=3, null=True)
+    post_status = models.SmallIntegerField(null=True)
     monitor_date = models.DateTimeField(null=True)
-    monitor_status = models.SmallIntegerField(max_length=3, null=True)
+    monitor_status = models.SmallIntegerField(null=True)
     canvas_id = models.CharField(max_length=30, null=True)
     canvas_state = models.CharField(max_length=80, null=True)
-    canvas_progress = models.SmallIntegerField(max_length=3, default=0)
+    canvas_progress = models.SmallIntegerField(default=0)
     canvas_errors = models.TextField(null=True)
 
     def json_data(self):
