@@ -5,7 +5,6 @@ from restclients.canvas.sis_import import SISImport
 from restclients.models.canvas import SISImport as SISImportModel
 from restclients.gws import GWS
 from restclients.exceptions import DataFailureException
-from eos.models import EOSCourseDelta
 import datetime
 import json
 import re
@@ -292,10 +291,18 @@ class Enrollment(models.Model):
     AUDITOR_ROLE = "Auditor"
     INSTRUCTOR_ROLE = "Teacher"
 
+    ROLE_CHOICES = (
+        (STUDENT_ROLE, "Student"),
+        (INSTRUCTOR_ROLE, "Teacher"),
+        (AUDITOR_ROLE, "Auditor")
+    )
+
     reg_id = models.CharField(max_length=32, null=True)
     status = models.CharField(max_length=16, choices=STATUS_CHOICES)
+    role = models.CharField(max_length=32, choices=ROLE_CHOICES)
     course_id = models.CharField(max_length=80)
     last_modified = models.DateTimeField()
+    request_date = models.DateTimeField(null=True)
     primary_course_id = models.CharField(max_length=80, null=True)
     instructor_reg_id = models.CharField(max_length=32, null=True)
     priority = models.SmallIntegerField(default=1, choices=PRIORITY_CHOICES)
@@ -313,8 +320,11 @@ class Enrollment(models.Model):
             "course_id": self.course_id,
             "last_modified": localtime(self.last_modified).isoformat() if (
                 self.last_modified is not None) else None,
+            "request_date": localtime(self.request_date).isoformat() if (
+                self.request_date is not None) else None,
             "primary_course_id": self.primary_course_id,
             "instructor_reg_id": self.instructor_reg_id,
+            "is_auditor": self.is_auditor,
             "priority": PRIORITY_CHOICES[self.priority][1],
             "queue_id": self.queue_id,
         }
@@ -644,8 +654,7 @@ class Import(models.Model):
         ('unused_course', 'Term'),
         ('coursemember', 'CourseMember'),
         ('enrollment', 'Enrollment'),
-        ('group', 'Group'),
-        ('eoscourse', 'EOSCourseDelta')
+        ('group', 'Group')
     )
 
     csv_type = models.SlugField(max_length=20, choices=CSV_TYPE_CHOICES)

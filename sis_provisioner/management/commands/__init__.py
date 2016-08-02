@@ -2,6 +2,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.core.mail import mail_admins
 from django.utils.timezone import utc
 from sis_provisioner.models import Job
+from logging import getLogger
 import datetime
 import sys
 
@@ -13,6 +14,7 @@ class SISProvisionerCommand(BaseCommand):
         if not self.is_active_job():
             sys.exit(0)
 
+        self.log = getLogger(__name__)
         self.health_check()
 
     def is_active_job(self):
@@ -43,9 +45,13 @@ class SISProvisionerCommand(BaseCommand):
         job.health_status = message
         if (not job.last_status_date or
                 (now - job.last_status_date) > datetime.timedelta(hours=1)):
-            mail_admins("Provisioning job may be having issues",
-                        message, fail_silently=True)
-            job.last_status_date = now
+            try:
+                mail_admins("Provisioning job may be having issues",
+                            message, fail_silently=True)
+                job.last_status_date = now
+            except Exception as err:
+                self.log.error('Cannot email admins "%s", Error Message: "%s"' % (
+                    err, message))
 
         job.save()
 
