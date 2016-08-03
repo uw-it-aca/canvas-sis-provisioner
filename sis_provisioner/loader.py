@@ -149,9 +149,10 @@ class Loader():
                 continue
 
             # validate time schedule construction (TSC) for campus
-            # if TSC is on, skip the course
             # if not a TSC campus, ignore TSC
-            if tsc.get(section.course_campus.lower(), False):
+            # if TSC is on for the campus, skip the course
+            campus = section.course_campus.lower()
+            if campus in tsc and tsc[campus]:
                 continue
 
             if section.is_independent_study:
