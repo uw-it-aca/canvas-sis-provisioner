@@ -2,7 +2,7 @@ import re
 import json
 import dateutil.parser
 from django.utils.timezone import utc
-from django.utils.log import getLogger
+from logging import getLogger
 from django.core.management import call_command
 from sis_provisioner.models import Import, User
 from sis_provisioner.views.rest_dispatch import RESTDispatch

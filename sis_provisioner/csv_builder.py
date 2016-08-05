@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.utils.log import getLogger
+from logging import getLogger
 from django.utils.timezone import utc
 
 from restclients.util.retry import retry
@@ -29,8 +29,9 @@ from sis_provisioner.csv_data import CSVData
 from sis_provisioner.csv_formatters import csv_for_user, csv_for_term,\
     csv_for_course, csv_for_section, csv_for_group_section,\
     csv_for_group_enrollment, csv_for_sis_instructor_enrollment,\
-    csv_for_sis_student_enrollment, csv_for_xlist, csv_for_account,\
-    sisid_for_account, header_for_accounts, titleize
+    csv_for_sis_student_enrollment, csv_for_sis_auditor_enrollment,\
+    csv_for_xlist, csv_for_account, sisid_for_account,\
+    header_for_accounts, titleize
 
 from datetime import datetime
 import re
@@ -299,10 +300,10 @@ class CSVBuilder():
                         enrollment.reg_id, enrollment.course_id,
                         'Independent study missing instructor regid'))
                     continue
-
                 if len(section.linked_section_urls):
-                    logger.info("Skip enrollment %s in %s: %s" % (
-                        enrollment.reg_id, enrollment.course_id,
+                    logger.info("Skip enrollment %s %s in %s: %s" % (
+                        enrollment.reg_id, enrollment.role,
+                        enrollment.course_id,
                         'Section has linked sections'))
                     continue
 
@@ -314,8 +315,21 @@ class CSVBuilder():
             registration = Registration(section=section,
                                         person=person,
                                         is_active=enrollment.is_active())
-            csv_data = csv_for_sis_student_enrollment(registration)
-            csv.add_enrollment(csv_data)
+            if enrollment.is_student():
+                csv.add_enrollment(
+                    csv_for_sis_student_enrollment(registration))
+            elif enrollment.is_instructor():
+                if section.is_independent_study and not enrollment.is_active():
+                    # delete canvas independent_study course
+                    section.is_withdrawn = True
+                    csv.add_course(enrollment.course_id,
+                                   csv_for_course(section))
+                else:
+                    csv.add_enrollment(
+                        csv_for_sis_instructor_enrollment(registration))
+#            elif enrollment.role == Enrollment.AUDITOR_ROLE:
+#                csv.add_enrollment(
+#                    csv_for_sis_auditor_enrollment(registration))
 
         return csv.write_files()
 
@@ -325,7 +339,8 @@ class CSVBuilder():
         sis_provisioner.CourseMember objects.
         """
         for member in course_members:
-            section_id = self._course_policy.group_section_sis_id(member.course_id)
+            section_id = self._course_policy.group_section_sis_id(
+                member.course_id)
             status = Enrollment.DELETED_STATUS if (
                 member.is_deleted) else Enrollment.ACTIVE_STATUS
 
