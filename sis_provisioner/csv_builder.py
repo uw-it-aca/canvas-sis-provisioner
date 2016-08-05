@@ -322,7 +322,8 @@ class CSVBuilder():
                 if section.is_independent_study and not enrollment.is_active():
                     # delete canvas independent_study course
                     section.is_withdrawn = True
-                    csv.add_course(course_section_id, csv_for_course(section))
+                    csv.add_course(enrollment.course_id,
+                                   csv_for_course(section))
                 else:
                     csv.add_enrollment(
                         csv_for_sis_instructor_enrollment(registration))
