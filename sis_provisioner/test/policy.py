@@ -1,26 +1,27 @@
 from django.test import TestCase
 from django.conf import settings
-from restclients.sws.term import get_next_term
-from restclients.models.sws import Section
+from restclients.models.sws import Term, Section, TimeScheduleConstruction
 from sis_provisioner.policy import UserPolicy, UserPolicyException,\
     CoursePolicy, CoursePolicyException
 
 
 class TimeScheduleConstructionTest(TestCase):
     def test_by_campus(self):
-        with self.settings(
-                RESTCLIENTS_SWS_DAO_CLASS='restclients.dao_implementation.sws.File',
-                RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
+        policy = CoursePolicy()
 
-	    policy = CoursePolicy()
+        time_schedule_constructions = [
+            TimeScheduleConstruction(campus='Seattle', is_on=False),
+            TimeScheduleConstruction(campus='Tacoma', is_on=False),
+            TimeScheduleConstruction(campus='Bothell', is_on=True),
+        ]
+        term = Term(year=2013, quarter='summer')
+        term.time_schedule_construction = time_schedule_constructions
+        section = Section(term=term)
 
-	    term = get_next_term()
-            section = Section(term=term)
-
-            for campus in ['Seattle', 'Tacoma', 'Bothell', 'PCE', '']:
-                section.course_campus = campus
-                self.assertEquals(policy.is_time_schedule_construction(section),
-                        True if campus == 'Bothell' else False,
+        for campus in ['Seattle', 'Tacoma', 'Bothell', 'PCE', '']:
+            section.course_campus = campus
+            self.assertEquals(policy.is_time_schedule_construction(section),
+                    True if campus == 'Bothell' else False,
                         'Campus: %s' % section.course_campus)
 
 
