@@ -313,6 +313,15 @@ class Enrollment(models.Model):
     def is_active(self):
         return self.status == self.ACTIVE_STATUS
 
+    def is_student(self):
+        return self.role == self.STUDENT_ROLE
+
+    def is_instructor(self):
+        return self.role == self.INSTRUCTOR_ROLE
+
+    def is_auditor(self):
+        return self.role == self.AUDITOR_ROLE
+
     def json_data(self):
         return {
             "reg_id": self.reg_id,

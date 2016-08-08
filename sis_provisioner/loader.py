@@ -245,7 +245,7 @@ class Loader():
                     self._log.info('LATE: %s %s before %s' % (
                         reg_id, last_modified, enrollment.last_modified))
             else:
-                self._log.info('DROP: %s %s %s status %s' % (
+                self._log.info('FULL: %s %s %s status %s' % (
                     full_course_id, reg_id, role, status))
                 course.priority = PRIORITY_HIGH
                 course.save()

@@ -315,12 +315,21 @@ class CSVBuilder():
             registration = Registration(section=section,
                                         person=person,
                                         is_active=enrollment.is_active())
-            if enrollment.role == Enrollment.STUDENT_ROLE:
-                csv.add_enrollment(csv_for_sis_student_enrollment(registration))
-            elif enrollment.role == Enrollment.INSTRUCTOR_ROLE:
-                csv.add_enrollment(csv_for_sis_instructor_enrollment(registration))
+            if enrollment.is_student():
+                csv.add_enrollment(
+                    csv_for_sis_student_enrollment(registration))
+            elif enrollment.is_instructor():
+                if section.is_independent_study and not enrollment.is_active():
+                    # delete canvas independent_study course
+                    section.is_withdrawn = True
+                    csv.add_course(enrollment.course_id,
+                                   csv_for_course(section))
+                else:
+                    csv.add_enrollment(
+                        csv_for_sis_instructor_enrollment(registration))
 #            elif enrollment.role == Enrollment.AUDITOR_ROLE:
-#                csv.add_enrollment(csv_for_sis_auditor_enrollment(registration))
+#                csv.add_enrollment(
+#                    csv_for_sis_auditor_enrollment(registration))
 
         return csv.write_files()
 
@@ -330,7 +339,8 @@ class CSVBuilder():
         sis_provisioner.CourseMember objects.
         """
         for member in course_members:
-            section_id = self._course_policy.group_section_sis_id(member.course_id)
+            section_id = self._course_policy.group_section_sis_id(
+                member.course_id)
             status = Enrollment.DELETED_STATUS if (
                 member.is_deleted) else Enrollment.ACTIVE_STATUS
 
