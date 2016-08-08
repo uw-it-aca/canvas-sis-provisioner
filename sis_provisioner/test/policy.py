@@ -1,15 +1,36 @@
 from django.test import TestCase
 from django.conf import settings
-from sis_provisioner.policy import UserPolicy, UserPolicyException
+from restclients.models.sws import Term, Section, TimeScheduleConstruction
+from sis_provisioner.policy import UserPolicy, UserPolicyException,\
+    CoursePolicy, CoursePolicyException
 
 
-valid_domains = ['gmail.com', 'google.com', 'googlemail.com']
+class TimeScheduleConstructionTest(TestCase):
+    def test_by_campus(self):
+        policy = CoursePolicy()
+
+        time_schedule_constructions = [
+            TimeScheduleConstruction(campus='Seattle', is_on=False),
+            TimeScheduleConstruction(campus='Tacoma', is_on=False),
+            TimeScheduleConstruction(campus='Bothell', is_on=True),
+        ]
+        term = Term(year=2013, quarter='summer')
+        term.time_schedule_construction = time_schedule_constructions
+        section = Section(term=term)
+
+        for campus in ['Seattle', 'Tacoma', 'Bothell', 'PCE', '']:
+            section.course_campus = campus
+            self.assertEquals(policy.is_time_schedule_construction(section),
+                    True if campus == 'Bothell' else False,
+                        'Campus: %s' % section.course_campus)
 
 
 class GmailPolicyTest(TestCase):
+    valid_domains = ['gmail.com', 'google.com', 'googlemail.com']
+
     def test_valid_domains(self):
         with self.settings(
-                LOGIN_DOMAIN_WHITELIST=valid_domains):
+                LOGIN_DOMAIN_WHITELIST=self.valid_domains):
 
             default_user = "johnsmith"
 
@@ -20,7 +41,7 @@ class GmailPolicyTest(TestCase):
 
             policy = UserPolicy()
 
-            for domain in valid_domains:
+            for domain in self.valid_domains:
                 user = "%s@%s" % (default_user, domain)
                 self.assertEquals(policy.valid_gmail_id(user), user, "Valid user: %s" % user)
 
@@ -30,7 +51,7 @@ class GmailPolicyTest(TestCase):
 
     def test_valid_user(self):
         with self.settings(
-                LOGIN_DOMAIN_WHITELIST=valid_domains):
+                LOGIN_DOMAIN_WHITELIST=self.valid_domains):
 
             default_user = "johnsmith@gmail.com"
 

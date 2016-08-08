@@ -1,19 +1,17 @@
-from sis_provisioner.models import Course, User, Enrollment, Curriculum
-from sis_provisioner.models import PRIORITY_NONE, PRIORITY_DEFAULT,\
-    PRIORITY_HIGH
+from sis_provisioner.models import Course, Term, User, Enrollment,\
+    PRIORITY_NONE, PRIORITY_DEFAULT, PRIORITY_HIGH
 from sis_provisioner.policy import UserPolicy, CoursePolicy
 from restclients.sws.term import get_term_by_date, get_term_after
-from restclients.sws.section import get_sections_by_curriculum_and_term
-from restclients.sws.section import get_section_by_label
+from restclients.sws.section import get_changed_sections_by_term,\
+    get_section_by_label
 from restclients.gws import GWS
 from restclients.canvas.reports import Reports
-from restclients.models.sws import Curriculum as SWSCurriculum
 from restclients.exceptions import DataFailureException
-from django.utils.timezone import utc
+from django.utils.timezone import utc, localtime
 from django.conf import settings
 from django.db.models import Q
-from django.utils.log import getLogger
-from datetime import datetime
+from logging import getLogger
+from datetime import datetime, timedelta
 import csv
 
 
@@ -112,77 +110,82 @@ class Loader():
             term_id=term_id, course_type=Course.SDB_TYPE
         ).values_list("course_id", "priority"))
 
-        curricula = Curriculum.objects.all().values_list("curriculum_abbr",
-                                                         flat=True)
+        try:
+            delta = Term.objects.get(term_id=term_id)
+        except Term.DoesNotExist:
+            delta = Term(term_id=term_id)
 
-        tsc = dict((t.campus.lower(),
-                    t.is_on) for t in term.time_schedule_construction)
+        delta.last_course_search_date = datetime.utcnow().replace(tzinfo=utc)
+        if delta.courses_changed_since_date is None:
+            days = getattr(settings, 'COURSES_CHANGED_SINCE_DAYS', 120)
+            delta.courses_changed_since_date = (
+                term.get_bod_first_day() - timedelta(days=days))
+        delta.save()
 
-        for curriculum_abbr in curricula:
-            new_courses = []
-            try:
-                sections = get_sections_by_curriculum_and_term(
-                    SWSCurriculum(label=curriculum_abbr), term)
-            except DataFailureException:
+        sections = get_changed_sections_by_term(
+            localtime(delta.courses_changed_since_date).date(), term,
+            transcriptable_course='all')
+
+        new_courses = []
+        for section_ref in sections:
+            course_id = generate_course_id(section_ref)
+
+            if course_id in existing_course_ids:
+                if existing_course_ids[course_id] == PRIORITY_NONE:
+                    Course.objects.filter(course_id=course_id).update(
+                        priority=PRIORITY_HIGH)
                 continue
 
-            for section_ref in sections:
-                course_id = generate_course_id(section_ref)
+            # Get the full section resource
+            try:
+                label = section_ref.section_label()
+                section = get_section_by_label(label)
+            except DataFailureException:
+                continue
+            except ValueError:
+                continue
 
-                if course_id in existing_course_ids:
-                    if existing_course_ids[course_id] == PRIORITY_NONE:
-                        Course.objects.filter(course_id=course_id).update(
-                            priority=PRIORITY_HIGH)
+            # validate time schedule construction (TSC) for campus
+            if self._course_policy.is_time_schedule_construction(section):
+                continue
 
-                    continue
+            if section.is_independent_study:
+                for meeting in section.meetings:
+                    for instructor in meeting.instructors:
+                        if not instructor.uwregid:
+                            continue
 
-                # Get the full section resource
-                try:
-                    label = section_ref.section_label()
-                    section = get_section_by_label(label)
-                except DataFailureException:
-                    continue
-                except ValueError:
-                    continue
+                        ind_course_id = "-".join([course_id,
+                                                  instructor.uwregid])
 
-                # valid time schedule construction for campus
-                campus = section.course_campus.lower()
-                if campus not in tsc or tsc[campus]:
-                    continue
+                        if ind_course_id in existing_course_ids:
+                            continue
 
-                if section.is_independent_study:
-                    for meeting in section.meetings:
-                        for instructor in meeting.instructors:
-                            if not instructor.uwregid:
-                                continue
+                        course = Course(course_id=ind_course_id,
+                                        course_type=Course.SDB_TYPE,
+                                        term_id=term_id,
+                                        priority=PRIORITY_HIGH)
 
-                            ind_course_id = "-".join([course_id,
-                                                      instructor.uwregid])
-
-                            if ind_course_id in existing_course_ids:
-                                continue
-
-                            course = Course(course_id=ind_course_id,
-                                            course_type=Course.SDB_TYPE,
-                                            term_id=term_id,
-                                            priority=PRIORITY_HIGH)
-
-                            new_courses.append(course)
+                        new_courses.append(course)
+            else:
+                if section.is_primary_section:
+                    primary_id = None
                 else:
-                    if section.is_primary_section:
-                        primary_id = None
-                    else:
-                        primary_id = generate_primary_course_id(section)
+                    primary_id = generate_primary_course_id(section)
 
-                    course = Course(course_id=course_id,
-                                    course_type=Course.SDB_TYPE,
-                                    term_id=term_id,
-                                    primary_id=primary_id,
-                                    priority=PRIORITY_HIGH)
+                course = Course(course_id=course_id,
+                                course_type=Course.SDB_TYPE,
+                                term_id=term_id,
+                                primary_id=primary_id,
+                                priority=PRIORITY_HIGH)
 
-                    new_courses.append(course)
+                new_courses.append(course)
 
-            Course.objects.bulk_create(new_courses)
+        Course.objects.bulk_create(new_courses)
+
+        delta.courses_changed_since_date = datetime.utcnow().replace(
+            tzinfo=utc)
+        delta.save()
 
     def unload_courses_for_term(self, term):
         """
@@ -198,8 +201,11 @@ class Loader():
         section = data.get('Section')
         course_id = generate_course_id(section)
         reg_id = data.get('UWRegID')
+        role = data.get('Role', Enrollment.STUDENT_ROLE)
         status = data.get('Status').lower()
         last_modified = data.get('LastModified')
+        request_date = data.get('RequestDate')
+
         primary_course_id = None
         if not section.is_primary_section:
             primary_course_id = generate_primary_course_id(section)
@@ -211,15 +217,17 @@ class Loader():
             course = Course.objects.get(course_id=full_course_id)
             if course.provisioned_date:
                 enrollment = Enrollment.objects.get(course_id=course_id,
-                                                    reg_id=reg_id)
+                                                    reg_id=reg_id,
+                                                    role=role)
                 if (last_modified > enrollment.last_modified or (
                         last_modified == enrollment.last_modified and
                         status == Enrollment.ACTIVE_STATUS)):
-                    self._log.info('UPDATE: %s %s on %s status %s' % (
-                        course_id, reg_id, last_modified, status))
+                    self._log.info('UPDATE: %s %s %s on %s status %s' % (
+                        course_id, reg_id, role, last_modified, status))
 
                     enrollment.status = status
                     enrollment.last_modified = last_modified
+                    enrollment.request_date = request_date
                     enrollment.primary_course_id = primary_course_id
                     enrollment.instructor_reg_id = instructor_reg_id
 
@@ -234,11 +242,11 @@ class Loader():
 
                     enrollment.save()
                 else:
-                    self._log.info('LATE: %s before %s' % (
-                        last_modified, enrollment.last_modified))
+                    self._log.info('LATE: %s %s before %s' % (
+                        reg_id, last_modified, enrollment.last_modified))
             else:
-                self._log.info('DROP: %s %s status %s' % (
-                    full_course_id, reg_id, status))
+                self._log.info('FULL: %s %s %s status %s' % (
+                    full_course_id, reg_id, role, status))
                 course.priority = PRIORITY_HIGH
                 course.save()
 
@@ -246,8 +254,8 @@ class Loader():
             self._log.info('LOAD: %s %s on %s status %s' % (
                 course_id, reg_id, last_modified, status))
             enrollment = Enrollment(course_id=course_id, reg_id=reg_id,
+                                    role=role, status=status,
                                     last_modified=last_modified,
-                                    status=status,
                                     primary_course_id=primary_course_id,
                                     instructor_reg_id=instructor_reg_id)
             enrollment.save()
