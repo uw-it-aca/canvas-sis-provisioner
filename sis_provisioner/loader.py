@@ -110,9 +110,6 @@ class Loader():
             term_id=term_id, course_type=Course.SDB_TYPE
         ).values_list("course_id", "priority"))
 
-        tsc = dict((t.campus.lower(),
-                    t.is_on) for t in term.time_schedule_construction)
-
         try:
             delta = Term.objects.get(term_id=term_id)
         except Term.DoesNotExist:
@@ -149,10 +146,7 @@ class Loader():
                 continue
 
             # validate time schedule construction (TSC) for campus
-            # if not a TSC campus, ignore TSC
-            # if TSC is on for the campus, skip the course
-            campus = section.course_campus.lower()
-            if campus in tsc and tsc[campus]:
+            if self._course_policy.is_time_schedule_construction(section):
                 continue
 
             if section.is_independent_study:

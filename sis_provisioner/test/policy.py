@@ -1,15 +1,35 @@
 from django.test import TestCase
 from django.conf import settings
-from sis_provisioner.policy import UserPolicy, UserPolicyException
+from restclients.sws.term import get_next_term
+from restclients.models.sws import Section
+from sis_provisioner.policy import UserPolicy, UserPolicyException,\
+    CoursePolicy, CoursePolicyException
 
 
-valid_domains = ['gmail.com', 'google.com', 'googlemail.com']
+class TimeScheduleConstructionTest(TestCase):
+    def test_by_campus(self):
+        with self.settings(
+                RESTCLIENTS_SWS_DAO_CLASS='restclients.dao_implementation.sws.File',
+                RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
+
+	    policy = CoursePolicy()
+
+	    term = get_next_term()
+            section = Section(term=term)
+
+            for campus in ['Seattle', 'Tacoma', 'Bothell', 'PCE', '']:
+                section.course_campus = campus
+                self.assertEquals(policy.is_time_schedule_construction(section),
+                        True if campus == 'Bothell' else False,
+                        'Campus: %s' % section.course_campus)
 
 
 class GmailPolicyTest(TestCase):
+    valid_domains = ['gmail.com', 'google.com', 'googlemail.com']
+
     def test_valid_domains(self):
         with self.settings(
-                LOGIN_DOMAIN_WHITELIST=valid_domains):
+                LOGIN_DOMAIN_WHITELIST=self.valid_domains):
 
             default_user = "johnsmith"
 
@@ -20,7 +40,7 @@ class GmailPolicyTest(TestCase):
 
             policy = UserPolicy()
 
-            for domain in valid_domains:
+            for domain in self.valid_domains:
                 user = "%s@%s" % (default_user, domain)
                 self.assertEquals(policy.valid_gmail_id(user), user, "Valid user: %s" % user)
 
@@ -30,7 +50,7 @@ class GmailPolicyTest(TestCase):
 
     def test_valid_user(self):
         with self.settings(
-                LOGIN_DOMAIN_WHITELIST=valid_domains):
+                LOGIN_DOMAIN_WHITELIST=self.valid_domains):
 
             default_user = "johnsmith@gmail.com"
 
