@@ -296,6 +296,12 @@ class CoursePolicy(object):
         except CoursePolicyException:
             return False
 
+    def is_time_schedule_construction(self, section):
+        campus = section.course_campus.lower()
+        return next(
+            (t.is_on for t in section.term.time_schedule_construction if (
+                t.campus.lower() == campus)), False)
+
     def term_sis_id(self, section):
         try:
             override = TermOverride.objects.get(
