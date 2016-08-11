@@ -117,9 +117,10 @@ class Loader():
 
         delta.last_course_search_date = datetime.utcnow().replace(tzinfo=utc)
         if delta.courses_changed_since_date is None:
+            term_first_day = term.get_bod_first_day().replace(tzinfo=utc)
             days = getattr(settings, 'COURSES_CHANGED_SINCE_DAYS', 120)
             delta.courses_changed_since_date = (
-                term.get_bod_first_day() - timedelta(days=days))
+                term_first_day - timedelta(days=days))
         delta.save()
 
         sections = get_changed_sections_by_term(
