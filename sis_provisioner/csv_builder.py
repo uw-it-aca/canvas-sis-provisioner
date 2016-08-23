@@ -232,8 +232,10 @@ class CSVBuilder():
                 logger.info("Skip enrollment %s in %s: %s" % (
                     enrollment.reg_id, enrollment.course_id, err))
                 continue
-            except Exception as err:
+            except DataFailureException as err:
                 enrollment.queue_id = None
+                if err.status == 404:
+                    enrollment.priority = PRIORITY_NONE
                 enrollment.save()
                 logger.info("Defer enrollment %s in %s: %s" % (
                     enrollment.reg_id, enrollment.course_id, err))
