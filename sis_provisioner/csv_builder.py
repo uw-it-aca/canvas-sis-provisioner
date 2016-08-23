@@ -252,8 +252,8 @@ class CSVBuilder():
                             not enrollment.is_active()):
                         # Remove independent study course
                         section.is_withdrawn = True
-                        csv.add_course(section.canvas_course_sis_id(),
-                                       csv_for_course(section))
+                        self._csv.add_course(section.canvas_course_sis_id(),
+                                             csv_for_course(section))
 
                     elif len(section.linked_section_urls):
                         # Add/remove primary instructor for each linked section
@@ -265,12 +265,12 @@ class CSVBuilder():
 
                             csv_data = csv_for_sis_instructor_enrollment(
                                 linked_section, person, enrollment.status)
-                            csv.add_enrollment(csv_data)
+                            self._csv.add_enrollment(csv_data)
 
                     else:
                         csv_data = csv_for_sis_instructor_enrollment(
                             section, person, enrollment.status)
-                        csv.add_enrollment(csv_data)
+                        self._csv.add_enrollment(csv_data)
 
                 else:  # student/auditor
                     if len(section.linked_section_urls):
@@ -287,17 +287,17 @@ class CSVBuilder():
                         section=section, person=person,
                         is_active=enrollment.is_active())
                     csv_data = csv_for_sis_student_enrollment(registration)
-                    csv.add_enrollment(csv_data)
+                    self._csv.add_enrollment(csv_data)
 
                 # Add the section csv
-                if not csv.has_section(course_section_id):
-                    csv.add_section(course_section_id,
-                                    csv_for_section(section))
+                if not self._csv.has_section(course_section_id):
+                    self._csv.add_section(course_section_id,
+                                          csv_for_section(section))
 
                 # Add the user csv
                 self.generate_user_csv_for_person(person)
 
-        return csv.write_files()
+        return self._csv.write_files()
 
     def generate_csv_for_course_members(self, course_members):
         """
