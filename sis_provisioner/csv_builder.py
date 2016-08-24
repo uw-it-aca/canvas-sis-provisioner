@@ -246,20 +246,28 @@ class CSVBuilder():
                     enrollment.instructor_reg_id)
 
             if self._course_policy.is_active_section(section):
-                course_section_id = section.canvas_section_sis_id()
                 if enrollment.is_instructor():
-                    if (section.is_independent_study and
-                            not enrollment.is_active()):
-                        # Remove independent study course
-                        section.is_withdrawn = True
+                    if section.is_independent_study:
+                        # Add or remove independent study course
+                        section.is_withdrawn = False if (
+                            enrollment.is_active()) else True
                         self._csv.add_course(section.canvas_course_sis_id(),
                                              csv_for_course(section))
+
+                        if enrollment.is_active():
+                            self._csv.add_section(
+                                section.canvas_section_sis_id(),
+                                csv_for_section(section))
+
+                            csv_data = csv_for_sis_instructor_enrollment(
+                                section, person, enrollment.status)
+                            self._csv.add_enrollment(csv_data)
 
                     elif len(section.linked_section_urls):
                         # Add/remove primary instructor for each linked section
                         for url in section.linked_section_urls:
                             try:
-                                    linked_section = get_section_by_url(url)
+                                linked_section = get_section_by_url(url)
                             except Exception as err:
                                 continue
 
@@ -267,10 +275,18 @@ class CSVBuilder():
                                 linked_section, person, enrollment.status)
                             self._csv.add_enrollment(csv_data)
 
+                            self._csv.add_section(
+                                linked_section.canvas_section_sis_id(),
+                                csv_for_section(linked_section))
+
                     else:
                         csv_data = csv_for_sis_instructor_enrollment(
                             section, person, enrollment.status)
                         self._csv.add_enrollment(csv_data)
+
+                        self._csv.add_section(
+                            section.canvas_section_sis_id(),
+                            csv_for_section(section))
 
                 else:  # student/auditor
                     if len(section.linked_section_urls):
@@ -289,10 +305,9 @@ class CSVBuilder():
                     csv_data = csv_for_sis_student_enrollment(registration)
                     self._csv.add_enrollment(csv_data)
 
-                # Add the section csv
-                if not self._csv.has_section(course_section_id):
-                    self._csv.add_section(course_section_id,
-                                          csv_for_section(section))
+                    self._csv.add_section(
+                        section.canvas_section_sis_id(),
+                        csv_for_section(section))
 
                 # Add the user csv
                 self.generate_user_csv_for_person(person)
