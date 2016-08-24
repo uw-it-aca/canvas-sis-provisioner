@@ -14,7 +14,7 @@ from restclients.sws.term import get_term_by_year_and_quarter
 from restclients.canvas.courses import Courses as CanvasCourses
 from restclients.canvas.sections import Sections as CanvasSections
 from restclients.canvas.enrollments import Enrollments as CanvasEnrollments
-from restclients.models.sws import Section, Registration
+from restclients.models.sws import Registration
 from restclients.exceptions import DataFailureException,\
     InvalidCanvasIndependentStudyCourse
 
@@ -29,9 +29,8 @@ from sis_provisioner.csv_data import CSVData
 from sis_provisioner.csv_formatters import csv_for_user, csv_for_term,\
     csv_for_course, csv_for_section, csv_for_group_section,\
     csv_for_group_enrollment, csv_for_sis_instructor_enrollment,\
-    csv_for_sis_student_enrollment, csv_for_sis_auditor_enrollment,\
-    csv_for_xlist, csv_for_account, sisid_for_account,\
-    header_for_accounts, titleize
+    csv_for_sis_student_enrollment, csv_for_xlist, csv_for_account,\
+    sisid_for_account, header_for_accounts, titleize
 
 from datetime import datetime
 import re
@@ -219,119 +218,86 @@ class CSVBuilder():
         Generates full csv for each of the passed sis_provisioner.Enrollment
         objects.
         """
-        csv = self._csv
         for enrollment in enrollments:
             try:
-                person = self._user_policy.get_person_by_regid(enrollment.reg_id)
+                person = self._user_policy.get_person_by_regid(
+                    enrollment.reg_id)
+
+                section = self.get_section_resource_by_id(enrollment.course_id)
+
             except UserPolicyException as err:
+                enrollment.queue_id = None
+                enrollment.priority = PRIORITY_NONE
+                enrollment.save()
                 logger.info("Skip enrollment %s in %s: %s" % (
                     enrollment.reg_id, enrollment.course_id, err))
                 continue
-            except Exception as err:
+            except DataFailureException as err:
                 enrollment.queue_id = None
+                if err.status == 404:
+                    enrollment.priority = PRIORITY_NONE
                 enrollment.save()
                 logger.info("Defer enrollment %s in %s: %s" % (
                     enrollment.reg_id, enrollment.course_id, err))
                 continue
 
-            # Add the student user csv
-            self.generate_user_csv_for_person(person)
-            if enrollment.reg_id in self._invalid_users:
-                continue
+            if enrollment.instructor_reg_id:
+                section.independent_study_instructor_regid = (
+                    enrollment.instructor_reg_id)
 
-            if enrollment.instructor_reg_id is not None:
-                # Independent study section
-                (year, quarter, curr_abbr, course_num, section_id,
-                    reg_id) = self._section_data_from_id(enrollment.course_id)
+            if self._course_policy.is_active_section(section):
+                course_section_id = section.canvas_section_sis_id()
+                if enrollment.is_instructor():
+                    if (section.is_independent_study and
+                            not enrollment.is_active()):
+                        # Remove independent study course
+                        section.is_withdrawn = True
+                        self._csv.add_course(section.canvas_course_sis_id(),
+                                             csv_for_course(section))
 
-                try:
-                    term = self.get_term_resource_by_year_and_quarter(year,
-                                                                      quarter)
-                except:
-                    continue
+                    elif len(section.linked_section_urls):
+                        # Add/remove primary instructor for each linked section
+                        for url in section.linked_section_urls:
+                            try:
+                                    linked_section = get_section_by_url(url)
+                            except Exception as err:
+                                continue
 
-                section = Section(term=term,
-                                  curriculum_abbr=curr_abbr,
-                                  course_number=course_num,
-                                  section_id=section_id,
-                                  is_primary_section=True,
-                                  is_independent_study=True,
-                                  independent_study_instructor_regid=enrollment.instructor_reg_id)
+                            csv_data = csv_for_sis_instructor_enrollment(
+                                linked_section, person, enrollment.status)
+                            self._csv.add_enrollment(csv_data)
 
-            elif (enrollment.primary_course_id is not None and
-                    enrollment.primary_course_id != enrollment.course_id):
-                # Secondary section
-                (year, quarter, curr_abbr, course_num, section_id,
-                    reg_id) = self._section_data_from_id(enrollment.course_id)
+                    else:
+                        csv_data = csv_for_sis_instructor_enrollment(
+                            section, person, enrollment.status)
+                        self._csv.add_enrollment(csv_data)
 
-                (pr_year, pr_quarter, pr_curr_abbr, pr_course_num,
-                    pr_section_id, pr_reg_id) = self._section_data_from_id(
-                        enrollment.primary_course_id)
+                else:  # student/auditor
+                    if len(section.linked_section_urls):
+                        # Don't enroll students into primary sections
+                        enrollment.queue_id = None
+                        enrollment.priority = PRIORITY_NONE
+                        enrollment.save()
+                        logger.info("Skip enrollment %s in %s: %s" % (
+                            enrollment.reg_id, enrollment.course_id,
+                            'Section has linked sections'))
+                        continue
 
-                try:
-                    term = self.get_term_resource_by_year_and_quarter(
-                        pr_year, pr_quarter)
-                except:
-                    continue
+                    registration = Registration(
+                        section=section, person=person,
+                        is_active=enrollment.is_active())
+                    csv_data = csv_for_sis_student_enrollment(registration)
+                    self._csv.add_enrollment(csv_data)
 
-                section = Section(term=term,
-                                  curriculum_abbr=curr_abbr,
-                                  course_number=course_num,
-                                  section_id=section_id,
-                                  is_primary_section=False,
-                                  is_independent_study=False,
-                                  primary_section_curriculum_abbr=pr_curr_abbr,
-                                  primary_section_course_number=pr_course_num,
-                                  primary_section_id=pr_section_id)
+                # Add the section csv
+                if not self._csv.has_section(course_section_id):
+                    self._csv.add_section(course_section_id,
+                                          csv_for_section(section))
 
-            else:
-                # Do not create student enrollments for primary sections
-                try:
-                    section = self.get_section_resource_by_id(
-                        enrollment.course_id)
-                except:
-                    continue
+                # Add the user csv
+                self.generate_user_csv_for_person(person)
 
-                if section.is_independent_study:
-                    enrollment.queue_id = None
-                    enrollment.priority = PRIORITY_NONE
-                    enrollment.save()
-                    logger.info("Skip enrollment %s in %s: %s" % (
-                        enrollment.reg_id, enrollment.course_id,
-                        'Independent study missing instructor regid'))
-                    continue
-                if len(section.linked_section_urls):
-                    logger.info("Skip enrollment %s %s in %s: %s" % (
-                        enrollment.reg_id, enrollment.role,
-                        enrollment.course_id,
-                        'Section has linked sections'))
-                    continue
-
-            course_section_id = section.canvas_section_sis_id()
-            if not csv.has_section(course_section_id):
-                csv.add_section(course_section_id, csv_for_section(section))
-
-            # Add the student enrollment csv
-            registration = Registration(section=section,
-                                        person=person,
-                                        is_active=enrollment.is_active())
-            if enrollment.is_student():
-                csv.add_enrollment(
-                    csv_for_sis_student_enrollment(registration))
-            elif enrollment.is_instructor():
-                if section.is_independent_study and not enrollment.is_active():
-                    # delete canvas independent_study course
-                    section.is_withdrawn = True
-                    csv.add_course(enrollment.course_id,
-                                   csv_for_course(section))
-                else:
-                    csv.add_enrollment(
-                        csv_for_sis_instructor_enrollment(registration))
-#            elif enrollment.role == Enrollment.AUDITOR_ROLE:
-#                csv.add_enrollment(
-#                    csv_for_sis_auditor_enrollment(registration))
-
-        return csv.write_files()
+        return self._csv.write_files()
 
     def generate_csv_for_course_members(self, course_members):
         """
@@ -518,6 +484,8 @@ class CSVBuilder():
             if self._course_policy.is_active_section(section):
                 self.generate_user_csv_for_person(instructor)
                 if instructor.uwregid not in self._invalid_users:
+                    logger.info("ADD instructor %s to %s" % (
+                        instructor.uwregid, section_id))
                     csv_data = csv_for_sis_instructor_enrollment(
                         section, instructor, Enrollment.ACTIVE_STATUS)
                     csv.add_enrollment(csv_data)

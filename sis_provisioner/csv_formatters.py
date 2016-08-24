@@ -104,14 +104,6 @@ def csv_for_sis_instructor_enrollment(section, user, status):
                                Enrollment.INSTRUCTOR_ROLE, status)
 
 
-def csv_for_sis_auditor_enrollment(section, user, status):
-    """
-    Returns a list of data for creating a line of csv for an SIS Auditor.
-    """
-    return _csv_for_enrollment(section.canvas_section_sis_id(), user,
-                               Enrollment.AUDITOR_ROLE, status)
-
-
 def csv_for_group_enrollment(section_id, user, role, status):
     """
     Returns a list of data for creating a line of csv for a group member.
