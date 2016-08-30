@@ -1,9 +1,10 @@
-from django.conf.urls import patterns, url, include
+from django.conf.urls import url, include
 from django.views.generic.base import TemplateView
 from sis_provisioner.views.course import CourseView, CourseListView
 from sis_provisioner.views.enrollment import EnrollmentListView
 from sis_provisioner.views.group import GroupListView
 from sis_provisioner.views.user import UserView
+from sis_provisioner.views.terms import TermListView
 from sis_provisioner.views.canvas import CanvasCourseView, CanvasAccountView
 from sis_provisioner.views.imports import ImportView, ImportListView
 from sis_provisioner.views.jobs import JobView, JobListView
@@ -11,8 +12,7 @@ from astra.views import AdminSearch, AccountSearch, AccountSoC
 from events.views import EventListView
 
 
-urlpatterns = patterns(
-    '',
+urlpatterns = [
     url(r'^$', TemplateView.as_view(template_name='index.html')),
     url(r'^robots\.txt$', TemplateView.as_view(template_name='robots.txt',
                                                content_type='text/plain')),
@@ -26,6 +26,7 @@ urlpatterns = patterns(
     url(r'api/v1/import/(?P<import_id>[0-9]+)?$', ImportView().run),
     url(r'api/v1/imports/?$', ImportListView().run),
     url(r'api/v1/groups/?$', GroupListView().run),
+    url(r'api/v1/terms/?$', TermListView().run),
     url(r'api/v1/enrollments/?$', EnrollmentListView().run),
     url(r'api/v1/events/?(?P<begin>[0-9\-:TZtz]+)'
         r'?(?P<end>[0-9\-:TZtz]+)'
@@ -36,4 +37,4 @@ urlpatterns = patterns(
     url(r'api/v1/soc/?$', AccountSoC().run),
     url(r'api/v1/job/(?P<job_id>[0-9]+)?$', JobView().run),
     url(r'api/v1/jobs/?$', JobListView().run),
-)
+]
