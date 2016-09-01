@@ -8,8 +8,7 @@ from restclients.sws.college import get_all_colleges
 from restclients.sws.curriculum import get_curricula_by_department
 from restclients.sws.department import get_departments_by_college
 from restclients.sws.section import get_section_by_label, get_section_by_url
-from restclients.sws.registration import get_active_registrations_by_section,\
-    get_all_registrations_by_section
+from restclients.sws.registration import get_all_registrations_by_section
 from restclients.sws.term import get_term_by_year_and_quarter
 from restclients.canvas.courses import Courses as CanvasCourses
 from restclients.canvas.sections import Sections as CanvasSections
@@ -670,7 +669,8 @@ class CSVBuilder():
         """
         Generates the full student enrollments csv for the passed section.
         """
-        for registration in get_all_registrations_by_section(section):
+        for registration in get_all_registrations_by_section(
+                section, transcriptable_course="all"):
             # Add the student user csv
             self.generate_user_csv_for_person(registration.person)
 
