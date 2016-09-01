@@ -27,19 +27,20 @@ class Loader():
         priority, and updates all courses from previous term to priority
         none.
         """
-        curr_term = get_term_by_date(datetime.now().date())
+        now_dt = datetime.now()
+        curr_term = get_term_by_date(now_dt.date())
 
         if curr_term.bterm_last_day_add is not None:
             curr_last_date = curr_term.bterm_last_day_add
         else:
             curr_last_date = curr_term.last_day_add
 
-        if datetime.now().date() <= curr_last_date:
+        if now_dt.date() <= curr_last_date:
             self.load_courses_for_term(curr_term)
         else:
             self.unload_courses_for_term(curr_term)
 
-        if datetime.now() > curr_term.grade_submission_deadline:
+        if now_dt > curr_term.grade_submission_deadline:
             curr_term = get_term_after(curr_term)
 
         # Load courses for the next two terms
@@ -52,9 +53,10 @@ class Loader():
         Finds all active Canvas courses for the current or next term, and
         updates them to priority high.
         """
-        term = get_term_by_date(datetime.now().date())
+        now_dt = datetime.now()
+        term = get_term_by_date(now_dt.date())
 
-        if datetime.now() > term.grade_submission_deadline:
+        if now_dt > term.grade_submission_deadline:
             term = get_term_after(term)
 
         self.queue_active_courses_for_term(term)
@@ -264,6 +266,10 @@ class Loader():
             # course provision effectively picks up event
             self._log.info('NO COURSE: %s %s status %s' % (
                 full_course_id, reg_id, status))
+
+            if section.is_independent_study:
+                section.independent_study_instructor_regid = instructor_reg_id
+
             course = Course(course_id=full_course_id,
                             course_type=Course.SDB_TYPE,
                             term_id=self._course_policy.term_sis_id(section),
