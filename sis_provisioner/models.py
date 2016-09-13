@@ -297,7 +297,7 @@ class Enrollment(models.Model):
         (AUDITOR_ROLE, "Auditor")
     )
 
-    reg_id = models.CharField(max_length=32, null=True)
+    reg_id = models.CharField(max_length=32)
     status = models.CharField(max_length=16, choices=STATUS_CHOICES)
     role = models.CharField(max_length=32, choices=ROLE_CHOICES)
     course_id = models.CharField(max_length=80)
