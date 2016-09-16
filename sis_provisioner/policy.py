@@ -75,6 +75,17 @@ class UserPolicy(object):
         if self._application_net_id_whitelist.match(login_id) is None:
             raise UserPolicyException('Not a valid Application UWNetID')
 
+    def valid_nonpersonal_net_id(self, netid):
+        try:
+            self.valid_admin_net_id(netid)
+        except UserPolicyException:
+            try:
+                self.valid_application_net_id(netid)
+            except UserPolicyException:
+                if netid not in getattr(
+                        settings, 'NONPERSONAL_UWNETID_EXCEPTIONS', []):
+                    raise UserPolicyException('UWNetID not permitted')
+
     def valid_reg_id(self, login_id):
         if not self._pws.valid_uwregid(login_id):
             raise UserPolicyException('Not a valid UWRegID')
@@ -105,14 +116,7 @@ class UserPolicy(object):
 
         except DataFailureException, err:
             if err.status == 404:  # Non-personal netid?
-                try:
-                    self.valid_admin_net_id(netid)
-                except UserPolicyException:
-                    try:
-                        self.valid_application_net_id(netid)
-                    except UserPolicyException:
-                        raise UserPolicyException('UWNetID not permitted')
-
+                self.valid_nonpersonal_net_id(netid)
                 person = self._pws.get_entity_by_netid(netid)
             else:
                 raise
@@ -127,10 +131,7 @@ class UserPolicy(object):
         except DataFailureException, err:
             if err.status == 404:  # Non-personal regid?
                 person = self._pws.get_entity_by_regid(regid)
-                try:
-                    self.valid_admin_net_id(person.uwnetid)
-                except:
-                    raise UserPolicyException('UWRegID not permitted')
+                self.valid_nonpersonal_net_id(person.netid)
             else:
                 raise
 
