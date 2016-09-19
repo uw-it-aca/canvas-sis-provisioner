@@ -29,7 +29,7 @@ class RestClientsCache(TimedCache):
     url_policies["gws"] = (
         (re.compile(r"^/group_sws/v2/group/%s/effective_member/" % (
             getattr(settings, 'NONPERSONAL_NETID_EXCEPTION_GROUP', 'none'))),
-        60 * 5),
+            60 * 60),
     )
     url_policies["canvas"] = (
         (re.compile(r"^%s" % (canvas_url_roles % '\d+')), 60 * 60 * 4),
