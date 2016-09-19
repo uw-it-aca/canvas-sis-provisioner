@@ -1,7 +1,7 @@
 from django.conf import settings
 from restclients.pws import PWS
 from restclients.gws import GWS
-from restclients.exceptions import DataFailureException
+from restclients.exceptions import InvalidGroupID, DataFailureException
 from restclients.models.canvas import CanvasUser
 from restclients.models.sws import Section
 from sis_provisioner.models import Curriculum, SubAccountOverride, TermOverride
@@ -47,6 +47,7 @@ class UserPolicy(object):
             ['(?:css|wire|lib|event)[0-9]{4,}'])
         self._re_canvas_id = re.compile(r"^\d+$")
         self._pws = PWS()
+        self._gws = GWS()
 
     def valid(self, login_id):
         try:
@@ -82,12 +83,16 @@ class UserPolicy(object):
             try:
                 self.valid_application_net_id(netid)
             except UserPolicyException:
-                if netid not in getattr(
-                        settings, 'NONPERSONAL_UWNETID_EXCEPTIONS', []):
+                group = getattr(settings, 'NONPERSONAL_NETID_EXCEPTION_GROUP',
+                                '')
+                try:
+                    if not self._gws.is_effective_member(group, netid):
+                        raise UserPolicyException('UWNetID not permitted')
+                except InvalidGroupID as err:
                     raise UserPolicyException('UWNetID not permitted')
 
-    def valid_reg_id(self, login_id):
-        if not self._pws.valid_uwregid(login_id):
+    def valid_reg_id(self, regid):
+        if not self._pws.valid_uwregid(regid):
             raise UserPolicyException('Not a valid UWRegID')
 
     def valid_gmail_id(self, login_id):
