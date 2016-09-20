@@ -154,14 +154,13 @@ class UserPolicy(object):
 
 class GroupPolicy(object):
     def __init__(self):
-        self._re_group_id = re.compile(r"^[a-z0-9][\w\.-]+$", re.I)
-
         policy = r'^(%s).*$' % ('|'.join(
             getattr(settings, 'UW_GROUP_BLACKLIST', [])))
         self._policy_restricted = re.compile(policy, re.I)
+        self._gws = GWS()
 
     def valid(self, group_id):
-        if self._re_group_id.match(group_id) is None:
+        if not self._gws._is_valid_group_id(group_id):
             raise GroupPolicyException("Invalid Group ID: %s" % group_id)
 
         elif self._policy_restricted.match(group_id):
@@ -169,7 +168,6 @@ class GroupPolicy(object):
                 "This group cannot be used in Canvas: %s" % group_id)
 
     def get_effective_members(self, group_id, act_as=None):
-        self._gws = GWS()
         self._gws.actas = act_as
         self._user_policy = UserPolicy()
         self._root_group_id = group_id
