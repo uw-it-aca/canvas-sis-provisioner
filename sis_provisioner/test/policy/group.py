@@ -24,6 +24,7 @@ class GroupPolicyTest(TestCase):
 class EffectiveMemberTest(TestCase):
     def test_effective_members(self):
         with self.settings(
+                UW_GROUP_BLACKLIST=['uw_student', 'uw_staff'],
                 RESTCLIENTS_GWS_DAO_CLASS='restclients.dao_implementation.gws.File',
                 RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
             policy = GroupPolicy()
