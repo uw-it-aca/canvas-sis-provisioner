@@ -1,3 +1,4 @@
+from django.conf import settings
 from restclients.cache_implementation import TimedCache
 from restclients.models import CacheEntryTimed
 import re
@@ -24,6 +25,11 @@ class RestClientsCache(TimedCache):
             kws_url_key % '[\-\da-fA-F]{36}\\')), 60 * 60 * 24 * 30),
         (re.compile(r"^%s" % (
             kws_url_current_key % "[\-\da-zA-Z]+")), 60 * 60 * 24 * 7),
+    )
+    url_policies["gws"] = (
+        (re.compile(r"^/group_sws/v2/group/%s/effective_member/" % (
+            getattr(settings, 'NONPERSONAL_NETID_EXCEPTION_GROUP', 'none'))),
+            60 * 60),
     )
     url_policies["canvas"] = (
         (re.compile(r"^%s" % (canvas_url_roles % '\d+')), 60 * 60 * 4),

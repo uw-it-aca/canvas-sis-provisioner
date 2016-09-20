@@ -1,7 +1,7 @@
 from django.conf import settings
 from restclients.pws import PWS
 from restclients.gws import GWS
-from restclients.exceptions import DataFailureException
+from restclients.exceptions import InvalidGroupID, DataFailureException
 from restclients.models.canvas import CanvasUser
 from restclients.models.sws import Section
 from sis_provisioner.models import Curriculum, SubAccountOverride, TermOverride
@@ -47,6 +47,7 @@ class UserPolicy(object):
             ['(?:css|wire|lib|event)[0-9]{4,}'])
         self._re_canvas_id = re.compile(r"^\d+$")
         self._pws = PWS()
+        self._gws = GWS()
 
     def valid(self, login_id):
         try:
@@ -75,8 +76,23 @@ class UserPolicy(object):
         if self._application_net_id_whitelist.match(login_id) is None:
             raise UserPolicyException('Not a valid Application UWNetID')
 
-    def valid_reg_id(self, login_id):
-        if not self._pws.valid_uwregid(login_id):
+    def valid_nonpersonal_net_id(self, netid):
+        try:
+            self.valid_admin_net_id(netid)
+        except UserPolicyException:
+            try:
+                self.valid_application_net_id(netid)
+            except UserPolicyException:
+                group = getattr(settings, 'NONPERSONAL_NETID_EXCEPTION_GROUP',
+                                '')
+                try:
+                    if not self._gws.is_effective_member(group, netid):
+                        raise UserPolicyException('UWNetID not permitted')
+                except InvalidGroupID as err:
+                    raise UserPolicyException('UWNetID not permitted')
+
+    def valid_reg_id(self, regid):
+        if not self._pws.valid_uwregid(regid):
             raise UserPolicyException('Not a valid UWRegID')
 
     def valid_gmail_id(self, login_id):
@@ -105,14 +121,7 @@ class UserPolicy(object):
 
         except DataFailureException, err:
             if err.status == 404:  # Non-personal netid?
-                try:
-                    self.valid_admin_net_id(netid)
-                except UserPolicyException:
-                    try:
-                        self.valid_application_net_id(netid)
-                    except UserPolicyException:
-                        raise UserPolicyException('UWNetID not permitted')
-
+                self.valid_nonpersonal_net_id(netid)
                 person = self._pws.get_entity_by_netid(netid)
             else:
                 raise
@@ -127,10 +136,7 @@ class UserPolicy(object):
         except DataFailureException, err:
             if err.status == 404:  # Non-personal regid?
                 person = self._pws.get_entity_by_regid(regid)
-                try:
-                    self.valid_admin_net_id(person.uwnetid)
-                except:
-                    raise UserPolicyException('UWRegID not permitted')
+                self.valid_nonpersonal_net_id(person.netid)
             else:
                 raise
 
@@ -148,14 +154,13 @@ class UserPolicy(object):
 
 class GroupPolicy(object):
     def __init__(self):
-        self._re_group_id = re.compile(r"^[a-z0-9][\w\.-]+$", re.I)
-
         policy = r'^(%s).*$' % ('|'.join(
             getattr(settings, 'UW_GROUP_BLACKLIST', [])))
         self._policy_restricted = re.compile(policy, re.I)
+        self._gws = GWS()
 
     def valid(self, group_id):
-        if self._re_group_id.match(group_id) is None:
+        if not self._gws._is_valid_group_id(group_id):
             raise GroupPolicyException("Invalid Group ID: %s" % group_id)
 
         elif self._policy_restricted.match(group_id):
@@ -163,7 +168,6 @@ class GroupPolicy(object):
                 "This group cannot be used in Canvas: %s" % group_id)
 
     def get_effective_members(self, group_id, act_as=None):
-        self._gws = GWS()
         self._gws.actas = act_as
         self._user_policy = UserPolicy()
         self._root_group_id = group_id
