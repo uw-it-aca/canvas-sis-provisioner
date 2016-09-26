@@ -339,7 +339,7 @@ class Enrollment(models.Model):
         }
 
     class Meta:
-        unique_together = ("course_id", "reg_id")
+        unique_together = ("course_id", "reg_id", "role")
 
 
 class UserManager(models.Manager):
