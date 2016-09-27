@@ -926,8 +926,8 @@ class CSVBuilder():
                 course.provisioned_status = None
 
             except CoursePolicyException as err:
-                course.provisioned_status = "%s %s" % (
-                    self.LMS_STATUS_PREFIX, section.primary_lms)
+                course.provisioned_status = "%s %s (%s)" % (
+                    self.LMS_STATUS_PREFIX, section.primary_lms, err)
 
             if section.is_withdrawn:
                 course.priority = PRIORITY_NONE
