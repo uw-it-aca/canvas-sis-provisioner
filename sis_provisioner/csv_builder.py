@@ -229,21 +229,20 @@ class CSVBuilder():
                 if not self._course_policy.is_active_section(section):
                     continue
 
-            except (UserPolicyException,
-                    InvalidCanvasIndependentStudyCourse) as err:
-                enrollment.queue_id = None
-                enrollment.priority = PRIORITY_NONE
-                enrollment.save()
-                logger.info("Skip enrollment %s in %s: %s" % (
-                    enrollment.reg_id, enrollment.course_id, err))
+            except UserPolicyException as err:
+                if err == 'Missing UWNetID':
+                    _requeue_enrollment_event(enrollment, err)
+                else:
+                    _skip_enrollment_event(enrollment, err)
+                continue
+            except InvalidCanvasIndependentStudyCourse as err:
+                _skip_enrollment_event(enrollment)
                 continue
             except DataFailureException as err:
-                enrollment.queue_id = None
                 if err.status == 404:
-                    enrollment.priority = PRIORITY_NONE
-                enrollment.save()
-                logger.info("Defer enrollment %s in %s: %s" % (
-                    enrollment.reg_id, enrollment.course_id, err))
+                    _skip_enrollment_event(enrollment, err)
+                else:
+                    _requeue_enrollment_event(enrollment, err)
                 continue
 
             if enrollment.is_instructor():
@@ -314,6 +313,20 @@ class CSVBuilder():
             self.generate_user_csv_for_person(person)
 
         return self._csv.write_files()
+
+    def _requeue_enrollment_event(self, enrollment, err):
+        enrollment.queue_id = None
+        enrollment.priority = PRIORITY_DEFAULT
+        enrollment.save()
+        logger.info("Requeue enrollment %s in %s: %s" % (
+            enrollment.reg_id, enrollment.course_id, err))
+
+    def _skip_enrollment_event(self, enrollment, err):
+        enrollment.queue_id = None
+        enrollment.priority = PRIORITY_NONE
+        enrollment.save()
+        logger.info("Skip enrollment %s in %s: %s" % (
+            enrollment.reg_id, enrollment.course_id, err))
 
     def generate_csv_for_course_members(self, course_members):
         """
