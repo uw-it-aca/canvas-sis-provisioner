@@ -19,7 +19,7 @@ class NetidPolicyTest(TestCase):
         self.assertRaises(MissingLoginIdException, policy.valid_net_id, '')
         self.assertRaises(TemporaryNetidException, policy.valid_net_id, 'wire1234')
         self.assertRaises(TemporaryNetidException, policy.valid_net_id, 'event1234')
-        self.assertRaises(InvalidLoginIdException, policy.valid_net_id, 'lib1234')
+        self.assertRaises(TemporaryNetidException, policy.valid_net_id, 'lib1234')
         self.assertRaises(TemporaryNetidException, policy.valid_net_id, 'css1234')
         self.assertRaises(InvalidLoginIdException, policy.valid_net_id, '1abcdef')
         self.assertRaises(InvalidLoginIdException, policy.valid_net_id, 'j123456789012345')
