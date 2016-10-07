@@ -20,8 +20,8 @@ from restclients.exceptions import DataFailureException,\
 from sis_provisioner.models import Course, Curriculum, Enrollment, Group,\
     CourseMember, GroupMemberGroup, PRIORITY_NONE, PRIORITY_DEFAULT
 from sis_provisioner.policy import UserPolicy, UserPolicyException,\
-    CoursePolicy, CoursePolicyException, GroupPolicy, GroupPolicyException,\
-    GroupNotFoundException, GroupUnauthorizedException
+    MissingLoginIdException, CoursePolicy, CoursePolicyException,\
+    GroupPolicy, GroupPolicyException
 from sis_provisioner.loader import load_user
 from sis_provisioner.csv_data import CSVData
 
@@ -33,7 +33,6 @@ from sis_provisioner.csv_formatters import csv_for_user, csv_for_term,\
 
 from datetime import datetime
 import re
-import copy
 import json
 
 
@@ -135,8 +134,8 @@ class CSVBuilder():
                     except DataFailureException:
                         raise
 
-                    except (GroupPolicyException, GroupNotFoundException,
-                            GroupUnauthorizedException) as err:
+                    # skip on any group policy exception
+                    except GroupPolicyException as err:
                         logger.info("Skipped group %s (%s)" % (
                             group.group_id, err))
 
@@ -229,21 +228,18 @@ class CSVBuilder():
                 if not self._course_policy.is_active_section(section):
                     continue
 
+            except MissingLoginIdException as err:
+                self._requeue_enrollment_event(enrollment, err)
+                continue
             except (UserPolicyException,
                     InvalidCanvasIndependentStudyCourse) as err:
-                enrollment.queue_id = None
-                enrollment.priority = PRIORITY_NONE
-                enrollment.save()
-                logger.info("Skip enrollment %s in %s: %s" % (
-                    enrollment.reg_id, enrollment.course_id, err))
+                self._skip_enrollment_event(enrollment, err)
                 continue
             except DataFailureException as err:
-                enrollment.queue_id = None
                 if err.status == 404:
-                    enrollment.priority = PRIORITY_NONE
-                enrollment.save()
-                logger.info("Defer enrollment %s in %s: %s" % (
-                    enrollment.reg_id, enrollment.course_id, err))
+                    self._skip_enrollment_event(enrollment, err)
+                else:
+                    self._requeue_enrollment_event(enrollment, err)
                 continue
 
             if enrollment.is_instructor():
@@ -314,6 +310,20 @@ class CSVBuilder():
             self.generate_user_csv_for_person(person)
 
         return self._csv.write_files()
+
+    def _requeue_enrollment_event(self, enrollment, err):
+        enrollment.queue_id = None
+        enrollment.priority = PRIORITY_DEFAULT
+        enrollment.save()
+        logger.info("Requeue enrollment %s in %s: %s" % (
+            enrollment.reg_id, enrollment.course_id, err))
+
+    def _skip_enrollment_event(self, enrollment, err):
+        enrollment.queue_id = None
+        enrollment.priority = PRIORITY_NONE
+        enrollment.save()
+        logger.info("Skip enrollment %s in %s: %s" % (
+            enrollment.reg_id, enrollment.course_id, err))
 
     def generate_csv_for_course_members(self, course_members):
         """
@@ -926,8 +936,8 @@ class CSVBuilder():
                 course.provisioned_status = None
 
             except CoursePolicyException as err:
-                course.provisioned_status = "%s %s" % (
-                    self.LMS_STATUS_PREFIX, section.primary_lms)
+                course.provisioned_status = "%s %s (%s)" % (
+                    self.LMS_STATUS_PREFIX, section.primary_lms, err)
 
             if section.is_withdrawn:
                 course.priority = PRIORITY_NONE

@@ -13,15 +13,27 @@ class UserPolicyException(Exception):
     pass
 
 
+class MissingLoginIdException(UserPolicyException):
+    pass
+
+
+class TemporaryNetidException(UserPolicyException):
+    pass
+
+
+class InvalidLoginIdException(UserPolicyException):
+    pass
+
+
 class GroupPolicyException(Exception):
     pass
 
 
-class GroupNotFoundException(Exception):
+class GroupNotFoundException(GroupPolicyException):
     pass
 
 
-class GroupUnauthorizedException(Exception):
+class GroupUnauthorizedException(GroupPolicyException):
     pass
 
 
@@ -55,26 +67,26 @@ class UserPolicy(object):
         except UserPolicyException:
             try:
                 self.valid_reg_id(login_id)
-            except UserPolicyException:
+            except InvalidLoginIdException:
                 self.valid_gmail_id(login_id)
 
     def valid_net_id(self, login_id):
         if not login_id:
-            raise UserPolicyException('Missing UWNetID')
+            raise MissingLoginIdException('Missing UWNetID')
 
         if self._temp_net_id_whitelist.match(login_id):
-            raise UserPolicyException('Temporary UWNetID not permitted')
+            raise TemporaryNetidException('Temporary UWNetID not permitted')
 
         if not self._pws.valid_uwnetid(login_id):
-            raise UserPolicyException('Not a valid UWNetID')
+            raise InvalidLoginIdException('Not a valid UWNetID')
 
     def valid_admin_net_id(self, login_id):
         if self._admin_net_id_whitelist.match(login_id) is None:
-            raise UserPolicyException('Not a valid Admin UWNetID')
+            raise InvalidLoginIdException('Not a valid Admin UWNetID')
 
     def valid_application_net_id(self, login_id):
         if self._application_net_id_whitelist.match(login_id) is None:
-            raise UserPolicyException('Not a valid Application UWNetID')
+            raise InvalidLoginIdException('Not a valid Application UWNetID')
 
     def valid_nonpersonal_net_id(self, netid):
         try:
@@ -82,37 +94,37 @@ class UserPolicy(object):
         except UserPolicyException:
             try:
                 self.valid_application_net_id(netid)
-            except UserPolicyException:
+            except InvalidLoginIdException:
                 group = getattr(settings, 'NONPERSONAL_NETID_EXCEPTION_GROUP',
                                 '')
                 try:
                     if not self._gws.is_effective_member(group, netid):
-                        raise UserPolicyException('UWNetID not permitted')
-                except InvalidGroupID as err:
-                    raise UserPolicyException('UWNetID not permitted')
+                        raise InvalidLoginIdException('UWNetID not permitted')
+                except InvalidGroupID:
+                    raise InvalidLoginIdException('UWNetID not permitted')
 
     def valid_reg_id(self, regid):
         if not self._pws.valid_uwregid(regid):
-            raise UserPolicyException('Not a valid UWRegID')
+            raise InvalidLoginIdException('UWNetID not permitted')
 
     def valid_gmail_id(self, login_id):
         try:
             (username, domain) = login_id.lower().split("@")
             username = username.split("+", 1)[0].replace(".", "")
             if not len(username):
-                raise UserPolicyException(
+                raise InvalidLoginIdException(
                     "Invalid username: %s" % login_id)
         except:
-            raise UserPolicyException("Invalid username: %s" % login_id)
+            raise InvalidLoginIdException("Invalid username: %s" % login_id)
 
         if domain not in getattr(settings, 'LOGIN_DOMAIN_WHITELIST', []):
-            raise UserPolicyException("Invalid domain: %s" % login_id)
+            raise InvalidLoginIdException("Invalid domain: %s" % login_id)
 
         return "%s@%s" % (username, domain)
 
     def valid_canvas_id(self, canvas_id):
         if (self._re_canvas_id.match(canvas_id) is None):
-            raise UserPolicyException("Invalid Canvas ID: %s" % canvas_id)
+            raise InvalidLoginIdException("Invalid Canvas ID: %s" % canvas_id)
 
     def get_person_by_netid(self, netid):
         try:
@@ -201,8 +213,7 @@ class GroupPolicy(object):
                         invalid_members.update(invalid_sub)
                         member_group_ids += [member.name] + member_subgroups
 
-                except (GroupNotFoundException, GroupUnauthorizedException,
-                        UserPolicyException, GroupPolicyException) as err:
+                except (UserPolicyException, GroupPolicyException) as err:
                     member.error = err
                     invalid_members[member.name] = member
 
