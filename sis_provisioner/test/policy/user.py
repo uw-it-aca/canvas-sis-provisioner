@@ -1,6 +1,6 @@
 from django.test import TestCase
-from django.conf import settings
-from sis_provisioner.policy import UserPolicy, UserPolicyException
+from sis_provisioner.policy import UserPolicy, UserPolicyException,\
+    MissingLoginIdException
 
 
 class NetidPolicyTest(TestCase):
@@ -14,13 +14,14 @@ class NetidPolicyTest(TestCase):
         self.assertEquals(policy.valid_net_id('j1234567890'), None)
 
         # Invalid
-        self.assertRaises(UserPolicyException, policy.valid_net_id, None)
-        self.assertRaises(UserPolicyException, policy.valid_net_id, '')
-        self.assertRaises(UserPolicyException, policy.valid_net_id, 'wire1234')
-        self.assertRaises(UserPolicyException, policy.valid_net_id, 'event1234')
-        self.assertRaises(UserPolicyException, policy.valid_net_id, 'lib1234')
-        self.assertRaises(UserPolicyException, policy.valid_net_id, 'css1234')
-        self.assertRaises(UserPolicyException, policy.valid_net_id, '1abcdef')
+        self.assertRaises(MissingLoginIdException, policy.valid_net_id, None)
+        self.assertRaises(MissingLoginIdException, policy.valid_net_id, '')
+        self.assertRaises(TemporaryNetidException, policy.valid_net_id, 'wire1234')
+        self.assertRaises(TemporaryNetidException, policy.valid_net_id, 'event1234')
+        self.assertRaises(InvalidLoginIdException, policy.valid_net_id, 'lib1234')
+        self.assertRaises(TemporaryNetidException, policy.valid_net_id, 'css1234')
+        self.assertRaises(InvalidLoginIdException, policy.valid_net_id, '1abcdef')
+        self.assertRaises(InvalidLoginIdException, policy.valid_net_id, 'j123456789012345')
         self.assertRaises(UserPolicyException, policy.valid_net_id, 'j123456789012345')
 
     def test_valid_admin_netid(self):
@@ -31,7 +32,7 @@ class NetidPolicyTest(TestCase):
         self.assertEquals(policy.valid_admin_net_id('wadm_javerage'), None)
 
         # Invalid
-        self.assertRaises(UserPolicyException, policy.valid_admin_net_id, 'javerage')
+        self.assertRaises(InvalidLoginIdException, policy.valid_admin_net_id, 'javerage')
 
     def test_valid_application_netid(self):
         policy = UserPolicy()
@@ -54,7 +55,7 @@ class NetidPolicyTest(TestCase):
             self.assertEquals(policy.valid_nonpersonal_net_id('javerage'), None)
 
             # Invalid
-            self.assertRaises(UserPolicyException, policy.valid_nonpersonal_net_id, 'canvas')
+            self.assertRaises(InvalidLoginIdException, policy.valid_nonpersonal_net_id, 'canvas')
 
 
 class RegidPolicyTest(TestCase):
@@ -65,8 +66,9 @@ class RegidPolicyTest(TestCase):
         self.assertEquals(policy.valid_reg_id('9136CCB8F66711D5BE060004AC494FFE'), None)
 
         # Invalid
-        self.assertRaises(UserPolicyException, policy.valid_reg_id, '9136CCB8F66711D5BE060004AC494FF')
-        self.assertRaises(UserPolicyException, policy.valid_reg_id, '9136CCB8F66711D5BE060004AC494FFEE')
+        self.assertRaises(InvalidLoginIdException, policy.valid_reg_id, '9136CCB8F66711D5BE060004AC494FF')
+        self.assertRaises(InvalidLoginIdException, policy.valid_reg_id, '9136CCB8F66711D5BE060004AC494FFEE')
+        self.assertRaises(InvalidLoginIdException, policy.valid_reg_id, 'javerage')
         self.assertRaises(UserPolicyException, policy.valid_reg_id, 'javerage')
 
 
@@ -92,7 +94,7 @@ class GmailPolicyTest(TestCase):
 
             for domain in invalid_domains:
                 user = "%s@%s" % (default_user, domain)
-                self.assertRaises(UserPolicyException, policy.valid_gmail_id, user)
+                self.assertRaises(InvalidLoginIdException, policy.valid_gmail_id, user)
 
     def test_valid_user(self):
         with self.settings(
