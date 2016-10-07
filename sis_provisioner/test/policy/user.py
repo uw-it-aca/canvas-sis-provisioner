@@ -1,6 +1,7 @@
 from django.test import TestCase
 from sis_provisioner.policy import UserPolicy, UserPolicyException,\
-    MissingLoginIdException
+    MissingLoginIdException, InvalidLoginIdException,\
+    TemporaryNetidException
 
 
 class NetidPolicyTest(TestCase):
