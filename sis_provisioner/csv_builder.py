@@ -20,8 +20,8 @@ from restclients.exceptions import DataFailureException,\
 from sis_provisioner.models import Course, Curriculum, Enrollment, Group,\
     CourseMember, GroupMemberGroup, PRIORITY_NONE, PRIORITY_DEFAULT
 from sis_provisioner.policy import UserPolicy, UserPolicyException,\
-    CoursePolicy, CoursePolicyException, GroupPolicy, GroupPolicyException,\
-    GroupNotFoundException, GroupUnauthorizedException
+    MissingLoginIdException, CoursePolicy, CoursePolicyException,\
+    GroupPolicy, GroupPolicyException
 from sis_provisioner.loader import load_user
 from sis_provisioner.csv_data import CSVData
 
@@ -33,7 +33,6 @@ from sis_provisioner.csv_formatters import csv_for_user, csv_for_term,\
 
 from datetime import datetime
 import re
-import copy
 import json
 
 
@@ -135,8 +134,8 @@ class CSVBuilder():
                     except DataFailureException:
                         raise
 
-                    except (GroupPolicyException, GroupNotFoundException,
-                            GroupUnauthorizedException) as err:
+                    # skip on any group policy exception
+                    except GroupPolicyException as err:
                         logger.info("Skipped group %s (%s)" % (
                             group.group_id, err))
 
@@ -229,20 +228,18 @@ class CSVBuilder():
                 if not self._course_policy.is_active_section(section):
                     continue
 
-            except UserPolicyException as err:
-                if err == 'Missing UWNetID':
-                    _requeue_enrollment_event(enrollment, err)
-                else:
-                    _skip_enrollment_event(enrollment, err)
+            except MissingLoginIdException as err:
+                self._requeue_enrollment_event(enrollment, err)
                 continue
-            except InvalidCanvasIndependentStudyCourse as err:
-                _skip_enrollment_event(enrollment)
+            except (UserPolicyException,
+                    InvalidCanvasIndependentStudyCourse) as err:
+                self._skip_enrollment_event(enrollment, err)
                 continue
             except DataFailureException as err:
                 if err.status == 404:
-                    _skip_enrollment_event(enrollment, err)
+                    self._skip_enrollment_event(enrollment, err)
                 else:
-                    _requeue_enrollment_event(enrollment, err)
+                    self._requeue_enrollment_event(enrollment, err)
                 continue
 
             if enrollment.is_instructor():
