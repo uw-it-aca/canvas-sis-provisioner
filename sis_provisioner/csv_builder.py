@@ -124,7 +124,7 @@ class CSVBuilder():
                                 gmg.save()
 
                         for member in invalid_members:
-                            logger.info("Skipped group member %s (%s)" % (
+                            logger.info("Skip group member %s (%s)" % (
                                 member.name, member.error))
 
                         for member in members:
@@ -157,7 +157,7 @@ class CSVBuilder():
 
                     # skip on any group policy exception
                     except GroupPolicyException as err:
-                        logger.info("Skipped group %s (%s)" % (
+                        logger.info("Skip group %s (%s)" % (
                             group.group_id, err))
 
             except DataFailureException as err:
@@ -204,7 +204,7 @@ class CSVBuilder():
                 self.generate_user_csv_for_person(person)
 
             except Exception as err:
-                logger.info("Skipped group member %s (%s)" % (
+                logger.info("Skip group member %s (%s)" % (
                     member.name, err))
                 return
 
@@ -472,7 +472,7 @@ class CSVBuilder():
                 person = self._user_policy.get_person_by_netid(user.net_id)
                 self.generate_user_csv_for_person(person, force=True)
             except UserPolicyException as err:
-                logger.info("Skipped user %s: %s" % (user.reg_id, err))
+                logger.info("Skip user %s: %s" % (user.reg_id, err))
 
         return self._csv.write_files()
 
@@ -781,7 +781,7 @@ class CSVBuilder():
             self._user_policy.valid_net_id(person.uwnetid)
         except UserPolicyException as err:
             self._invalid_users[person.uwregid] = True
-            logger.info("Skipped user %s: %s" % (person.uwregid, err))
+            logger.info("Skip user %s: %s" % (person.uwregid, err))
             return
 
         if force is True:
@@ -829,13 +829,13 @@ class CSVBuilder():
             data = json.loads(err.msg)
             self._remove_from_queue(section_id, "%s: %s %s" % (
                 err.url, err.status, data["StatusDescription"]))
-            logger.info("Skipping section %s: %s %s" % (
+            logger.info("Skip section %s: %s %s" % (
                 label, err.status, data["StatusDescription"]))
             raise
 
         except ValueError as err:
             self._remove_from_queue(section_id, err)
-            logger.info("Skipping section %s: %s" % (label, err))
+            logger.info("Skip section %s: %s" % (label, err))
             raise
 
     def get_canvas_sections_for_course(self, course_sis_id):
