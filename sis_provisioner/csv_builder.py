@@ -60,7 +60,13 @@ class CSVBuilder():
         canvas = CanvasCourses()
         for course_id in course_ids:
             try:
-                canvas_course = canvas.get_course(course_id)
+                try:
+                    self._course_policy.valid_adhoc_course_sis_id(course_id)
+                    (prefix, canvas_course_id) = course_id.split('_')
+                    canvas_course = canvas.get_course(canvas_course_id)
+                except CoursePolicyException:
+                    canvas_course = canvas.get_course_by_sis_id(course_id)
+
                 if canvas_course.sis_course_id is None:
                     canvas.update_sis_id(canvas_course.course_id, course_id)
             except DataFailureException as err:
