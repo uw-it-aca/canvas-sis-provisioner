@@ -57,8 +57,30 @@ class CSVBuilder():
         """
         course_ids = list(set(course_ids))
         cached_course_enrollments = {}
+        canvas = CanvasCourses()
         for course_id in course_ids:
+            try:
+                try:
+                    self._course_policy.valid_adhoc_course_sis_id(course_id)
+                    (prefix, canvas_course_id) = course_id.split('_')
+                    canvas_course = canvas.get_course(canvas_course_id)
+                except CoursePolicyException:
+                    canvas_course = canvas.get_course_by_sis_id(course_id)
+
+                if canvas_course.sis_course_id is None:
+                    canvas.update_sis_id(canvas_course.course_id, course_id)
+            except DataFailureException as err:
+                if err.status == 404:
+                    Group.objects.deprioritize_course(course_id)
+                    logger.info("Drop group sync for deleted course %s" % (
+                        course_id))
+                    continue
+
             section_id = self._course_policy.group_section_sis_id(course_id)
+            if not self._csv.has_section(section_id):
+                self._csv.add_section(section_id,
+                                      csv_for_group_section(course_id))
+
             cached_members = CourseMember.objects.filter(course_id=course_id)
             current_members = []
 
@@ -73,10 +95,9 @@ class CSVBuilder():
             except CoursePolicyException:
                 canvas_enrollments = None
             except DataFailureException as err:
-                Group.objects.filter(course_id=course_id).update(
-                    priority=PRIORITY_NONE if (
-                        err.status == 404) else PRIORITY_DEFAULT,
-                    queue_id=None)
+                Group.objects.dequeue_course(course_id)
+                logger.info("Requeue group sync for course %s: %s" % (
+                    course_id, err))
                 continue
 
             groups = Group.objects.filter(course_id=course_id,
@@ -103,7 +124,7 @@ class CSVBuilder():
                                 gmg.save()
 
                         for member in invalid_members:
-                            logger.info("Skipped group member %s (%s)" % (
+                            logger.info("Skip group member %s (%s)" % (
                                 member.name, member.error))
 
                         for member in members:
@@ -136,23 +157,12 @@ class CSVBuilder():
 
                     # skip on any group policy exception
                     except GroupPolicyException as err:
-                        logger.info("Skipped group %s (%s)" % (
+                        logger.info("Skip group %s (%s)" % (
                             group.group_id, err))
 
             except DataFailureException as err:
                 Group.objects.filter(course_id=course_id).update(queue_id=None)
                 continue
-
-            if not self._csv.has_section(section_id):
-                try:
-                    self._course_policy.valid_adhoc_course_sis_id(course_id)
-                    (prefix, canvas_course_id) = course_id.split('_')
-                    CanvasCourses().update_sis_id(canvas_course_id, course_id)
-                except CoursePolicyException:
-                    pass
-
-                self._csv.add_section(section_id,
-                                      csv_for_group_section(course_id))
 
             for member in cached_members:
                 # Try to match on name, type, and role
@@ -194,7 +204,7 @@ class CSVBuilder():
                 self.generate_user_csv_for_person(person)
 
             except Exception as err:
-                logger.info("Skipped group member %s (%s)" % (
+                logger.info("Skip group member %s (%s)" % (
                     member.name, err))
                 return
 
@@ -288,12 +298,8 @@ class CSVBuilder():
             else:  # student/auditor
                 if len(section.linked_section_urls):
                     # Don't enroll students into primary sections
-                    enrollment.queue_id = None
-                    enrollment.priority = PRIORITY_NONE
-                    enrollment.save()
-                    logger.info("Skip enrollment %s in %s: %s" % (
-                        enrollment.reg_id, enrollment.course_id,
-                        'Section has linked sections'))
+                    self._skip_enrollment_event(enrollment,
+                                                'Section has linked sections')
                     continue
 
                 registration = Registration(
@@ -466,7 +472,7 @@ class CSVBuilder():
                 person = self._user_policy.get_person_by_netid(user.net_id)
                 self.generate_user_csv_for_person(person, force=True)
             except UserPolicyException as err:
-                logger.info("Skipped user %s: %s" % (user.reg_id, err))
+                logger.info("Skip user %s: %s" % (user.reg_id, err))
 
         return self._csv.write_files()
 
@@ -775,7 +781,7 @@ class CSVBuilder():
             self._user_policy.valid_net_id(person.uwnetid)
         except UserPolicyException as err:
             self._invalid_users[person.uwregid] = True
-            logger.info("Skipped user %s: %s" % (person.uwregid, err))
+            logger.info("Skip user %s: %s" % (person.uwregid, err))
             return
 
         if force is True:
@@ -823,13 +829,13 @@ class CSVBuilder():
             data = json.loads(err.msg)
             self._remove_from_queue(section_id, "%s: %s %s" % (
                 err.url, err.status, data["StatusDescription"]))
-            logger.info("Skipping section %s: %s %s" % (
+            logger.info("Skip section %s: %s %s" % (
                 label, err.status, data["StatusDescription"]))
             raise
 
         except ValueError as err:
             self._remove_from_queue(section_id, err)
-            logger.info("Skipping section %s: %s" % (label, err))
+            logger.info("Skip section %s: %s" % (label, err))
             raise
 
     def get_canvas_sections_for_course(self, course_sis_id):

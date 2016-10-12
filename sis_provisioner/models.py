@@ -438,6 +438,8 @@ class GroupManager(models.Manager):
 
         groups = super(GroupManager, self).get_queryset().filter(
             queue_id__isnull=True
+        ).exclude(
+            priority=PRIORITY_NONE
         ).order_by('-priority', 'provisioned_date')
 
         group_ids = set()
@@ -505,6 +507,20 @@ class GroupManager(models.Manager):
             kwargs['priority'] = PRIORITY_DEFAULT
 
         self.queued(queue_id).update(**kwargs)
+
+    def dequeue_course(self, course_id):
+        super(GroupManager, self).get_queryset().filter(
+            course_id=course_id
+        ).update(
+            priority=PRIORITY_DEFAULT, queue_id=None
+        )
+
+    def deprioritize_course(self, course_id):
+        super(GroupManager, self).get_queryset().filter(
+            course_id=course_id
+        ).update(
+            priority=PRIORITY_NONE, queue_id=None
+        )
 
 
 class Group(models.Model):
