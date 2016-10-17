@@ -31,7 +31,7 @@ from sis_provisioner.csv_formatters import csv_for_user, csv_for_term,\
     csv_for_sis_student_enrollment, csv_for_xlist, csv_for_account,\
     sisid_for_account, header_for_accounts, titleize
 
-from datetime import datetime
+from datetime import datetime, timedelta
 import re
 import json
 
@@ -226,6 +226,11 @@ class CSVBuilder():
         Generates full csv for each of the passed sis_provisioner.Enrollment
         objects.
         """
+        missing_login_id_timeout = getattr(
+            settings, 'MISSING_LOGIN_ID_RETRY_TIMEOUT', 48)
+        retry_missing_id = datetime.utcnow().replace(tzinfo=utc) - timedelta(
+            hours=missing_login_id_timeout)
+
         for enrollment in enrollments:
             try:
                 person = self._user_policy.get_person_by_regid(
@@ -239,7 +244,11 @@ class CSVBuilder():
                     continue
 
             except MissingLoginIdException as err:
-                self._requeue_enrollment_event(enrollment, err)
+                if enrollment.last_modified > retry_missing_id:
+                    self._requeue_enrollment_event(enrollment, err)
+                else:
+                    self._skip_enrollment_event(enrollment, err)
+
                 continue
             except (UserPolicyException,
                     InvalidCanvasIndependentStudyCourse) as err:
