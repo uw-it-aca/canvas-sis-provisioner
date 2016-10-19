@@ -302,7 +302,7 @@ class Loader():
                             member.name, err))
 
 
-def load_user(person):
+def load_user(person, priority=PRIORITY_DEFAULT):
     """
     Loads a single user from PWS-returned json
     """
@@ -321,8 +321,8 @@ def load_user(person):
     if user is None:
         user = User(added_date=datetime.utcnow().replace(tzinfo=utc))
 
-    if (user.reg_id != person.uwregid or
-            user.net_id != person.uwnetid):
+    if (user.reg_id != person.uwregid or user.net_id != person.uwnetid or
+            priority > PRIORITY_DEFAULT):
         user.reg_id = person.uwregid
         user.net_id = person.uwnetid
         user.priority = PRIORITY_HIGH
