@@ -1,12 +1,10 @@
 import re
 import json
 from logging import getLogger
-from restclients.sws import SWS
 from sis_provisioner.models import Enrollment, PRIORITY_NONE
 from sis_provisioner.views.rest_dispatch import RESTDispatch
 from sis_provisioner.views import regid_from_request, netid_from_request
-from sis_provisioner.policy import UserPolicy
-from restclients.pws import PWS
+from sis_provisioner.dao.user import get_person_by_netid
 
 
 class EnrollmentInvalidException(Exception):
@@ -19,8 +17,6 @@ class EnrollmentListView(RESTDispatch):
         GET returns 200 with Enrollment details.
     """
     def __init__(self):
-        self._sws = SWS()
-        self._pws = PWS()
         self._criteria = [
             {
                 'term': 'year',
@@ -50,7 +46,6 @@ class EnrollmentListView(RESTDispatch):
             }
         ]
         self._log = getLogger(__name__)
-        self._user_policy = UserPolicy()
 
     def GET(self, request, **kwargs):
         json_rep = {
@@ -90,8 +85,8 @@ class EnrollmentListView(RESTDispatch):
         reg_id = None
         try:
             if 'net_id' in request.GET:
-                reg_id = self._pws.get_person_by_netid(
-                    netid_from_request(request.GET)).uwregid
+                person = get_person_by_netid(netid_from_request(request.GET))
+                reg_id = person.uwregid
             elif 'reg_id' in request.GET:
                 reg_id = regid_from_request(request.GET)
             else:

@@ -1,11 +1,15 @@
+from sis_provisioner.dao.canvas import create_unused_courses_report,\
+    create_course_provisioning_report, get_report_data, delete_report,\
+    get_term_by_sis_id
+from sis_provisioner.dao.group import get_effective_members
+from sis_provisioner.dao.user import get_person_by_netid
+from sis_provisioner.dao.term import get_term_by_date, get_term_after,\
+    term_sis_id
+from sis_provisioner.dao.course import get_sections_by_term,\
+    get_section_by_label, is_time_schedule_construction,\
+    valid_academic_course_sis_id
 from sis_provisioner.models import Course, Term, User, Enrollment,\
     PRIORITY_NONE, PRIORITY_DEFAULT, PRIORITY_HIGH
-from sis_provisioner.policy import UserPolicy, CoursePolicy
-from restclients.sws.term import get_term_by_date, get_term_after
-from restclients.sws.section import get_changed_sections_by_term,\
-    get_section_by_label
-from restclients.gws import GWS
-from restclients.canvas.reports import Reports
 from restclients.exceptions import DataFailureException
 from django.utils.timezone import utc, localtime
 from django.conf import settings
@@ -17,8 +21,6 @@ import csv
 
 class Loader():
     def __init__(self):
-        self._user_policy = UserPolicy()
-        self._course_policy = CoursePolicy()
         self._log = getLogger(__name__)
 
     def load_all_courses(self):
@@ -62,17 +64,16 @@ class Loader():
         self.queue_active_courses_for_term(term)
 
     def queue_active_courses_for_term(self, term):
-        client = Reports()
-        canvas_term = client.get_term_by_sis_id(term.canvas_sis_id())
+        canvas_term = get_term_by_sis_id(term.canvas_sis_id())
         canvas_account_id = getattr(settings, 'RESTCLIENTS_CANVAS_ACCOUNT_ID',
                                     None)
 
         # Canvas report of "unused" courses for the term
-        unused_course_report = client.create_unused_courses_report(
+        unused_course_report = create_unused_courses_report(
             canvas_account_id, term_id=canvas_term.term_id)
 
         unused_courses = {}
-        for row in csv.reader(client.get_report_data(unused_course_report)):
+        for row in csv.reader(get_report_data(unused_course_report)):
             # Create a lookup by unused course_sis_id
             try:
                 unused_courses[row[1]] = True
@@ -80,13 +81,13 @@ class Loader():
                 continue
 
         # Canvas report of all courses for the term
-        all_course_report = client.create_course_provisioning_report(
+        all_course_report = create_course_provisioning_report(
             canvas_account_id, term_id=canvas_term.term_id)
 
-        for row in csv.reader(client.get_report_data(all_course_report)):
+        for row in csv.reader(get_report_data(all_course_report)):
             try:
                 sis_course_id = row[1]
-                self._course_policy.valid_academic_course_sis_id(sis_course_id)
+                valid_academic_course_sis_id(sis_course_id)
             except Exception as ex:
                 continue
 
@@ -98,8 +99,8 @@ class Loader():
                 except Course.DoesNotExist:
                     continue
 
-        client.delete_report(unused_course_report)
-        client.delete_report(all_course_report)
+        delete_report(unused_course_report)
+        delete_report(all_course_report)
 
     def load_courses_for_term(self, term):
         """
@@ -125,9 +126,8 @@ class Loader():
                 term_first_day - timedelta(days=days))
         delta.save()
 
-        sections = get_changed_sections_by_term(
-            localtime(delta.courses_changed_since_date).date(), term,
-            transcriptable_course='all')
+        sections = get_sections_by_term(
+            localtime(delta.courses_changed_since_date).date(), term)
 
         new_courses = []
         for section_ref in sections:
@@ -149,7 +149,7 @@ class Loader():
                 continue
 
             # validate time schedule construction (TSC) for campus
-            if self._course_policy.is_time_schedule_construction(section):
+            if is_time_schedule_construction(section):
                 continue
 
             if section.is_independent_study:
@@ -272,7 +272,7 @@ class Loader():
 
             course = Course(course_id=full_course_id,
                             course_type=Course.SDB_TYPE,
-                            term_id=self._course_policy.term_sis_id(section),
+                            term_id=term_sis_id(section),
                             primary_id=primary_course_id,
                             added_date=datetime.utcnow().replace(tzinfo=utc),
                             priority=PRIORITY_HIGH)
@@ -288,14 +288,13 @@ class Loader():
         uwnetids = User.objects.all().values_list('net_id', flat=True)
         existing_netids = dict((u, True) for u in uwnetids)
 
-        gws = GWS()
-        policy = self._user_policy
         for group_id in getattr(settings, 'SIS_IMPORT_GROUPS', []):
-            members = gws.get_effective_members(group_id)
+            (members, invalid_members,
+                member_group_ids) = get_effective_members(group_id)
             for member in members:
                 if member.is_uwnetid() and member.name not in existing_netids:
                     try:
-                        load_user(policy.get_person_by_netid(member.name))
+                        load_user(get_person_by_netid(member.name))
                         existing_netids[member.name] = True
                     except Exception as err:
                         self._log.info('load_all_users: Skipped %s (%s)' % (

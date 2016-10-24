@@ -1,24 +1,42 @@
 from django.test import TestCase
 from django.conf import settings
-from sis_provisioner.policy import GroupPolicy, GroupPolicyException,\
+from sis_provisioner.dao.group import valid_group_id, is_modified_group,\
+    get_effective_members
+from sis_provisioner.exceptions import GroupPolicyException,\
     GroupNotFoundException
+from datetime import datetime, timedelta
 
 
 class GroupPolicyTest(TestCase):
     def test_valid_group(self):
         with self.settings(
                 UW_GROUP_BLACKLIST=['uw_student', 'uw_staff']):
-            policy = GroupPolicy()
 
             # Valid
-            self.assertEquals(policy.valid('u_javerage_test'), None)
-            self.assertEquals(policy.valid('uw_faculty'), None)
+            self.assertEquals(valid_group_id('u_javerage_test'), None)
+            self.assertEquals(valid_group_id('uw_faculty'), None)
 
             # Invalid
-            self.assertRaises(GroupPolicyException, policy.valid, '')
-            self.assertRaises(GroupPolicyException, policy.valid, '1')
-            self.assertRaises(GroupPolicyException, policy.valid, 'uw_student')
-            self.assertRaises(GroupPolicyException, policy.valid, 'uw_staff')
+            self.assertRaises(GroupPolicyException, valid_group_id, '')
+            self.assertRaises(GroupPolicyException, valid_group_id, '1')
+            self.assertRaises(GroupPolicyException, valid_group_id, 'uw_student')
+            self.assertRaises(GroupPolicyException, valid_group_id, 'uw_staff')
+
+
+class GroupModifiedTest(TestCase):
+    def test_modified_group(self):
+        with self.settings(
+                RESTCLIENTS_GWS_DAO_CLASS='restclients.dao_implementation.gws.File',
+                RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
+
+            mtime = datetime.now()
+            self.assertEquals(is_modified_group('u_does_not_exist', mtime), True)
+
+            mtime = datetime(2000, 10, 10, 0, 0, 0)
+            self.assertEquals(is_modified_group('u_acadev_tester', mtime), True)
+
+            mtime = datetime(2020, 10, 10, 0, 0, 0)
+            self.assertEquals(is_modified_group('u_acadev_tester', mtime), False)
 
 
 class EffectiveMemberTest(TestCase):
@@ -27,18 +45,17 @@ class EffectiveMemberTest(TestCase):
                 UW_GROUP_BLACKLIST=['uw_student', 'uw_staff'],
                 RESTCLIENTS_GWS_DAO_CLASS='restclients.dao_implementation.gws.File',
                 RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
-            policy = GroupPolicy()
 
-            (valid_members, invalid_members, member_groups) = policy.get_effective_members('u_acadev_unittest')
-
-            self.assertEquals(len(valid_members), 2)
-            self.assertEquals(len(invalid_members), 0)
-            self.assertEquals(len(member_groups), 0)
-
-            (valid_members, invalid_members, member_groups) = policy.get_effective_members('u_acadev_unittest', 'javerage')  # Using act_as
+            (valid_members, invalid_members, member_groups) = get_effective_members('u_acadev_unittest')
 
             self.assertEquals(len(valid_members), 2)
             self.assertEquals(len(invalid_members), 0)
             self.assertEquals(len(member_groups), 0)
 
-            self.assertRaises(GroupNotFoundException, policy.get_effective_members, 'u_acadev_fake')
+            (valid_members, invalid_members, member_groups) = get_effective_members('u_acadev_unittest', 'javerage')  # Using act_as
+
+            self.assertEquals(len(valid_members), 2)
+            self.assertEquals(len(invalid_members), 0)
+            self.assertEquals(len(member_groups), 0)
+
+            self.assertRaises(GroupNotFoundException, get_effective_members, 'u_acadev_fake')

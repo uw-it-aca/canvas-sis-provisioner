@@ -1,9 +1,10 @@
 from django.db import models
 from django.conf import settings
 from django.utils.timezone import utc, localtime
-from restclients.canvas.sis_import import SISImport
-from restclients.models.canvas import SISImport as SISImportModel
-from restclients.gws import GWS
+from sis_provisioner.dao.group import is_modified_group
+from sis_provisioner.dao.course import valid_canvas_section
+from sis_provisioner.dao.canvas import import_by_path, get_sis_import_status
+from sis_provisioner.exceptions import CoursePolicyException
 from restclients.exceptions import DataFailureException
 import datetime
 import json
@@ -155,6 +156,65 @@ class CourseManager(models.Manager):
             kwargs['priority'] = PRIORITY_DEFAULT
 
         self.queued(queue_id).update(**kwargs)
+
+    def add_to_queue(self, section, queue_id):
+        if section.is_primary_section:
+            course_id = section.canvas_course_sis_id()
+        else:
+            course_id = section.canvas_section_sis_id()
+
+        try:
+            course = Course.objects.get(course_id=course_id)
+
+        except Course.DoesNotExist:
+            if section.is_primary_section:
+                primary_id = None
+            else:
+                primary_id = section.canvas_course_sis_id()
+
+            course = Course(course_id=course_id,
+                            course_type=Course.SDB_TYPE,
+                            term_id=section.term.canvas_sis_id(),
+                            primary_id=primary_id)
+
+        course.queue_id = queue_id
+        course.save()
+        return course
+
+    def remove_from_queue(self, course_id, error=None):
+        try:
+            course = Course.objects.get(course_id=course_id)
+            course.queue_id = None
+            if error is not None:
+                course.provisioned_error = True
+                course.provisioned_status = error
+            course.save()
+
+        except Course.DoesNotExist:
+            pass
+
+    def update_status(self, section):
+        if section.is_primary_section:
+            course_id = section.canvas_course_sis_id()
+        else:
+            course_id = section.canvas_section_sis_id()
+
+        try:
+            course = Course.objects.get(course_id=course_id)
+            try:
+                valid_canvas_section(section)
+                course.provisioned_status = None
+
+            except CoursePolicyException as err:
+                course.provisioned_status = 'Primary LMS: %s (%s)' % (
+                    section.primary_lms, err)
+
+            if section.is_withdrawn:
+                course.priority = PRIORITY_NONE
+
+            course.save()
+        except Course.DoesNotExist:
+            pass
 
 
 class Course(models.Model):
@@ -444,20 +504,19 @@ class GroupManager(models.Manager):
 
         group_ids = set()
         course_ids = set()
-        self._gws = GWS()
         for group in groups:
             if group.group_id not in group_ids:
                 group_ids.add(group.group_id)
 
                 mod_group_ids = []
-                if self._is_modified_group(group.group_id, modified_since):
+                if is_modified_group(group.group_id, modified_since):
                     mod_group_ids.append(group.group_id)
                 else:
                     for membergroup in GroupMemberGroup.objects.filter(
                             root_group_id=group.group_id,
                             is_deleted__isnull=True):
-                        if self._is_modified_group(membergroup.group_id,
-                                                   modified_since):
+                        if is_modified_group(membergroup.group_id,
+                                             modified_since):
                             group_ids.add(membergroup.group_id)
                             mod_group_ids.append(membergroup.group_id)
                             mod_group_ids.append(group.group_id)
@@ -485,16 +544,6 @@ class GroupManager(models.Manager):
         )
 
         return imp
-
-    def _is_modified_group(self, group_id, mtime):
-        try:
-            group = self._gws.get_group_by_id(group_id)
-            return (group.membership_modified > mtime)
-        except DataFailureException as err:
-            if err.status == 404:   # deleted group?
-                return True
-            else:
-                raise
 
     def queued(self, queue_id):
         return super(GroupManager, self).get_queryset().filter(
@@ -658,6 +707,33 @@ class CurriculumManager(models.Manager):
     def dequeue(self, queue_id, provisioned_date=None):
         pass
 
+    def canvas_account_id(section):
+        course_id = section.canvas_course_sis_id()
+        try:
+            curr_abbr = section.curriculum_abbr
+            curriculum = Curriculum.objects.get(curriculum_abbr=curr_abbr)
+            account_id = curriculum.subaccount_id
+        except Curriculum.DoesNotExist:
+            account_id = None
+
+        lms_owner_accounts = getattr(settings, 'LMS_OWNERSHIP_SUBACCOUNT', {})
+        try:
+            account_id = lms_owner_accounts[section.lms_ownership]
+        except (AttributeError, KeyError):
+            if account_id is None and section.course_campus == 'PCE':
+                account_id = lms_owner_accounts['PCE_NONE']
+
+        try:
+            override = SubAccountOverride.objects.get(course_id=course_id)
+            account_id = override.subaccount_id
+        except SubAccountOverride.DoesNotExist:
+            pass
+
+        if account_id is None:
+            raise CoursePolicyException("No account_id for %s" % course_id)
+
+        return account_id
+
 
 class Curriculum(models.Model):
     """ Maps curricula to sub-account IDs
@@ -718,7 +794,7 @@ class Import(models.Model):
             raise MissingImportPathException()
 
         try:
-            sis_import = SISImport().import_dir(self.csv_path)
+            sis_import = import_by_path(self.csv_path)
             self.post_status = 200
             self.canvas_id = sis_import.import_id
             self.canvas_state = sis_import.workflow_state
@@ -739,8 +815,8 @@ class Import(models.Model):
                     self.monitor_status in [500, 503, 504])):
             self.monitor_date = datetime.datetime.utcnow().replace(tzinfo=utc)
             try:
-                sis_import = SISImport().get_import_status(
-                    SISImportModel(import_id=str(self.canvas_id)))
+                sis_import = get_sis_import_status(self.canvas_id)
+                get_import_status_by_id(self.canvas_id)
                 self.monitor_status = 200
                 self.canvas_errors = None
                 self.canvas_state = sis_import.workflow_state
