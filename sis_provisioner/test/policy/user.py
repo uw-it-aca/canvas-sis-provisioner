@@ -17,6 +17,7 @@ class UserPolicyTest(TestCase):
 
     def test_user_email(self):
         with self.settings(
+                LOGIN_DOMAIN_WHITELIST=['gmail.com'],
                 RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
 
             user = get_person_by_netid('javerage')
@@ -27,6 +28,7 @@ class UserPolicyTest(TestCase):
 
     def test_user_fullname(self):
         with self.settings(
+                LOGIN_DOMAIN_WHITELIST=['gmail.com'],
                 RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
 
             user = get_person_by_netid('javerage')
