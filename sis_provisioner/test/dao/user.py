@@ -15,6 +15,17 @@ class UserPolicyTest(TestCase):
         self.assertRaises(UserPolicyException, valid_canvas_user_id, 'abc')
         self.assertRaises(UserPolicyException, valid_canvas_user_id, '1234z')
 
+    def test_user_sis_id(self):
+        with self.settings(
+                LOGIN_DOMAIN_WHITELIST=['gmail.com'],
+                RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
+
+            user = get_person_by_netid('javerage')
+            self.assertEquals(user_sis_id(user), '9136CCB8F66711D5BE060004AC494FFE')
+
+            user = get_person_by_gmail_id('john.smith@gmail.com')
+            self.assertEquals(user_sis_id(user), 'johnsmith@gmail.com')
+
     def test_user_email(self):
         with self.settings(
                 LOGIN_DOMAIN_WHITELIST=['gmail.com'],

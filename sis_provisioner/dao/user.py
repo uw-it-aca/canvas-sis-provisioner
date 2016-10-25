@@ -80,6 +80,10 @@ def valid_canvas_user_id(canvas_id):
         raise UserPolicyException("Invalid Canvas ID: %s" % canvas_id)
 
 
+def user_sis_id(user):
+    return user.uwregid if hasattr(user, 'uwregid') else user.sis_user_id
+
+
 def user_email(user):
     if hasattr(user, 'uwnetid'):
         return '%s@uw.edu' % user.uwnetid
