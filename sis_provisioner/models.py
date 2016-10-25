@@ -707,7 +707,7 @@ class CurriculumManager(models.Manager):
     def dequeue(self, queue_id, provisioned_date=None):
         pass
 
-    def canvas_account_id(section):
+    def canvas_account_id(self, section):
         course_id = section.canvas_course_sis_id()
         try:
             curr_abbr = section.curriculum_abbr
