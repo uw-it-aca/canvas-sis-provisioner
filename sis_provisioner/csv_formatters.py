@@ -58,12 +58,13 @@ def _csv_for_enrollment(section_id, user, role, status):
         course_id, root_account, user_id, role, role_id, section_id, status,
         associated_user_id
     """
-    user_sis_id = user_sis_id(user)
     if not any(status == val for (val, name) in Enrollment.STATUS_CHOICES):
         raise Exception(
-            "Invalid enrollment status for %s: %s" % (user_sis_id, status))
+            "Invalid enrollment status for %s: %s" % (user_sis_id(user),
+                                                      status))
 
-    return [None, None, user_sis_id, role, None, section_id, status, None]
+    return [None, None, user_sis_id(user), role, None, section_id, status,
+            None]
 
 
 def csv_for_sis_student_enrollment(registration):

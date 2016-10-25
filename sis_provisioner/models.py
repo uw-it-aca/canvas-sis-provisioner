@@ -3,7 +3,8 @@ from django.conf import settings
 from django.utils.timezone import utc, localtime
 from sis_provisioner.dao.group import is_modified_group
 from sis_provisioner.dao.course import valid_canvas_section
-from sis_provisioner.dao.canvas import import_by_path, get_sis_import_status
+from sis_provisioner.dao.canvas import sis_import_by_path,\
+    get_sis_import_status
 from sis_provisioner.exceptions import CoursePolicyException
 from restclients.exceptions import DataFailureException
 import datetime
@@ -794,7 +795,7 @@ class Import(models.Model):
             raise MissingImportPathException()
 
         try:
-            sis_import = import_by_path(self.csv_path)
+            sis_import = sis_import_by_path(self.csv_path)
             self.post_status = 200
             self.canvas_id = sis_import.import_id
             self.canvas_state = sis_import.workflow_state
