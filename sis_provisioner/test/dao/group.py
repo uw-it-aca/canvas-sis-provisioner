@@ -1,7 +1,6 @@
 from django.test import TestCase
 from django.conf import settings
-from sis_provisioner.dao.group import valid_group_id, is_modified_group,\
-    get_effective_members
+from sis_provisioner.dao.group import * 
 from sis_provisioner.exceptions import GroupPolicyException,\
     GroupNotFoundException
 from datetime import datetime, timedelta
@@ -37,6 +36,18 @@ class GroupModifiedTest(TestCase):
 
             mtime = datetime(2020, 10, 10, 0, 0, 0)
             self.assertEquals(is_modified_group('u_acadev_tester', mtime), False)
+
+
+class SISImportMembersTest(TestCase):
+    def test_sis_import_members(self):
+        with self.settings(
+                SIS_IMPORT_GROUPS=['u_acadev_unittest', 'u_acadev_tester'],
+                RESTCLIENTS_GWS_DAO_CLASS='restclients.dao_implementation.gws.File',
+                RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
+
+            members = get_sis_import_members()
+
+            self.assertEquals(len(members), 5)
 
 
 class EffectiveMemberTest(TestCase):

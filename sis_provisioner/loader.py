@@ -1,7 +1,7 @@
 from sis_provisioner.dao.canvas import create_unused_courses_report,\
     create_course_provisioning_report, get_report_data, delete_report,\
     get_term_by_sis_id
-from sis_provisioner.dao.group import get_effective_members
+from sis_provisioner.dao.group import get_sis_import_members
 from sis_provisioner.dao.user import get_person_by_netid
 from sis_provisioner.dao.term import get_term_by_date, get_term_after,\
     term_sis_id
@@ -288,17 +288,14 @@ class Loader():
         uwnetids = User.objects.all().values_list('net_id', flat=True)
         existing_netids = dict((u, True) for u in uwnetids)
 
-        for group_id in getattr(settings, 'SIS_IMPORT_GROUPS', []):
-            (members, invalid_members,
-                member_group_ids) = get_effective_members(group_id)
-            for member in members:
-                if member.is_uwnetid() and member.name not in existing_netids:
-                    try:
-                        load_user(get_person_by_netid(member.name))
-                        existing_netids[member.name] = True
-                    except Exception as err:
-                        self._log.info('load_all_users: Skipped %s (%s)' % (
-                            member.name, err))
+        for member in get_sis_import_members():
+            if member.name not in existing_netids:
+                try:
+                    load_user(get_person_by_netid(member.name))
+                    existing_netids[member.name] = True
+                except Exception as err:
+                    self._log.info('load_all_users: Skipped %s (%s)' % (
+                        member.name, err))
 
 
 def load_user(person):

@@ -30,6 +30,25 @@ def is_modified_group(group_id, mtime):
             raise
 
 
+def get_sis_import_members():
+    gws = GWS()
+
+    valid_members = {}
+    for group_id in getattr(settings, 'SIS_IMPORT_GROUPS', []):
+        try:
+            for member in gws.get_effective_members(group_id):
+                try:
+                    if member.is_uwnetid():
+                        valid_net_id(member.name)
+                        valid_members[member.name] = member
+                except UserPolicyException as err:
+                    pass
+        except DataFailureException as err:
+            pass
+
+    return valid_members.values()
+
+
 def get_effective_members(group_id, act_as=None):
     gws = GWS({'actas': act_as})
 
