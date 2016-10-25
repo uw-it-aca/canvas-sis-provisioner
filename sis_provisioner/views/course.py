@@ -1,14 +1,16 @@
 import re
 import json
 from logging import getLogger
-from restclients.sws.section import get_sections_by_instructor_and_term
-from restclients.sws.term import get_term_by_year_and_quarter
+from sis_provisioner.dao.course import get_sections_by_instructor_and_term,\
+    valid_academic_course_sis_id, valid_adhoc_course_sis_id
+from sis_provisioner.dao.term import get_term_by_year_and_quarter
+from sis_provisioner.dao.user import get_person_by_netid, get_person_by_regid
 from sis_provisioner.models import Course, Group, PRIORITY_NONE,\
     PRIORITY_CHOICES
 from sis_provisioner.loader import generate_course_id
 from sis_provisioner.views.rest_dispatch import RESTDispatch
 from sis_provisioner.views import regid_from_request, netid_from_request
-from sis_provisioner.policy import UserPolicy
+from sis_provisioner.exceptions import CoursePolicyException
 from canvas_admin.views import can_view_source_data
 
 
@@ -22,13 +24,6 @@ class CourseView(RESTDispatch):
         PUT returns 200 and updates the Course information.
     """
     def __init__(self):
-        self._course_re = re.compile('^(\d{4})-'
-                                     '(winter|spring|summer|autumn)-'
-                                     '([\w& ]+)-'
-                                     '(\d{3})-'
-                                     '([A-Z][A-Z0-9]?)'
-                                     '(-[A-F0-9]{32})?$', re.I)
-        self._adhoc_re = re.compile(r"^course_\d+$", re.I)
         self._log = getLogger(__name__)
 
     def GET(self, request, **kwargs):
@@ -85,17 +80,14 @@ class CourseView(RESTDispatch):
         """ normalize course id case
         """
         course = course.strip()
-        m = self._course_re.match(course)
-        if m:
-            course = '-'.join([m.group(1), m.group(2).lower(),
-                               m.group(3).upper(), m.group(4),
-                               m.group(5).upper()])
-            if m.group(6) is not None:
-                course += m.group(6).upper()
-        else:
-            m = self._adhoc_re.match(course)
-            if m:
-                course = course.lower()
+        try:
+            valid_academic_course_sis_id(course)
+        except CoursePolicyException:
+            try:
+                valid_adhoc_course_sis_id(course.lower())
+                return course.lower()
+            except CoursePolicyException:
+                pass
 
         return course
 
@@ -134,7 +126,6 @@ class CourseListView(RESTDispatch):
             }
         ]
         self._log = getLogger(__name__)
-        self._user_policy = UserPolicy()
 
     def GET(self, request, **kwargs):
         json_rep = {
@@ -198,9 +189,9 @@ class CourseListView(RESTDispatch):
         if (net_id is not None or reg_id is not None) and len(course_list):
             try:
                 if net_id is not None:
-                    instructor = self._user_policy.get_person_by_netid(net_id)
+                    instructor = get_person_by_netid(net_id)
                 else:
-                    instructor = self._user_policy.get_person_by_regid(reg_id)
+                    instructor = get_person_by_regid(reg_id)
 
                 year = request.GET.get('year')
                 quarter = request.GET.get('quarter')
