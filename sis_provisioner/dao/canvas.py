@@ -93,8 +93,8 @@ def delete_report(report):
     return Reports().delete_report(report)
 
 
-def import_by_path(csv_path):
-    return SISImport().import_by_path(csv_path)
+def sis_import_by_path(csv_path):
+    return SISImport().import_dir(csv_path)
 
 
 def get_sis_import_status(import_id):
