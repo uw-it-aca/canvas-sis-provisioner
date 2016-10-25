@@ -817,7 +817,6 @@ class Import(models.Model):
             self.monitor_date = datetime.datetime.utcnow().replace(tzinfo=utc)
             try:
                 sis_import = get_sis_import_status(self.canvas_id)
-                get_import_status_by_id(self.canvas_id)
                 self.monitor_status = 200
                 self.canvas_errors = None
                 self.canvas_state = sis_import.workflow_state
