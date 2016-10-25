@@ -3,7 +3,7 @@ from sis_provisioner.dao.term import term_sis_id, term_name,\
 from sis_provisioner.dao.course import is_active_section,\
     group_section_sis_id, group_section_name, section_short_name,\
     section_long_name
-from sis_provisioner.dao.user import user_email, user_fullname
+from sis_provisioner.dao.user import user_sis_id, user_email, user_fullname
 from sis_provisioner.dao.account import account_name
 from sis_provisioner.models import Enrollment, Curriculum
 
@@ -154,7 +154,7 @@ def csv_for_user(user, status="active"):
         user_id, login_id, password, first_name, last_name, full_name,
         sortable_name, short_name, email, status (active|deleted)
     """
-    return [user.uwregid if hasattr(user, 'uwregid') else user.sis_user_id,
+    return [user_sis_id(user),
             user.uwnetid if hasattr(user, 'uwnetid') else user.login_id,
             None, None, None,
             user_fullname(user),
