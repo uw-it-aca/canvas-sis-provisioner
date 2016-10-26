@@ -87,23 +87,26 @@ def user_sis_id(user):
 def user_email(user):
     if hasattr(user, 'uwnetid'):
         return '%s@uw.edu' % user.uwnetid
-    else:
+    elif hasattr(user, 'email'):
         return user.email  # CanvasUser
+    else:
+        raise UserPolicyException('Invalid user')
 
 
 def user_fullname(user):
-    if (hasattr(user, 'display_name') and user.display_name is not None and
-            len(user.display_name) and not user.display_name.isupper()):
-        return user.display_name
-
-    elif hasattr(user, 'first_name'):
-        fullname = HumanName('%s %s' % (user.first_name, user.surname))
-        fullname.capitalize()
-        fullname.string_format = '{first} {last}'
-        return fullname
-
-    else:
+    if hasattr(user, 'display_name'):
+        if ((user.display_name is None or not len(user.display_name) or
+                user.display_name.isupper()) and hasattr(user, 'first_name')):
+            fullname = HumanName('%s %s' % (user.first_name, user.surname))
+            fullname.capitalize()
+            fullname.string_format = '{first} {last}'
+            return fullname
+        else:
+            return user.display_name
+    elif hasattr(user, 'email'):
         return user.email.split('@')[0]  # CanvasUser
+    else:
+        raise UserPolicyException('Invalid user')
 
 
 def get_person_by_netid(netid):

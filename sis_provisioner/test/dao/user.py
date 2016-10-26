@@ -1,4 +1,5 @@
 from django.test import TestCase
+from restclients.pws import PWS
 from sis_provisioner.dao.user import *
 from sis_provisioner.exceptions import UserPolicyException,\
     MissingLoginIdException, InvalidLoginIdException,\
@@ -20,7 +21,7 @@ class UserPolicyTest(TestCase):
                 LOGIN_DOMAIN_WHITELIST=['gmail.com'],
                 RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
 
-            user = get_person_by_netid('javerage')
+            user = PWS().get_person_by_netid('javerage')
             self.assertEquals(user_sis_id(user), '9136CCB8F66711D5BE060004AC494FFE')
 
             user = get_person_by_gmail_id('john.smith@gmail.com')
@@ -31,8 +32,12 @@ class UserPolicyTest(TestCase):
                 LOGIN_DOMAIN_WHITELIST=['gmail.com'],
                 RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
 
-            user = get_person_by_netid('javerage')
+            user = PWS().get_person_by_netid('javerage')
             self.assertEquals(user_email(user), 'javerage@uw.edu')
+
+            # non-personal netid
+            user = PWS().get_entity_by_netid('somalt')
+            self.assertEquals(user_email(user), 'somalt@uw.edu')
 
             user = get_person_by_gmail_id('john.smith@gmail.com')
             self.assertEquals(user_email(user), 'john.smith@gmail.com')
@@ -42,15 +47,26 @@ class UserPolicyTest(TestCase):
                 LOGIN_DOMAIN_WHITELIST=['gmail.com'],
                 RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
 
-            user = get_person_by_netid('javerage')
+            user = PWS().get_person_by_netid('javerage')
             user.display_name = None
+            self.assertEquals(user_fullname(user), 'James Student')
+
+            user.display_name = ''
+            self.assertEquals(user_fullname(user), 'James Student')
+
+            user.display_name = 'JOHN SMITH'
             self.assertEquals(user_fullname(user), 'James Student')
 
             user.display_name = 'Johnny S'
             self.assertEquals(user_fullname(user), user.display_name)
 
+            # non-personal netid
+            user = PWS().get_entity_by_netid('somalt')
+            self.assertEquals(user_fullname(user), user.display_name)
+
             user = get_person_by_gmail_id('john.smith@gmail.com')
             self.assertEquals(user_fullname(user), 'john.smith')
+
 
 class NetidPolicyTest(TestCase):
     def test_get_person_by_netid(self):
