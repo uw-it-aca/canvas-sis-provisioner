@@ -6,6 +6,7 @@ from restclients.models.sws import Section
 from restclients.exceptions import DataFailureException
 from sis_provisioner.exceptions import CoursePolicyException
 from sis_provisioner.dao.user import user_fullname
+from sis_provisioner.dao.term import term_short_name
 from sis_provisioner.dao import titleize
 import re
 
@@ -131,10 +132,10 @@ def section_long_name(section):
     short_name = section_short_name(section)
     if (section.course_title_long is not None and
             len(section.course_title_long)):
-        name = '%s: %s' % (short_name, titleize(
+        name = '%s %s: %s' % (short_name, term_short_name(section), titleize(
             section.course_title_long.encode('ascii', 'ignore')))
     else:
-        name = short_name
+        name = '%s %s' % (short_name, term_short_name(section))
 
     if section.is_independent_study:
         for person in section.get_instructors():
