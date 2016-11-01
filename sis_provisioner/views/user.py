@@ -3,14 +3,15 @@ import json
 import datetime
 from django.http import HttpResponse
 from logging import getLogger
-from restclients.canvas.users import Users as CanvasUsers
-from restclients.exceptions import InvalidNetID, InvalidRegID
-from restclients.exceptions import DataFailureException
+from restclients.exceptions import InvalidNetID, InvalidRegID,\
+    DataFailureException
 from restclients.models.sws import Person
+from sis_provisioner.dao.canvas import get_user_by_sis_id, create_user
+from sis_provisioner.dao.user import get_person_by_netid, get_person_by_regid,\
+    get_person_by_gmail_id
 from sis_provisioner.models import User, PRIORITY_IMMEDIATE
 from sis_provisioner.views.rest_dispatch import RESTDispatch
 from sis_provisioner.views import regid_from_request, netid_from_request
-from sis_provisioner.policy import UserPolicy
 from sis_provisioner.loader import load_user
 from canvas_admin.views import can_view_source_data
 
@@ -22,21 +23,20 @@ class UserView(RESTDispatch):
     """
     def __init__(self):
         self._log = getLogger(__name__)
-        self._user_policy = UserPolicy()
 
     def GET(self, request, **kwargs):
         try:
             if 'gmail_id' in request.GET:
                 gmail_id = request.GET.get('gmail_id', '').strip()
-                person = self._user_policy.get_person_by_gmail_id(gmail_id)
+                person = get_person_by_gmail_id(gmail_id)
                 return self.response_for_google_person(person)
             elif 'net_id' in request.GET:
                 net_id = netid_from_request(request.GET)
-                person = self._user_policy.get_person_by_netid(net_id)
+                person = get_person_by_netid(net_id)
                 return self.response_for_person(person)
             elif 'reg_id' in request.GET:
                 reg_id = regid_from_request(request.GET)
-                person = self._user_policy.get_person_by_regid(reg_id)
+                person = get_person_by_regid(reg_id)
                 return self.response_for_person(person)
             else:
                 return self.json_response('{"error":"Unrecognized user ID"}',
@@ -56,8 +56,8 @@ class UserView(RESTDispatch):
 
             if 'gmail_id' in rep:
                 gmail_id = rep.get('gmail_id', '').strip()
-                person = self._user_policy.get_person_by_gmail_id(gmail_id)
-                user = CanvasUsers().create_user(person)
+                person = get_person_by_gmail_id(gmail_id)
+                user = create_user(person)
                 return HttpResponse()
             else:
                 net_id = netid_from_request(rep)
@@ -66,7 +66,7 @@ class UserView(RESTDispatch):
                                           status=409)
         except User.DoesNotExist:
             try:
-                person = self._user_policy.get_person_by_netid(net_id)
+                person = get_person_by_netid(net_id)
                 user = load_user(person)
                 user.priority = PRIORITY_IMMEDIATE
                 user.save()
@@ -123,7 +123,7 @@ class UserView(RESTDispatch):
         }
 
         try:
-            user = CanvasUsers().get_user_by_sis_id(person.sis_user_id)
+            user = get_user_by_sis_id(person.sis_user_id)
             response['provisioned_date'] = datetime.datetime.now().isoformat()
             response['display_name'] = user.name
 

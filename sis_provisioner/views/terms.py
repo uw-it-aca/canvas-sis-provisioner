@@ -1,5 +1,6 @@
 from sis_provisioner.views.rest_dispatch import RESTDispatch
-from restclients.sws.term import get_current_term, get_next_term
+from sis_provisioner.dao.term import get_term_by_date, get_term_after
+from datetime import datetime
 import json
 
 
@@ -7,9 +8,10 @@ class TermListView(RESTDispatch):
     """ Retrieves a list of Terms.
     """
     def GET(self, request, **kwargs):
+        curr_term = get_term_by_date(datetime.now().date())
         terms = {
-            'current': self._load_term(get_current_term()),
-            'next': self._load_term(get_next_term())
+            'current': self._load_term(curr_term),
+            'next': self._load_term(get_term_after(curr_term))
         }
 
         return self.json_response(json.dumps({'terms': terms}))

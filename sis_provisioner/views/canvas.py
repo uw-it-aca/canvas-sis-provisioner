@@ -3,9 +3,8 @@ from logging import getLogger
 from django.conf import settings
 from sis_provisioner.models import Course
 from sis_provisioner.views.rest_dispatch import RESTDispatch
-from restclients.canvas.courses import Courses
-from restclients.models.canvas import CanvasAccount
-from restclients.canvas.accounts import Accounts
+from sis_provisioner.dao.canvas import get_account_by_id, get_course_by_id,\
+    get_course_by_sis_id
 from canvas_admin.views import can_view_source_data
 import re
 
@@ -22,9 +21,9 @@ class CanvasCourseView(RESTDispatch):
             sis_id = kwargs.get('sis_id')
             canvas_id = re.match(r'^\d+$', sis_id)
             if canvas_id:
-                course = Courses().get_course(canvas_id.group(0))
+                course = get_course_by_id(canvas_id.group(0))
             else:
-                course = Courses().get_course_by_sis_id(sis_id)
+                course = get_course_by_sis_id(sis_id)
 
             course_rep = {
                 'course_id': course.course_id,
@@ -68,7 +67,7 @@ class CanvasAccountView(RESTDispatch):
 
     def GET(self, request, **kwargs):
         try:
-            account = Accounts().get_account(kwargs.get('account_id'))
+            account = get_account_by_id(kwargs.get('account_id'))
             return self.json_response(json.dumps({
                 'account_id': account.account_id,
                 'sis_account_id': account.sis_account_id,

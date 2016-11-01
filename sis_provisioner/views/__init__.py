@@ -1,13 +1,13 @@
-from sis_provisioner.policy import UserPolicy
+from sis_provisioner.dao.user import valid_net_id, valid_reg_id
 
 
 def regid_from_request(data):
     regid = data.get('reg_id', '').strip().upper()
-    UserPolicy().valid_reg_id(regid)
+    valid_reg_id(regid)
     return regid
 
 
 def netid_from_request(data):
     netid = data.get('net_id', '').strip().lower()
-    UserPolicy().valid_net_id(netid)
+    valid_net_id(netid)
     return netid
