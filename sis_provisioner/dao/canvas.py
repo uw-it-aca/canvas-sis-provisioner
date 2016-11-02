@@ -18,7 +18,7 @@ logger = getLogger(__name__)
 
 
 def valid_canvas_id(canvas_id):
-    return Canvas().valid_canvas_id(canvas_id) 
+    return Canvas().valid_canvas_id(canvas_id)
 
 
 def get_account_by_id(account_id):
