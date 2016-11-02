@@ -26,7 +26,7 @@ def get_account_by_id(account_id):
 
 
 def get_account_by_sis_id(sis_account_id):
-    return Accounts().get_account_by_sis_id(account_id)
+    return Accounts().get_account_by_sis_id(sis_account_id)
 
 
 def get_all_sub_accounts(account_id):
