@@ -1,3 +1,4 @@
+from restclients.canvas import Canvas
 from restclients.canvas.accounts import Accounts
 from restclients.canvas.courses import Courses
 from restclients.canvas.sections import Sections
@@ -16,8 +17,16 @@ from logging import getLogger
 logger = getLogger(__name__)
 
 
+def valid_canvas_id(canvas_id):
+    return Canvas().valid_canvas_id(canvas_id) 
+
+
 def get_account_by_id(account_id):
     return Accounts().get_account(account_id)
+
+
+def get_all_sub_accounts(account_id):
+    return Accounts().get_all_sub_accounts(account_id)
 
 
 def get_user_by_sis_id(sis_user_id):
