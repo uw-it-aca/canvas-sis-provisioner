@@ -49,6 +49,10 @@ def get_sis_import_members():
     return valid_members.values()
 
 
+def is_member(group_id, member_name, act_as=None):
+    return GWS({'actas': act_as}).is_effective_member(group_id, member_name)
+
+
 def get_effective_members(group_id, act_as=None):
     gws = GWS({'actas': act_as})
 
