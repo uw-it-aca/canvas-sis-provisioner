@@ -90,6 +90,19 @@ def get_sis_enrollments_for_course(course_sis_id):
     return enrollments
 
 
+def get_sis_enrollments_for_user_in_course(user_sis_id, course_sis_id):
+    canvas = Enrollments()
+    enrollments = []
+    for enrollment in canvas.get_enrollments_for_course_by_sis_id(
+            course_sis_id, {'user_id': canvas.sis_user_id(user_sis_id)}):
+        try:
+            valid_academic_section_sis_id(enrollment.sis_section_id)
+            enrollments.append(enrollment)
+        except CoursePolicyException:
+            continue
+    return enrollments
+
+
 def create_unused_courses_report(account_id, term_id):
     return Reports().create_unused_courses_report(account_id, term_id)
 
