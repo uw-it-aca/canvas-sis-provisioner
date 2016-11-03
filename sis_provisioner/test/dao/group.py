@@ -50,6 +50,18 @@ class SISImportMembersTest(TestCase):
             self.assertEquals(len(members), 5)
 
 
+class IsMemberTest(TestCase):
+    def test_is_member(self):
+        with self.settings(
+                RESTCLIENTS_GWS_DAO_CLASS='restclients.dao_implementation.gws.File',
+                RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
+
+            self.assertEquals(is_member('u_acadev_unittest', 'javerage'), True)
+            self.assertEquals(is_member('u_acadev_unittest', 'eight'), True)
+            self.assertEquals(is_member('u_acadev_unittest', 'baverage'), False)
+            self.assertEquals(is_member('u_acadev_unittest', 'joe@gmail.com'), False)
+
+
 class EffectiveMemberTest(TestCase):
     def test_effective_members(self):
         with self.settings(
