@@ -90,7 +90,7 @@ class CSVBuilder():
                     cached_course_enrollments[course_id] = canvas_enrollments
 
             except CoursePolicyException:
-                canvas_enrollments = None
+                canvas_enrollments = []
             except DataFailureException as err:
                 Group.objects.dequeue_course(course_id)
                 logger.info("Requeue group sync for course %s: %s" % (
@@ -108,15 +108,19 @@ class CSVBuilder():
 
                         # remember member groups
                         for member_group_id in member_groups:
-                            (gmg, created) = GroupMemberGroup.objects.get_or_create(group_id=member_group_id,
-                                                                                    root_group_id=group.group_id)
+                            (gmg,
+                             created) = GroupMemberGroup.objects.get_or_create(
+                                group_id=member_group_id,
+                                root_group_id=group.group_id)
+
                             if not created:
                                 gmg.is_deleted = None
                                 gmg.save()
 
                         # discard old member groups
-                        for gmg in GroupMemberGroup.objects.filter(root_group_id=group.group_id,
-                                                                   is_deleted__isnull=True):
+                        for gmg in GroupMemberGroup.objects.filter(
+                                root_group_id=group.group_id,
+                                is_deleted__isnull=True):
                             if gmg.group_id not in member_groups:
                                 gmg.is_deleted = True
                                 gmg.save()
@@ -136,17 +140,20 @@ class CSVBuilder():
 
                             # Skip members already in academic course sections,
                             # removing from -group section
-                            if canvas_enrollments:
-                                match = next((m for m in canvas_enrollments if (m.login_id.lower() == member.name.lower())), None)
-                                if match:
-                                    logger.info("Skip group member %s (present in %s)" % (
+                            match = next((m for m in canvas_enrollments if (
+                                m.login_id.lower() == member.name.lower())),
+                                         None)
+                            if match:
+                                logger.info(
+                                    "Skip group member %s (present in %s)" % (
                                         member.name, match.sis_section_id))
-                                    continue
+                                continue
 
-                            course_member = CourseMember(course_id=course_id,
-                                                         name=user_id,
-                                                         member_type=member.member_type,
-                                                         role=group.role)
+                            course_member = CourseMember(
+                                course_id=course_id,
+                                name=user_id,
+                                member_type=member.member_type,
+                                role=group.role)
                             course_member.login = login_id
                             current_members.append(course_member)
 
@@ -443,7 +450,8 @@ class CSVBuilder():
                                               curriculum.label])
 
                     if not csv.has_account(curr_id):
-                        csv_data = csv_for_account(curr_id, dept_id, curriculum)
+                        csv_data = csv_for_account(
+                            curr_id, dept_id, curriculum)
                         csv.add_account(curr_id, csv_data)
 
                         # Update the Curriculum model for this curriculum
@@ -451,7 +459,8 @@ class CSVBuilder():
                             model = Curriculum.objects.get(
                                 curriculum_abbr=curriculum.label)
                         except Curriculum.DoesNotExist:
-                            model = Curriculum(curriculum_abbr=curriculum.label)
+                            model = Curriculum(
+                                curriculum_abbr=curriculum.label)
 
                         model.full_name = account_name(curriculum)
                         model.subaccount_id = curr_id
@@ -482,7 +491,8 @@ class CSVBuilder():
             return
 
         if not section.is_independent_study:
-            raise Exception("Not an independent study section: %s" % section.section_label())
+            raise Exception("Not an independent study section: %s" % (
+                section.section_label()))
 
         csv = self._csv
 
@@ -531,10 +541,12 @@ class CSVBuilder():
             return
 
         if section.is_independent_study:
-            raise Exception("Independent study section: %s" % section.section_label())
+            raise Exception("Independent study section: %s" % (
+                section.section_label()))
 
         if not section.is_primary_section:
-            raise Exception("Not a primary section: %s" % section.section_label())
+            raise Exception("Not a primary section: %s" % (
+                section.section_label()))
 
         csv = self._csv
         term_id = term_sis_id(section)
@@ -574,12 +586,14 @@ class CSVBuilder():
                     self.generate_student_enrollment_csv(section)
 
         # Check for linked sections already in the Course table
-        for linked_course_id in Course.objects.get_linked_course_ids(course_id):
+        for linked_course_id in Course.objects.get_linked_course_ids(
+                course_id):
             if csv.has_section(linked_course_id):
                 continue
 
             try:
-                linked_section = self.get_section_resource_by_id(linked_course_id)
+                linked_section = self.get_section_resource_by_id(
+                    linked_course_id)
                 Course.objects.add_to_queue(linked_section, self._queue_id)
                 self.generate_linked_section_csv(linked_section,
                                                  primary_instructors)
@@ -606,7 +620,8 @@ class CSVBuilder():
         # Joint sections already joined to this section in the Course table
         for joint_course_id in Course.objects.get_joint_course_ids(course_id):
             try:
-                joint_section = self.get_section_resource_by_id(joint_course_id)
+                joint_section = self.get_section_resource_by_id(
+                    joint_course_id)
                 Course.objects.add_to_queue(joint_section, self._queue_id)
                 self.generate_primary_section_csv(joint_section)
 
@@ -642,10 +657,12 @@ class CSVBuilder():
             return
 
         if section.is_independent_study:
-            raise Exception("Independent study section: %s" % section.section_label())
+            raise Exception("Independent study section: %s" % (
+                section.section_label()))
 
         if section.is_primary_section:
-            raise Exception("Not a linked section: %s" % section.section_label())
+            raise Exception("Not a linked section: %s" % (
+                section.section_label()))
 
         csv = self._csv
         section_id = section.canvas_section_sis_id()
@@ -696,10 +713,12 @@ class CSVBuilder():
         Generates the full xlists csv for the passed primary section.
         """
         if not section.is_primary_section:
-            raise Exception("Not a primary section %s:" % section.section_label())
+            raise Exception(
+                "Not a primary section %s:" % section.section_label())
 
         if section.is_independent_study:
-            raise Exception("Independent study section %s:" % section.section_label())
+            raise Exception(
+                "Independent study section %s:" % section.section_label())
 
         course_id = section.canvas_course_sis_id()
 
@@ -736,7 +755,8 @@ class CSVBuilder():
         for url in section.linked_section_urls:
             try:
                 linked_section = get_section_by_url(url)
-                linked_section_ids.append(linked_section.canvas_section_sis_id())
+                linked_section_ids.append(
+                    linked_section.canvas_section_sis_id())
             except:
                 continue
 
@@ -745,7 +765,8 @@ class CSVBuilder():
             linked_section_ids.append(section.canvas_section_sis_id())
 
         for linked_section_id in linked_section_ids:
-            if (existing_xlist_id is not None and existing_xlist_id != new_xlist_id):
+            if (existing_xlist_id is not None and
+                    existing_xlist_id != new_xlist_id):
                 self._csv.add_xlist(csv_for_xlist(existing_xlist_id,
                                                   linked_section_id,
                                                   status="deleted"))
