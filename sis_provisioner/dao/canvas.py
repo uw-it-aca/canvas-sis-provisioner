@@ -4,6 +4,7 @@ from restclients.canvas.courses import Courses
 from restclients.canvas.sections import Sections
 from restclients.canvas.enrollments import Enrollments
 from restclients.canvas.reports import Reports
+from restclients.canvas.roles import Roles
 from restclients.canvas.users import Users
 from restclients.canvas.sis_import import SISImport
 from restclients.models.canvas import SISImport as SISImportModel
@@ -11,6 +12,7 @@ from restclients.exceptions import DataFailureException
 from restclients.util.retry import retry
 from sis_provisioner.dao.course import valid_academic_section_sis_id
 from sis_provisioner.exceptions import CoursePolicyException
+from urllib3.exceptions import SSLError
 from logging import getLogger
 
 
@@ -31,6 +33,11 @@ def get_account_by_sis_id(sis_account_id):
 
 def get_all_sub_accounts(account_id):
     return Accounts().get_all_sub_accounts(account_id)
+
+
+@retry(SSLError, tries=3, delay=1, logger=logger)
+def get_course_roles_in_account(account_id):
+    return Roles().get_effective_course_roles_in_account(account_id)
 
 
 def get_user_by_sis_id(sis_user_id):
