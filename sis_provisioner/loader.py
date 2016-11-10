@@ -3,8 +3,8 @@ from sis_provisioner.dao.canvas import create_unused_courses_report,\
     get_term_by_sis_id
 from sis_provisioner.dao.group import get_sis_import_members
 from sis_provisioner.dao.user import get_person_by_netid
-from sis_provisioner.dao.term import get_term_by_date, get_term_after,\
-    term_sis_id
+from sis_provisioner.dao.term import term_sis_id, get_all_active_terms,\
+    get_current_active_term 
 from sis_provisioner.dao.course import get_sections_by_term,\
     get_section_by_label, is_time_schedule_construction,\
     valid_academic_course_sis_id
@@ -30,37 +30,23 @@ class Loader():
         none.
         """
         now_dt = datetime.now()
-        curr_term = get_term_by_date(now_dt.date())
+        for term in get_all_active_terms(now_dt):
+            if term.bterm_last_day_add is not None:
+                curr_last_date = term.bterm_last_day_add
+            else:
+                curr_last_date = term.last_day_add
 
-        if curr_term.bterm_last_day_add is not None:
-            curr_last_date = curr_term.bterm_last_day_add
-        else:
-            curr_last_date = curr_term.last_day_add
-
-        if now_dt.date() <= curr_last_date:
-            self.load_courses_for_term(curr_term)
-        else:
-            self.unload_courses_for_term(curr_term)
-
-        if now_dt > curr_term.grade_submission_deadline:
-            curr_term = get_term_after(curr_term)
-
-        # Load courses for the next two terms
-        next_term = get_term_after(curr_term)
-        self.load_courses_for_term(next_term)
-        self.load_courses_for_term(get_term_after(next_term))
+            if now_dt.date() <= curr_last_date:
+                self.load_courses_for_term(term)
+            else:
+                self.unload_courses_for_term(term)
 
     def queue_active_courses(self):
         """
         Finds all active Canvas courses for the current or next term, and
         updates them to priority high.
         """
-        now_dt = datetime.now()
-        term = get_term_by_date(now_dt.date())
-
-        if now_dt > term.grade_submission_deadline:
-            term = get_term_after(term)
-
+        term = get_current_active_term(datetime.now())
         self.queue_active_courses_for_term(term)
 
     def queue_active_courses_for_term(self, term):
