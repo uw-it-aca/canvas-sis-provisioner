@@ -8,6 +8,19 @@ from datetime import timedelta
 TERM_DATE_FORMAT = '%Y-%m-%dT00:00:00-0800'
 
 
+def get_current_active_term(dt):
+    curr_term = get_term_by_date(dt.date())
+    if dt > curr_term.grade_submission_deadline:
+        curr_term = get_term_after(curr_term)
+    return curr_term
+
+
+def get_all_active_terms(dt):
+    curr_term = get_current_active_term(dt)
+    next_term = get_term_after(curr_term)
+    return [curr_term, next_term, get_term_after(next_term)]
+
+
 def term_sis_id(section):
     if section.is_independent_start:
         return getattr(settings, 'UWEO_INDIVIDUAL_START_TERM_SIS_ID',
