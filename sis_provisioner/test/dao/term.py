@@ -1,6 +1,34 @@
 from django.test import TestCase
 from sis_provisioner.dao.term import *
 from sis_provisioner.dao.course import get_section_by_label
+from datetime import datetime
+
+
+class ActiveTermTest(TestCase):
+    def test_current_active_term(self):
+        with self.settings(
+                RESTCLIENTS_SWS_DAO_CLASS='restclients.dao_implementation.sws.File'):
+
+           self.assertEquals(get_current_active_term(datetime(2013, 7, 15)).term_label(),
+                             '2013,summer')
+           self.assertEquals(get_current_active_term(datetime(2013, 8, 27, hour=15)).term_label(),
+                             '2013,summer')
+           self.assertEquals(get_current_active_term(datetime(2013, 8, 27, hour=19)).term_label(),
+                             '2013,autumn')
+
+    def test_all_active_terms(self):
+        with self.settings(
+                RESTCLIENTS_SWS_DAO_CLASS='restclients.dao_implementation.sws.File'):
+           
+            terms = get_all_active_terms(datetime(2013, 7, 15))
+            self.assertEquals(terms[0].term_label(), '2013,summer')
+            self.assertEquals(terms[1].term_label(), '2013,autumn')
+            self.assertEquals(terms[2].term_label(), '2014,winter')
+
+            terms = get_all_active_terms(datetime(2013, 8, 28))
+            self.assertEquals(terms[0].term_label(), '2013,autumn')
+            self.assertEquals(terms[1].term_label(), '2014,winter')
+            self.assertEquals(terms[2].term_label(), '2014,spring')
 
 
 class TermPolicyTest(TestCase):
