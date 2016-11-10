@@ -394,7 +394,7 @@ class Enrollment(models.Model):
                 self.request_date is not None) else None,
             "primary_course_id": self.primary_course_id,
             "instructor_reg_id": self.instructor_reg_id,
-            "is_auditor": self.is_auditor,
+            "role": self.role,
             "priority": PRIORITY_CHOICES[self.priority][1],
             "queue_id": self.queue_id,
         }
