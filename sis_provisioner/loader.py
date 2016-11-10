@@ -4,7 +4,7 @@ from sis_provisioner.dao.canvas import create_unused_courses_report,\
 from sis_provisioner.dao.group import get_sis_import_members
 from sis_provisioner.dao.user import get_person_by_netid
 from sis_provisioner.dao.term import term_sis_id, get_all_active_terms,\
-    get_current_active_term 
+    get_current_active_term
 from sis_provisioner.dao.course import get_sections_by_term,\
     get_section_by_label, is_time_schedule_construction,\
     valid_academic_course_sis_id
