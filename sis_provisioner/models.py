@@ -242,6 +242,7 @@ class CourseManager(models.Manager):
             pass
 
     def add_all_courses_for_term(self, term):
+        term_id = term.canvas_sis_id()
         existing_course_ids = dict((c, p) for c, p in (
             super(CourseManager, self).get_queryset().filter(
                 term_id=term_id, course_type=Course.SDB_TYPE
@@ -283,7 +284,7 @@ class CourseManager(models.Manager):
                             if ind_course_id not in existing_course_ids:
                                 course = Course(course_id=ind_course_id,
                                                 course_type=Course.SDB_TYPE,
-                                                term_id=term.canvas_sis_id(),
+                                                term_id=term_id,
                                                 priority=PRIORITY_HIGH)
                                 new_courses.append(course)
             else:
@@ -294,7 +295,7 @@ class CourseManager(models.Manager):
 
                 course = Course(course_id=course_id,
                                 course_type=Course.SDB_TYPE,
-                                term_id=term.canvas_sis_id(),
+                                term_id=term_id,
                                 primary_id=primary_id,
                                 priority=PRIORITY_HIGH)
                 new_courses.append(course)
@@ -658,9 +659,9 @@ class UserManager(models.Manager):
         self.queued(queue_id).update(**kwargs)
 
     def add_all_users(self):
-        uwnetids = super(UserManager, self).get_queryset().values_list(
-            'net_id', flat=True)
-        existing_netids = dict((u, u) for u in uwnetids)
+        existing_netids = dict((u, p) for u, p in (
+            super(UserManager, self).get_queryset().values_list(
+                'net_id', flat=True)))
 
         for member in get_sis_import_members():
             if member.name not in existing_netids:
