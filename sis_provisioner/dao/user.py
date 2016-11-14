@@ -100,7 +100,7 @@ def user_fullname(user):
             fullname = HumanName('%s %s' % (user.first_name, user.surname))
             fullname.capitalize()
             fullname.string_format = '{first} {last}'
-            return fullname
+            return str(fullname)
         else:
             return user.display_name
     elif hasattr(user, 'email'):
