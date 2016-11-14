@@ -22,10 +22,9 @@ from sis_provisioner.dao.account import get_all_campuses, get_all_colleges,\
     account_name
 
 from sis_provisioner.models import Course, Curriculum, Enrollment, Group,\
-    CourseMember, GroupMemberGroup, PRIORITY_NONE, PRIORITY_DEFAULT
+    CourseMember, GroupMemberGroup, User, PRIORITY_NONE, PRIORITY_DEFAULT
 from sis_provisioner.exceptions import UserPolicyException,\
     MissingLoginIdException, CoursePolicyException, GroupPolicyException
-from sis_provisioner.loader import load_user
 from sis_provisioner.csv_data import CSVData
 
 from sis_provisioner.csv_formatters import csv_for_user, csv_for_term,\
@@ -797,7 +796,7 @@ class CSVBuilder():
         if force is True:
             csv.add_user(person.uwregid, csv_for_user(person))
         else:
-            user = load_user(person)
+            user = User.objects.add_user(person)
             if user.provisioned_date is None:
                 csv.add_user(person.uwregid, csv_for_user(person))
 

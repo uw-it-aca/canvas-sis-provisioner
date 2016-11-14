@@ -7,7 +7,6 @@ from sis_provisioner.dao.term import get_term_by_year_and_quarter
 from sis_provisioner.dao.user import get_person_by_netid, get_person_by_regid
 from sis_provisioner.models import Course, Group, PRIORITY_NONE,\
     PRIORITY_CHOICES
-from sis_provisioner.loader import generate_course_id
 from sis_provisioner.views.rest_dispatch import RESTDispatch
 from sis_provisioner.views import regid_from_request, netid_from_request
 from sis_provisioner.exceptions import CoursePolicyException
@@ -198,10 +197,13 @@ class CourseListView(RESTDispatch):
                 term = get_term_by_year_and_quarter(year, quarter)
 
                 white_list = []
-                sections = get_sections_by_instructor_and_term(instructor,
-                                                               term)
-                for section in sections:
-                    white_list.append(generate_course_id(section))
+                for section in get_sections_by_instructor_and_term(
+                        instructor, term):
+                    white_list.append('-'.join([
+                        section.term.canvas_sis_id(),
+                        section.curriculum_abbr.upper(),)
+                        section.course_number,
+                        section.section_id.upper()])
 
             except Exception as err:
                 self._log.error('section search fail: %s' % err)
