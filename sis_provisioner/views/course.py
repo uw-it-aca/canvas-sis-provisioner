@@ -201,7 +201,7 @@ class CourseListView(RESTDispatch):
                         instructor, term):
                     white_list.append('-'.join([
                         section.term.canvas_sis_id(),
-                        section.curriculum_abbr.upper(),)
+                        section.curriculum_abbr.upper(),
                         section.course_number,
                         section.section_id.upper()])
 
