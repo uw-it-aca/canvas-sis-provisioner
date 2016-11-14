@@ -12,7 +12,6 @@ from sis_provisioner.dao.user import get_person_by_netid, get_person_by_regid,\
 from sis_provisioner.models import User, PRIORITY_IMMEDIATE
 from sis_provisioner.views.rest_dispatch import RESTDispatch
 from sis_provisioner.views import regid_from_request, netid_from_request
-from sis_provisioner.loader import load_user
 from canvas_admin.views import can_view_source_data
 
 
@@ -66,10 +65,8 @@ class UserView(RESTDispatch):
                                           status=409)
         except User.DoesNotExist:
             try:
-                person = get_person_by_netid(net_id)
-                user = load_user(person)
-                user.priority = PRIORITY_IMMEDIATE
-                user.save()
+                user = User.objects.add_user(get_person_by_netid(net_id),
+                                             priority=PRIORITY_IMMEDIATE)
                 return HttpResponse()
 
             except Exception as err:
