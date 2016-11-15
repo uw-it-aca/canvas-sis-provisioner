@@ -268,10 +268,13 @@ class CourseManager(models.Manager):
                 label = section_ref.section_label()
                 section = get_section_by_label(label)
                 if is_time_schedule_construction(section):
+                    logger.info('Course: SKIP %s, TSC on' % label)
                     continue
-            except DataFailureException:
+            except DataFailureException as err:
+                logger.info('Course: SKIP %s, %s' % (label, err))
                 continue
-            except ValueError:
+            except ValueError as err:
+                logger.info('Course: SKIP, %s' % err)
                 continue
 
             if section.is_independent_study:
@@ -542,7 +545,7 @@ class EnrollmentManager(models.Manager):
 
             course = Course(course_id=full_course_id,
                             course_type=Course.SDB_TYPE,
-                            term_id=term_sis_id(section),
+                            term_id=section.term.canvas_sis_id(),
                             primary_id=primary_course_id,
                             priority=PRIORITY_HIGH)
             course.save()
@@ -675,6 +678,8 @@ class UserManager(models.Manager):
 
     def add_user(self, person, priority=PRIORITY_DEFAULT):
         if person.uwnetid is None or person.uwregid is None:
+            logger.info('User: SKIP uwnetid: %s, uwregid: %s' % (
+                person.uwnetid, person.uwregid))
             return
 
         users = super(UserManager, self).get_queryset().filter(
