@@ -661,13 +661,15 @@ class UserManager(models.Manager):
     def add_all_users(self):
         existing_netids = dict((u, p) for u, p in (
             super(UserManager, self).get_queryset().values_list(
-                'net_id', flat=True)))
+                'net_id', 'priority')))
 
         for member in get_sis_import_members():
-            if member.name not in existing_netids:
+            if (member.name not in existing_netids or
+                    existing_netids[member.name] == PRIORITY_NONE):
                 try:
-                    self.add_user(get_person_by_netid(member.name))
-                    existing_netids[member.name] = member.name
+                    self.add_user(get_person_by_netid(member.name),
+                                  priority=PRIORITY_HIGH)
+                    existing_netids[member.name] = PRIORITY_HIGH
                 except Exception as err:
                     logger.info('User: SKIP %s, %s' % (member.name, err))
 
@@ -684,23 +686,15 @@ class UserManager(models.Manager):
         elif len(users) > 1:
             users.delete()
 
-        save = False
         if user is None:
-            user = User(added_date=datetime.utcnow().replace(tzinfo=utc),
-                        reg_id=person.uwregid,
-                        net_id=person.uwnetid,
-                        priority=PRIORITY_HIGH)
-            save = True
-        elif user.reg_id != person.uwregid or user.net_id != person.uwnetid:
+            user = User()
+
+        if (user.reg_id != person.uwregid or user.net_id != person.uwnetid or
+                user.priority < priority):
             user.reg_id = person.uwregid
             user.net_id = person.uwnetid
-            save = True
-
-        if priority > PRIORITY_DEFAULT:
-            user.priority = priority
-            save = True
-
-        if save:
+            if user.priority < priority:
+                user.priority = priority
             user.save()
 
         return user
