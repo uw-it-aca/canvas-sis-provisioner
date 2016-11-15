@@ -1,15 +1,24 @@
 from django.db import models
 from django.conf import settings
 from django.utils.timezone import utc, localtime
-from sis_provisioner.dao.group import is_modified_group
-from sis_provisioner.dao.course import valid_canvas_section
-from sis_provisioner.dao.canvas import sis_import_by_path,\
-    get_sis_import_status
+from sis_provisioner.dao.group import get_sis_import_members, is_modified_group
+from sis_provisioner.dao.user import get_person_by_netid
+from sis_provisioner.dao.course import valid_academic_course_sis_id,\
+    valid_canvas_section, get_sections_by_term, get_section_by_label,\
+    is_time_schedule_construction
+from sis_provisioner.dao.canvas import create_course_provisioning_report,\
+    create_unused_courses_report, get_report_data, delete_report,\
+    sis_import_by_path, get_sis_import_status
 from sis_provisioner.exceptions import CoursePolicyException
 from restclients.exceptions import DataFailureException
-import datetime
+from datetime import datetime, timedelta
+from logging import getLogger
 import json
+import csv
 import re
+
+
+logger = getLogger(__name__)
 
 
 PRIORITY_NONE = 0
@@ -93,6 +102,21 @@ class TermManager(models.Manager):
             kwargs['deleted_unused_courses_date'] = provisioned_date
 
         self.queued(queue_id).update(**kwargs)
+
+    def initialize_course_search(self, sws_term):
+        try:
+            term = Term.objects.get(term_id=sws_term.canvas_sis_id())
+        except Term.DoesNotExist:
+            term = Term(term_id=sws_term.canvas_sis_id())
+
+        term.last_course_search_date = datetime.utcnow().replace(tzinfo=utc)
+        if term.courses_changed_since_date is None:
+            term_first_day = sws_term.get_bod_first_day().replace(tzinfo=utc)
+            days = getattr(settings, 'COURSES_CHANGED_SINCE_DAYS', 120)
+            term.courses_changed_since_date = (
+                term_first_day - timedelta(days=days))
+        term.save()
+        return term
 
 
 class Term(models.Model):
@@ -217,6 +241,117 @@ class CourseManager(models.Manager):
         except Course.DoesNotExist:
             pass
 
+    def add_all_courses_for_term(self, term):
+        term_id = term.canvas_sis_id()
+        existing_course_ids = dict((c, p) for c, p in (
+            super(CourseManager, self).get_queryset().filter(
+                term_id=term_id, course_type=Course.SDB_TYPE
+            ).values_list('course_id', 'priority')))
+
+        delta = Term.objects.initialize_course_search(term)
+
+        new_courses = []
+        for section_ref in get_sections_by_term(
+                localtime(delta.courses_changed_since_date).date(), term):
+            course_id = '-'.join([section_ref.term.canvas_sis_id(),
+                                  section_ref.curriculum_abbr.upper(),
+                                  section_ref.course_number,
+                                  section_ref.section_id.upper()])
+
+            if course_id in existing_course_ids:
+                if existing_course_ids[course_id] == PRIORITY_NONE:
+                    super(CourseManager, self).get_queryset().filter(
+                        course_id=course_id).update(priority=PRIORITY_HIGH)
+                continue
+
+            try:
+                label = section_ref.section_label()
+                section = get_section_by_label(label)
+                if is_time_schedule_construction(section):
+                    logger.info('Course: SKIP %s, TSC on' % label)
+                    continue
+            except DataFailureException as err:
+                logger.info('Course: SKIP %s, %s' % (label, err))
+                continue
+            except ValueError as err:
+                logger.info('Course: SKIP, %s' % err)
+                continue
+
+            if section.is_independent_study:
+                for meeting in section.meetings:
+                    for instructor in meeting.instructors:
+                        if instructor.uwregid:
+                            ind_course_id = '-'.join([course_id,
+                                                      instructor.uwregid])
+
+                            if ind_course_id not in existing_course_ids:
+                                course = Course(course_id=ind_course_id,
+                                                course_type=Course.SDB_TYPE,
+                                                term_id=term_id,
+                                                priority=PRIORITY_HIGH)
+                                new_courses.append(course)
+            else:
+                if section.is_primary_section:
+                    primary_id = None
+                else:
+                    primary_id = section.canvas_course_sis_id()
+
+                course = Course(course_id=course_id,
+                                course_type=Course.SDB_TYPE,
+                                term_id=term_id,
+                                primary_id=primary_id,
+                                priority=PRIORITY_HIGH)
+                new_courses.append(course)
+
+        Course.objects.bulk_create(new_courses)
+
+        delta.courses_changed_since_date = datetime.utcnow().replace(
+            tzinfo=utc)
+        delta.save()
+
+    def prioritize_active_courses_for_term(self, term):
+        canvas_term = get_term_by_sis_id(term.canvas_sis_id())
+        canvas_account_id = getattr(settings, 'RESTCLIENTS_CANVAS_ACCOUNT_ID',
+                                    None)
+
+        # Canvas report of "unused" courses for the term
+        unused_course_report = create_unused_courses_report(
+            canvas_account_id, term_id=canvas_term.term_id)
+
+        unused_courses = {}
+        for row in csv.reader(get_report_data(unused_course_report)):
+            # Create a lookup by unused course_sis_id
+            try:
+                unused_courses[row[1]] = True
+            except Exception as ex:
+                continue
+
+        # Canvas report of all courses for the term
+        all_course_report = create_course_provisioning_report(
+            canvas_account_id, term_id=canvas_term.term_id)
+
+        for row in csv.reader(get_report_data(all_course_report)):
+            try:
+                sis_course_id = row[1]
+                valid_academic_course_sis_id(sis_course_id)
+            except Exception as ex:
+                continue
+
+            if sis_course_id not in unused_courses:
+                try:
+                    course = Course.objects.get(course_id=sis_course_id)
+                    course.priority = PRIORITY_HIGH
+                    course.save()
+                except Course.DoesNotExist:
+                    continue
+
+        delete_report(unused_course_report)
+        delete_report(all_course_report)
+
+    def deprioritize_all_courses_for_term(self, term):
+        super(CourseManager, self).get_queryset().filter(
+            term_id=term.canvas_sis_id()).update(priority=PRIORITY_NONE)
+
 
 class Course(models.Model):
     """ Represents the provisioned state of a course.
@@ -332,6 +467,89 @@ class EnrollmentManager(models.Manager):
                 queue_id=None
             )
 
+    def add_enrollment(self, enrollment_data):
+        section = enrollment_data.get('Section')
+        reg_id = enrollment_data.get('UWRegID')
+        role = enrollment_data.get('Role', Enrollment.STUDENT_ROLE)
+        status = enrollment_data.get('Status').lower()
+        last_modified = enrollment_data.get('LastModified')
+        request_date = enrollment_data.get('RequestDate')
+        instructor_reg_id = enrollment_data.get('InstructorUWRegID', None)
+
+        course_id = '-'.join([section.term.canvas_sis_id(),
+                              section.curriculum_abbr.upper(),
+                              section.course_number,
+                              section.section_id.upper()])
+
+        primary_course_id = None
+        if section.is_primary_section:
+            primary_course_id = None
+        else:
+            primary_course_id = section.canvas_course_sis_id()
+
+        full_course_id = '-'.join([course_id, instructor_reg_id]) if (
+            instructor_reg_id is not None) else course_id
+
+        try:
+            course = Course.objects.get(course_id=full_course_id)
+            if course.provisioned_date:
+                enrollment = Enrollment.objects.get(course_id=course_id,
+                                                    reg_id=reg_id,
+                                                    role=role)
+                if (last_modified > enrollment.last_modified or (
+                        last_modified == enrollment.last_modified and
+                        status == Enrollment.ACTIVE_STATUS)):
+                    logger.info('Enrollment: UPDATE %s %s %s %s %s' % (
+                        course_id, reg_id, role, status, last_modified))
+
+                    enrollment.status = status
+                    enrollment.last_modified = last_modified
+                    enrollment.request_date = request_date
+                    enrollment.primary_course_id = primary_course_id
+                    enrollment.instructor_reg_id = instructor_reg_id
+
+                    if enrollment.queue_id is None:
+                        enrollment.priority = PRIORITY_DEFAULT
+                    else:
+                        enrollment.priority = PRIORITY_HIGH
+                        logger.info('Enrollment: IN QUEUE %s %s %s %s' % (
+                            course_id, reg_id, role, enrollment.queue_id))
+
+                    enrollment.save()
+                else:
+                    logger.info('Enrollment: IGNORE %s %s, %s before %s' % (
+                        course_id, reg_id, last_modified,
+                        enrollment.last_modified))
+            else:
+                logger.info('Enrollment: IGNORE %s %s Unprovisioned course' % (
+                    full_course_id, reg_id))
+                course.priority = PRIORITY_HIGH
+                course.save()
+
+        except Enrollment.DoesNotExist:
+            logger.info('Enrollment: ADD %s %s %s %s %s' % (
+                course_id, reg_id, role, status, last_modified))
+            enrollment = Enrollment(course_id=course_id, reg_id=reg_id,
+                                    role=role, status=status,
+                                    last_modified=last_modified,
+                                    primary_course_id=primary_course_id,
+                                    instructor_reg_id=instructor_reg_id)
+            enrollment.save()
+        except Course.DoesNotExist:
+            # course provisioning effectively picks up event
+            logger.info('Enrollment: IGNORE %s %s Unprovisioned course' % (
+                full_course_id, reg_id))
+
+            if section.is_independent_study:
+                section.independent_study_instructor_regid = instructor_reg_id
+
+            course = Course(course_id=full_course_id,
+                            course_type=Course.SDB_TYPE,
+                            term_id=section.term.canvas_sis_id(),
+                            primary_id=primary_course_id,
+                            priority=PRIORITY_HIGH)
+            course.save()
+
 
 class Enrollment(models.Model):
     """ Represents the provisioned state of an enrollment.
@@ -442,6 +660,49 @@ class UserManager(models.Manager):
             kwargs['priority'] = PRIORITY_DEFAULT
 
         self.queued(queue_id).update(**kwargs)
+
+    def add_all_users(self):
+        existing_netids = dict((u, p) for u, p in (
+            super(UserManager, self).get_queryset().values_list(
+                'net_id', 'priority')))
+
+        for member in get_sis_import_members():
+            if (member.name not in existing_netids or
+                    existing_netids[member.name] == PRIORITY_NONE):
+                try:
+                    self.add_user(get_person_by_netid(member.name),
+                                  priority=PRIORITY_HIGH)
+                    existing_netids[member.name] = PRIORITY_HIGH
+                except Exception as err:
+                    logger.info('User: SKIP %s, %s' % (member.name, err))
+
+    def add_user(self, person, priority=PRIORITY_DEFAULT):
+        if person.uwnetid is None or person.uwregid is None:
+            logger.info('User: SKIP uwnetid: %s, uwregid: %s' % (
+                person.uwnetid, person.uwregid))
+            return
+
+        users = super(UserManager, self).get_queryset().filter(
+            models.Q(reg_id=person.uwregid) | models.Q(net_id=person.uwnetid))
+
+        user = None
+        if len(users) == 1:
+            user = users[0]
+        elif len(users) > 1:
+            users.delete()
+
+        if user is None:
+            user = User()
+
+        if (user.reg_id != person.uwregid or user.net_id != person.uwnetid or
+                user.priority < priority):
+            user.reg_id = person.uwregid
+            user.net_id = person.uwnetid
+            if user.priority < priority:
+                user.priority = priority
+            user.save()
+
+        return user
 
 
 class User(models.Model):
@@ -814,7 +1075,7 @@ class Import(models.Model):
         if (self.canvas_id and self.post_status == 200 and
                 (self.canvas_errors is None or
                     self.monitor_status in [500, 503, 504])):
-            self.monitor_date = datetime.datetime.utcnow().replace(tzinfo=utc)
+            self.monitor_date = datetime.utcnow().replace(tzinfo=utc)
             try:
                 sis_import = get_sis_import_status(self.canvas_id)
                 self.monitor_status = 200
