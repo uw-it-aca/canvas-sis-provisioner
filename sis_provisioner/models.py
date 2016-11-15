@@ -262,7 +262,7 @@ class CourseManager(models.Manager):
                 if existing_course_ids[course_id] == PRIORITY_NONE:
                     super(CourseManager, self).get_queryset().filter(
                         course_id=course_id).update(priority=PRIORITY_HIGH)
-                    continue
+                continue
 
             try:
                 label = section_ref.section_label()
