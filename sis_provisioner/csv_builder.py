@@ -1,39 +1,40 @@
 from django.conf import settings
-from logging import getLogger
 from django.utils.timezone import utc
 
 from restclients.models.sws import Registration
-from restclients.exceptions import DataFailureException,\
-    InvalidCanvasIndependentStudyCourse
+from restclients.exceptions import (
+    DataFailureException, InvalidCanvasIndependentStudyCourse)
 
 from sis_provisioner.dao.term import term_sis_id, get_term_by_year_and_quarter
-from sis_provisioner.dao.course import canvas_xlist_id, is_active_section,\
-    group_section_sis_id, get_section_by_id, get_section_by_url,\
-    valid_academic_course_sis_id, valid_adhoc_course_sis_id,\
-    get_registrations_by_section
-from sis_provisioner.dao.canvas import get_course_by_id, get_course_by_sis_id,\
-    update_course_sis_id, get_sis_sections_for_course,\
-    get_sis_enrollments_for_course
+from sis_provisioner.dao.course import (
+    canvas_xlist_id, is_active_section, group_section_sis_id,
+    get_section_by_id, get_section_by_url, valid_academic_course_sis_id,
+    valid_adhoc_course_sis_id, get_registrations_by_section)
+from sis_provisioner.dao.canvas import (
+    get_course_by_id, get_course_by_sis_id, update_course_sis_id,
+    get_sis_sections_for_course, get_sis_enrollments_for_course)
 from sis_provisioner.dao.group import get_effective_members
-from sis_provisioner.dao.user import valid_net_id, valid_gmail_id,\
-    get_person_by_gmail_id, get_person_by_netid, get_person_by_regid
-from sis_provisioner.dao.account import get_all_campuses, get_all_colleges,\
-    get_curricula_by_department, get_departments_by_college, account_sis_id,\
-    account_name
+from sis_provisioner.dao.user import (
+    valid_net_id, valid_gmail_id, get_person_by_gmail_id, get_person_by_netid,
+    get_person_by_regid)
+from sis_provisioner.dao.account import (
+    get_all_campuses, get_all_colleges, get_curricula_by_department,
+    get_departments_by_college, account_sis_id, account_name)
 
-from sis_provisioner.models import Course, Curriculum, Enrollment, Group,\
-    CourseMember, GroupMemberGroup, User, PRIORITY_NONE, PRIORITY_DEFAULT
-from sis_provisioner.exceptions import UserPolicyException,\
-    MissingLoginIdException, CoursePolicyException, GroupPolicyException
+from sis_provisioner.models import (
+    Course, Curriculum, Enrollment, Group, CourseMember, GroupMemberGroup,
+    User, PRIORITY_NONE, PRIORITY_DEFAULT)
+from sis_provisioner.exceptions import (
+    UserPolicyException, MissingLoginIdException, CoursePolicyException,
+    GroupPolicyException)
+
 from sis_provisioner.csv_data import CSVData
-
-from sis_provisioner.csv_formatters import csv_for_user, csv_for_term,\
-    csv_for_course, csv_for_section, csv_for_group_section,\
-    csv_for_group_enrollment, csv_for_sis_instructor_enrollment,\
-    csv_for_sis_student_enrollment, csv_for_xlist, csv_for_account,\
-    header_for_accounts
+from sis_provisioner.csv.format import (
+    AccountCSV, TermCSV, CourseCSV, SectionCSV, GroupSectionCSV, EnrollmentCSV,
+    StudentEnrollmentCSV, InstructorEnrollmentCSV, UserCSV, XlistCSV)
 
 from datetime import datetime, timedelta
+from logging import getLogger
 import re
 import json
 
@@ -74,7 +75,7 @@ class CSVBuilder():
             section_id = group_section_sis_id(course_id)
             if not self._csv.has_section(section_id):
                 self._csv.add_section(section_id,
-                                      csv_for_group_section(course_id))
+                                      GroupSectionCSV(course_id))
 
             cached_members = CourseMember.objects.filter(course_id=course_id)
             current_members = []
@@ -216,13 +217,13 @@ class CSVBuilder():
             if status == Enrollment.ACTIVE_STATUS and hasattr(member, "login"):
                 person = get_person_by_gmail_id(member.login)
                 if not self._csv.has_user(member.name):
-                    self._csv.add_user(member.name, csv_for_user(person))
+                    self._csv.add_user(member.name, UserCSV(person))
             else:
                 person = get_person_by_gmail_id(member.name)
         else:
             return
 
-        csv_data = csv_for_group_enrollment(section_id, person, role, status)
+        csv_data = EnrollmentCSV(section_id, person, role, status)
         self._csv.add_enrollment(csv_data)
 
     def generate_csv_for_enrollment_events(self, enrollments):
@@ -271,16 +272,15 @@ class CSVBuilder():
                         section.is_withdrawn = True
 
                     self._csv.add_course(section.canvas_course_sis_id(),
-                                         csv_for_course(section))
+                                         CourseCSV(section))
 
                     if enrollment.is_active():
                         self._csv.add_section(
                             section.canvas_section_sis_id(),
-                            csv_for_section(section))
+                            SectionCSV(section))
 
-                        csv_data = csv_for_sis_instructor_enrollment(
-                            section, person, enrollment.status)
-                        self._csv.add_enrollment(csv_data)
+                        self._csv.add_enrollment(InstructorEnrollmentCSV(
+                            section, person, enrollment.status))
 
                 elif len(section.linked_section_urls):
                     # Add/remove primary instructor for each linked section
@@ -290,22 +290,20 @@ class CSVBuilder():
                         except Exception as err:
                             continue
 
-                        csv_data = csv_for_sis_instructor_enrollment(
-                            linked_section, person, enrollment.status)
-                        self._csv.add_enrollment(csv_data)
+                        self._csv.add_enrollment(InstructorEnrollmentCSV(
+                            linked_section, person, enrollment.status))
 
                         self._csv.add_section(
                             linked_section.canvas_section_sis_id(),
-                            csv_for_section(linked_section))
+                            SectionCSV(linked_section))
 
                 else:
-                    csv_data = csv_for_sis_instructor_enrollment(
-                        section, person, enrollment.status)
-                    self._csv.add_enrollment(csv_data)
+                    self._csv.add_enrollment(InstructorEnrollmentCSV(
+                        section, person, enrollment.status))
 
                     self._csv.add_section(
                         section.canvas_section_sis_id(),
-                        csv_for_section(section))
+                        SectionCSV(section))
 
             else:  # student/auditor
                 if len(section.linked_section_urls):
@@ -317,12 +315,10 @@ class CSVBuilder():
                 registration = Registration(
                     section=section, person=person,
                     is_active=enrollment.is_active())
-                csv_data = csv_for_sis_student_enrollment(registration)
-                self._csv.add_enrollment(csv_data)
+                self._csv.add_enrollment(StudentEnrollmentCSV(registration))
 
-                self._csv.add_section(
-                    section.canvas_section_sis_id(),
-                    csv_for_section(section))
+                self._csv.add_section(section.canvas_section_sis_id(),
+                                      SectionCSV(section))
 
             # Add the user csv
             self.generate_user_csv_for_person(person)
@@ -417,8 +413,8 @@ class CSVBuilder():
             campus_id = account_sis_id([root_id, campus.label])
 
             if not csv.has_account(campus_id):
-                csv_data = csv_for_account(campus_id, root_id, campus)
-                csv.add_account(campus_id, csv_data)
+                csv.add_account(campus_id, AccountCSV(
+                    campus_id, root_id, campus))
 
         colleges = get_all_colleges()
 
@@ -428,8 +424,8 @@ class CSVBuilder():
 
             if not csv.has_account(college_id):
                 campus_id = account_sis_id([root_id, college.campus_label])
-                csv_data = csv_for_account(college_id, campus_id, college)
-                csv.add_account(college_id, csv_data)
+                csv.add_account(college_id, AccountCSV(
+                    college_id, campus_id, college))
 
             departments = get_departments_by_college(college)
 
@@ -438,8 +434,8 @@ class CSVBuilder():
                                           college.name, dept.label])
 
                 if not csv.has_account(dept_id):
-                    csv_data = csv_for_account(dept_id, college_id, dept)
-                    csv.add_account(dept_id, csv_data)
+                    csv.add_account(dept_id, AccountCSV(
+                        dept_id, college_id, dept))
 
                 curricula = get_curricula_by_department(dept, future_terms=2)
 
@@ -449,9 +445,8 @@ class CSVBuilder():
                                               curriculum.label])
 
                     if not csv.has_account(curr_id):
-                        csv_data = csv_for_account(
-                            curr_id, dept_id, curriculum)
-                        csv.add_account(curr_id, csv_data)
+                        csv.add_account(curr_id, AccountCSV(
+                            curr_id, dept_id, curriculum))
 
                         # Update the Curriculum model for this curriculum
                         try:
@@ -509,23 +504,22 @@ class CSVBuilder():
 
             term_id = term_sis_id(section)
             if not csv.has_term(term_id):
-                csv.add_term(term_id, csv_for_term(section))
+                csv.add_term(term_id, TermCSV(section))
 
-            csv.add_course(course_id, csv_for_course(section))
+            csv.add_course(course_id, CourseCSV(section))
 
             Course.objects.update_status(section)
 
             section_id = section.canvas_section_sis_id()
-            csv.add_section(section_id, csv_for_section(section))
+            csv.add_section(section_id, SectionCSV(section))
 
             if is_active_section(section):
                 self.generate_user_csv_for_person(instructor)
                 if instructor.uwregid not in self._invalid_users:
                     logger.info("ADD instructor %s to %s" % (
                         instructor.uwregid, section_id))
-                    csv_data = csv_for_sis_instructor_enrollment(
-                        section, instructor, Enrollment.ACTIVE_STATUS)
-                    csv.add_enrollment(csv_data)
+                    csv.add_enrollment(InstructorEnrollmentCSV(
+                        section, instructor, Enrollment.ACTIVE_STATUS))
 
                 if self._include_enrollment:
                     self.generate_student_enrollment_csv(section)
@@ -550,14 +544,14 @@ class CSVBuilder():
         csv = self._csv
         term_id = term_sis_id(section)
         if not csv.has_term(term_id):
-            csv.add_term(term_id, csv_for_term(section))
+            csv.add_term(term_id, TermCSV(section))
 
         course_id = section.canvas_course_sis_id()
         if csv.has_course(course_id):
             return
 
         # Add the course csv
-        csv.add_course(course_id, csv_for_course(section))
+        csv.add_course(course_id, CourseCSV(section))
 
         Course.objects.update_status(section)
 
@@ -576,7 +570,7 @@ class CSVBuilder():
         else:
             section_id = section.canvas_section_sis_id()
 
-            csv.add_section(section_id, csv_for_section(section))
+            csv.add_section(section_id, SectionCSV(section))
 
             if is_active_section(section):
                 self.generate_teacher_enrollment_csv(section)
@@ -668,7 +662,7 @@ class CSVBuilder():
         if csv.has_section(section_id):
             return
 
-        csv.add_section(section_id, csv_for_section(section))
+        csv.add_section(section_id, SectionCSV(section))
 
         if is_active_section(section):
             self.generate_teacher_enrollment_csv(section, primary_instructors)
@@ -690,9 +684,8 @@ class CSVBuilder():
             if person.uwregid not in self._invalid_users:
                 logger.info("ADD instructor %s to %s" % (
                     person.uwregid, section.canvas_section_sis_id()))
-                csv_data = csv_for_sis_instructor_enrollment(
-                    section, person, Enrollment.ACTIVE_STATUS)
-                self._csv.add_enrollment(csv_data)
+                self._csv.add_enrollment(InstructorEnrollmentCSV(
+                    section, person, Enrollment.ACTIVE_STATUS))
 
     def generate_student_enrollment_csv(self, section):
         """
@@ -704,8 +697,7 @@ class CSVBuilder():
 
             # Add the student enrollment csv
             if registration.person.uwregid not in self._invalid_users:
-                csv_data = csv_for_sis_student_enrollment(registration)
-                self._csv.add_enrollment(csv_data)
+                self._csv.add_enrollment(StudentEnrollmentCSV(registration))
 
     def generate_xlists_csv(self, section):
         """
@@ -766,14 +758,12 @@ class CSVBuilder():
         for linked_section_id in linked_section_ids:
             if (existing_xlist_id is not None and
                     existing_xlist_id != new_xlist_id):
-                self._csv.add_xlist(csv_for_xlist(existing_xlist_id,
-                                                  linked_section_id,
-                                                  status="deleted"))
+                self._csv.add_xlist(XlistCSV(
+                    existing_xlist_id, linked_section_id, status="deleted"))
 
             if (new_xlist_id is not None and new_xlist_id != course_id):
-                self._csv.add_xlist(csv_for_xlist(new_xlist_id,
-                                                  linked_section_id,
-                                                  status="active"))
+                self._csv.add_xlist(XlistCSV(
+                    new_xlist_id, linked_section_id, status="active"))
 
     def generate_user_csv_for_person(self, person, force=False):
         """
@@ -794,11 +784,11 @@ class CSVBuilder():
             return
 
         if force is True:
-            csv.add_user(person.uwregid, csv_for_user(person))
+            csv.add_user(person.uwregid, UserCSV(person))
         else:
             user = User.objects.add_user(person)
             if user.provisioned_date is None:
-                csv.add_user(person.uwregid, csv_for_user(person))
+                csv.add_user(person.uwregid, UserCSV(person))
 
                 if user.queue_id is None:
                     user.queue_id = self._queue_id

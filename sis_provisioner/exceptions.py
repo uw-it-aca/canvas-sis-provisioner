@@ -35,5 +35,9 @@ class CoursePolicyException(Exception):
     pass
 
 
+class EnrollmentPolicyException(Exception):
+    pass
+
+
 class AccountPolicyException(Exception):
     pass

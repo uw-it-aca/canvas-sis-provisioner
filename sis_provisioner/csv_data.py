@@ -1,9 +1,7 @@
 from django.conf import settings
-from sis_provisioner.csv_formatters import header_for_users,\
-    header_for_accounts, header_for_terms, header_for_courses,\
-    header_for_sections, header_for_enrollments, header_for_xlists
-import StringIO
-import csv
+from sis_provisioner.csv.format import (
+    AccountHeader, TermHeader, CourseHeader, SectionHeader, EnrollmentHeader,
+    UserHeader, XlistHeader)
 import os
 import errno
 import stat
@@ -26,13 +24,13 @@ class CSVData():
         self.xlists = []
         self.users = {}
         self.headers = {
-            'users': header_for_users(),
-            'accounts': header_for_accounts(),
-            'terms': header_for_terms(),
-            'courses': header_for_courses(),
-            'sections': header_for_sections(),
-            'enrollments': header_for_enrollments(),
-            'xlists': header_for_xlists(),
+            'users': UserHeader(),
+            'accounts': AccountHeader(),
+            'terms': TermHeader(),
+            'courses': CourseHeader(),
+            'sections': SectionHeader(),
+            'enrollments': EnrollmentHeader(),
+            'xlists': XlistHeader(),
         }
         self.filemode = (stat.S_IRUSR | stat.S_IWUSR |
                          stat.S_IRGRP | stat.S_IWGRP |
@@ -75,23 +73,6 @@ class CSVData():
     def has_user(self, key):
         return key in self.users
 
-    def csv_line_from_data(self, data):
-        """
-        Creates a line of csv data from the passed list.
-        """
-        s = StringIO.StringIO()
-
-        csv.register_dialect("unix_newline", lineterminator="\n")
-        writer = csv.writer(s, dialect="unix_newline")
-        try:
-            writer.writerow(data)
-        except UnicodeEncodeError:
-            print "Caught unicode error: %s" % data
-
-        line = s.getvalue()
-        s.close()
-        return line
-
     def write_files(self):
         """
         Writes all csv files. Returns a path to the csv files, or None
@@ -118,9 +99,9 @@ class CSVData():
 
             try:
                 headers = self.headers[csv_type]
-                f.write(self.csv_line_from_data(headers))
+                f.write(str(headers))
                 for line in data:
-                    f.write(self.csv_line_from_data(line))
+                    f.write(str(line))
             finally:
                 f.close()
 
