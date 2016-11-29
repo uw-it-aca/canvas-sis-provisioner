@@ -28,7 +28,7 @@ from sis_provisioner.exceptions import (
     UserPolicyException, MissingLoginIdException, CoursePolicyException,
     GroupPolicyException)
 
-from sis_provisioner.csv_data import CSVData
+from sis_provisioner.csv.data import Collector
 from sis_provisioner.csv.format import (
     AccountCSV, TermCSV, CourseCSV, SectionCSV, GroupSectionCSV, EnrollmentCSV,
     StudentEnrollmentCSV, InstructorEnrollmentCSV, UserCSV, XlistCSV)
@@ -44,7 +44,7 @@ logger = getLogger(__name__)
 
 class CSVBuilder():
     def __init__(self):
-        self._csv = CSVData()
+        self._csv = Collector()
         self._queue_id = None
         self._invalid_users = {}
 
@@ -223,8 +223,8 @@ class CSVBuilder():
         else:
             return
 
-        csv_data = EnrollmentCSV(section_id, person, role, status)
-        self._csv.add_enrollment(csv_data)
+        self._csv.add_enrollment(EnrollmentCSV(
+            section_id, person, role, status))
 
     def generate_csv_for_enrollment_events(self, enrollments):
         """

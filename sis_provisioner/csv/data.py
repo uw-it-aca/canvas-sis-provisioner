@@ -2,15 +2,14 @@ from django.conf import settings
 from sis_provisioner.csv.format import (
     AccountHeader, TermHeader, CourseHeader, SectionHeader, EnrollmentHeader,
     UserHeader, XlistHeader)
+from datetime import datetime
 import os
 import errno
 import stat
 import shutil
-import re
-import datetime
 
 
-class CSVData():
+class Collector(object):
     def __init__(self):
         self._init_data()
 
@@ -36,27 +35,27 @@ class CSVData():
                          stat.S_IRGRP | stat.S_IWGRP |
                          stat.S_IROTH)
 
-    def add_account(self, account_id, csv_data):
+    def add_account(self, account_id, formatter):
         self.account_ids[account_id] = True
-        self.accounts.append(csv_data)
+        self.accounts.append(formatter)
 
-    def add_user(self, person_id, csv_data):
-        self.users[person_id] = csv_data
+    def add_user(self, person_id, formatter):
+        self.users[person_id] = formatter
 
-    def add_term(self, term_id, csv_data):
-        self.terms[term_id] = csv_data
+    def add_term(self, term_id, formatter):
+        self.terms[term_id] = formatter
 
-    def add_course(self, course_id, csv_data):
-        self.courses[course_id] = csv_data
+    def add_course(self, course_id, formatter):
+        self.courses[course_id] = formatter
 
-    def add_section(self, key, csv_data):
-        self.sections[key] = csv_data
+    def add_section(self, section_id, formatter):
+        self.sections[section_id] = formatter
 
-    def add_enrollment(self, csv_data):
-        self.enrollments.append(csv_data)
+    def add_enrollment(self, formatter):
+        self.enrollments.append(formatter)
 
-    def add_xlist(self, csv_data):
-        self.xlists.append(csv_data)
+    def add_xlist(self, formatter):
+        self.xlists.append(formatter)
 
     def has_account(self, key):
         return key in self.account_ids
@@ -120,8 +119,7 @@ class CSVData():
         """
         Create a fresh directory for the csv files
         """
-        base = os.path.join(root,
-                            datetime.datetime.now().strftime('%Y%m%d-%H%M%S'))
+        base = os.path.join(root, datetime.now().strftime('%Y%m%d-%H%M%S'))
 
         # ugo+x
         mode = self.filemode | (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
@@ -130,8 +128,8 @@ class CSVData():
 
         for collision in range(max_collisions):
             try:
-                filepath = base if collision < 1 else '%s-%03d' % (base,
-                                                                   collision)
+                filepath = base if (
+                    collision < 1) else '%s-%03d' % (base, collision)
                 os.makedirs(filepath)
                 os.chmod(filepath, mode)
                 return filepath

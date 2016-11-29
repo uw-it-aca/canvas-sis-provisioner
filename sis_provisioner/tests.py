@@ -7,6 +7,7 @@ from sis_provisioner.test.dao.group import (
     SISImportMembersTest)
 from sis_provisioner.test.dao.term import ActiveTermTest, TermPolicyTest
 from sis_provisioner.test.dao.account import AccountPolicyTest
+from sis_provisioner.test.csv.data import CSVDataTest
 from sis_provisioner.test.csv.format import (
     CSVHeaderTest, AccountCSVTest, TermCSVTest, CourseCSVTest, SectionCSVTest,
     GroupSectionCSVTest, EnrollmentCSVTest, UserCSVTest, XlistCSVTest)
