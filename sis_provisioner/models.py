@@ -103,21 +103,6 @@ class TermManager(models.Manager):
 
         self.queued(queue_id).update(**kwargs)
 
-    def initialize_course_search(self, sws_term):
-        try:
-            term = Term.objects.get(term_id=sws_term.canvas_sis_id())
-        except Term.DoesNotExist:
-            term = Term(term_id=sws_term.canvas_sis_id())
-
-        term.last_course_search_date = datetime.utcnow().replace(tzinfo=utc)
-        if term.courses_changed_since_date is None:
-            term_first_day = sws_term.get_bod_first_day().replace(tzinfo=utc)
-            days = getattr(settings, 'COURSES_CHANGED_SINCE_DAYS', 120)
-            term.courses_changed_since_date = (
-                term_first_day - timedelta(days=days))
-        term.save()
-        return term
-
 
 class Term(models.Model):
     """ Represents the provisioned state of courses for a term.
@@ -248,7 +233,16 @@ class CourseManager(models.Manager):
                 term_id=term_id, course_type=Course.SDB_TYPE
             ).values_list('course_id', 'priority')))
 
-        delta = Term.objects.initialize_course_search(term)
+        try:
+            delta = Term.objects.get(term_id=term_id)
+        except Term.DoesNotExist:
+            delta = Term(term_id=term_id)
+
+        if delta.last_course_search_date is None:
+            delta.courses_changed_since_date = datetime(
+                1970, 1, 1).replace(tzinfo=utc)
+        else:
+            delta.courses_changed_since_date = delta.last_course_search_date
 
         new_courses = []
         for section_ref in get_sections_by_term(
@@ -305,8 +299,7 @@ class CourseManager(models.Manager):
 
         Course.objects.bulk_create(new_courses)
 
-        delta.courses_changed_since_date = datetime.utcnow().replace(
-            tzinfo=utc)
+        delta.last_course_search_date = datetime.utcnow().replace(tzinfo=utc)
         delta.save()
 
     def prioritize_active_courses_for_term(self, term):
