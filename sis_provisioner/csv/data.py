@@ -1,7 +1,5 @@
 from django.conf import settings
-from sis_provisioner.csv.format import (
-    AccountHeader, TermHeader, CourseHeader, SectionHeader, EnrollmentHeader,
-    UserHeader, XlistHeader)
+from sis_provisioner.csv.format import *
 from datetime import datetime
 import os
 import errno
@@ -35,42 +33,67 @@ class Collector(object):
                          stat.S_IRGRP | stat.S_IWGRP |
                          stat.S_IROTH)
 
-    def add_account(self, account_id, formatter):
-        self.account_ids[account_id] = True
-        self.accounts.append(formatter)
+    def add(self, formatter):
+        """
+        Add the passed csv formatter object based on type, returns True if
+        the formatter is added, False otherwise.
+        """
+        if isinstance(formatter, UserCSV):
+            return self._add_user(formatter)
+        elif isinstance(formatter, (
+                EnrollmentCSV, StudentEnrollmentCSV, InstructorEnrollmentCSV)):
+            return self._add_enrollment(formatter)
+        elif isinstance(formatter, AccountCSV):
+            return self._add_account(formatter)
+        elif isinstance(formatter, TermCSV):
+            return self._add_term(formatter)
+        elif isinstance(formatter, CourseCSV):
+            return self._add_course(formatter)
+        elif isinstance(formatter, (SectionCSV, GroupSectionCSV)):
+            return self._add_section(formatter)
+        elif isinstance(formatter, XlistCSV):
+            return self._add_xlist(formatter)
+        else:
+            raise Exception('Unknown CSV format class %s' % type(formatter))
 
-    def add_user(self, person_id, formatter):
-        self.users[person_id] = formatter
+    def _add_account(self, formatter):
+        if formatter.key not in self.account_ids:
+            self.account_ids[formatter.key] = True
+            self.accounts.append(formatter)
+            return True
+        return False
 
-    def add_term(self, term_id, formatter):
-        self.terms[term_id] = formatter
+    def _add_user(self, formatter):
+        if formatter.key not in self.users:
+            self.users[formatter.key] = formatter
+            return True
+        return False
 
-    def add_course(self, course_id, formatter):
-        self.courses[course_id] = formatter
+    def _add_term(self, formatter):
+        if formatter.key not in self.terms:
+            self.terms[formatter.key] = formatter
+            return True
+        return False
 
-    def add_section(self, section_id, formatter):
-        self.sections[section_id] = formatter
+    def _add_course(self, formatter):
+        if formatter.key not in self.courses:
+            self.courses[formatter.key] = formatter
+            return True
+        return False
 
-    def add_enrollment(self, formatter):
+    def _add_section(self, formatter):
+        if formatter.key not in self.sections:
+            self.sections[formatter.key] = formatter
+            return True
+        return False
+
+    def _add_enrollment(self, formatter):
         self.enrollments.append(formatter)
+        return True
 
-    def add_xlist(self, formatter):
+    def _add_xlist(self, formatter):
         self.xlists.append(formatter)
-
-    def has_account(self, key):
-        return key in self.account_ids
-
-    def has_course(self, key):
-        return key in self.courses
-
-    def has_section(self, key):
-        return key in self.sections
-
-    def has_term(self, key):
-        return key in self.terms
-
-    def has_user(self, key):
-        return key in self.users
+        return True
 
     def write_files(self):
         """
@@ -78,7 +101,7 @@ class Collector(object):
         if no data was written.
         """
         root = getattr(settings, 'SIS_IMPORT_CSV_ROOT', '')
-        filepath = self.filepath(root)
+        filepath = self.create_filepath(root)
         has_csv = False
         for csv_type in self.headers:
             try:
@@ -115,7 +138,7 @@ class Collector(object):
         else:
             return filepath
 
-    def filepath(self, root):
+    def create_filepath(self, root):
         """
         Create a fresh directory for the csv files
         """

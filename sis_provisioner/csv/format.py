@@ -12,16 +12,17 @@ import csv
 
 class CSVFormat(object):
     def __init__(self):
-        self._data = []
+        self.key = None
+        self.data = []
 
     def __str__(self):
         """
-        Creates a line of csv data from the obj _data attribute
+        Creates a line of csv data from the obj data attribute
         """
         s = StringIO.StringIO()
 
         csv.register_dialect('unix_newline', lineterminator='\n')
-        csv.writer(s, dialect='unix_newline').writerow(self._data)
+        csv.writer(s, dialect='unix_newline').writerow(self.data)
 
         line = s.getvalue()
         s.close()
@@ -31,42 +32,42 @@ class CSVFormat(object):
 # CSV Header classes
 class AccountHeader(CSVFormat):
     def __init__(self):
-        self._data = ['account_id', 'parent_account_id', 'name', 'status']
+        self.data = ['account_id', 'parent_account_id', 'name', 'status']
 
 
 class TermHeader(CSVFormat):
     def __init__(self):
-        self._data = ['term_id', 'name', 'status', 'start_date', 'end_date']
+        self.data = ['term_id', 'name', 'status', 'start_date', 'end_date']
 
 
 class CourseHeader(CSVFormat):
     def __init__(self):
-        self._data = ['course_id', 'short_name', 'long_name', 'account_id',
-                      'term_id', 'status', 'start_date', 'end_date']
+        self.data = ['course_id', 'short_name', 'long_name', 'account_id',
+                     'term_id', 'status', 'start_date', 'end_date']
 
 
 class SectionHeader(CSVFormat):
     def __init__(self):
-        self._data = ['section_id', 'course_id', 'name', 'status',
-                      'start_date', 'end_date']
+        self.data = ['section_id', 'course_id', 'name', 'status',
+                     'start_date', 'end_date']
 
 
 class EnrollmentHeader(CSVFormat):
     def __init__(self):
-        self._data = ['course_id', 'root_account', 'user_id', 'role',
-                      'role_id', 'section_id', 'status', 'associated_user_id']
+        self.data = ['course_id', 'root_account', 'user_id', 'role',
+                     'role_id', 'section_id', 'status', 'associated_user_id']
 
 
 class UserHeader(CSVFormat):
     def __init__(self):
-        self._data = ['user_id', 'login_id', 'password', 'first_name',
-                      'last_name', 'full_name', 'sortable_name', 'short_name',
-                      'email', 'status']
+        self.data = ['user_id', 'login_id', 'password', 'first_name',
+                     'last_name', 'full_name', 'sortable_name', 'short_name',
+                     'email', 'status']
 
 
 class XlistHeader(CSVFormat):
     def __init__(self):
-        self._data = ['xlist_course_id', 'section_id', 'status']
+        self.data = ['xlist_course_id', 'section_id', 'status']
 
 
 # CSV Data classes
@@ -75,10 +76,11 @@ class AccountCSV(CSVFormat):
     account_id, parent_account_id, name, status (active|deleted)
     """
     def __init__(self, account_id, parent_id, context, status='active'):
-        self._data = [account_id,
-                      parent_id,
-                      account_name(context),
-                      status]
+        self.key = account_id
+        self.data = [account_id,
+                     parent_id,
+                     account_name(context),
+                     status]
 
 
 class TermCSV(CSVFormat):
@@ -86,11 +88,12 @@ class TermCSV(CSVFormat):
     term_id, name, status (active|deleted), start_date, end_date
     """
     def __init__(self, section, status='active'):
-        self._data = [term_sis_id(section),
-                      term_name(section),
-                      status,
-                      term_start_date(section),
-                      term_end_date(section)]
+        self.key = term_sis_id(section)
+        self.data = [self.key,
+                     term_name(section),
+                     status,
+                     term_start_date(section),
+                     term_end_date(section)]
 
 
 class CourseCSV(CSVFormat):
@@ -99,13 +102,14 @@ class CourseCSV(CSVFormat):
     status (active|deleted|completed), start_date, end_date
     """
     def __init__(self, section):
-        self._data = [section.canvas_course_sis_id(),
-                      section_short_name(section),
-                      section_long_name(section),
-                      Curriculum.objects.canvas_account_id(section),
-                      term_sis_id(section),
-                      'active' if is_active_section(section) else 'deleted',
-                      None, None]
+        self.key = section.canvas_course_sis_id()
+        self.data = [self.key,
+                     section_short_name(section),
+                     section_long_name(section),
+                     Curriculum.objects.canvas_account_id(section),
+                     term_sis_id(section),
+                     'active' if is_active_section(section) else 'deleted',
+                     None, None]
 
 
 class SectionCSV(CSVFormat):
@@ -113,11 +117,12 @@ class SectionCSV(CSVFormat):
     section_id, course_id, name, status (active|deleted), start_date, end_date
     """
     def __init__(self, section):
-        self._data = [section.canvas_section_sis_id(),
-                      section.canvas_course_sis_id(),
-                      section_short_name(section),
-                      'active' if is_active_section(section) else 'deleted',
-                      None, None]
+        self.key = section.canvas_section_sis_id()
+        self.data = [self.key,
+                     section.canvas_course_sis_id(),
+                     section_short_name(section),
+                     'active' if is_active_section(section) else 'deleted',
+                     None, None]
 
 
 class GroupSectionCSV(CSVFormat):
@@ -125,11 +130,9 @@ class GroupSectionCSV(CSVFormat):
     section_id, course_id, name, status (active|deleted), start_date, end_date
     """
     def __init__(self, course_id, status='active'):
-        self._data = [group_section_sis_id(course_id),
-                      course_id,
-                      group_section_name(),
-                      status,
-                      None, None]
+        self.key = group_section_sis_id(course_id)
+        self.data = [self.key, course_id, group_section_name(), status,
+                     None, None]
 
 
 class EnrollmentCSV(CSVFormat):
@@ -138,13 +141,12 @@ class EnrollmentCSV(CSVFormat):
     status (active|inactive|deleted|completed), associated_user_id
     """
     def __init__(self, section_id, user, role, status):
+        user_id = user_sis_id(user)
         if not any(status == val for (val, name) in Enrollment.STATUS_CHOICES):
             raise EnrollmentPolicyException(
-                'Invalid enrollment status for %s: %s' % (
-                    user_sis_id(user), status))
+                'Invalid enrollment status for %s: %s' % (user_id, status))
 
-        self._data = [None, None, user_sis_id(user), role, None, section_id,
-                      status, None]
+        self.data = [None, None, user_id, role, None, section_id, status, None]
 
 
 class StudentEnrollmentCSV(EnrollmentCSV):
@@ -174,8 +176,9 @@ class UserCSV(CSVFormat):
     sortable_name, short_name, email, status (active|deleted)
     """
     def __init__(self, user, status='active'):
-        self._data = [
-            user_sis_id(user),
+        self.key = user_sis_id(user)
+        self.data = [
+            self.key,
             user.uwnetid if hasattr(user, 'uwnetid') else user.login_id,
             None, None, None,
             user_fullname(user),
@@ -189,4 +192,4 @@ class XlistCSV(CSVFormat):
     xlist_course_id, section_id, status (active|deleted)
     """
     def __init__(self, course_id, section_id, status='active'):
-        self._data = [course_id, section_id, status]
+        self.data = [course_id, section_id, status]
