@@ -3,14 +3,15 @@ from django.conf import settings
 from django.utils.timezone import utc, localtime
 from sis_provisioner.dao.group import get_sis_import_members, is_modified_group
 from sis_provisioner.dao.user import get_person_by_netid
-from sis_provisioner.dao.course import valid_academic_course_sis_id,\
-    valid_canvas_section, get_sections_by_term, get_section_by_label,\
-    is_time_schedule_construction
-from sis_provisioner.dao.canvas import create_course_provisioning_report,\
-    create_unused_courses_report, get_report_data, delete_report,\
-    sis_import_by_path, get_sis_import_status
-from sis_provisioner.exceptions import CoursePolicyException,\
-    MissingLoginIdException
+from sis_provisioner.dao.course import (
+    valid_academic_course_sis_id, valid_canvas_section, get_sections_by_term,
+    get_section_by_label, is_time_schedule_construction)
+from sis_provisioner.dao.canvas import (
+    create_course_provisioning_report, create_unused_courses_report,
+    get_report_data, delete_report, sis_import_by_path, get_sis_import_status,
+    get_term_by_sis_id)
+from sis_provisioner.exceptions import (
+    CoursePolicyException, MissingLoginIdException)
 from restclients.exceptions import DataFailureException
 from datetime import datetime, timedelta
 from logging import getLogger
@@ -103,21 +104,6 @@ class TermManager(models.Manager):
             kwargs['deleted_unused_courses_date'] = provisioned_date
 
         self.queued(queue_id).update(**kwargs)
-
-    def initialize_course_search(self, sws_term):
-        try:
-            term = Term.objects.get(term_id=sws_term.canvas_sis_id())
-        except Term.DoesNotExist:
-            term = Term(term_id=sws_term.canvas_sis_id())
-
-        term.last_course_search_date = datetime.utcnow().replace(tzinfo=utc)
-        if term.courses_changed_since_date is None:
-            term_first_day = sws_term.get_bod_first_day().replace(tzinfo=utc)
-            days = getattr(settings, 'COURSES_CHANGED_SINCE_DAYS', 120)
-            term.courses_changed_since_date = (
-                term_first_day - timedelta(days=days))
-        term.save()
-        return term
 
 
 class Term(models.Model):
@@ -249,7 +235,16 @@ class CourseManager(models.Manager):
                 term_id=term_id, course_type=Course.SDB_TYPE
             ).values_list('course_id', 'priority')))
 
-        delta = Term.objects.initialize_course_search(term)
+        last_search_date = datetime.utcnow().replace(tzinfo=utc)
+        try:
+            delta = Term.objects.get(term_id=term_id)
+        except Term.DoesNotExist:
+            delta = Term(term_id=term_id)
+
+        if delta.last_course_search_date is None:
+            delta.courses_changed_since_date = datetime.fromtimestamp(0, utc)
+        else:
+            delta.courses_changed_since_date = delta.last_course_search_date
 
         new_courses = []
         for section_ref in get_sections_by_term(
@@ -306,8 +301,7 @@ class CourseManager(models.Manager):
 
         Course.objects.bulk_create(new_courses)
 
-        delta.courses_changed_since_date = datetime.utcnow().replace(
-            tzinfo=utc)
+        delta.last_course_search_date = last_search_date
         delta.save()
 
     def prioritize_active_courses_for_term(self, term):
