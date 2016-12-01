@@ -10,7 +10,8 @@ from sis_provisioner.dao.canvas import (
     create_course_provisioning_report, create_unused_courses_report,
     get_report_data, delete_report, sis_import_by_path, get_sis_import_status,
     get_term_by_sis_id)
-from sis_provisioner.exceptions import CoursePolicyException
+from sis_provisioner.exceptions import (
+    CoursePolicyException, MissingLoginIdException)
 from restclients.exceptions import DataFailureException
 from datetime import datetime, timedelta
 from logging import getLogger
@@ -664,36 +665,48 @@ class UserManager(models.Manager):
             if (member.name not in existing_netids or
                     existing_netids[member.name] == PRIORITY_NONE):
                 try:
-                    self.add_user(get_person_by_netid(member.name),
-                                  priority=PRIORITY_HIGH)
-                    existing_netids[member.name] = PRIORITY_HIGH
+                    user = self.add_user(get_person_by_netid(member.name))
+                    existing_netids[member.name] = user.priority
                 except Exception as err:
                     logger.info('User: SKIP %s, %s' % (member.name, err))
 
-    def add_user(self, person, priority=PRIORITY_DEFAULT):
-        if person.uwnetid is None or person.uwregid is None:
-            logger.info('User: SKIP uwnetid: %s, uwregid: %s' % (
-                person.uwnetid, person.uwregid))
-            return
+    def _find_existing(self, net_id, reg_id, priority=PRIORITY_HIGH):
+        if net_id is None:
+            raise MissingLoginIdException()
 
         users = super(UserManager, self).get_queryset().filter(
-            models.Q(reg_id=person.uwregid) | models.Q(net_id=person.uwnetid))
+            models.Q(reg_id=reg_id) | models.Q(net_id=net_id))
 
         user = None
         if len(users) == 1:
             user = users[0]
         elif len(users) > 1:
             users.delete()
+            user = User(net_id=net_id, reg_id=reg_id, priority=priority)
+            user.save()
+
+        return user
+
+    def update_priority(self, person, priority):
+        user = self._find_existing(person.uwnetid, person.uwregid, priority)
+
+        if (user is not None and user.priority != priority):
+            user.priority = priority
+            user.save()
+
+        return user
+
+    def add_user(self, person, priority=PRIORITY_HIGH):
+        user = self._find_existing(person.uwnetid, person.uwregid, priority)
 
         if user is None:
             user = User()
 
         if (user.reg_id != person.uwregid or user.net_id != person.uwnetid or
-                user.priority < priority):
+                user.priority != priority):
             user.reg_id = person.uwregid
             user.net_id = person.uwnetid
-            if user.priority < priority:
-                user.priority = priority
+            user.priority = priority
             user.save()
 
         return user
