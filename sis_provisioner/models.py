@@ -233,14 +233,14 @@ class CourseManager(models.Manager):
                 term_id=term_id, course_type=Course.SDB_TYPE
             ).values_list('course_id', 'priority')))
 
+        last_search_date = datetime.utcnow().replace(tzinfo=utc)
         try:
             delta = Term.objects.get(term_id=term_id)
         except Term.DoesNotExist:
             delta = Term(term_id=term_id)
 
         if delta.last_course_search_date is None:
-            delta.courses_changed_since_date = datetime(
-                1970, 1, 1).replace(tzinfo=utc)
+            delta.courses_changed_since_date = datetime.fromtimestamp(0, utc)
         else:
             delta.courses_changed_since_date = delta.last_course_search_date
 
@@ -299,7 +299,7 @@ class CourseManager(models.Manager):
 
         Course.objects.bulk_create(new_courses)
 
-        delta.last_course_search_date = datetime.utcnow().replace(tzinfo=utc)
+        delta.last_course_search_date = last_search_date
         delta.save()
 
     def prioritize_active_courses_for_term(self, term):
