@@ -8,9 +8,11 @@ from sis_provisioner.dao.course import (
     get_section_by_label, is_time_schedule_construction)
 from sis_provisioner.dao.canvas import (
     create_course_provisioning_report, create_unused_courses_report,
-    get_report_data, delete_report, sis_import_by_path, get_sis_import_status)
+    get_report_data, delete_report, sis_import_by_path, get_sis_import_status,
+    get_term_by_sis_id)
 from sis_provisioner.exceptions import (
-    CoursePolicyException, EmptyQueueException, MissingImportPathException)
+    CoursePolicyException, MissingLoginIdException, EmptyQueueException,
+    MissingImportPathException)
 from restclients.exceptions import DataFailureException
 from datetime import datetime, timedelta
 from logging import getLogger
