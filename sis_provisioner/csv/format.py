@@ -1,8 +1,9 @@
 from sis_provisioner.dao.account import account_name
-from sis_provisioner.dao.term import term_sis_id, term_name,\
-    term_start_date, term_end_date
-from sis_provisioner.dao.course import is_active_section, section_short_name,\
-    section_long_name, group_section_sis_id, group_section_name
+from sis_provisioner.dao.term import (
+    term_sis_id, term_name, term_start_date, term_end_date)
+from sis_provisioner.dao.course import (
+    is_active_section, section_short_name, section_long_name,
+    group_section_sis_id, group_section_name)
 from sis_provisioner.dao.user import user_sis_id, user_email, user_fullname
 from sis_provisioner.models import Curriculum, Enrollment
 from sis_provisioner.exceptions import EnrollmentPolicyException
@@ -110,6 +111,15 @@ class CourseCSV(CSVFormat):
                      term_sis_id(section),
                      'active' if is_active_section(section) else 'deleted',
                      None, None]
+
+
+class CanvasCourseCSV(CSVFormat):
+    def __init__(self, **kwargs):
+        self.key = kwargs['course_sis_id']
+        self.data = [self.key, kwargs['short_name'], kwargs['long_name'],
+                     kwargs['account_sis_id'], kwargs['term_sis_id'],
+                     kwargs['status'], kwargs.get('start_date', None),
+                     kwargs.get('end_date', None)]
 
 
 class SectionCSV(CSVFormat):

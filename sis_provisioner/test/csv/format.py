@@ -52,6 +52,19 @@ class CourseCSVTest(TestCase):
             self.assertEquals(str(CourseCSV(section)), '2013-spring-TRAIN-101-A,TRAIN 101 A,TRAIN 101 A: Intro Train,pce_none_account,2013-spring,active,,\n')
 
 
+    def test_canvas_course_csv(self):
+        data = {'course_sis_id': '2013-spring-TRAIN-101-A',
+                'short_name': 'TRAIN 101 A',
+                'long_name': 'TRAIN 101 A: Intro Train',
+                'account_sis_id': None,
+                'term_sis_id': '2013-spring',
+                'status': 'deleted'}
+
+        self.assertEquals(str(CanvasCourseCSV(**data)), '2013-spring-TRAIN-101-A,TRAIN 101 A,TRAIN 101 A: Intro Train,,2013-spring,deleted,,\n')
+
+        self.assertRaises(KeyError, CanvasCourseCSV, **{})
+
+
 class SectionCSVTest(TestCase):
     def test_section_csv(self):
         with self.settings(

@@ -47,7 +47,7 @@ class Collector(object):
             return self._add_account(formatter)
         elif isinstance(formatter, TermCSV):
             return self._add_term(formatter)
-        elif isinstance(formatter, CourseCSV):
+        elif isinstance(formatter, (CourseCSV, CanvasCourseCSV)):
             return self._add_course(formatter)
         elif isinstance(formatter, (SectionCSV, GroupSectionCSV)):
             return self._add_section(formatter)
