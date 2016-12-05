@@ -1,10 +1,11 @@
 from django.core.management.base import BaseCommand, CommandError
-from sis_provisioner.management.commands import SISProvisionerCommand
-from optparse import make_option
 from django.utils.timezone import utc
-from sis_provisioner.models import Group, EmptyQueueException,\
-    MissingImportPathException, PRIORITY_DEFAULT, PRIORITY_IMMEDIATE
-from sis_provisioner.csv_builder import CSVBuilder
+from optparse import make_option
+from sis_provisioner.management.commands import SISProvisionerCommand
+from sis_provisioner.models import Group, PRIORITY_DEFAULT, PRIORITY_IMMEDIATE
+from sis_provisioner.exceptions import (
+    EmptyQueueException, MissingImportPathException)
+from sis_provisioner.builders.groups import GroupBuilder
 from dateutil.parser import parse
 from datetime import datetime, timedelta
 import traceback
@@ -61,9 +62,9 @@ class Command(SISProvisionerCommand):
             return
 
         try:
-            imp.csv_path = CSVBuilder().generate_csv_for_group_memberships(
+            imp.csv_path = GroupBuilder(
                 imp.queued_objects().values_list('course_id', flat=True),
-                delta=delta)
+                delta=delta).build()
         except:
             imp.csv_errors = traceback.format_exc()
 

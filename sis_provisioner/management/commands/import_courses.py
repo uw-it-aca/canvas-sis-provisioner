@@ -1,8 +1,9 @@
 from django.core.management.base import CommandError
 from sis_provisioner.management.commands import SISProvisionerCommand
-from sis_provisioner.models import Course, EmptyQueueException,\
-    MissingImportPathException, PRIORITY_DEFAULT, PRIORITY_IMMEDIATE
-from sis_provisioner.csv_builder import CSVBuilder
+from sis_provisioner.models import Course, PRIORITY_DEFAULT, PRIORITY_IMMEDIATE
+from sis_provisioner.exceptions import (
+    EmptyQueueException, MissingImportPathException)
+from sis_provisioner.builders.courses import CourseBuilder
 import traceback
 
 
@@ -26,8 +27,8 @@ class Command(SISProvisionerCommand):
 
         include_enrollment = True if (priority > PRIORITY_DEFAULT) else False
         try:
-            imp.csv_path = CSVBuilder().generate_course_csv(
-                imp.queued_objects(), include_enrollment)
+            imp.csv_path = CourseBuilder(
+                imp.queued_objects(), include_enrollment).build()
         except:
             imp.csv_errors = traceback.format_exc()
 
