@@ -41,3 +41,11 @@ class EnrollmentPolicyException(Exception):
 
 class AccountPolicyException(Exception):
     pass
+
+
+class EmptyQueueException(Exception):
+    pass
+
+
+class MissingImportPathException(Exception):
+    pass

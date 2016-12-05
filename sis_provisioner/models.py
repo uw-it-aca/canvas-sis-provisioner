@@ -3,13 +3,14 @@ from django.conf import settings
 from django.utils.timezone import utc, localtime
 from sis_provisioner.dao.group import get_sis_import_members, is_modified_group
 from sis_provisioner.dao.user import get_person_by_netid
-from sis_provisioner.dao.course import valid_academic_course_sis_id,\
-    valid_canvas_section, get_sections_by_term, get_section_by_label,\
-    is_time_schedule_construction
-from sis_provisioner.dao.canvas import create_course_provisioning_report,\
-    create_unused_courses_report, get_report_data, delete_report,\
-    sis_import_by_path, get_sis_import_status
-from sis_provisioner.exceptions import CoursePolicyException
+from sis_provisioner.dao.course import (
+    valid_academic_course_sis_id, valid_canvas_section, get_sections_by_term,
+    get_section_by_label, is_time_schedule_construction)
+from sis_provisioner.dao.canvas import (
+    create_course_provisioning_report, create_unused_courses_report,
+    get_report_data, delete_report, sis_import_by_path, get_sis_import_status)
+from sis_provisioner.exceptions import (
+    CoursePolicyException, EmptyQueueException, MissingImportPathException)
 from restclients.exceptions import DataFailureException
 from datetime import datetime, timedelta
 from logging import getLogger
@@ -32,14 +33,6 @@ PRIORITY_CHOICES = (
     (PRIORITY_HIGH, 'high'),
     (PRIORITY_IMMEDIATE, 'immediate')
 )
-
-
-class EmptyQueueException(Exception):
-    pass
-
-
-class MissingImportPathException(Exception):
-    pass
 
 
 class Job(models.Model):
