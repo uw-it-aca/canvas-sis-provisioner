@@ -98,21 +98,6 @@ class TermManager(models.Manager):
 
         self.queued(queue_id).update(**kwargs)
 
-    def initialize_course_search(self, sws_term):
-        try:
-            term = Term.objects.get(term_id=sws_term.canvas_sis_id())
-        except Term.DoesNotExist:
-            term = Term(term_id=sws_term.canvas_sis_id())
-
-        term.last_course_search_date = datetime.utcnow().replace(tzinfo=utc)
-        if term.courses_changed_since_date is None:
-            term_first_day = sws_term.get_bod_first_day().replace(tzinfo=utc)
-            days = getattr(settings, 'COURSES_CHANGED_SINCE_DAYS', 120)
-            term.courses_changed_since_date = (
-                term_first_day - timedelta(days=days))
-        term.save()
-        return term
-
 
 class Term(models.Model):
     """ Represents the provisioned state of courses for a term.
@@ -243,7 +228,16 @@ class CourseManager(models.Manager):
                 term_id=term_id, course_type=Course.SDB_TYPE
             ).values_list('course_id', 'priority')))
 
-        delta = Term.objects.initialize_course_search(term)
+        last_search_date = datetime.utcnow().replace(tzinfo=utc)
+        try:
+            delta = Term.objects.get(term_id=term_id)
+        except Term.DoesNotExist:
+            delta = Term(term_id=term_id)
+
+        if delta.last_course_search_date is None:
+            delta.courses_changed_since_date = datetime.fromtimestamp(0, utc)
+        else:
+            delta.courses_changed_since_date = delta.last_course_search_date
 
         new_courses = []
         for section_ref in get_sections_by_term(
@@ -300,8 +294,7 @@ class CourseManager(models.Manager):
 
         Course.objects.bulk_create(new_courses)
 
-        delta.courses_changed_since_date = datetime.utcnow().replace(
-            tzinfo=utc)
+        delta.last_course_search_date = last_search_date
         delta.save()
 
     def prioritize_active_courses_for_term(self, term):
@@ -665,36 +658,48 @@ class UserManager(models.Manager):
             if (member.name not in existing_netids or
                     existing_netids[member.name] == PRIORITY_NONE):
                 try:
-                    self.add_user(get_person_by_netid(member.name),
-                                  priority=PRIORITY_HIGH)
-                    existing_netids[member.name] = PRIORITY_HIGH
+                    user = self.add_user(get_person_by_netid(member.name))
+                    existing_netids[member.name] = user.priority
                 except Exception as err:
                     logger.info('User: SKIP %s, %s' % (member.name, err))
 
-    def add_user(self, person, priority=PRIORITY_DEFAULT):
-        if person.uwnetid is None or person.uwregid is None:
-            logger.info('User: SKIP uwnetid: %s, uwregid: %s' % (
-                person.uwnetid, person.uwregid))
-            return
+    def _find_existing(self, net_id, reg_id, priority=PRIORITY_HIGH):
+        if net_id is None:
+            raise MissingLoginIdException()
 
         users = super(UserManager, self).get_queryset().filter(
-            models.Q(reg_id=person.uwregid) | models.Q(net_id=person.uwnetid))
+            models.Q(reg_id=reg_id) | models.Q(net_id=net_id))
 
         user = None
         if len(users) == 1:
             user = users[0]
         elif len(users) > 1:
             users.delete()
+            user = User(net_id=net_id, reg_id=reg_id, priority=priority)
+            user.save()
+
+        return user
+
+    def update_priority(self, person, priority):
+        user = self._find_existing(person.uwnetid, person.uwregid, priority)
+
+        if (user is not None and user.priority != priority):
+            user.priority = priority
+            user.save()
+
+        return user
+
+    def add_user(self, person, priority=PRIORITY_HIGH):
+        user = self._find_existing(person.uwnetid, person.uwregid, priority)
 
         if user is None:
             user = User()
 
         if (user.reg_id != person.uwregid or user.net_id != person.uwnetid or
-                user.priority < priority):
+                user.priority != priority):
             user.reg_id = person.uwregid
             user.net_id = person.uwnetid
-            if user.priority < priority:
-                user.priority = priority
+            user.priority = priority
             user.save()
 
         return user
