@@ -1,6 +1,5 @@
 from sis_provisioner.csv.data import Collector
-from sis_provisioner.csv.format import (
-    UserCSV, EnrollmentCSV, InstructorEnrollmentCSV, StudentEnrollmentCSV)
+from sis_provisioner.csv.format import UserCSV, EnrollmentCSV
 from sis_provisioner.models import User, Course, Enrollment
 from sis_provisioner.dao.user import (
     valid_net_id, get_person_by_netid, get_person_by_gmail_id)
@@ -56,7 +55,8 @@ class Builder(object):
         self.add_user_data_for_person(person)
 
         if person.uwregid not in self.invalid_users:
-            self.data.add(InstructorEnrollmentCSV(section, person, status))
+            self.data.add(EnrollmentCSV(
+                section=section, instructor=person, status=status))
 
     def add_student_enrollment_data(self, registration):
         """
@@ -65,7 +65,7 @@ class Builder(object):
         self.add_user_data_for_person(registration.person)
 
         if registration.person.uwregid not in self.invalid_users:
-            self.data.add(StudentEnrollmentCSV(registration))
+            self.data.add(EnrollmentCSV(registration=registration))
 
     def add_group_enrollment_data(self, member, section_id, role, status):
         """
@@ -76,7 +76,9 @@ class Builder(object):
             self.add_user_data_for_person(person)
 
             if person.uwregid not in self.invalid_users:
-                self.data.add(EnrollmentCSV(section_id, person, role, status))
+                self.data.add(EnrollmentCSV(
+                    section_id=section_id, person=person, role=role,
+                    status=status))
 
         elif member.is_eppn():
             if status == Enrollment.ACTIVE_STATUS and hasattr(member, 'login'):
@@ -85,7 +87,9 @@ class Builder(object):
             else:
                 person = get_person_by_gmail_id(member.name)
 
-            self.data.add(EnrollmentCSV(section_id, person, role, status))
+            self.data.add(EnrollmentCSV(
+                section_id=section_id, person=person, role=role,
+                status=status))
 
     def get_section_resource_by_id(self, section_id):
         """

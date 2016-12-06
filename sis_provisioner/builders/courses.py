@@ -67,7 +67,7 @@ class CourseBuilder(Builder):
                 section.section_label()))
 
         self.data.add(TermCSV(section))
-        if not self.data.add(CourseCSV(section)):
+        if not self.data.add(CourseCSV(section=section)):
             return
 
         Course.objects.update_status(section)
@@ -86,7 +86,7 @@ class CourseBuilder(Builder):
                 self.add_data_for_linked_section(linked_section,
                                                  primary_instructors)
         else:
-            self.data.add(SectionCSV(section))
+            self.data.add(SectionCSV(section=section))
 
             if is_active_section(section):
                 for instructor in primary_instructors:
@@ -167,7 +167,7 @@ class CourseBuilder(Builder):
             raise Exception("Not a linked section: %s" % (
                 section.section_label()))
 
-        if self.data.add(SectionCSV(section)):
+        if self.data.add(SectionCSV(section=section)):
             if is_active_section(section):
                 instructors = section.get_instructors()
                 instructors.extend(primary_instructors)
@@ -201,11 +201,11 @@ class CourseBuilder(Builder):
 
             section.independent_study_instructor_regid = instructor.uwregid
 
-            if not self.data.add(CourseCSV(section)):
+            if not self.data.add(CourseCSV(section=section)):
                 continue
 
             self.data.add(TermCSV(section))
-            self.data.add(SectionCSV(section))
+            self.data.add(SectionCSV(section=section))
 
             Course.objects.update_status(section)
 

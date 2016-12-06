@@ -53,10 +53,10 @@ class EnrollmentBuilder(Builder):
                 if not enrollment.is_active():
                     section.is_withdrawn = True
 
-                self.data.add(CourseCSV(section))
+                self.data.add(CourseCSV(section=section))
 
                 if enrollment.is_active():
-                    self.data.add(SectionCSV(section))
+                    self.data.add(SectionCSV(section=section))
                     self.add_teacher_enrollment_data(section, person,
                                                      enrollment.status)
 
@@ -68,12 +68,12 @@ class EnrollmentBuilder(Builder):
                     except Exception as err:
                         continue
 
-                    self.data.add(SectionCSV(linked_section))
+                    self.data.add(SectionCSV(section=linked_section))
                     self.add_teacher_enrollment_data(linked_section, person,
                                                      enrollment.status)
 
             else:
-                self.data.add(SectionCSV(section))
+                self.data.add(SectionCSV(section=section))
                 self.add_teacher_enrollment_data(section, person,
                                                  enrollment.status)
 
@@ -87,7 +87,7 @@ class EnrollmentBuilder(Builder):
             registration = Registration(section=section, person=person,
                                         is_active=enrollment.is_active())
 
-            self.data.add(SectionCSV(section))
+            self.data.add(SectionCSV(section=section))
             self.add_student_enrollment_data(registration)
 
     def _requeue_enrollment_event(self, enrollment, err):

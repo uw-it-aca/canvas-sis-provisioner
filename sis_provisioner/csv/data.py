@@ -1,5 +1,8 @@
 from django.conf import settings
-from sis_provisioner.csv.format import *
+from sis_provisioner.csv.format import (
+    UserHeader, AccountHeader, TermHeader, CourseHeader, SectionHeader,
+    EnrollmentHeader, XlistHeader, UserCSV, AccountCSV, TermCSV, CourseCSV,
+    SectionCSV, EnrollmentCSV, XlistCSV)
 from datetime import datetime
 import os
 import errno
@@ -40,8 +43,7 @@ class Collector(object):
         """
         if isinstance(formatter, UserCSV):
             return self._add_user(formatter)
-        elif isinstance(formatter, (
-                EnrollmentCSV, StudentEnrollmentCSV, InstructorEnrollmentCSV)):
+        elif isinstance(formatter, EnrollmentCSV):
             return self._add_enrollment(formatter)
         elif isinstance(formatter, AccountCSV):
             return self._add_account(formatter)
@@ -49,7 +51,7 @@ class Collector(object):
             return self._add_term(formatter)
         elif isinstance(formatter, CourseCSV):
             return self._add_course(formatter)
-        elif isinstance(formatter, (SectionCSV, GroupSectionCSV)):
+        elif isinstance(formatter, SectionCSV):
             return self._add_section(formatter)
         elif isinstance(formatter, XlistCSV):
             return self._add_xlist(formatter)
