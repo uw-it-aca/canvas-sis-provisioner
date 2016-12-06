@@ -39,7 +39,7 @@ class CSVDataTest(TestCase):
 
             section = get_section_by_label('2013,spring,TRAIN,101/A')
             section.course_campus = 'PCE'
-            formatter = CourseCSV(section)
+            formatter = CourseCSV(section=section)
 
             csv = Collector()
             self.assertEquals(len(csv.courses), 0)
@@ -53,14 +53,15 @@ class CSVDataTest(TestCase):
                 RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
 
             section = get_section_by_label('2013,spring,TRAIN,101/A')
-            formatter = SectionCSV(section)
+            formatter = SectionCSV(section=section)
 
             csv = Collector()
             self.assertEquals(len(csv.sections), 0)
             self.assertEquals(csv.add(formatter), True)
             self.assertEquals(len(csv.sections), 1)
             self.assertEquals(csv.add(formatter), False)
-            self.assertEquals(csv.add(GroupSectionCSV('abc', 'active')), True)
+            self.assertEquals(csv.add(SectionCSV(section_id='abc', course_id='abc',
+                name='abc', status='active')), True)
             self.assertEquals(len(csv.sections), 2)
 
     def test_enrollments(self):
@@ -72,18 +73,20 @@ class CSVDataTest(TestCase):
 
             csv = Collector()
             self.assertEquals(len(csv.enrollments), 0)
-            self.assertEquals(csv.add(EnrollmentCSV('abc', user, 'Student', 'active')), True)
+            self.assertEquals(csv.add(EnrollmentCSV(section_id='abc', person=user,
+                role='Student', status='active')), True)
             self.assertEquals(len(csv.enrollments), 1)
 
             section = get_section_by_label('2013,winter,DROP_T,100/B')
 
             for registration in get_all_registrations_by_section(section):
-                self.assertEquals(csv.add(StudentEnrollmentCSV(registration)), True)
+                self.assertEquals(csv.add(EnrollmentCSV(registration=registration)), True)
 
             section = get_section_by_label('2013,spring,TRAIN,101/A')
 
             for user in section.get_instructors():
-                self.assertEquals(csv.add(InstructorEnrollmentCSV(section, user, 'active')), True)
+                self.assertEquals(csv.add(EnrollmentCSV(section=section,
+                    instructor=user, status='active')), True)
 
             self.assertEquals(len(csv.enrollments), 4)
 

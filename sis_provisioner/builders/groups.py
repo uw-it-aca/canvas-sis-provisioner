@@ -1,8 +1,8 @@
 from sis_provisioner.builders import Builder
-from sis_provisioner.csv.format import GroupSectionCSV
+from sis_provisioner.csv.format import SectionCSV
 from sis_provisioner.dao.course import (
     valid_adhoc_course_sis_id, valid_academic_course_sis_id,
-    group_section_sis_id)
+    group_section_sis_id, group_section_name)
 from sis_provisioner.dao.canvas import (
     get_course_by_id, get_course_by_sis_id, update_course_sis_id,
     get_sis_enrollments_for_course)
@@ -39,8 +39,10 @@ class GroupBuilder(Builder):
                 self._requeue_course(course_id, err)
             return
 
-        self.data.add(GroupSectionCSV(course_id))
         group_section_id = group_section_sis_id(course_id)
+        self.data.add(SectionCSV(
+            section_id=group_section_id, course_id=course_id,
+            name=group_section_name(), status))
 
         # Get the enrollments for academic courses from Canvas, excluding
         # ad-hoc and group sections

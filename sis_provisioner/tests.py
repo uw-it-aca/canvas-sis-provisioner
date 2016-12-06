@@ -10,6 +10,6 @@ from sis_provisioner.test.dao.account import AccountPolicyTest
 from sis_provisioner.test.csv.data import CSVDataTest
 from sis_provisioner.test.csv.format import (
     CSVHeaderTest, AccountCSVTest, TermCSVTest, CourseCSVTest, SectionCSVTest,
-    GroupSectionCSVTest, EnrollmentCSVTest, UserCSVTest, XlistCSVTest)
+    EnrollmentCSVTest, UserCSVTest, XlistCSVTest)
 from sis_provisioner.test.builders import BuilderTest
 from sis_provisioner.test.models.curriculum import CurriculumModelTest

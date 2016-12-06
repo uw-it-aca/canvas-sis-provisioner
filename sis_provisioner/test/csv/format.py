@@ -39,62 +39,81 @@ class TermCSVTest(TestCase):
 
 
 class CourseCSVTest(TestCase):
-    def test_course_csv(self):
+    def test_with_section(self):
         with self.settings(
                 RESTCLIENTS_SWS_DAO_CLASS='restclients.dao_implementation.sws.File',
                 RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File',
                 LMS_OWNERSHIP_SUBACCOUNT={'PCE_NONE': 'pce_none_account'}):
 
             section = get_section_by_label('2013,spring,TRAIN,101/A')
-            self.assertRaises(CoursePolicyException, CourseCSV, section)
+            self.assertRaises(CoursePolicyException, CourseCSV, section=section)
 
             section.course_campus = 'PCE'
-            self.assertEquals(str(CourseCSV(section)), '2013-spring-TRAIN-101-A,TRAIN 101 A,TRAIN 101 A: Intro Train,pce_none_account,2013-spring,active,,\n')
+            self.assertEquals(str(CourseCSV(section=section)), '2013-spring-TRAIN-101-A,TRAIN 101 A,TRAIN 101 A: Intro Train,pce_none_account,2013-spring,active,,\n')
 
-
-    def test_canvas_course_csv(self):
-        data = {'course_sis_id': '2013-spring-TRAIN-101-A',
+    def test_with_kwargs(self):
+        data = {'course_id': '2013-spring-TRAIN-101-A',
                 'short_name': 'TRAIN 101 A',
                 'long_name': 'TRAIN 101 A: Intro Train',
-                'account_sis_id': None,
-                'term_sis_id': '2013-spring',
+                'account_id': None,
+                'term_id': '2013-spring',
                 'status': 'deleted'}
 
-        self.assertEquals(str(CanvasCourseCSV(**data)), '2013-spring-TRAIN-101-A,TRAIN 101 A,TRAIN 101 A: Intro Train,,2013-spring,deleted,,\n')
+        self.assertEquals(str(CourseCSV(**data)), '2013-spring-TRAIN-101-A,TRAIN 101 A,TRAIN 101 A: Intro Train,,2013-spring,deleted,,\n')
 
-        self.assertRaises(KeyError, CanvasCourseCSV, **{})
+        self.assertRaises(KeyError, CourseCSV, **{})
 
 
 class SectionCSVTest(TestCase):
-    def test_section_csv(self):
+    def test_with_section(self):
         with self.settings(
                 RESTCLIENTS_SWS_DAO_CLASS='restclients.dao_implementation.sws.File',
                 RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
 
             section = get_section_by_label('2013,spring,TRAIN,101/A')
 
-            self.assertEquals(str(SectionCSV(section)), '2013-spring-TRAIN-101-A--,2013-spring-TRAIN-101-A,TRAIN 101 A,active,,\n')
+            self.assertEquals(str(SectionCSV(section=section)), '2013-spring-TRAIN-101-A--,2013-spring-TRAIN-101-A,TRAIN 101 A,active,,\n')
+
+    def test_with_kwargs(self):
+        data = {'section_id': '2013-spring-TRAIN-101-A--',
+                'course_id': '2013-spring-TRAIN-101-A',
+                'name': 'TRAIN 101 A'}
+        self.assertEquals(str(SectionCSV(**data)), '2013-spring-TRAIN-101-A--,2013-spring-TRAIN-101-A,TRAIN 101 A,active,,\n')
 
 
-class GroupSectionCSVTest(TestCase):
-    def test_group_section_csv(self):
-        self.assertEquals(str(GroupSectionCSV('abc', 'active')), 'abc-groups,abc,UW Group members,active,,\n')
-        self.assertEquals(str(GroupSectionCSV('abc', 'deleted')), 'abc-groups,abc,UW Group members,deleted,,\n')
-        self.assertEquals(str(GroupSectionCSV('abc')), 'abc-groups,abc,UW Group members,active,,\n')
+        data = {'section_id': 'abc-groups',
+                'course_id': 'abc',
+                'name': 'UW Group members'}
+
+        self.assertEquals(str(SectionCSV(**data)), 'abc-groups,abc,UW Group members,active,,\n')
+        data['status'] = 'deleted'
+        self.assertEquals(str(SectionCSV(**data)), 'abc-groups,abc,UW Group members,deleted,,\n')
 
 
 class EnrollmentCSVTest(TestCase):
-    def test_enrollment_csv(self):
+    def test_with_kwargs(self):
         with self.settings(
                 RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
 
             user = PWS().get_person_by_netid('javerage')
 
-            self.assertEquals(str(EnrollmentCSV('abc', user, 'Student', 'active')), ',,9136CCB8F66711D5BE060004AC494FFE,Student,,abc,active,\n')
-            self.assertEquals(str(EnrollmentCSV('abc', user, 'Student', 'deleted')), ',,9136CCB8F66711D5BE060004AC494FFE,Student,,abc,deleted,\n')
+            data = {'section_id': 'abc',
+                    'role': 'Student',
+                    'person': user}
 
-            self.assertRaises(TypeError, EnrollmentCSV, 'abc', user, 'Student')
-            self.assertRaises(EnrollmentPolicyException, EnrollmentCSV, 'abc', user, 'Student', 'status')
+            # No status
+            self.assertRaises(EnrollmentPolicyException, EnrollmentCSV, **data)
+
+            # Invalid status
+            data['status'] = 'status'
+            self.assertRaises(EnrollmentPolicyException, EnrollmentCSV, **data)
+
+    
+            data['status'] = 'active'
+            self.assertEquals(str(EnrollmentCSV(**data)), ',,9136CCB8F66711D5BE060004AC494FFE,Student,,abc,active,\n')
+            
+            data['status'] = 'deleted'
+            self.assertEquals(str(EnrollmentCSV(**data)), ',,9136CCB8F66711D5BE060004AC494FFE,Student,,abc,deleted,\n')
 
     def test_student_enrollment_csv(self):
         with self.settings(
@@ -104,18 +123,18 @@ class EnrollmentCSVTest(TestCase):
             section = get_section_by_label('2013,winter,DROP_T,100/B')
 
             for registration in get_all_registrations_by_section(section):
-                self.assertEquals(str(StudentEnrollmentCSV(registration)), ',,%s,Student,,2013-winter-DROP_T-100-B--,active,\n' % registration.person.uwregid)
+                self.assertEquals(str(EnrollmentCSV(registration=registration)), ',,%s,Student,,2013-winter-DROP_T-100-B--,active,\n' % registration.person.uwregid)
 
 
     def test_instructor_enrollment_csv(self):
         with self.settings(
                 RESTCLIENTS_SWS_DAO_CLASS='restclients.dao_implementation.sws.File',
                 RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
-            
+
             section = get_section_by_label('2013,spring,TRAIN,101/A')
 
             for user in section.get_instructors():
-                self.assertEquals(str(InstructorEnrollmentCSV(section, user, 'active')), ',,%s,Teacher,,2013-spring-TRAIN-101-A--,active,\n' % user.uwregid)
+                self.assertEquals(str(EnrollmentCSV(section=section, instructor=user, status='active')), ',,%s,Teacher,,2013-spring-TRAIN-101-A--,active,\n' % user.uwregid)
 
 
 class UserCSVTest(TestCase):

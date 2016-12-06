@@ -2,8 +2,7 @@ from sis_provisioner.dao.account import account_name
 from sis_provisioner.dao.term import (
     term_sis_id, term_name, term_start_date, term_end_date)
 from sis_provisioner.dao.course import (
-    is_active_section, section_short_name, section_long_name,
-    group_section_sis_id, group_section_name)
+    is_active_section, section_short_name, section_long_name)
 from sis_provisioner.dao.user import user_sis_id, user_email, user_fullname
 from sis_provisioner.models import Curriculum, Enrollment
 from sis_provisioner.exceptions import EnrollmentPolicyException
@@ -102,47 +101,45 @@ class CourseCSV(CSVFormat):
     course_id, short_name, long_name, account_id, term_id,
     status (active|deleted|completed), start_date, end_date
     """
-    def __init__(self, section):
-        self.key = section.canvas_course_sis_id()
-        self.data = [self.key,
-                     section_short_name(section),
-                     section_long_name(section),
-                     Curriculum.objects.canvas_account_id(section),
-                     term_sis_id(section),
-                     'active' if is_active_section(section) else 'deleted',
-                     None, None]
-
-
-class CanvasCourseCSV(CSVFormat):
     def __init__(self, **kwargs):
-        self.key = kwargs['course_sis_id']
-        self.data = [self.key, kwargs['short_name'], kwargs['long_name'],
-                     kwargs['account_sis_id'], kwargs['term_sis_id'],
-                     kwargs['status'], kwargs.get('start_date', None),
-                     kwargs.get('end_date', None)]
+        if kwargs.get('section'):
+            section = kwargs.get('section')
+            self.key = section.canvas_course_sis_id()
+            self.data = [self.key,
+                         section_short_name(section),
+                         section_long_name(section),
+                         Curriculum.objects.canvas_account_id(section),
+                         term_sis_id(section),
+                         'active' if is_active_section(section) else 'deleted',
+                         None, None]
+        else:
+            self.key = kwargs['course_id']
+            self.data = [self.key, kwargs['short_name'], kwargs['long_name'],
+                         kwargs['account_id'], kwargs['term_id'],
+                         kwargs.get('status', 'active'),
+                         kwargs.get('start_date', None),
+                         kwargs.get('end_date', None)]
 
 
 class SectionCSV(CSVFormat):
     """
     section_id, course_id, name, status (active|deleted), start_date, end_date
     """
-    def __init__(self, section):
-        self.key = section.canvas_section_sis_id()
-        self.data = [self.key,
-                     section.canvas_course_sis_id(),
-                     section_short_name(section),
-                     'active' if is_active_section(section) else 'deleted',
-                     None, None]
-
-
-class GroupSectionCSV(CSVFormat):
-    """
-    section_id, course_id, name, status (active|deleted), start_date, end_date
-    """
-    def __init__(self, course_id, status='active'):
-        self.key = group_section_sis_id(course_id)
-        self.data = [self.key, course_id, group_section_name(), status,
-                     None, None]
+    def __init__(self, **kwargs):
+        if kwargs.get('section'):
+            section = kwargs.get('section')
+            self.key = section.canvas_section_sis_id()
+            self.data = [self.key,
+                         section.canvas_course_sis_id(),
+                         section_short_name(section),
+                         'active' if is_active_section(section) else 'deleted',
+                         None, None]
+        else:
+            self.key = kwargs['section_id']
+            self.data = [self.key, kwargs['course_id'], kwargs['name'],
+                         kwargs.get('status', 'active'),
+                         kwargs.get('start_date', None),
+                         kwargs.get('end_date', None)]
 
 
 class EnrollmentCSV(CSVFormat):
@@ -150,34 +147,39 @@ class EnrollmentCSV(CSVFormat):
     course_id, root_account, user_id, role, role_id, section_id,
     status (active|inactive|deleted|completed), associated_user_id
     """
-    def __init__(self, section_id, user, role, status):
-        user_id = user_sis_id(user)
+    def __init__(self, **kwargs):
+        if kwargs.get('registration'):  # Student registration object
+            registration = kwargs.get('registration')
+            person = registration.person
+            section_id = registration.section.canvas_section_sis_id()
+            role = Enrollment.STUDENT_ROLE
+            status = self._status_from_registration(registration)
+
+        elif kwargs.get('instructor'):
+            section = kwargs.get('section')
+            person = kwargs.get('instructor')
+            section_id = section.canvas_section_sis_id()
+            role = Enrollment.INSTRUCTOR_ROLE
+            status = kwargs.get('status')
+
+        else:
+            section_id = kwargs.get('section_id')
+            person = kwargs.get('person')
+            role = kwargs.get('role')
+            status = kwargs.get('status')
+
+        user_id = user_sis_id(person)
         if not any(status == val for (val, name) in Enrollment.STATUS_CHOICES):
             raise EnrollmentPolicyException(
                 'Invalid enrollment status for %s: %s' % (user_id, status))
 
         self.data = [None, None, user_id, role, None, section_id, status, None]
 
-
-class StudentEnrollmentCSV(EnrollmentCSV):
-    def __init__(self, registration):
+    def _status_from_registration(self, registration):
         if registration.is_active:
-            status = Enrollment.ACTIVE_STATUS
-        else:
-            status = Enrollment.DELETED_STATUS
+            return Enrollment.ACTIVE_STATUS
 
-        super(StudentEnrollmentCSV, self).__init__(
-            registration.section.canvas_section_sis_id(),
-            registration.person,
-            Enrollment.STUDENT_ROLE,
-            status)
-
-
-class InstructorEnrollmentCSV(EnrollmentCSV):
-    def __init__(self, section, user, status):
-        super(InstructorEnrollmentCSV, self).__init__(
-            section.canvas_section_sis_id(), user, Enrollment.INSTRUCTOR_ROLE,
-            status)
+        return Enrollment.DELETED_STATUS
 
 
 class UserCSV(CSVFormat):
