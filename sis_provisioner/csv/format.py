@@ -148,6 +148,7 @@ class EnrollmentCSV(CSVFormat):
     status (active|inactive|deleted|completed), associated_user_id
     """
     def __init__(self, **kwargs):
+        course_id = None  # course_id is not used for SIS enrollments
         if kwargs.get('registration'):  # Student registration object
             registration = kwargs.get('registration')
             person = registration.person
@@ -163,7 +164,8 @@ class EnrollmentCSV(CSVFormat):
             status = kwargs.get('status')
 
         else:
-            section_id = kwargs.get('section_id')
+            course_id = kwargs.get('course_id', None)
+            section_id = kwargs.get('section_id', None)
             person = kwargs.get('person')
             role = kwargs.get('role')
             status = kwargs.get('status')
@@ -173,7 +175,12 @@ class EnrollmentCSV(CSVFormat):
             raise EnrollmentPolicyException(
                 'Invalid enrollment status for %s: %s' % (user_id, status))
 
-        self.data = [None, None, user_id, role, None, section_id, status, None]
+        if course_id is None and section_id is None:
+            raise EnrollmentPolicyException(
+                'Missing course and section for %s: %s' % (user_id, status))
+
+        self.data = [course_id, None, user_id, role, None, section_id, status,
+                     None]
 
     def _status_from_registration(self, registration):
         if registration.is_active:

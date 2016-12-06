@@ -108,12 +108,25 @@ class EnrollmentCSVTest(TestCase):
             data['status'] = 'status'
             self.assertRaises(EnrollmentPolicyException, EnrollmentCSV, **data)
 
-    
             data['status'] = 'active'
             self.assertEquals(str(EnrollmentCSV(**data)), ',,9136CCB8F66711D5BE060004AC494FFE,Student,,abc,active,\n')
-            
+
             data['status'] = 'deleted'
             self.assertEquals(str(EnrollmentCSV(**data)), ',,9136CCB8F66711D5BE060004AC494FFE,Student,,abc,deleted,\n')
+
+            data = {'status': 'active',
+                    'role': 'Student',
+                    'person': user}
+
+            # No course or section
+            self.assertRaises(EnrollmentPolicyException, EnrollmentCSV, **data)
+
+            data['course_id'] = 'abc'
+            self.assertEquals(str(EnrollmentCSV(**data)), 'abc,,9136CCB8F66711D5BE060004AC494FFE,Student,,,active,\n')
+
+            data['section_id'] = 'abc--'
+            self.assertEquals(str(EnrollmentCSV(**data)), 'abc,,9136CCB8F66711D5BE060004AC494FFE,Student,,abc--,active,\n')
+
 
     def test_student_enrollment_csv(self):
         with self.settings(
