@@ -42,7 +42,7 @@ class GroupBuilder(Builder):
         group_section_id = group_section_sis_id(course_id)
         self.data.add(SectionCSV(
             section_id=group_section_id, course_id=course_id,
-            name=group_section_name(), status))
+            name=group_section_name()))
 
         # Get the enrollments for academic courses from Canvas, excluding
         # ad-hoc and group sections
