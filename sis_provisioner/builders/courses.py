@@ -12,7 +12,7 @@ class CourseBuilder(Builder):
     Generates import data for Course models.
     """
     def __init__(self, courses, include_enrollment=True):
-        super(Builder, self).__init__()
+        super(CourseBuilder, self).__init__()
         self.courses = courses
         self.include_enrollment = include_enrollment
 

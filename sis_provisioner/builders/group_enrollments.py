@@ -5,7 +5,7 @@ from sis_provisioner.models import Enrollment
 
 class GroupEnrollmentBuilder(Builder):
     def __init__(self, group_members):
-        super(Builder, self).__init__()
+        super(GroupEnrollmentBuilder, self).__init__()
         self.group_members = group_members
 
     def build(self):
