@@ -8,7 +8,7 @@ class UserBuilder(Builder):
     Generates the import data for the passed list of User models.
     """
     def __init__(self, users):
-        super(Builder, self).__init__()
+        super(UserBuilder, self).__init__()
         self.users = users
 
     def build(self):

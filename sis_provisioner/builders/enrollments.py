@@ -16,7 +16,7 @@ class EnrollmentBuilder(Builder):
     Generates import data for each of the passed Enrollment models.
     """
     def __init__(self, enrollments):
-        super(Builder, self).__init__()
+        super(EnrollmentBuilder, self).__init__()
         self.enrollments = enrollments
 
     def _process_enrollment(self, enrollment):

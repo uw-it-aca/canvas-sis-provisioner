@@ -18,19 +18,19 @@ class AccountBuilder(Builder):
 
         for campus in get_all_campuses():
             campus_id = account_sis_id([root_id, campus.label])
-            self.csv.add(AccountCSV(campus_id, root_id, campus))
+            self.data.add(AccountCSV(campus_id, root_id, campus))
 
         for college in get_all_colleges():
             college_id = account_sis_id([root_id, college.campus_label,
                                          college.name])
             campus_id = account_sis_id([root_id, college.campus_label])
-            self.csv.add(AccountCSV(college_id, campus_id, college))
+            self.data.add(AccountCSV(college_id, campus_id, college))
 
             for department in get_departments_by_college(college):
                 dept_id = account_sis_id([root_id, college.campus_label,
                                           college.name, department.label])
 
-                self.csv.add(AccountCSV(dept_id, college_id, department))
+                self.data.add(AccountCSV(dept_id, college_id, department))
 
                 for curriculum in get_curricula_by_department(
                         department, future_terms=2):
@@ -38,7 +38,7 @@ class AccountBuilder(Builder):
                                               college.name, department.label,
                                               curriculum.label])
 
-                    if self.csv.add(AccountCSV(curr_id, dept_id, curriculum)):
+                    if self.data.add(AccountCSV(curr_id, dept_id, curriculum)):
                         # Update the Curriculum model for this curriculum
                         try:
                             model = Curriculum.objects.get(

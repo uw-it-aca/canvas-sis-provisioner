@@ -14,7 +14,7 @@ from restclients.exceptions import DataFailureException
 
 class GroupBuilder(Builder):
     def __init__(self, course_ids, delta=True):
-        super(Builder, self).__init__()
+        super(GroupBuilder, self).__init__()
         self.course_ids = course_ids
         self.delta = delta
 
