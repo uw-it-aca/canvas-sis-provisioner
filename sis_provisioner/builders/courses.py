@@ -3,6 +3,7 @@ from sis_provisioner.csv.format import CourseCSV, SectionCSV, TermCSV, XlistCSV
 from sis_provisioner.dao.course import (
     is_active_section, get_section_by_url, canvas_xlist_id,
     get_registrations_by_section)
+from sis_provisioner.dao.canvas import get_sis_sections_for_course
 from sis_provisioner.models import Course, PRIORITY_NONE
 import re
 
@@ -16,7 +17,7 @@ class CourseBuilder(Builder):
         self.courses = courses
         self.include_enrollment = include_enrollment
 
-    def _process_courses(courses):
+    def _process_courses(self, courses):
         for course in courses:
             if course.queue_id is not None:
                 self.queue_id = course.queue_id
@@ -151,7 +152,6 @@ class CourseBuilder(Builder):
         self._process_courses(course_models)
 
     def add_data_for_linked_section(self, section, primary_instructors=[]):
-
         """
         Generates the import data for a non-independent study linked section.
         Linked (secondary) sections are added to sections.
