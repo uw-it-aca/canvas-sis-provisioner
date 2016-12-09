@@ -266,23 +266,20 @@ class CourseManager(models.Manager):
                 logger.info('Course: SKIP, %s' % err)
                 continue
 
+            primary_id = None
             if section.is_independent_study:
-                for meeting in section.meetings:
-                    for instructor in meeting.instructors:
-                        if instructor.uwregid:
-                            ind_course_id = '-'.join([course_id,
-                                                      instructor.uwregid])
+                for instructor in section.get_instructors():
+                    ind_course_id = '-'.join([course_id, instructor.uwregid])
 
-                            if ind_course_id not in existing_course_ids:
-                                course = Course(course_id=ind_course_id,
-                                                course_type=Course.SDB_TYPE,
-                                                term_id=term_id,
-                                                priority=PRIORITY_HIGH)
-                                new_courses.append(course)
+                    if ind_course_id not in existing_course_ids:
+                        course = Course(course_id=ind_course_id,
+                                        course_type=Course.SDB_TYPE,
+                                        term_id=term_id,
+                                        primary_id=primary_id,
+                                        priority=PRIORITY_HIGH)
+                        new_courses.append(course)
             else:
-                if section.is_primary_section:
-                    primary_id = None
-                else:
+                if not section.is_primary_section:
                     primary_id = section.canvas_course_sis_id()
 
                 course = Course(course_id=course_id,

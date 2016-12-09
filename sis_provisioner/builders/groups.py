@@ -1,5 +1,7 @@
 from sis_provisioner.builders import Builder
 from sis_provisioner.csv.format import SectionCSV
+from sis_provisioner.dao.group import get_effective_members
+from sis_provisioner.dao.user import valid_gmail_id
 from sis_provisioner.dao.course import (
     valid_adhoc_course_sis_id, valid_academic_course_sis_id,
     group_section_sis_id, group_section_name)
@@ -8,8 +10,11 @@ from sis_provisioner.dao.canvas import (
     get_sis_enrollments_for_course)
 from sis_provisioner.models import (
     Group, GroupMemberGroup, CourseMember, Enrollment)
-from sis_provisioner.exceptions import CoursePolicyException
+from sis_provisioner.exceptions import (
+    CoursePolicyException, GroupPolicyException)
 from restclients.exceptions import DataFailureException
+from django.utils.timezone import utc
+from datetime import datetime
 
 
 class GroupBuilder(Builder):
@@ -80,9 +85,13 @@ class GroupBuilder(Builder):
 
             if match is None:
                 if not self.delta or not member.is_deleted:
-                    self.add_group_enrollment_data(
-                        member, group_section_id, member.role,
-                        status=Enrollment.DELETED_STATUS)
+                    try:
+                        self.add_group_enrollment_data(
+                            member, group_section_id, member.role,
+                            status=Enrollment.DELETED_STATUS)
+                    except Exception as err:
+                        self.logger.info("Skip group member %s (%s)" % (
+                            member.name, err))
 
                 member.is_deleted = True
                 member.deleted_date = datetime.utcnow().replace(tzinfo=utc)
@@ -108,7 +117,7 @@ class GroupBuilder(Builder):
                     match.deleted_date = None
                     match.save()
 
-    def _get_current_members(self, group, canvas_enrollments):
+    def _get_current_members(self, group):
         (members, invalid_members, member_groups) = get_effective_members(
             group.group_id, act_as=group.added_by)
 
@@ -132,7 +141,8 @@ class GroupBuilder(Builder):
             # from -group section
             enrollments = self.cached_course_enrollments[group.course_id]
             match = next((m for m in enrollments if (
-               m.login_id.lower() == member.name.lower())), None)
+                m.login_id is not None and
+                m.login_id.lower() == login_id.lower())), None)
 
             if match:
                 self.logger.info("Skip group member %s (present in %s)" % (
