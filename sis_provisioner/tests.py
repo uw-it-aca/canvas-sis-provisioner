@@ -1,5 +1,6 @@
 from sis_provisioner.test.dao.course import (
-    TimeScheduleConstructionTest, SectionPolicyTest, SectionByIDTest)
+    TimeScheduleConstructionTest, SectionPolicyTest, SectionByIDTest,
+    XlistSectionTest)
 from sis_provisioner.test.dao.user import (
     UserPolicyTest, NetidPolicyTest, RegidPolicyTest, GmailPolicyTest)
 from sis_provisioner.test.dao.group import (

@@ -142,6 +142,10 @@ class SectionPolicyTest(TestCase):
             section = get_section_by_id('2013-spring-TRAIN-101-A')
             self.assertEquals(section_long_name(section), 'TRAIN 101 A: Intro Train')
 
+            section.course_title_long = ''
+            self.assertEquals(section_long_name(section), 'TRAIN 101 A')
+
+
     def test_independent_study_section_long_name(self):
         with self.settings(
                 RESTCLIENTS_SWS_DAO_CLASS='restclients.dao_implementation.sws.File',
@@ -149,6 +153,9 @@ class SectionPolicyTest(TestCase):
 
             section = get_section_by_id('2013-autumn-REHAB-591-C-8BD26A286A7D11D5A4AE0004AC494FFE')
             self.assertEquals(section_long_name(section), 'REHAB 591 C: Graduate Project (Bill Teacher)')
+
+            section.course_title_long = ''
+            self.assertEquals(section_long_name(section), 'REHAB 591 C (Bill Teacher)')
 
 
 class SectionByIDTest(TestCase):
@@ -169,6 +176,27 @@ class SectionByIDTest(TestCase):
             section = get_section_by_id('2013-autumn-REHAB-591-C-8BD26A286A7D11D5A4AE0004AC494FFE')
             self.assertEquals(section.section_label(), '2013,autumn,REHAB,591/C')
             self.assertEquals(section.independent_study_instructor_regid, '8BD26A286A7D11D5A4AE0004AC494FFE')
+
+
+class XlistSectionTest(TestCase):
+    def test_canvas_xlist_id(self):
+        with self.settings(
+                RESTCLIENTS_SWS_DAO_CLASS='restclients.dao_implementation.sws.File',
+                RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
+
+            section = get_section_by_id('2013-summer-TRAIN-101-A')
+            self.assertEquals(canvas_xlist_id([section]), '2013-summer-TRAIN-101-A')
+
+            section.is_withdrawn = True
+            self.assertEquals(canvas_xlist_id([section]), None)
+
+            section1 = get_section_by_id('2013-spring-TRAIN-101-A')
+            section2 = get_section_by_id('2013-summer-TRAIN-101-A')
+
+            self.assertEquals(canvas_xlist_id([section1, section2]), '2013-spring-TRAIN-101-A')
+
+            section2.lms_ownership = Section.LMS_OWNER_OL
+            self.assertEquals(canvas_xlist_id([section1, section2]), '2013-summer-TRAIN-101-A')
 
 
 class TimeScheduleConstructionTest(TestCase):
