@@ -56,7 +56,7 @@ class Collector(object):
         elif isinstance(formatter, XlistCSV):
             return self._add_xlist(formatter)
         else:
-            raise Exception('Unknown CSV format class %s' % type(formatter))
+            raise TypeError('Unknown CSV format class %s' % type(formatter))
 
     def _add_account(self, formatter):
         if formatter.key not in self.account_ids:

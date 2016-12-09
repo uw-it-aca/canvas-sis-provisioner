@@ -1,5 +1,6 @@
 from django.test import TestCase
 from django.conf import settings
+from restclients.exceptions import DataFailureException
 from sis_provisioner.dao.group import * 
 from sis_provisioner.exceptions import GroupPolicyException,\
     GroupNotFoundException
@@ -48,6 +49,13 @@ class SISImportMembersTest(TestCase):
             members = get_sis_import_members()
 
             self.assertEquals(len(members), 5)
+
+        with self.settings(
+                SIS_IMPORT_GROUPS=['u_does_not_exist'],
+                RESTCLIENTS_GWS_DAO_CLASS='restclients.dao_implementation.gws.File',
+                RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
+
+            self.assertRaises(DataFailureException, get_sis_import_members)
 
 
 class IsMemberTest(TestCase):

@@ -2,8 +2,9 @@ from django.conf import settings
 from restclients.gws import GWS
 from restclients.exceptions import DataFailureException
 from sis_provisioner.dao.user import valid_net_id, valid_gmail_id
-from sis_provisioner.exceptions import UserPolicyException,\
-    GroupPolicyException, GroupNotFoundException, GroupUnauthorizedException
+from sis_provisioner.exceptions import (
+    UserPolicyException, GroupPolicyException, GroupNotFoundException,
+    GroupUnauthorizedException)
 import re
 
 
@@ -35,16 +36,13 @@ def get_sis_import_members():
 
     valid_members = {}
     for group_id in getattr(settings, 'SIS_IMPORT_GROUPS', []):
-        try:
-            for member in gws.get_effective_members(group_id):
-                try:
-                    if member.is_uwnetid():
-                        valid_net_id(member.name)
-                        valid_members[member.name] = member
-                except UserPolicyException as err:
-                    pass
-        except DataFailureException as err:
-            pass
+        for member in gws.get_effective_members(group_id):
+            try:
+                if member.is_uwnetid():
+                    valid_net_id(member.name)
+                    valid_members[member.name] = member
+            except UserPolicyException as err:
+                pass
 
     return valid_members.values()
 
@@ -90,8 +88,7 @@ def get_effective_members(group_id, act_as=None):
                 raise GroupNotFoundException("Group not found: %s" % group_id)
             elif err.status == 401:
                 raise GroupUnauthorizedException(
-                    "Group not permitted for %s: %s" % (
-                        gws.actas, group_id))
+                    "Group not permitted for %s: %s" % (gws.actas, group_id))
             else:
                 raise
 
