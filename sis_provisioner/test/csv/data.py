@@ -7,6 +7,10 @@ from sis_provisioner.csv.data import Collector
 from sis_provisioner.csv.format import *
 
 
+class InvalidFormat(CSVFormat):
+    pass
+
+
 class CSVDataTest(TestCase):
     def test_accounts(self):
         formatter = AccountCSV('account_id', 'parent_id', Curriculum())
@@ -16,6 +20,10 @@ class CSVDataTest(TestCase):
         self.assertEquals(csv.add(formatter), True)
         self.assertEquals(len(csv.accounts), 1)
         self.assertEquals(csv.add(formatter), False)
+
+    def test_invalid_format(self):
+        csv = Collector()
+        self.assertRaises(TypeError, csv.add, InvalidFormat)
 
     def test_terms(self):
         with self.settings(
@@ -109,4 +117,7 @@ class CSVDataTest(TestCase):
             self.assertEquals(csv.add(UserCSV(user, 'active')), False)
 
     def test_write_files(self):
+        pass
+
+    def test_create_filepath(self):
         pass

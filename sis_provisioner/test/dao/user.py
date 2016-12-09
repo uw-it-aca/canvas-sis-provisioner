@@ -8,8 +8,7 @@ from sis_provisioner.exceptions import UserPolicyException,\
 
 
 class InvalidPerson(object):
-    def __init__(self):
-        pass
+    pass
 
 
 class UserPolicyTest(TestCase):
