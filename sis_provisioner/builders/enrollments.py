@@ -21,7 +21,7 @@ class EnrollmentBuilder(Builder):
 
     def _process_enrollment(self, enrollment):
         try:
-            person = get_person_by_regid(enrollment.reg_id)
+            enrollment.person = get_person_by_regid(enrollment.reg_id)
 
             section = self.get_section_resource_by_id(enrollment.course_id)
             section.independent_study_instructor_regid = (
@@ -29,6 +29,8 @@ class EnrollmentBuilder(Builder):
 
             if not is_active_section(section):
                 return
+
+            enrollment.section = section
 
         except MissingLoginIdException as err:
             if enrollment.last_modified > self.retry_missing_id:
@@ -48,47 +50,51 @@ class EnrollmentBuilder(Builder):
             return
 
         if enrollment.is_instructor():
-            if section.is_independent_study:
-                # Add or remove independent study course
-                if not enrollment.is_active():
-                    section.is_withdrawn = True
-
-                self.data.add(CourseCSV(section=section))
-
-                if enrollment.is_active():
-                    self.data.add(SectionCSV(section=section))
-                    self.add_teacher_enrollment_data(section, person,
-                                                     enrollment.status)
-
-            elif len(section.linked_section_urls):
-                # Add/remove primary instructor for each linked section
-                for url in section.linked_section_urls:
-                    try:
-                        linked_section = get_section_by_url(url)
-                    except Exception as err:
-                        continue
-
-                    self.data.add(SectionCSV(section=linked_section))
-                    self.add_teacher_enrollment_data(linked_section, person,
-                                                     enrollment.status)
-
-            else:
-                self.data.add(SectionCSV(section=section))
-                self.add_teacher_enrollment_data(section, person,
-                                                 enrollment.status)
-
+            self._process_instructor_enrollment(enrollment)
         else:  # student/auditor
             if len(section.linked_section_urls):
                 # Don't enroll students into primary sections
                 self._skip_enrollment_event(
                     enrollment, 'Section has linked sections')
-                return
+            else:
+                self._process_student_enrollment(enrollment)
 
-            registration = Registration(section=section, person=person,
-                                        is_active=enrollment.is_active())
+    def _process_instructor_enrollment(self, enrollment):
+        if enrollment.section.is_independent_study:
+            if enrollment.is_active():
+                self.data.add(SectionCSV(section=enrollment.section))
+                self.add_teacher_enrollment_data(enrollment.section,
+                                                 enrollment.person,
+                                                 enrollment.status)
+            else:
+                enrollment.section.is_withdrawn = True
 
-            self.data.add(SectionCSV(section=section))
-            self.add_student_enrollment_data(registration)
+            # Add or remove independent study course
+            self.data.add(CourseCSV(section=enrollment.section))
+
+        elif len(enrollment.section.linked_section_urls):
+            # Add/remove primary instructor for each linked section
+            for url in enrollment.section.linked_section_urls:
+                try:
+                    linked_section = get_section_by_url(url)
+                    self.data.add(SectionCSV(section=linked_section))
+                    self.add_teacher_enrollment_data(linked_section,
+                                                     enrollment.person,
+                                                     enrollment.status)
+                except DataFailureException as err:
+                    continue
+
+        else:
+            self.data.add(SectionCSV(section=enrollment.section))
+            self.add_teacher_enrollment_data(
+                enrollment.section, enrollment.person, enrollment.status)
+
+    def _process_student_enrollment(self, enrollment):
+        registration = Registration(section=enrollment.section,
+                                    person=enrollment.person,
+                                    is_active=enrollment.is_active())
+        self.add_student_enrollment_data(registration)
+        self.data.add(SectionCSV(section=enrollment.section))
 
     def _requeue_enrollment_event(self, enrollment, err):
         enrollment.queue_id = None

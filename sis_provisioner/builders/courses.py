@@ -17,40 +17,39 @@ class CourseBuilder(Builder):
         self.courses = courses
         self.include_enrollment = include_enrollment
 
-    def _process_courses(self, courses):
-        for course in courses:
-            if course.queue_id is not None:
-                self.queue_id = course.queue_id
+    def _process_course(self, course):
+        if course.queue_id is not None:
+            self.queue_id = course.queue_id
 
-            # Primary sections only
-            if course.primary_id:
-                section_id = course.primary_id
-            else:
-                section_id = course.course_id
+        # Primary sections only
+        if course.primary_id:
+            section_id = course.primary_id
+        else:
+            section_id = course.course_id
 
+        try:
+            section = self.get_section_resource_by_id(section_id)
+        except:
+            return
+
+        if course.primary_id:
             try:
-                section = self.get_section_resource_by_id(section_id)
+                Course.objects.add_to_queue(section, self.queue_id)
             except:
-                continue
+                return
 
-            if course.primary_id:
-                try:
-                    Course.objects.add_to_queue(section, self.queue_id)
-                except:
-                    continue
+        if section.is_independent_study:
+            self._process_independent_study_section(section)
 
-            if section.is_independent_study:
-                self.add_data_for_independent_study_section(section)
+            # This handles ind. study sections that were initially created
+            # in the sdb without the ind. study flag set
+            if section.is_withdrawn:
+                course.priority = PRIORITY_NONE
+                course.save()
+        else:
+            self._process_primary_section(section)
 
-                # This handles ind. study sections that were initially created
-                # in the sdb without the ind. study flag set
-                if section.is_withdrawn:
-                    course.priority = PRIORITY_NONE
-                    course.save()
-            else:
-                self.add_data_for_primary_section(section)
-
-    def add_data_for_primary_section(self, section):
+    def _process_primary_section(self, section):
         """
         Generates the import data for a non-independent study primary section.
         Primary sections are added to courses, linked (secondary) sections are
@@ -67,10 +66,10 @@ class CourseBuilder(Builder):
             raise Exception("Not a primary section: %s" % (
                 section.section_label()))
 
-        self.data.add(TermCSV(section))
         if not self.data.add(CourseCSV(section=section)):
             return
 
+        self.data.add(TermCSV(section))
         Course.objects.update_status(section)
 
         course_id = section.canvas_course_sis_id()
@@ -84,8 +83,8 @@ class CourseBuilder(Builder):
                     continue
 
                 # Add primary section instructors to each linked section
-                self.add_data_for_linked_section(linked_section,
-                                                 primary_instructors)
+                self._process_linked_section(linked_section,
+                                             primary_instructors)
         else:
             self.data.add(SectionCSV(section=section))
 
@@ -104,8 +103,8 @@ class CourseBuilder(Builder):
                 linked_section = self.get_section_resource_by_id(
                     linked_course_id)
                 Course.objects.add_to_queue(linked_section, self.queue_id)
-                self.add_data_for_linked_section(linked_section,
-                                                 primary_instructors)
+                self._process_linked_section(linked_section,
+                                             primary_instructors)
             except Exception as ex:
                 Course.objects.remove_from_queue(linked_course_id, ex)
                 continue
@@ -120,7 +119,7 @@ class CourseBuilder(Builder):
                 continue
 
             try:
-                self.add_data_for_primary_section(joint_section)
+                self._process_primary_section(joint_section)
             except Exception as ex:
                 Course.objects.remove_from_queue(model.course_id, ex)
 
@@ -130,28 +129,25 @@ class CourseBuilder(Builder):
                 joint_section = self.get_section_resource_by_id(
                     joint_course_id)
                 Course.objects.add_to_queue(joint_section, self.queue_id)
-                self.add_data_for_primary_section(joint_section)
+                self._process_primary_section(joint_section)
 
             except Exception as ex:
                 Course.objects.remove_from_queue(joint_course_id, ex)
 
-        self.add_xlist_data_for_section(section)
+        self._process_xlists_for_section(section)
 
         # Find any sections that are manually cross-listed to this course,
         # so we can update enrollments for those
-        course_models = []
         for s in get_sis_sections_for_course(course_id):
             try:
                 course_model_id = re.sub(r'--$', '', s.sis_section_id)
                 course = Course.objects.get(course_id=course_model_id,
                                             queue_id__isnull=True)
-                course_models.append(course)
+                self._process_course(course)
             except Course.DoesNotExist:
                 pass
 
-        self._process_courses(course_models)
-
-    def add_data_for_linked_section(self, section, primary_instructors=[]):
+    def _process_linked_section(self, section, primary_instructors=[]):
         """
         Generates the import data for a non-independent study linked section.
         Linked (secondary) sections are added to sections.
@@ -180,7 +176,7 @@ class CourseBuilder(Builder):
 
             Course.objects.update_status(section)
 
-    def add_data_for_independent_study_section(self, section):
+    def _process_independent_study_section(self, section):
         """
         Generates the import data for an independent study section. This method
         will create course/section data for each instructor of the section,
@@ -216,7 +212,7 @@ class CourseBuilder(Builder):
                     for registration in get_registrations_by_section(section):
                         self.add_student_enrollment_data(registration)
 
-    def add_xlist_data_for_section(self, section):
+    def _process_xlists_for_section(self, section):
         """
         Generates the full xlist import data for the passed primary section.
         """
@@ -283,5 +279,7 @@ class CourseBuilder(Builder):
                                        status='active'))
 
     def build(self):
-        self._process_courses(self.courses)
+        for course in self.courses:
+            self._process_course(course)
+
         return self.write()
