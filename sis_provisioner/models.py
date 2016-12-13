@@ -804,6 +804,10 @@ class GroupManager(models.Manager):
 
         return imp
 
+    def get_active_by_course(self, course_id):
+        return super(GroupManager, self).get_queryset().filter(
+            course_id=course_id, is_deleted__isnull=True)
+
     def queued(self, queue_id):
         return super(GroupManager, self).get_queryset().filter(
             queue_id=queue_id)
@@ -870,12 +874,28 @@ class Group(models.Model):
         unique_together = ('course_id', 'group_id', 'role')
 
 
+class GroupMemberGroupManager(models.Manager):
+    def get_active_by_root(self, root_group_id):
+        return super(GroupMemberGroupManager, self).get_queryset().filter(
+            root_group_id=root_group_id, is_deleted__isnull=True)
+
+
 class GroupMemberGroup(models.Model):
     """ Represents member group relationship
     """
     group_id = models.CharField(max_length=256)
     root_group_id = models.CharField(max_length=256)
     is_deleted = models.NullBooleanField()
+
+    objects = GroupMemberGroupManager()
+
+    def deactivate(self):
+        self.is_deleted = True
+        self.save()
+
+    def activate(self):
+        self.is_deleted = None
+        self.save()
 
 
 class CourseMemberManager(models.Manager):
@@ -925,6 +945,10 @@ class CourseMemberManager(models.Manager):
                 queue_id=None
             )
 
+    def get_by_course(self, course_id):
+        return super(CourseMemberManager, self).get_queryset().filter(
+            course_id=course_id)
+
 
 class CourseMember(models.Model):
     UWNETID_TYPE = "uwnetid"
@@ -951,6 +975,16 @@ class CourseMember(models.Model):
 
     def is_eppn(self):
         return self.member_type.lower() == self.EPPN_TYPE
+
+    def deactivate(self):
+        self.is_deleted = True
+        self.deleted_date = datetime.utcnow().replace(tzinfo=utc)
+        self.save()
+
+    def activate(self):
+        self.is_deleted = None
+        self.deleted_date = None
+        self.save()
 
     def __eq__(self, other):
         return (self.course_id == other.course_id and

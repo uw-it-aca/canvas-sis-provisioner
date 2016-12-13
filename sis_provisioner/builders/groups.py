@@ -13,8 +13,6 @@ from sis_provisioner.models import (
 from sis_provisioner.exceptions import (
     CoursePolicyException, GroupPolicyException)
 from restclients.exceptions import DataFailureException
-from django.utils.timezone import utc
-from datetime import datetime
 
 
 class GroupBuilder(Builder):
@@ -25,16 +23,7 @@ class GroupBuilder(Builder):
 
     def _process_course_groups(self, course_id):
         try:
-            try:
-                valid_adhoc_course_sis_id(course_id)
-                (prefix, canvas_course_id) = course_id.split('_')
-                canvas_course = get_course_by_id(canvas_course_id)
-            except CoursePolicyException:
-                canvas_course = get_course_by_sis_id(course_id)
-
-            if canvas_course.sis_course_id is None:
-                update_course_sis_id(canvas_course.course_id, course_id)
-
+            self._verify_canvas_course(course_id)
         except DataFailureException as err:
             if err.status == 404:
                 Group.objects.deprioritize_course(course_id)
@@ -63,11 +52,8 @@ class GroupBuilder(Builder):
             self._requeue_course(course_id, err)
             return
 
-        groups = Group.objects.filter(course_id=course_id,
-                                      is_deleted__isnull=True)
-
         current_members = []
-        for group in groups:
+        for group in Group.objects.get_active_by_course(course_id):
             try:
                 current_members.extend(self._get_current_members(group))
 
@@ -79,7 +65,7 @@ class GroupBuilder(Builder):
             except GroupPolicyException as err:
                 self.logger.info("Skip group %s (%s)" % (group.group_id, err))
 
-        cached_members = CourseMember.objects.filter(course_id=course_id)
+        cached_members = CourseMember.objects.get_by_course(course_id)
         for member in cached_members:
             match = next((m for m in current_members if m == member), None)
 
@@ -93,9 +79,7 @@ class GroupBuilder(Builder):
                         self.logger.info("Skip group member %s (%s)" % (
                             member.name, err))
 
-                member.is_deleted = True
-                member.deleted_date = datetime.utcnow().replace(tzinfo=utc)
-                member.save()
+                member.deactivate()
 
         for member in current_members:
             match = next((m for m in cached_members if m == member), None)
@@ -113,9 +97,18 @@ class GroupBuilder(Builder):
                 if match is None:
                     member.save()
                 elif match.is_deleted:
-                    match.is_deleted = None
-                    match.deleted_date = None
-                    match.save()
+                    match.activate()
+
+    def _verify_canvas_course(self, course_id):
+        try:
+            valid_adhoc_course_sis_id(course_id)
+            (prefix, canvas_course_id) = course_id.split('_')
+            canvas_course = get_course_by_id(canvas_course_id)
+        except CoursePolicyException:
+            canvas_course = get_course_by_sis_id(course_id)
+
+        if canvas_course.sis_course_id is None:
+            update_course_sis_id(canvas_course.course_id, course_id)
 
     def _get_current_members(self, group):
         (members, invalid_members, member_groups) = get_effective_members(
@@ -163,14 +156,11 @@ class GroupBuilder(Builder):
                 group_id=member_group_id, root_group_id=group.group_id)
 
             if not created:
-                gmg.is_deleted = None
-                gmg.save()
+                gmg.activate()
 
-        for gmg in GroupMemberGroup.objects.filter(
-                root_group_id=group.group_id, is_deleted__isnull=True):
+        for gmg in GroupMemberGroup.objects.get_active_by_root(group.group_id):
             if gmg.group_id not in member_group_ids:
-                gmg.is_deleted = True
-                gmg.save()
+                gmg.deactivate()
 
     def _requeue_course(self, course_id, err):
         Group.objects.dequeue_course(course_id)
