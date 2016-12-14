@@ -148,8 +148,8 @@ class Collector(object):
         """
         base = os.path.join(root, datetime.now().strftime('%Y%m%d-%H%M%S'))
 
-        max_collisions = getattr(settings,
-            'SIS_IMPORT_CSV_FILEPATH_COLLISIONS_MAX', 100)
+        max_collisions = getattr(
+            settings, 'SIS_IMPORT_CSV_FILEPATH_COLLISIONS_MAX', 100)
 
         for collision in range(max_collisions):
             try:
