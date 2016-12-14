@@ -5,6 +5,7 @@ from sis_provisioner.models import Curriculum
 from sis_provisioner.dao.course import get_section_by_label
 from sis_provisioner.csv.data import Collector
 from sis_provisioner.csv.format import *
+import mock
 
 
 class InvalidFormat(CSVFormat):
@@ -107,7 +108,7 @@ class CSVDataTest(TestCase):
     def test_users(self):
         with self.settings(
                 RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
-            
+
             user = PWS().get_person_by_netid('javerage')
 
             csv = Collector()
@@ -116,8 +117,26 @@ class CSVDataTest(TestCase):
             self.assertEquals(len(csv.users), 1)
             self.assertEquals(csv.add(UserCSV(user, 'active')), False)
 
-    def test_write_files(self):
+    @mock.patch('sis_provisioner.csv.data.shutil')
+    @mock.patch('sis_provisioner.csv.data.stat')
+    @mock.patch('sis_provisioner.csv.data.os')
+    def test_write_files(self, mock_os, mock_stat, mock_shutil):
         pass
 
-    def test_create_filepath(self):
-        pass
+    @mock.patch('sis_provisioner.csv.data.stat')
+    @mock.patch('sis_provisioner.csv.data.os')
+    def test_create_filepath(self, mock_os, mock_stat):
+        with self.settings(SIS_IMPORT_CSV_FILEPATH_COLLISIONS_MAX=1):
+            csv = Collector()
+            root = ''
+
+            path = csv.create_filepath(root)
+
+            mock_os.makedirs.assert_called_with(path)
+            mock_os.chmod.assert_called_with(path, csv.dirmode)
+
+        with self.settings(SIS_IMPORT_CSV_FILEPATH_COLLISIONS_MAX=0):
+            csv = Collector()
+            root = ''
+
+            self.assertRaises(EnvironmentError, csv.create_filepath, root)
