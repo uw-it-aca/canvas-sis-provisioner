@@ -35,6 +35,8 @@ class Collector(object):
         self.filemode = (stat.S_IRUSR | stat.S_IWUSR |
                          stat.S_IRGRP | stat.S_IWGRP |
                          stat.S_IROTH)
+        self.dirmode = self.filemode | (stat.S_IXUSR | stat.S_IXGRP |
+                                        stat.S_IXOTH)
 
     def add(self, formatter):
         """
@@ -146,21 +148,18 @@ class Collector(object):
         """
         base = os.path.join(root, datetime.now().strftime('%Y%m%d-%H%M%S'))
 
-        # ugo+x
-        mode = self.filemode | (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
-
-        max_collisions = 100
+        max_collisions = getattr(
+            settings, 'SIS_IMPORT_CSV_FILEPATH_COLLISIONS_MAX', 100)
 
         for collision in range(max_collisions):
             try:
                 filepath = base if (
                     collision < 1) else '%s-%03d' % (base, collision)
                 os.makedirs(filepath)
-                os.chmod(filepath, mode)
+                os.chmod(filepath, self.dirmode)  # ugo+x
                 return filepath
             except OSError as err:
                 if err.errno != errno.EEXIST:
                     raise
 
-        raise Exception('Cannot create CSV dir: Too many attempts (%d)' % (
-            max_collisions))
+        raise EnvironmentError('Too many attempts (%d)' % max_collisions)
