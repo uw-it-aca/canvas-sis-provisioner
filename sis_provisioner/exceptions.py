@@ -35,5 +35,17 @@ class CoursePolicyException(Exception):
     pass
 
 
+class EnrollmentPolicyException(Exception):
+    pass
+
+
 class AccountPolicyException(Exception):
+    pass
+
+
+class EmptyQueueException(Exception):
+    pass
+
+
+class MissingImportPathException(Exception):
     pass

@@ -1,9 +1,14 @@
 from django.test import TestCase
 from restclients.pws import PWS
+from restclients.exceptions import DataFailureException
 from sis_provisioner.dao.user import *
 from sis_provisioner.exceptions import UserPolicyException,\
     MissingLoginIdException, InvalidLoginIdException,\
     TemporaryNetidException
+
+
+class InvalidPerson(object):
+    pass
 
 
 class UserPolicyTest(TestCase):
@@ -42,6 +47,14 @@ class UserPolicyTest(TestCase):
             user = get_person_by_gmail_id('john.smith@gmail.com')
             self.assertEquals(user_email(user), 'john.smith@gmail.com')
 
+            user = PWS().get_entity_by_netid('somalt')
+            user.uwnetid = None
+            self.assertRaises(UserPolicyException, user_email, user)
+
+            user = InvalidPerson()
+            self.assertRaises(UserPolicyException, user_email, user)
+
+
     def test_user_fullname(self):
         with self.settings(
                 LOGIN_DOMAIN_WHITELIST=['gmail.com'],
@@ -67,13 +80,22 @@ class UserPolicyTest(TestCase):
             user = get_person_by_gmail_id('john.smith@gmail.com')
             self.assertEquals(user_fullname(user), 'john.smith')
 
+            user = InvalidPerson()
+            self.assertRaises(UserPolicyException, user_fullname, user)
+
 
 class NetidPolicyTest(TestCase):
     def test_get_person_by_netid(self):
         with self.settings(
+                NONPERSONAL_NETID_EXCEPTION_GROUP='u_acadev_unittest',
+                RESTCLIENTS_GWS_DAO_CLASS='restclients.dao_implementation.gws.File',
                 RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
 
             self.assertEquals(get_person_by_netid('javerage').uwnetid, 'javerage')
+
+            self.assertRaises(DataFailureException, get_person_by_netid, 'a_canvas_application')
+            self.assertRaises(InvalidLoginIdException, get_person_by_netid, 'canvas')
+
 
     def test_valid_netid(self):
         # Valid
@@ -121,6 +143,13 @@ class NetidPolicyTest(TestCase):
             # Invalid
             self.assertRaises(InvalidLoginIdException, valid_nonpersonal_net_id, 'canvas')
 
+        with self.settings(
+                NONPERSONAL_NETID_EXCEPTION_GROUP='',
+                RESTCLIENTS_GWS_DAO_CLASS='restclients.dao_implementation.gws.File'):
+
+            self.assertRaises(InvalidLoginIdException, valid_nonpersonal_net_id, 'canvas')
+
+
     def test_valid_canvas_user_id(self):
         self.assertEquals(valid_canvas_user_id(12345), None)
         self.assertEquals(valid_canvas_user_id('12345'), None)
@@ -134,10 +163,15 @@ class NetidPolicyTest(TestCase):
 class RegidPolicyTest(TestCase):
     def test_get_person_by_regid(self):
         with self.settings(
+                NONPERSONAL_NETID_EXCEPTION_GROUP='u_acadev_unittest',
+                RESTCLIENTS_GWS_DAO_CLASS='restclients.dao_implementation.gws.File',
                 RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
 
             user = get_person_by_regid('9136CCB8F66711D5BE060004AC494FFE')
             self.assertEquals(user.uwregid, '9136CCB8F66711D5BE060004AC494FFE')
+
+            self.assertRaises(DataFailureException, get_person_by_regid, '9136CCB8F66711D5BE060004AC494FFF')
+
 
     def test_valid_regid(self):
         # Valid

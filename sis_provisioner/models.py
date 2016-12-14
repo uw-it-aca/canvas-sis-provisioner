@@ -11,7 +11,8 @@ from sis_provisioner.dao.canvas import (
     get_report_data, delete_report, sis_import_by_path, get_sis_import_status,
     get_term_by_sis_id)
 from sis_provisioner.exceptions import (
-    CoursePolicyException, MissingLoginIdException)
+    CoursePolicyException, MissingLoginIdException, EmptyQueueException,
+    MissingImportPathException)
 from restclients.exceptions import DataFailureException
 from datetime import datetime, timedelta
 from logging import getLogger
@@ -34,14 +35,6 @@ PRIORITY_CHOICES = (
     (PRIORITY_HIGH, 'high'),
     (PRIORITY_IMMEDIATE, 'immediate')
 )
-
-
-class EmptyQueueException(Exception):
-    pass
-
-
-class MissingImportPathException(Exception):
-    pass
 
 
 class Job(models.Model):
@@ -273,23 +266,20 @@ class CourseManager(models.Manager):
                 logger.info('Course: SKIP, %s' % err)
                 continue
 
+            primary_id = None
             if section.is_independent_study:
-                for meeting in section.meetings:
-                    for instructor in meeting.instructors:
-                        if instructor.uwregid:
-                            ind_course_id = '-'.join([course_id,
-                                                      instructor.uwregid])
+                for instructor in section.get_instructors():
+                    ind_course_id = '-'.join([course_id, instructor.uwregid])
 
-                            if ind_course_id not in existing_course_ids:
-                                course = Course(course_id=ind_course_id,
-                                                course_type=Course.SDB_TYPE,
-                                                term_id=term_id,
-                                                priority=PRIORITY_HIGH)
-                                new_courses.append(course)
+                    if ind_course_id not in existing_course_ids:
+                        course = Course(course_id=ind_course_id,
+                                        course_type=Course.SDB_TYPE,
+                                        term_id=term_id,
+                                        primary_id=primary_id,
+                                        priority=PRIORITY_HIGH)
+                        new_courses.append(course)
             else:
-                if section.is_primary_section:
-                    primary_id = None
-                else:
+                if not section.is_primary_section:
                     primary_id = section.canvas_course_sis_id()
 
                 course = Course(course_id=course_id,
@@ -814,6 +804,10 @@ class GroupManager(models.Manager):
 
         return imp
 
+    def get_active_by_course(self, course_id):
+        return super(GroupManager, self).get_queryset().filter(
+            course_id=course_id, is_deleted__isnull=True)
+
     def queued(self, queue_id):
         return super(GroupManager, self).get_queryset().filter(
             queue_id=queue_id)
@@ -880,12 +874,28 @@ class Group(models.Model):
         unique_together = ('course_id', 'group_id', 'role')
 
 
+class GroupMemberGroupManager(models.Manager):
+    def get_active_by_root(self, root_group_id):
+        return super(GroupMemberGroupManager, self).get_queryset().filter(
+            root_group_id=root_group_id, is_deleted__isnull=True)
+
+
 class GroupMemberGroup(models.Model):
     """ Represents member group relationship
     """
     group_id = models.CharField(max_length=256)
     root_group_id = models.CharField(max_length=256)
     is_deleted = models.NullBooleanField()
+
+    objects = GroupMemberGroupManager()
+
+    def deactivate(self):
+        self.is_deleted = True
+        self.save()
+
+    def activate(self):
+        self.is_deleted = None
+        self.save()
 
 
 class CourseMemberManager(models.Manager):
@@ -935,6 +945,10 @@ class CourseMemberManager(models.Manager):
                 queue_id=None
             )
 
+    def get_by_course(self, course_id):
+        return super(CourseMemberManager, self).get_queryset().filter(
+            course_id=course_id)
+
 
 class CourseMember(models.Model):
     UWNETID_TYPE = "uwnetid"
@@ -961,6 +975,16 @@ class CourseMember(models.Model):
 
     def is_eppn(self):
         return self.member_type.lower() == self.EPPN_TYPE
+
+    def deactivate(self):
+        self.is_deleted = True
+        self.deleted_date = datetime.utcnow().replace(tzinfo=utc)
+        self.save()
+
+    def activate(self):
+        self.is_deleted = None
+        self.deleted_date = None
+        self.save()
 
     def __eq__(self, other):
         return (self.course_id == other.course_id and

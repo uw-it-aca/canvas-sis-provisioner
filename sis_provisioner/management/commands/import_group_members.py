@@ -1,8 +1,10 @@
 from django.core.management.base import CommandError
 from sis_provisioner.management.commands import SISProvisionerCommand
-from sis_provisioner.models import CourseMember, EmptyQueueException,\
-    MissingImportPathException, PRIORITY_DEFAULT, PRIORITY_IMMEDIATE
-from sis_provisioner.csv_builder import CSVBuilder
+from sis_provisioner.models import (
+    CourseMember, PRIORITY_DEFAULT, PRIORITY_IMMEDIATE)
+from sis_provisioner.exceptions import (
+    EmptyQueueException, MissingImportPathException)
+from sis_provisioner.builders.group_enrollments import GroupEnrollmentBuilder
 import traceback
 
 
@@ -25,7 +27,7 @@ class Command(SISProvisionerCommand):
             return
 
         try:
-            imp.csv_path = CSVBuilder().generate_csv_for_course_members(imp.queued_objects())
+            imp.csv_path = GroupEnrollmentBuilder(imp.queued_objects()).build()
         except:
             imp.csv_errors = traceback.format_exc()
 

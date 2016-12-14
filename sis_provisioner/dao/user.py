@@ -3,8 +3,9 @@ from restclients.pws import PWS
 from restclients.gws import GWS
 from restclients.models.canvas import CanvasUser
 from restclients.exceptions import DataFailureException, InvalidGroupID
-from sis_provisioner.exceptions import UserPolicyException,\
-    MissingLoginIdException, TemporaryNetidException, InvalidLoginIdException
+from sis_provisioner.exceptions import (
+    UserPolicyException, MissingLoginIdException, TemporaryNetidException,
+    InvalidLoginIdException)
 from nameparser import HumanName
 import re
 
@@ -85,7 +86,7 @@ def user_sis_id(user):
 
 
 def user_email(user):
-    if hasattr(user, 'uwnetid'):
+    if hasattr(user, 'uwnetid') and user.uwnetid is not None:
         return '%s@uw.edu' % user.uwnetid
     elif hasattr(user, 'email'):
         return user.email  # CanvasUser
@@ -115,7 +116,7 @@ def get_person_by_netid(netid):
         valid_net_id(netid)
         person = pws.get_person_by_netid(netid)
 
-    except DataFailureException, err:
+    except DataFailureException as err:
         if err.status == 404:  # Non-personal netid?
             valid_nonpersonal_net_id(netid)
             person = pws.get_entity_by_netid(netid)
@@ -131,7 +132,7 @@ def get_person_by_regid(regid):
         person = pws.get_person_by_regid(regid)
         valid_net_id(person.uwnetid)
 
-    except DataFailureException, err:
+    except DataFailureException as err:
         if err.status == 404:  # Non-personal regid?
             person = pws.get_entity_by_regid(regid)
             valid_nonpersonal_net_id(person.netid)

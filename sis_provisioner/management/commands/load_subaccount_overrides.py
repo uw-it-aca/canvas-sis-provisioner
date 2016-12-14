@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 from optparse import make_option
 from sis_provisioner.models import SubAccountOverride
-from sis_provisioner.csv_builder import CSVBuilder
+from sis_provisioner.builders import Builder
 from restclients.sws.section import get_joint_sections
 from restclients.pws import PWS
 import json
@@ -9,7 +9,10 @@ import sys
 import re
 import csv
 
-class CourseTermException(Exception): pass
+
+class CourseTermException(Exception):
+    pass
+
 
 class Command(BaseCommand):
     help = "Load Course Sub Account Override list"
@@ -24,7 +27,7 @@ class Command(BaseCommand):
         make_option('--reconcile', action="store_true", dest='reconcile', default=False, help='provided overrides are authoratative for contained quarter'),
     )
 
-    _csv_builder = CSVBuilder()
+    _builder = Builder()
 
     _pws = PWS()
 
@@ -101,7 +104,7 @@ class Command(BaseCommand):
                             # more than an ordinary class?
                             if has_course_section:
                                 try:
-                                    section = self._csv_builder.get_section_resource_by_id(course_id)
+                                    section = self._builder.get_section_resource_by_id(course_id)
                                     if "independent study" == section.section_type:
                                         try:
                                             course_id += '-' + self._pws.get_person_by_employee_id(columns['instructor_eid']).uwregid

@@ -1,8 +1,9 @@
 from django.core.management.base import CommandError
 from sis_provisioner.management.commands import SISProvisionerCommand
-from sis_provisioner.models import User, EmptyQueueException,\
-    MissingImportPathException, PRIORITY_DEFAULT, PRIORITY_IMMEDIATE
-from sis_provisioner.csv_builder import CSVBuilder
+from sis_provisioner.models import User, PRIORITY_DEFAULT, PRIORITY_IMMEDIATE
+from sis_provisioner.exceptions import (
+    EmptyQueueException, MissingImportPathException)
+from sis_provisioner.builders.users import UserBuilder
 import traceback
 
 
@@ -25,7 +26,7 @@ class Command(SISProvisionerCommand):
             return
 
         try:
-            imp.csv_path = CSVBuilder().generate_user_csv(imp.queued_objects())
+            imp.csv_path = UserBuilder(imp.queued_objects()).build()
         except:
             imp.csv_errors = traceback.format_exc()
 

@@ -1,9 +1,10 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from logging import getLogger
-from sis_provisioner.models import Course, Group, User, Import,\
-    PRIORITY_DEFAULT, PRIORITY_HIGH, PRIORITY_IMMEDIATE
-from sis_provisioner.csv_builder import CSVBuilder
+from sis_provisioner.models import (
+    Course, Group, User, Import, PRIORITY_DEFAULT, PRIORITY_HIGH,
+    PRIORITY_IMMEDIATE)
+from sis_provisioner.builders.users import UserBuilder
 import traceback
 
 
@@ -42,7 +43,7 @@ def priority_user_import(sender, **kwargs):
             user.save()
 
             try:
-                imp.csv_path = CSVBuilder().generate_user_csv([user])
+                imp.csv_path = UserBuilder([user]).build()
             except:
                 imp.csv_errors = traceback.format_exc()
 
