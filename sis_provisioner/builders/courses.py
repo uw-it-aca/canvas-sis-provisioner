@@ -12,12 +12,10 @@ class CourseBuilder(Builder):
     """
     Generates import data for Course models.
     """
-    def __init__(self, courses, include_enrollment=True):
-        super(CourseBuilder, self).__init__()
-        self.courses = courses
-        self.include_enrollment = include_enrollment
+    def _init_build(self, **kwargs):
+        self.include_enrollment = kwargs.get('include_enrollment', True)
 
-    def _process_course(self, course):
+    def _process(self, course):
         if course.queue_id is not None:
             self.queue_id = course.queue_id
 
@@ -143,7 +141,7 @@ class CourseBuilder(Builder):
                 course_model_id = re.sub(r'--$', '', s.sis_section_id)
                 course = Course.objects.get(course_id=course_model_id,
                                             queue_id__isnull=True)
-                self._process_course(course)
+                self._process(course)
             except Course.DoesNotExist:
                 pass
 
@@ -277,9 +275,3 @@ class CourseBuilder(Builder):
             if (new_xlist_id is not None and new_xlist_id != course_id):
                 self.data.add(XlistCSV(new_xlist_id, linked_section_id,
                                        status='active'))
-
-    def build(self):
-        for course in self.courses:
-            self._process_course(course)
-
-        return self.write()

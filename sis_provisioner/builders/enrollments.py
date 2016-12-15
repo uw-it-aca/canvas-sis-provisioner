@@ -15,11 +15,7 @@ class EnrollmentBuilder(Builder):
     """
     Generates import data for each of the passed Enrollment models.
     """
-    def __init__(self, enrollments):
-        super(EnrollmentBuilder, self).__init__()
-        self.enrollments = enrollments
-
-    def _process_enrollment(self, enrollment):
+    def _process(self, enrollment):
         try:
             enrollment.person = get_person_by_regid(enrollment.reg_id)
 
@@ -110,12 +106,7 @@ class EnrollmentBuilder(Builder):
         logger.info("Skip enrollment %s in %s: %s" % (
             enrollment.reg_id, enrollment.course_id, err))
 
-    def build(self):
+    def _init_build(self, **kwargs):
         now = datetime.utcnow().replace(tzinfo=utc)
         timeout = getattr(settings, 'MISSING_LOGIN_ID_RETRY_TIMEOUT', 48)
         self.retry_missing_id = now - timedelta(hours=timeout)
-
-        for enrollment in self.enrollments:
-            self._process_enrollment(enrollment)
-
-        return self.write()

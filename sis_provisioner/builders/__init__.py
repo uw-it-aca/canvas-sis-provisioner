@@ -11,17 +11,27 @@ import json
 
 
 class Builder(object):
-    def __init__(self):
+    def __init__(self, items=[]):
         self.data = Collector()
         self.queue_id = None
         self.invalid_users = {}
+        self.items = items
         self.logger = getLogger(__name__)
+
+    def _init_build(self, **kwargs):
+        return
+
+    def _process(self, item):
+        raise NotImplementedError
 
     def write(self):
         return self.data.write_files()
 
-    def build(self):
-        raise NotImplementedError
+    def build(self, **kwargs):
+        self._init_build(**kwargs)
+        for item in self.items:
+            self._process(item)
+        return self.write()
 
     def add_user_data_for_person(self, person, force=False):
         """

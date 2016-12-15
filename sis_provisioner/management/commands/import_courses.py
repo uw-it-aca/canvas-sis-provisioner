@@ -27,8 +27,8 @@ class Command(SISProvisionerCommand):
 
         include_enrollment = True if (priority > PRIORITY_DEFAULT) else False
         try:
-            imp.csv_path = CourseBuilder(
-                imp.queued_objects(), include_enrollment).build()
+            builder = CourseBuilder(imp.queued_objects())
+            imp.csv_path = builder.build(include_enrollment=include_enrollment)
         except:
             imp.csv_errors = traceback.format_exc()
 
