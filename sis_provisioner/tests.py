@@ -13,4 +13,7 @@ from sis_provisioner.test.csv.format import (
     CSVHeaderTest, AccountCSVTest, TermCSVTest, CourseCSVTest, SectionCSVTest,
     EnrollmentCSVTest, UserCSVTest, XlistCSVTest)
 from sis_provisioner.test.builders import BuilderTest
+from sis_provisioner.test.builders.courses import CourseBuilderTest
+from sis_provisioner.test.builders.enrollments import EnrollmentBuilderTest
+from sis_provisioner.test.builders.groups import GroupBuilderTest
 from sis_provisioner.test.models.curriculum import CurriculumModelTest

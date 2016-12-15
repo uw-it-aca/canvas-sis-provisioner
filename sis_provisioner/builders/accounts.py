@@ -13,7 +13,7 @@ class AccountBuilder(Builder):
     term. Sub-account hierarchy is root account, campus, college,
     department, curriculum.
     """
-    def build(self):
+    def build(self, **kwargs):
         root_id = getattr(settings, 'SIS_IMPORT_ROOT_ACCOUNT_ID', None)
 
         for campus in get_all_campuses():

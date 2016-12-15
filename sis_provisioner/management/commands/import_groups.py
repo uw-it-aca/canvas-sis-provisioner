@@ -62,9 +62,8 @@ class Command(SISProvisionerCommand):
             return
 
         try:
-            imp.csv_path = GroupBuilder(
-                imp.queued_objects().values_list('course_id', flat=True),
-                delta=delta).build()
+            imp.csv_path = GroupBuilder(imp.queued_objects().values_list(
+                    'course_id', flat=True)).build(delta=delta)
         except:
             imp.csv_errors = traceback.format_exc()
 

@@ -16,12 +16,12 @@ from restclients.exceptions import DataFailureException
 
 
 class GroupBuilder(Builder):
-    def __init__(self, course_ids, delta=True):
-        super(GroupBuilder, self).__init__()
-        self.course_ids = course_ids
-        self.delta = delta
+    def _init_build(self, **kwargs):
+        self.delta = kwargs.get('delta', True)
+        self.cached_course_enrollments = {}
+        self.items = list(set(self.items))
 
-    def _process_course_groups(self, course_id):
+    def _process(self, course_id):
         try:
             self._verify_canvas_course(course_id)
         except DataFailureException as err:
@@ -166,11 +166,3 @@ class GroupBuilder(Builder):
         Group.objects.dequeue_course(course_id)
         self.logger.info("Requeue group sync for course %s: %s" % (
             course_id, err))
-
-    def build(self):
-        self.cached_course_enrollments = {}
-
-        for course_id in list(set(self.course_ids)):
-            self._process_course_groups(course_id)
-
-        return self.write()

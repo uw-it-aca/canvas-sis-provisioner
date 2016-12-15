@@ -10,3 +10,6 @@ class BuilderTest(TestCase):
         self.assertEquals(type(builder.data), Collector)
         self.assertEquals(builder.queue_id, None)
         self.assertEquals(len(builder.invalid_users), 0)
+        self.assertEquals(builder.write(), None)
+        self.assertEquals(builder.build(), None)
+        self.assertRaises(NotImplementedError, builder._process, True)
