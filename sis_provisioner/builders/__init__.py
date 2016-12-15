@@ -24,30 +24,30 @@ class Builder(object):
     def _process(self, item):
         raise NotImplementedError
 
-    def write(self):
+    def _write(self):
         return self.data.write_files()
 
     def build(self, **kwargs):
         self._init_build(**kwargs)
         for item in self.items:
             self._process(item)
-        return self.write()
+        return self._write()
 
     def add_user_data_for_person(self, person, force=False):
         """
         Creates a line of user data for the passed person.  If force is not
         true, the data will only be created if the person has not been
-        provisioned.
+        provisioned. Returns True for valid users, False otherwise.
         """
         if person.uwregid in self.invalid_users:
-            return
+            return False
 
         try:
             valid_net_id(person.uwnetid)
         except UserPolicyException as err:
             self.invalid_users[person.uwregid] = True
             self.logger.info("Skip user %s: %s" % (person.uwregid, err))
-            return
+            return False
 
         if force is True:
             self.data.add(UserCSV(person))
@@ -57,14 +57,13 @@ class Builder(object):
                 if (self.data.add(UserCSV(person)) and user.queue_id is None):
                     user.queue_id = self.queue_id
                     user.save()
+        return True
 
     def add_teacher_enrollment_data(self, section, person, status='active'):
         """
         Generates one teacher enrollment for the passed section and person.
         """
-        self.add_user_data_for_person(person)
-
-        if person.uwregid not in self.invalid_users:
+        if self.add_user_data_for_person(person):
             self.data.add(EnrollmentCSV(
                 section=section, instructor=person, status=status))
 
@@ -72,9 +71,7 @@ class Builder(object):
         """
         Generates one student enrollment for the passed registration.
         """
-        self.add_user_data_for_person(registration.person)
-
-        if registration.person.uwregid not in self.invalid_users:
+        if self.add_user_data_for_person(registration.person):
             self.data.add(EnrollmentCSV(registration=registration))
 
     def add_group_enrollment_data(self, member, section_id, role, status):
@@ -83,9 +80,7 @@ class Builder(object):
         """
         if member.is_uwnetid():
             person = get_person_by_netid(member.name)
-            self.add_user_data_for_person(person)
-
-            if person.uwregid not in self.invalid_users:
+            if self.add_user_data_for_person(person):
                 self.data.add(EnrollmentCSV(
                     section_id=section_id, person=person, role=role,
                     status=status))

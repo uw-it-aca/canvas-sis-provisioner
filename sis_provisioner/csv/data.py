@@ -7,7 +7,6 @@ from datetime import datetime
 import os
 import errno
 import stat
-import shutil
 
 
 class Collector(object):
@@ -99,46 +98,49 @@ class Collector(object):
         self.xlists.append(formatter)
         return True
 
+    def has_data(self):
+        """
+        Returns True if the collector contains data, False otherwise.
+        """
+        for csv_type in self.headers:
+            if len(getattr(self, csv_type)):
+                return True
+        return False
+
     def write_files(self):
         """
         Writes all csv files. Returns a path to the csv files, or None
         if no data was written.
         """
-        root = getattr(settings, 'SIS_IMPORT_CSV_ROOT', '')
-        filepath = self.create_filepath(root)
-        has_csv = False
-        for csv_type in self.headers:
-            try:
-                data = getattr(self, csv_type).values()
-                data.sort()
-            except AttributeError:
-                data = getattr(self, csv_type)
+        filepath = None
+        if self.has_data():
+            root = getattr(settings, 'SIS_IMPORT_CSV_ROOT', '')
+            filepath = self.create_filepath(root)
+            for csv_type in self.headers:
+                try:
+                    data = getattr(self, csv_type).values()
+                    data.sort()
+                except AttributeError:
+                    data = getattr(self, csv_type)
 
-            if len(data):
-                has_csv = True
-            else:
-                continue
+                if len(data):
+                    filename = os.path.join(filepath, csv_type + '.csv')
+                    f = open(filename, 'w')
+                    os.chmod(filename, self.filemode)
 
-            filename = os.path.join(filepath, csv_type + '.csv')
-            f = open(filename, 'w')
-            os.chmod(filename, self.filemode)
+                    try:
+                        headers = self.headers[csv_type]
+                        f.write(str(headers))
+                        for line in data:
+                            f.write(str(line))
+                    finally:
+                        f.close()
 
-            try:
-                headers = self.headers[csv_type]
-                f.write(str(headers))
-                for line in data:
-                    f.write(str(line))
-            finally:
-                f.close()
-
-        if has_csv:
             self._init_data()
-        else:
-            shutil.rmtree(filepath)
-            filepath = None
 
         if getattr(settings, 'SIS_IMPORT_CSV_DEBUG', False):
             print 'CSV PATH: %s' % filepath
+            return None
         else:
             return filepath
 
