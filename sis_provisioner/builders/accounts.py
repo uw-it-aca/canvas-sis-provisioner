@@ -51,4 +51,4 @@ class AccountBuilder(Builder):
                         model.subaccount_id = curr_id
                         model.save()
 
-        return self.write()
+        return self._write()

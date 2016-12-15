@@ -21,10 +21,12 @@ class CSVDataTest(TestCase):
         self.assertEquals(csv.add(formatter), True)
         self.assertEquals(len(csv.accounts), 1)
         self.assertEquals(csv.add(formatter), False)
+        self.assertEquals(csv.has_data(), True)
 
     def test_invalid_format(self):
         csv = Collector()
         self.assertRaises(TypeError, csv.add, InvalidFormat)
+        self.assertEquals(csv.has_data(), False)
 
     def test_terms(self):
         with self.settings(
@@ -39,6 +41,7 @@ class CSVDataTest(TestCase):
             self.assertEquals(csv.add(formatter), True)
             self.assertEquals(len(csv.terms), 1)
             self.assertEquals(csv.add(formatter), False)
+            self.assertEquals(csv.has_data(), True)
 
     def test_courses(self):
         with self.settings(
@@ -55,6 +58,7 @@ class CSVDataTest(TestCase):
             self.assertEquals(csv.add(formatter), True)
             self.assertEquals(len(csv.courses), 1)
             self.assertEquals(csv.add(formatter), False)
+            self.assertEquals(csv.has_data(), True)
 
     def test_sections(self):
         with self.settings(
@@ -72,6 +76,7 @@ class CSVDataTest(TestCase):
             self.assertEquals(csv.add(SectionCSV(section_id='abc', course_id='abc',
                 name='abc', status='active')), True)
             self.assertEquals(len(csv.sections), 2)
+            self.assertEquals(csv.has_data(), True)
 
     def test_enrollments(self):
         with self.settings(
@@ -98,12 +103,14 @@ class CSVDataTest(TestCase):
                     instructor=user, status='active')), True)
 
             self.assertEquals(len(csv.enrollments), 4)
+            self.assertEquals(csv.has_data(), True)
 
     def test_xlists(self):
         csv = Collector()
         self.assertEquals(len(csv.xlists), 0)
         self.assertEquals(csv.add(XlistCSV('abc', 'def')), True)
         self.assertEquals(len(csv.xlists), 1)
+        self.assertEquals(csv.has_data(), True)
 
     def test_users(self):
         with self.settings(
@@ -116,12 +123,14 @@ class CSVDataTest(TestCase):
             self.assertEquals(csv.add(UserCSV(user, 'active')), True)
             self.assertEquals(len(csv.users), 1)
             self.assertEquals(csv.add(UserCSV(user, 'active')), False)
+            self.assertEquals(csv.has_data(), True)
 
-    @mock.patch('sis_provisioner.csv.data.shutil')
     @mock.patch('sis_provisioner.csv.data.stat')
     @mock.patch('sis_provisioner.csv.data.os')
-    def test_write_files(self, mock_os, mock_stat, mock_shutil):
-        pass
+    def test_write_files(self, mock_os, mock_stat):
+        csv = Collector()
+        self.assertEquals(csv.has_data(), False)
+        self.assertEquals(csv.write_files(), None)
 
     @mock.patch('sis_provisioner.csv.data.stat')
     @mock.patch('sis_provisioner.csv.data.os')
