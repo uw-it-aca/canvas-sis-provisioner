@@ -127,10 +127,24 @@ class CSVDataTest(TestCase):
 
     @mock.patch('sis_provisioner.csv.data.stat')
     @mock.patch('sis_provisioner.csv.data.os')
-    def test_write_files(self, mock_os, mock_stat):
+    @mock.patch('sis_provisioner.csv.data.open')
+    def test_write_files(self, mock_open, mock_os, mock_stat):
+        # Test empty
         csv = Collector()
         self.assertEquals(csv.has_data(), False)
         self.assertEquals(csv.write_files(), None)
+
+        # Test with data
+        csv = Collector()
+        csv.enrollments.append(1)
+        self.assertEquals(csv.has_data(), True)
+
+        path = csv.write_files()
+
+        mock_os.path.join.assert_called_with(path, 'enrollments.csv')
+        mock_open.assert_called_with(path, 'w')
+        mock_os.chmod.assert_called_with(path, csv.filemode)
+        self.assertEquals(csv.has_data(), False)
 
     @mock.patch('sis_provisioner.csv.data.stat')
     @mock.patch('sis_provisioner.csv.data.os')
