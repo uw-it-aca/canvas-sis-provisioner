@@ -484,9 +484,6 @@ class EnrollmentManager(models.Manager):
                 if (last_modified > enrollment.last_modified or (
                         last_modified == enrollment.last_modified and
                         status == Enrollment.ACTIVE_STATUS)):
-                    logger.info('Enrollment: UPDATE %s, %s, %s, %s, %s' % (
-                        full_course_id, reg_id, role, status, last_modified))
-
                     enrollment.status = status
                     enrollment.last_modified = last_modified
                     enrollment.request_date = request_date
@@ -501,6 +498,8 @@ class EnrollmentManager(models.Manager):
                             full_course_id, reg_id, role, enrollment.queue_id))
 
                     enrollment.save()
+                    logger.info('Enrollment: UPDATE %s, %s, %s, %s, %s' % (
+                        full_course_id, reg_id, role, status, last_modified))
                 else:
                     logger.info('Enrollment: IGNORE %s, %s, %s before %s' % (
                         full_course_id, reg_id, last_modified,
