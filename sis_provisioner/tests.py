@@ -19,3 +19,4 @@ from sis_provisioner.test.builders.groups import GroupBuilderTest
 from sis_provisioner.test.models.course import CourseModelTest
 from sis_provisioner.test.models.curriculum import CurriculumModelTest
 from sis_provisioner.test.models.enrollment import EnrollmentModelTest
+from sis_provisioner.test.models.user import UserModelTest

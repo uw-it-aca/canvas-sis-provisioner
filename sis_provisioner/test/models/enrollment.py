@@ -37,9 +37,6 @@ class EnrollmentModelTest(TestCase):
         completed_enrollment = Enrollment(status=Enrollment.COMPLETED_STATUS)
         self.assertEquals(completed_enrollment.is_active(), False)
 
-    def test_queue_by_priority(self):
-        pass
-
     @mock.patch('sis_provisioner.models.logger')
     def test_add_enrollment(self, mock_logger):
         with self.settings(
