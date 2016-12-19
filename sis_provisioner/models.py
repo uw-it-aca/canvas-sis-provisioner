@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, IntegrityError
 from django.conf import settings
 from django.utils.timezone import utc, localtime
 from sis_provisioner.dao.group import get_sis_import_members, is_modified_group
@@ -484,9 +484,6 @@ class EnrollmentManager(models.Manager):
                 if (last_modified > enrollment.last_modified or (
                         last_modified == enrollment.last_modified and
                         status == Enrollment.ACTIVE_STATUS)):
-                    logger.info('Enrollment: UPDATE %s %s %s %s %s' % (
-                        course_id, reg_id, role, status, last_modified))
-
                     enrollment.status = status
                     enrollment.last_modified = last_modified
                     enrollment.request_date = request_date
@@ -497,43 +494,49 @@ class EnrollmentManager(models.Manager):
                         enrollment.priority = PRIORITY_DEFAULT
                     else:
                         enrollment.priority = PRIORITY_HIGH
-                        logger.info('Enrollment: IN QUEUE %s %s %s %s' % (
-                            course_id, reg_id, role, enrollment.queue_id))
+                        logger.info('Enrollment: IN QUEUE %s, %s, %s, %s' % (
+                            full_course_id, reg_id, role, enrollment.queue_id))
 
                     enrollment.save()
+                    logger.info('Enrollment: UPDATE %s, %s, %s, %s, %s' % (
+                        full_course_id, reg_id, role, status, last_modified))
                 else:
-                    logger.info('Enrollment: IGNORE %s %s, %s before %s' % (
-                        course_id, reg_id, last_modified,
+                    logger.info('Enrollment: IGNORE %s, %s, %s before %s' % (
+                        full_course_id, reg_id, last_modified,
                         enrollment.last_modified))
             else:
-                logger.info('Enrollment: IGNORE %s %s Unprovisioned course' % (
-                    full_course_id, reg_id))
+                logger.info(
+                    'Enrollment: IGNORE Unprovisioned course %s, %s, %s' % (
+                        full_course_id, reg_id, role))
                 course.priority = PRIORITY_HIGH
                 course.save()
 
         except Enrollment.DoesNotExist:
-            logger.info('Enrollment: ADD %s %s %s %s %s' % (
-                course_id, reg_id, role, status, last_modified))
             enrollment = Enrollment(course_id=course_id, reg_id=reg_id,
                                     role=role, status=status,
                                     last_modified=last_modified,
                                     primary_course_id=primary_course_id,
                                     instructor_reg_id=instructor_reg_id)
-            enrollment.save()
+            try:
+                enrollment.save()
+                logger.info('Enrollment: ADD %s, %s, %s, %s, %s' % (
+                    full_course_id, reg_id, role, status, last_modified))
+            except IntegrityError:
+                self.add_enrollment(enrollment_data)  # Try again
         except Course.DoesNotExist:
-            # course provisioning effectively picks up event
-            logger.info('Enrollment: IGNORE %s %s Unprovisioned course' % (
-                full_course_id, reg_id))
-
-            if section.is_independent_study:
-                section.independent_study_instructor_regid = instructor_reg_id
-
+            # Initial course provisioning effectively picks up event
             course = Course(course_id=full_course_id,
                             course_type=Course.SDB_TYPE,
                             term_id=section.term.canvas_sis_id(),
                             primary_id=primary_course_id,
                             priority=PRIORITY_HIGH)
-            course.save()
+            try:
+                course.save()
+                logger.info(
+                    'Enrollment: IGNORE Unprovisioned course %s, %s, %s' % (
+                        full_course_id, reg_id, role))
+            except IntegrityError:
+                self.add_enrollment(enrollment_data)  # Try again
 
 
 class Enrollment(models.Model):

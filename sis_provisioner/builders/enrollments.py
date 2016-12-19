@@ -3,7 +3,9 @@ from sis_provisioner.csv.format import CourseCSV, SectionCSV
 from sis_provisioner.models import PRIORITY_NONE, PRIORITY_DEFAULT
 from sis_provisioner.dao.user import get_person_by_regid
 from sis_provisioner.dao.course import is_active_section, get_section_by_url
-from sis_provisioner.exceptions import UserPolicyException
+from sis_provisioner.exceptions import (
+    UserPolicyException, MissingLoginIdException)
+from restclients.models.sws import Registration
 from restclients.exceptions import (
     DataFailureException, InvalidCanvasIndependentStudyCourse)
 from datetime import datetime, timedelta
@@ -103,7 +105,7 @@ class EnrollmentBuilder(Builder):
         enrollment.queue_id = None
         enrollment.priority = PRIORITY_NONE
         enrollment.save()
-        logger.info("Skip enrollment %s in %s: %s" % (
+        self.logger.info("Skip enrollment %s in %s: %s" % (
             enrollment.reg_id, enrollment.course_id, err))
 
     def _init_build(self, **kwargs):
