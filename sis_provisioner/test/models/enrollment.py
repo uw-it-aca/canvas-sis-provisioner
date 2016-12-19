@@ -78,3 +78,6 @@ class EnrollmentModelTest(TestCase):
             student_data['Status'] = 'Deleted'
             Enrollment.objects.add_enrollment(student_data)
             mock_logger.info.assert_called_with('Enrollment: IGNORE 2013-summer-TRAIN-101-A, BCDEF1234567890ABCDEF1234567890, 2013-01-01 00:00:00+00:00 before 2013-01-01 00:00:00+00:00')
+
+            Course.objects.all().delete()
+            Enrollment.objects.all().delete()
