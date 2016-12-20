@@ -1,6 +1,7 @@
 from django.db import models, IntegrityError
 from django.conf import settings
 from django.utils.timezone import utc, localtime
+from sis_provisioner.csv import reader
 from sis_provisioner.dao.group import get_sis_import_members, is_modified_group
 from sis_provisioner.dao.user import get_person_by_netid
 from sis_provisioner.dao.course import (
@@ -17,7 +18,6 @@ from restclients.exceptions import DataFailureException
 from datetime import datetime, timedelta
 from logging import getLogger
 import json
-import csv
 import re
 
 
@@ -304,7 +304,7 @@ class CourseManager(models.Manager):
             canvas_account_id, term_id=canvas_term.term_id)
 
         unused_courses = {}
-        for row in csv.reader(get_report_data(unused_course_report)):
+        for row in reader(get_report_data(unused_course_report)):
             # Create a lookup by unused course_sis_id
             try:
                 unused_courses[row[1]] = True
@@ -315,7 +315,7 @@ class CourseManager(models.Manager):
         all_course_report = create_course_provisioning_report(
             canvas_account_id, term_id=canvas_term.term_id)
 
-        for row in csv.reader(get_report_data(all_course_report)):
+        for row in reader(get_report_data(all_course_report)):
             try:
                 sis_course_id = row[1]
                 valid_academic_course_sis_id(sis_course_id)
