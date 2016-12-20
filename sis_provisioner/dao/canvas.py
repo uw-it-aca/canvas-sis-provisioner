@@ -1,3 +1,4 @@
+from django.conf import settings
 from restclients.canvas import Canvas
 from restclients.canvas.accounts import Accounts
 from restclients.canvas.courses import Courses
@@ -10,10 +11,12 @@ from restclients.canvas.sis_import import SISImport
 from restclients.models.canvas import SISImport as SISImportModel
 from restclients.exceptions import DataFailureException
 from restclients.util.retry import retry
-from sis_provisioner.dao.course import valid_academic_section_sis_id
+from sis_provisioner.dao.course import (
+    valid_academic_course_sis_id, valid_academic_section_sis_id)
 from sis_provisioner.exceptions import CoursePolicyException
 from urllib3.exceptions import SSLError
 from logging import getLogger
+from csv import reader
 
 
 logger = getLogger(__name__)
@@ -110,20 +113,42 @@ def get_sis_enrollments_for_user_in_course(user_sis_id, course_sis_id):
     return enrollments
 
 
-def create_unused_courses_report(account_id, term_id):
-    return Reports().create_unused_courses_report(account_id, term_id)
+def get_active_courses_for_term(term, account_id=None):
+    if account_id is None:
+        account_id = getattr(settings, 'RESTCLIENTS_CANVAS_ACCOUNT_ID', None)
+    canvas_term = get_term_by_sis_id(term.canvas_sis_id())
+    reports = Reports()
 
+    # Canvas report of "unused" courses for the term
+    unused_course_report = reports.create_unused_courses_report(
+        account_id, canvas_term.term_id)
 
-def create_course_provisioning_report(account_id, term_id):
-    return Reports().create_course_provisioning_report(account_id, term_id)
+    unused_courses = {}
+    for row in reader(reports.get_report_data(unused_course_report)):
+        try:
+            sis_course_id = row[1]
+            valid_academic_course_sis_id(sis_course_id)
+            unused_courses[sis_course_id] = True
+        except (IndexError, CoursePolicyException):
+            pass
 
+    # Canvas report of all courses for the term
+    all_course_report = reports.create_course_provisioning_report(
+        account_id, canvas_term.term_id)
 
-def get_report_data(report):
-    return Reports().get_report_data(report)
+    active_courses = []
+    for row in reader(reports.get_report_data(all_course_report)):
+        try:
+            sis_course_id = row[1]
+            valid_academic_course_sis_id(sis_course_id)
+            if sis_course_id not in unused_courses:
+                active_courses.append(sis_course_id)
+        except (IndexError, CoursePolicyException):
+            pass
 
-
-def delete_report(report):
-    return Reports().delete_report(report)
+    reports.delete_report(unused_course_report)
+    reports.delete_report(all_course_report)
+    return active_courses
 
 
 def sis_import_by_path(csv_path):
