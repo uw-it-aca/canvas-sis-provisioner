@@ -129,7 +129,7 @@ def get_active_courses_for_term(term, account_id=None):
             sis_course_id = row[1]
             valid_academic_course_sis_id(sis_course_id)
             unused_courses[sis_course_id] = True
-        except CoursePolicyException:
+        except (IndexError, CoursePolicyException):
             pass
 
     # Canvas report of all courses for the term
@@ -143,7 +143,7 @@ def get_active_courses_for_term(term, account_id=None):
             valid_academic_course_sis_id(sis_course_id)
             if sis_course_id not in unused_courses:
                 active_courses.append(sis_course_id)
-        except CoursePolicyException:
+        except (IndexError, CoursePolicyException):
             pass
 
     reports.delete_report(unused_course_report)
