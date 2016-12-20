@@ -1,16 +1,13 @@
 from django.db import models, IntegrityError
 from django.conf import settings
 from django.utils.timezone import utc, localtime
-from sis_provisioner.csv import reader
 from sis_provisioner.dao.group import get_sis_import_members, is_modified_group
 from sis_provisioner.dao.user import get_person_by_netid
 from sis_provisioner.dao.course import (
-    valid_academic_course_sis_id, valid_canvas_section, get_sections_by_term,
-    get_section_by_label, is_time_schedule_construction)
+    valid_canvas_section, get_sections_by_term, get_section_by_label,
+    is_time_schedule_construction)
 from sis_provisioner.dao.canvas import (
-    create_course_provisioning_report, create_unused_courses_report,
-    get_report_data, delete_report, sis_import_by_path, get_sis_import_status,
-    get_term_by_sis_id)
+    get_active_courses_for_term, sis_import_by_path, get_sis_import_status)
 from sis_provisioner.exceptions import (
     CoursePolicyException, MissingLoginIdException, EmptyQueueException,
     MissingImportPathException)
@@ -295,43 +292,13 @@ class CourseManager(models.Manager):
         delta.save()
 
     def prioritize_active_courses_for_term(self, term):
-        canvas_term = get_term_by_sis_id(term.canvas_sis_id())
-        canvas_account_id = getattr(settings, 'RESTCLIENTS_CANVAS_ACCOUNT_ID',
-                                    None)
-
-        # Canvas report of "unused" courses for the term
-        unused_course_report = create_unused_courses_report(
-            canvas_account_id, term_id=canvas_term.term_id)
-
-        unused_courses = {}
-        for row in reader(get_report_data(unused_course_report)):
-            # Create a lookup by unused course_sis_id
+        for sis_course_id in get_active_courses_for_term(term):
             try:
-                unused_courses[row[1]] = True
-            except Exception as ex:
-                continue
-
-        # Canvas report of all courses for the term
-        all_course_report = create_course_provisioning_report(
-            canvas_account_id, term_id=canvas_term.term_id)
-
-        for row in reader(get_report_data(all_course_report)):
-            try:
-                sis_course_id = row[1]
-                valid_academic_course_sis_id(sis_course_id)
-            except Exception as ex:
-                continue
-
-            if sis_course_id not in unused_courses:
-                try:
-                    course = Course.objects.get(course_id=sis_course_id)
-                    course.priority = PRIORITY_HIGH
-                    course.save()
-                except Course.DoesNotExist:
-                    continue
-
-        delete_report(unused_course_report)
-        delete_report(all_course_report)
+                course = Course.objects.get(course_id=sis_course_id)
+                course.priority = PRIORITY_HIGH
+                course.save()
+            except Course.DoesNotExist:
+                pass
 
     def deprioritize_all_courses_for_term(self, term):
         super(CourseManager, self).get_queryset().filter(
