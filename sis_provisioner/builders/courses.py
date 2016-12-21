@@ -2,9 +2,10 @@ from sis_provisioner.builders import Builder
 from sis_provisioner.csv.format import CourseCSV, SectionCSV, TermCSV, XlistCSV
 from sis_provisioner.dao.course import (
     is_active_section, get_section_by_url, canvas_xlist_id,
-    get_registrations_by_section)
+    get_registrations_by_section, section_id_from_url)
 from sis_provisioner.dao.canvas import get_sis_sections_for_course
 from sis_provisioner.models import Course, PRIORITY_NONE
+from restclients.exceptions import DataFailureException
 import re
 
 
@@ -30,12 +31,6 @@ class CourseBuilder(Builder):
         except:
             return
 
-        if course.primary_id:
-            try:
-                Course.objects.add_to_queue(section, self.queue_id)
-            except:
-                return
-
         if section.is_independent_study:
             self._process_independent_study_section(section)
 
@@ -57,11 +52,11 @@ class CourseBuilder(Builder):
             return
 
         if section.is_independent_study:
-            raise Exception("Independent study section: %s" % (
+            raise TypeError("Independent study section: %s" % (
                 section.section_label()))
 
         if not section.is_primary_section:
-            raise Exception("Not a primary section: %s" % (
+            raise TypeError("Not a primary section: %s" % (
                 section.section_label()))
 
         if not self.data.add(CourseCSV(section=section)):
@@ -75,14 +70,15 @@ class CourseBuilder(Builder):
         if len(section.linked_section_urls):
             for url in section.linked_section_urls:
                 try:
-                    linked_section = get_section_by_url(url)
-                    Course.objects.add_to_queue(linked_section, self.queue_id)
-                except:
-                    continue
+                    linked_course_id = section_id_from_url(url)
+                    linked_section = self.get_section_resource_by_id(
+                        linked_course_id)
+                    # Add primary section instructors to each linked section
+                    self._process_linked_section(linked_section,
+                                                 primary_instructors)
+                except DataFailureException:
+                    pass
 
-                # Add primary section instructors to each linked section
-                self._process_linked_section(linked_section,
-                                             primary_instructors)
         else:
             self.data.add(SectionCSV(section=section))
 
@@ -100,37 +96,29 @@ class CourseBuilder(Builder):
             try:
                 linked_section = self.get_section_resource_by_id(
                     linked_course_id)
-                Course.objects.add_to_queue(linked_section, self.queue_id)
                 self._process_linked_section(linked_section,
                                              primary_instructors)
-            except Exception as ex:
-                Course.objects.remove_from_queue(linked_course_id, ex)
-                continue
+            except DataFailureException:
+                pass
 
         # Iterate over joint sections
         for url in section.joint_section_urls:
             try:
-                joint_section = get_section_by_url(url)
-                model = Course.objects.add_to_queue(joint_section,
-                                                    self.queue_id)
-            except:
-                continue
-
-            try:
+                joint_course_id = section_id_from_url(url)
+                joint_section = self.get_section_resource_by_id(
+                    joint_course_id)
                 self._process_primary_section(joint_section)
-            except Exception as ex:
-                Course.objects.remove_from_queue(model.course_id, ex)
+            except DataFailureException:
+                pass
 
         # Joint sections already joined to this section in the Course table
         for joint_course_id in Course.objects.get_joint_course_ids(course_id):
             try:
                 joint_section = self.get_section_resource_by_id(
                     joint_course_id)
-                Course.objects.add_to_queue(joint_section, self.queue_id)
                 self._process_primary_section(joint_section)
-
-            except Exception as ex:
-                Course.objects.remove_from_queue(joint_course_id, ex)
+            except DataFailureException:
+                pass
 
         self._process_xlists_for_section(section)
 
@@ -154,11 +142,11 @@ class CourseBuilder(Builder):
             return
 
         if section.is_independent_study:
-            raise Exception("Independent study section: %s" % (
+            raise TypeError("Independent study section: %s" % (
                 section.section_label()))
 
         if section.is_primary_section:
-            raise Exception("Not a linked section: %s" % (
+            raise TypeError("Not a linked section: %s" % (
                 section.section_label()))
 
         if self.data.add(SectionCSV(section=section)):
@@ -184,7 +172,7 @@ class CourseBuilder(Builder):
             return
 
         if not section.is_independent_study:
-            raise Exception("Not an independent study section: %s" % (
+            raise TypeError("Not an independent study section: %s" % (
                 section.section_label()))
 
         match_independent_study = section.independent_study_instructor_regid
@@ -215,11 +203,11 @@ class CourseBuilder(Builder):
         Generates the full xlist import data for the passed primary section.
         """
         if not section.is_primary_section:
-            raise Exception(
+            raise TypeError(
                 "Not a primary section %s:" % section.section_label())
 
         if section.is_independent_study:
-            raise Exception(
+            raise TypeError(
                 "Independent study section %s:" % section.section_label())
 
         course_id = section.canvas_course_sis_id()
@@ -259,7 +247,7 @@ class CourseBuilder(Builder):
                 linked_section = get_section_by_url(url)
                 linked_section_ids.append(
                     linked_section.canvas_section_sis_id())
-            except:
+            except DataFailureException:
                 pass
 
         if not len(section.linked_section_urls):

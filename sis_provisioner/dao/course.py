@@ -1,14 +1,19 @@
 from django.conf import settings
-from restclients.sws.section import get_section_by_label, get_section_by_url,\
-    get_changed_sections_by_term, get_sections_by_instructor_and_term
+from restclients.sws.section import (
+    get_section_by_label, get_section_by_url, get_changed_sections_by_term,
+    get_sections_by_instructor_and_term)
 from restclients.sws.registration import get_all_registrations_by_section
 from restclients.models.sws import Section
 from restclients.exceptions import DataFailureException
 from sis_provisioner.exceptions import CoursePolicyException
 from sis_provisioner.dao.user import user_fullname
 from sis_provisioner.dao import titleize
+from logging import getLogger
+from urllib import unquote
 import re
 
+
+logger = getLogger(__name__)
 
 RE_COURSE_SIS_ID = re.compile(
     "^\d{4}-"                           # year
@@ -19,7 +24,6 @@ RE_COURSE_SIS_ID = re.compile(
     "(?:-[A-F0-9]{32})?$",              # ind. study instructor regid
     re.VERBOSE)
 
-
 RE_SECTION_SIS_ID = re.compile(
     "^\d{4}-"                                  # year
     "(?:winter|spring|summer|autumn)-"         # quarter
@@ -27,7 +31,6 @@ RE_SECTION_SIS_ID = re.compile(
     "\d{3}-"                                   # course number
     "[A-Z](?:[A-Z0-9]|--|-[A-F0-9]{32}--)?$",  # section id|regid
     re.VERBOSE)
-
 
 RE_CANVAS_ID = re.compile(r"^\d+$")
 RE_ADHOC_COURSE_SIS_ID = re.compile(r"^course_\d+$")
@@ -74,6 +77,20 @@ def group_section_name():
     return getattr(settings, 'DEFAULT_GROUP_SECTION_NAME', 'UW Group members')
 
 
+def section_id_from_url(url):
+    label = re.sub(r'^/student/v5/course/', '', unquote(str(url)))
+    label = re.sub(r'.json$', '', label)
+
+    try:
+        (year, quarter, curr_abbr, course_num,
+            section_id) = label.replace('/', ',').split(',', 4)
+    except ValueError:
+        return None
+
+    return '%s-%s-%s-%s-%s' % (year, quarter.lower(), curr_abbr.upper(),
+                               course_num, section_id)
+
+
 def section_label_from_section_id(section_id):
     section_id = re.sub(r'--$', '', str(section_id))
     valid_academic_course_sis_id(section_id)
@@ -116,6 +133,8 @@ def is_active_section(section):
 
 
 def is_time_schedule_construction(section):
+    # return section.term.time_schedule_construction.get(
+    #     section.course_campus.lower(), False)
     campus = section.course_campus.lower()
     return next(
         (t.is_on for t in section.term.time_schedule_construction if (
@@ -158,9 +177,45 @@ def get_section_by_id(section_id):
     return section
 
 
-def get_sections_by_term(changed_since_date, term):
-    return get_changed_sections_by_term(changed_since_date, term,
-                                        transcriptable_course='all')
+def get_new_sections_by_term(changed_since_date, term, existing={}):
+    sections = []
+    for section_ref in get_changed_sections_by_term(
+            changed_since_date, term, transcriptable_course='all'):
+
+        primary_id = None
+        course_id = '%s-%s-%s-%s' % (section_ref.term.canvas_sis_id(),
+                                     section_ref.curriculum_abbr.upper(),
+                                     section_ref.course_number,
+                                     section_ref.section_id.upper())
+
+        if not existing.get(course_id, None):
+            try:
+                label = section_ref.section_label()
+                section = get_section_by_label(label)
+                if is_time_schedule_construction(section):
+                    logger.info('Course: SKIP %s, TSC on' % label)
+                    continue
+            except DataFailureException as err:
+                logger.info('Course: SKIP %s, %s' % (label, err))
+                continue
+            except ValueError as err:
+                logger.info('Course: SKIP, %s' % err)
+                continue
+
+            if section.is_independent_study:
+                for instructor in section.get_instructors():
+                    ind_course_id = '%s-%s' % (course_id, instructor.uwregid)
+                    if not existing.get(ind_course_id, None):
+                        sections.append({'course_id': ind_course_id,
+                                         'primary_id': primary_id})
+            else:
+                if not section.is_primary_section:
+                    primary_id = section.canvas_course_sis_id()
+
+                sections.append({'course_id': course_id,
+                                 'primary_id': primary_id})
+
+    return sections
 
 
 def get_registrations_by_section(section):

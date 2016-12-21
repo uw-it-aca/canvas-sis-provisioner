@@ -98,10 +98,12 @@ class Builder(object):
 
     def get_section_resource_by_id(self, section_id):
         """
-        Fetch the section resource for the passed section ID.
+        Fetch the section resource for the passed section ID, and add to queue.
         """
         try:
-            return get_section_by_id(section_id)
+            section = get_section_by_id(section_id)
+            Course.objects.add_to_queue(section, self.queue_id)
+            return section
 
         except DataFailureException as err:
             data = json.loads(err.msg)
