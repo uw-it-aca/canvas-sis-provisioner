@@ -150,7 +150,7 @@ class SectionPolicyTest(TestCase):
             self.assertEquals(section_long_name(section), 'TRAIN 101 A Sp 13: Intro Train')
 
             section.course_title_long = ''
-            self.assertEquals(section_long_name(section), 'TRAIN 101 A')
+            self.assertEquals(section_long_name(section), 'TRAIN 101 A Sp 13')
 
 
     def test_independent_study_section_long_name(self):
@@ -165,7 +165,7 @@ class SectionPolicyTest(TestCase):
             self.assertEquals(section_long_name(section), 'REHAB 591 C Au 13 (Bill Teacher)')
 
             section.course_title_long = ''
-            self.assertEquals(section_long_name(section), 'REHAB 591 C (Bill Teacher)')
+            self.assertEquals(section_long_name(section), 'REHAB 591 C Au 13 (Bill Teacher)')
 
 
 class SectionByIDTest(TestCase):
