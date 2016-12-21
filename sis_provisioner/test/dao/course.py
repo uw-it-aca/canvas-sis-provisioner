@@ -78,6 +78,12 @@ class SectionPolicyTest(TestCase):
         with self.settings(DEFAULT_GROUP_SECTION_NAME='GROUP_NAME'):
             self.assertEquals(group_section_name(), 'GROUP_NAME')
 
+    def test_section_id_from_url(self):
+        self.assertEquals(section_id_from_url('/student/v5/course/2016,autumn,ABC,100/A.json'), '2016-autumn-ABC-100-A')
+        self.assertEquals(section_id_from_url('/student/v5/course/2016,autumn,ABC,100/AB.json'), '2016-autumn-ABC-100-AB')
+        self.assertEquals(section_id_from_url(''), None)
+        self.assertEquals(section_id_from_url(None), None)
+    
     def test_section_label_from_section_id(self):
         self.assertEquals(section_label_from_section_id('2016-autumn-ABC-100-A'), '2016,autumn,ABC,100/A')
         self.assertEquals(section_label_from_section_id('2016-autumn-ABC-100-A-ABCDEF1234567890ABCDEF1234567890'), '2016,autumn,ABC,100/A')

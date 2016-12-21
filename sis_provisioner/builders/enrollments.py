@@ -2,7 +2,7 @@ from sis_provisioner.builders import Builder
 from sis_provisioner.csv.format import CourseCSV, SectionCSV
 from sis_provisioner.models import PRIORITY_NONE, PRIORITY_DEFAULT
 from sis_provisioner.dao.user import get_person_by_regid
-from sis_provisioner.dao.course import is_active_section, get_section_by_url
+from sis_provisioner.dao.course import is_active_section, section_id_from_url
 from sis_provisioner.exceptions import (
     UserPolicyException, MissingLoginIdException)
 from restclients.models.sws import Registration
@@ -18,6 +18,9 @@ class EnrollmentBuilder(Builder):
     Generates import data for each of the passed Enrollment models.
     """
     def _process(self, enrollment):
+        if enrollment.queue_id is not None:
+            self.queue_id = enrollment.queue_id
+
         try:
             enrollment.person = get_person_by_regid(enrollment.reg_id)
 
@@ -74,12 +77,14 @@ class EnrollmentBuilder(Builder):
             # Add/remove primary instructor for each linked section
             for url in enrollment.section.linked_section_urls:
                 try:
-                    linked_section = get_section_by_url(url)
+                    linked_course_id = section_id_from_url(url)
+                    linked_section = self.get_section_resource_by_id(
+                        linked_course_id)
                     self.data.add(SectionCSV(section=linked_section))
                     self.add_teacher_enrollment_data(linked_section,
                                                      enrollment.person,
                                                      enrollment.status)
-                except DataFailureException as err:
+                except Exception:
                     continue
 
         else:

@@ -1,6 +1,7 @@
 from django.conf import settings
-from restclients.sws.section import get_section_by_label, get_section_by_url,\
-    get_changed_sections_by_term, get_sections_by_instructor_and_term
+from restclients.sws.section import (
+    get_section_by_label, get_section_by_url, get_changed_sections_by_term,
+    get_sections_by_instructor_and_term)
 from restclients.sws.registration import get_all_registrations_by_section
 from restclients.models.sws import Section
 from restclients.exceptions import DataFailureException
@@ -72,6 +73,20 @@ def group_section_sis_id(course_sis_id):
 
 def group_section_name():
     return getattr(settings, 'DEFAULT_GROUP_SECTION_NAME', 'UW Group members')
+
+
+def section_id_from_url(url):
+    label = re.sub(r'^/student/v5/course/', '', str(url))
+    label = re.sub(r'.json$', '', label)
+
+    try:
+        (year, quarter, curr_abbr, course_num,
+            section_id) = label.replace('/', ',').split(',', 4)
+    except ValueError:
+        return None
+
+    return '%s-%s-%s-%s-%s' % (year, quarter.lower(), curr_abbr.upper(),
+                               course_num, section_id)
 
 
 def section_label_from_section_id(section_id):

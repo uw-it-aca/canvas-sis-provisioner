@@ -400,6 +400,7 @@ class EnrollmentManager(models.Manager):
             queue_id=queue_id)
 
     def dequeue(self, queue_id, provisioned_date=None):
+        Course.objects.dequeue(queue_id, provisioned_date)
         if provisioned_date is None:
             self.queued(queue_id).update(queue_id=None)
         else:
