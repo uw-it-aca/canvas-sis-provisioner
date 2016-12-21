@@ -4,8 +4,7 @@ from django.utils.timezone import utc, localtime
 from sis_provisioner.dao.group import get_sis_import_members, is_modified_group
 from sis_provisioner.dao.user import get_person_by_netid
 from sis_provisioner.dao.course import (
-    valid_canvas_section, get_sections_by_term, get_section_by_label,
-    is_time_schedule_construction)
+    valid_canvas_section, get_new_sections_by_term)
 from sis_provisioner.dao.canvas import (
     get_active_courses_for_term, sis_import_by_path, get_sis_import_status)
 from sis_provisioner.exceptions import (
@@ -237,54 +236,22 @@ class CourseManager(models.Manager):
             delta.courses_changed_since_date = delta.last_course_search_date
 
         new_courses = []
-        for section_ref in get_sections_by_term(
-                localtime(delta.courses_changed_since_date).date(), term):
-            course_id = '-'.join([section_ref.term.canvas_sis_id(),
-                                  section_ref.curriculum_abbr.upper(),
-                                  section_ref.course_number,
-                                  section_ref.section_id.upper()])
+        for section_data in get_new_sections_by_term(
+                localtime(delta.courses_changed_since_date).date(), term,
+                existing=existing_course_ids):
 
+            course_id = section_data['course_id']
             if course_id in existing_course_ids:
                 if existing_course_ids[course_id] == PRIORITY_NONE:
                     super(CourseManager, self).get_queryset().filter(
                         course_id=course_id).update(priority=PRIORITY_HIGH)
                 continue
 
-            try:
-                label = section_ref.section_label()
-                section = get_section_by_label(label)
-                if is_time_schedule_construction(section):
-                    logger.info('Course: SKIP %s, TSC on' % label)
-                    continue
-            except DataFailureException as err:
-                logger.info('Course: SKIP %s, %s' % (label, err))
-                continue
-            except ValueError as err:
-                logger.info('Course: SKIP, %s' % err)
-                continue
-
-            primary_id = None
-            if section.is_independent_study:
-                for instructor in section.get_instructors():
-                    ind_course_id = '-'.join([course_id, instructor.uwregid])
-
-                    if ind_course_id not in existing_course_ids:
-                        course = Course(course_id=ind_course_id,
-                                        course_type=Course.SDB_TYPE,
-                                        term_id=term_id,
-                                        primary_id=primary_id,
-                                        priority=PRIORITY_HIGH)
-                        new_courses.append(course)
-            else:
-                if not section.is_primary_section:
-                    primary_id = section.canvas_course_sis_id()
-
-                course = Course(course_id=course_id,
-                                course_type=Course.SDB_TYPE,
-                                term_id=term_id,
-                                primary_id=primary_id,
-                                priority=PRIORITY_HIGH)
-                new_courses.append(course)
+            new_courses.append(Course(course_id=course_id,
+                                      course_type=Course.SDB_TYPE,
+                                      term_id=term_id,
+                                      primary_id=section_data['primary_id'],
+                                      priority=PRIORITY_HIGH))
 
         Course.objects.bulk_create(new_courses)
 
