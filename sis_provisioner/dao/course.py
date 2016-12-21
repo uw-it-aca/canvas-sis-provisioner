@@ -123,18 +123,19 @@ def is_time_schedule_construction(section):
 
 
 def section_short_name(section):
-    return ' '.join([section.curriculum_abbr, section.course_number,
-                     section.section_id])
+    return '%s %s %s' % (section.curriculum_abbr, section.course_number,
+                         section.section_id)
 
 
 def section_long_name(section):
-    short_name = section_short_name(section)
+    name = '%s %s %s %s %s' % (
+        section.curriculum_abbr, section.course_number, section.section_id,
+        section.term.quarter[:2].capitalize(), str(section.term.year)[-2:])
+
     if (section.course_title_long is not None and
             len(section.course_title_long)):
-        name = '%s: %s' % (short_name, titleize(
+        name = '%s: %s' % (name, titleize(
             section.course_title_long.encode('ascii', 'ignore')))
-    else:
-        name = short_name
 
     if section.is_independent_study:
         for person in section.get_instructors():

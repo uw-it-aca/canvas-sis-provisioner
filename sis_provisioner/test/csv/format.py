@@ -49,17 +49,17 @@ class CourseCSVTest(TestCase):
             self.assertRaises(CoursePolicyException, CourseCSV, section=section)
 
             section.course_campus = 'PCE'
-            self.assertEquals(str(CourseCSV(section=section)), '2013-spring-TRAIN-101-A,TRAIN 101 A,TRAIN 101 A: Intro Train,pce_none_account,2013-spring,active,,\n')
+            self.assertEquals(str(CourseCSV(section=section)), '2013-spring-TRAIN-101-A,TRAIN 101 A,TRAIN 101 A Sp 13: Intro Train,pce_none_account,2013-spring,active,,\n')
 
     def test_with_kwargs(self):
         data = {'course_id': '2013-spring-TRAIN-101-A',
                 'short_name': 'TRAIN 101 A',
-                'long_name': 'TRAIN 101 A: Intro Train',
+                'long_name': 'TRAIN 101 A Sp 13: Intro Train',
                 'account_id': None,
                 'term_id': '2013-spring',
                 'status': 'deleted'}
 
-        self.assertEquals(str(CourseCSV(**data)), '2013-spring-TRAIN-101-A,TRAIN 101 A,TRAIN 101 A: Intro Train,,2013-spring,deleted,,\n')
+        self.assertEquals(str(CourseCSV(**data)), '2013-spring-TRAIN-101-A,TRAIN 101 A,TRAIN 101 A Sp 13: Intro Train,,2013-spring,deleted,,\n')
 
         self.assertRaises(KeyError, CourseCSV, **{})
 
