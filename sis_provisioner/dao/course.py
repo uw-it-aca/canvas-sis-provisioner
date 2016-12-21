@@ -9,6 +9,7 @@ from sis_provisioner.exceptions import CoursePolicyException
 from sis_provisioner.dao.user import user_fullname
 from sis_provisioner.dao import titleize
 from logging import getLogger
+from urllib import unquote
 import re
 
 
@@ -77,7 +78,7 @@ def group_section_name():
 
 
 def section_id_from_url(url):
-    label = re.sub(r'^/student/v5/course/', '', str(url))
+    label = re.sub(r'^/student/v5/course/', '', unquote(str(url)))
     label = re.sub(r'.json$', '', label)
 
     try:
@@ -132,6 +133,8 @@ def is_active_section(section):
 
 
 def is_time_schedule_construction(section):
+    # return section.term.time_schedule_construction.get(
+    #     section.course_campus.lower(), False)
     campus = section.course_campus.lower()
     return next(
         (t.is_on for t in section.term.time_schedule_construction if (
