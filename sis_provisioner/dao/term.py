@@ -34,13 +34,7 @@ def term_name(section):
         return getattr(settings, 'UWEO_INDIVIDUAL_START_TERM_NAME',
                        'UWEO Individual Start')
     else:
-        return ' '.join([section.term.quarter.capitalize(),
-                         str(section.term.year)])
-
-
-def term_short_name(section):
-    return '%s %s' % (section.term.quarter[:2].capitalize(),
-                      str(section.term.year)[-2:])
+        return '%s %s' % (section.term.quarter.capitalize(), section.term.year)
 
 
 def term_start_date(section):
