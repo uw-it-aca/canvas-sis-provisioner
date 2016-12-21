@@ -49,14 +49,26 @@ class TermPolicyTest(TestCase):
         with self.settings(
                 RESTCLIENTS_SWS_DAO_CLASS='restclients.dao_implementation.sws.File',
                 RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File',
-                UWEO_INDIVIDUAL_START_TERM_NAME='TEST'):
+                UWEO_INDIVIDUAL_START_TERM_NAME='Individual Start'):
 
             section = get_section_by_label('2013,spring,TRAIN,101/A')
 
             self.assertEquals(term_name(section), 'Spring 2013')
 
             section.is_independent_start = True
-            self.assertEquals(term_name(section), 'TEST')
+            self.assertEquals(term_name(section), 'Individual Start')
+
+    def test_term_short_name(self):
+        with self.settings(
+                RESTCLIENTS_SWS_DAO_CLASS='restclients.dao_implementation.sws.File',
+                RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
+
+            section = get_section_by_label('2013,spring,TRAIN,101/A')
+
+            self.assertEquals(term_short_name(section), 'Sp 13')
+
+            section.is_independent_start = True
+            self.assertEquals(term_short_name(section), 'Sp 13')
 
     def test_term_start_date(self):
          with self.settings(

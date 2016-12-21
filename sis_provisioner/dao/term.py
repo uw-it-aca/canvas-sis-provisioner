@@ -38,6 +38,11 @@ def term_name(section):
                          str(section.term.year)])
 
 
+def term_short_name(section):
+    return '%s %s' % (section.term.quarter[:2].capitalize(),
+                      str(section.term.year)[-2:])
+
+
 def term_start_date(section):
     if section.is_independent_start:
         return None

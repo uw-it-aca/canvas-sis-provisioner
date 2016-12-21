@@ -140,7 +140,14 @@ class SectionPolicyTest(TestCase):
                 RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
 
             section = get_section_by_id('2013-spring-TRAIN-101-A')
-            self.assertEquals(section_long_name(section), 'TRAIN 101 A: Intro Train')
+            self.assertEquals(section_long_name(section), 'TRAIN 101 A Sp 13: Intro Train')
+
+            section.course_title_long = ''
+            self.assertEquals(section_long_name(section), 'TRAIN 101 A Sp 13')
+
+            section.course_title_long = 'Intro Train'
+            section.is_independent_start = True
+            self.assertEquals(section_long_name(section), 'TRAIN 101 A Sp 13: Intro Train')
 
             section.course_title_long = ''
             self.assertEquals(section_long_name(section), 'TRAIN 101 A')
@@ -152,7 +159,10 @@ class SectionPolicyTest(TestCase):
                 RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
 
             section = get_section_by_id('2013-autumn-REHAB-591-C-8BD26A286A7D11D5A4AE0004AC494FFE')
-            self.assertEquals(section_long_name(section), 'REHAB 591 C: Graduate Project (Bill Teacher)')
+            self.assertEquals(section_long_name(section), 'REHAB 591 C Au 13: Graduate Project (Bill Teacher)')
+
+            section.course_title_long = None
+            self.assertEquals(section_long_name(section), 'REHAB 591 C Au 13 (Bill Teacher)')
 
             section.course_title_long = ''
             self.assertEquals(section_long_name(section), 'REHAB 591 C (Bill Teacher)')
