@@ -1,8 +1,10 @@
 from django.test import TestCase
 from django.conf import settings
 from restclients.models.sws import Term, Section, TimeScheduleConstruction
+from restclients.exceptions import DataFailureException
 from sis_provisioner.exceptions import CoursePolicyException
 from sis_provisioner.dao.course import *
+from datetime import datetime
 
 
 class SectionPolicyTest(TestCase):
@@ -215,6 +217,20 @@ class XlistSectionTest(TestCase):
 
             section2.lms_ownership = Section.LMS_OWNER_OL
             self.assertEquals(canvas_xlist_id([section1, section2]), '2013-summer-TRAIN-101-A')
+
+
+class NewSectionQueryTest(TestCase):
+    def test_new_sections_by_term(self):
+        with self.settings(
+                RESTCLIENTS_SWS_DAO_CLASS='restclients.dao_implementation.sws.File',
+                RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
+
+            changed_date = datetime(2013, 12, 12).date()
+            term = Term(quarter="winter", year=2013)
+            existing = {}
+
+            # 404, no resource
+            self.assertRaises(DataFailureException, get_new_sections_by_term, changed_date, term)
 
 
 class TimeScheduleConstructionTest(TestCase):

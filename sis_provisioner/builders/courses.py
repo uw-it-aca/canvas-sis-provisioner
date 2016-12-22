@@ -214,8 +214,9 @@ class CourseBuilder(Builder):
             for url in section.joint_section_urls:
                 try:
                     joint_sections.append(get_section_by_url(url))
-                except DataFailureException:
-                    pass
+                except Exception as err:
+                    self.logger.info("Unable to xlist section %s: %s" % (
+                        url, err))
 
             try:
                 new_xlist_id = canvas_xlist_id(joint_sections)
