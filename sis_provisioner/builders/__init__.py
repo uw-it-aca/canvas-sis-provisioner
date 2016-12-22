@@ -4,7 +4,8 @@ from sis_provisioner.models import User, Course, Enrollment
 from sis_provisioner.dao.user import (
     valid_net_id, get_person_by_netid, get_person_by_gmail_id)
 from sis_provisioner.dao.course import get_section_by_id
-from sis_provisioner.exceptions import UserPolicyException
+from sis_provisioner.exceptions import (
+    UserPolicyException, CoursePolicyException)
 from restclients.exceptions import DataFailureException
 from logging import getLogger
 import json
@@ -113,7 +114,7 @@ class Builder(object):
                 section_id, err.status, data["StatusDescription"]))
             raise
 
-        except ValueError as err:
+        except (ValueError, CoursePolicyException) as err:
             Course.objects.remove_from_queue(section_id, err)
             self.logger.info("Skip section %s: %s" % (section_id, err))
-            raise
+            raise CoursePolicyException(err)

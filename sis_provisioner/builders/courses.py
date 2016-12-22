@@ -5,6 +5,7 @@ from sis_provisioner.dao.course import (
     get_registrations_by_section, section_id_from_url)
 from sis_provisioner.dao.canvas import get_sis_sections_for_course
 from sis_provisioner.models import Course, PRIORITY_NONE
+from sis_provisioner.exceptions import CoursePolicyException
 from restclients.exceptions import DataFailureException
 import re
 
@@ -51,12 +52,8 @@ class CourseBuilder(Builder):
         if section is None:
             return
 
-        if section.is_independent_study:
-            raise TypeError("Independent study section: %s" % (
-                section.section_label()))
-
-        if not section.is_primary_section:
-            raise TypeError("Not a primary section: %s" % (
+        if not section.is_primary_section or section.is_independent_study:
+            raise CoursePolicyException("Not a primary section: %s" % (
                 section.section_label()))
 
         if not self.data.add(CourseCSV(section=section)):
@@ -76,7 +73,7 @@ class CourseBuilder(Builder):
                     # Add primary section instructors to each linked section
                     self._process_linked_section(linked_section,
                                                  primary_instructors)
-                except DataFailureException:
+                except (DataFailureException, CoursePolicyException):
                     pass
 
         else:
@@ -98,7 +95,7 @@ class CourseBuilder(Builder):
                     linked_course_id)
                 self._process_linked_section(linked_section,
                                              primary_instructors)
-            except DataFailureException:
+            except (DataFailureException, CoursePolicyException):
                 pass
 
         # Iterate over joint sections
@@ -108,7 +105,7 @@ class CourseBuilder(Builder):
                 joint_section = self.get_section_resource_by_id(
                     joint_course_id)
                 self._process_primary_section(joint_section)
-            except DataFailureException:
+            except (DataFailureException, CoursePolicyException):
                 pass
 
         # Joint sections already joined to this section in the Course table
@@ -117,7 +114,7 @@ class CourseBuilder(Builder):
                 joint_section = self.get_section_resource_by_id(
                     joint_course_id)
                 self._process_primary_section(joint_section)
-            except DataFailureException:
+            except (DataFailureException, CoursePolicyException):
                 pass
 
         self._process_xlists_for_section(section)
@@ -141,13 +138,9 @@ class CourseBuilder(Builder):
         if section is None:
             return
 
-        if section.is_independent_study:
-            raise TypeError("Independent study section: %s" % (
-                section.section_label()))
-
-        if section.is_primary_section:
-            raise TypeError("Not a linked section: %s" % (
-                section.section_label()))
+        if section.is_primary_section or section.is_independent_study:
+            raise CoursePolicyException(
+                "Not a linked section: %s" % section.section_label())
 
         if self.data.add(SectionCSV(section=section)):
             if is_active_section(section):
@@ -172,8 +165,8 @@ class CourseBuilder(Builder):
             return
 
         if not section.is_independent_study:
-            raise TypeError("Not an independent study section: %s" % (
-                section.section_label()))
+            raise CoursePolicyException(
+                "Not an ind. study section: %s" % section.section_label())
 
         match_independent_study = section.independent_study_instructor_regid
         for instructor in section.get_instructors():
@@ -202,13 +195,9 @@ class CourseBuilder(Builder):
         """
         Generates the full xlist import data for the passed primary section.
         """
-        if not section.is_primary_section:
-            raise TypeError(
+        if not section.is_primary_section or section.is_independent_study:
+            raise CoursePolicyException(
                 "Not a primary section %s:" % section.section_label())
-
-        if section.is_independent_study:
-            raise TypeError(
-                "Independent study section %s:" % section.section_label())
 
         course_id = section.canvas_course_sis_id()
 
