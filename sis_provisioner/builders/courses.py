@@ -6,7 +6,8 @@ from sis_provisioner.dao.course import (
 from sis_provisioner.dao.canvas import get_sis_sections_for_course
 from sis_provisioner.models import Course, PRIORITY_NONE
 from sis_provisioner.exceptions import CoursePolicyException
-from restclients.exceptions import DataFailureException
+from restclients.exceptions import (
+    DataFailureException, InvalidCanvasIndependentStudyCourse)
 import re
 
 
@@ -105,7 +106,8 @@ class CourseBuilder(Builder):
                 joint_section = self.get_section_resource_by_id(
                     joint_course_id)
                 self._process_primary_section(joint_section)
-            except (DataFailureException, CoursePolicyException):
+            except (DataFailureException, CoursePolicyException,
+                    InvalidCanvasIndependentStudyCourse):
                 pass
 
         # Joint sections already joined to this section in the Course table
@@ -114,7 +116,8 @@ class CourseBuilder(Builder):
                 joint_section = self.get_section_resource_by_id(
                     joint_course_id)
                 self._process_primary_section(joint_section)
-            except (DataFailureException, CoursePolicyException):
+            except (DataFailureException, CoursePolicyException,
+                    InvalidCanvasIndependentStudyCourse):
                 pass
 
         self._process_xlists_for_section(section)
