@@ -1,6 +1,7 @@
 from sis_provisioner.builders import Builder
 from sis_provisioner.dao.user import get_person_by_netid
 from sis_provisioner.exceptions import UserPolicyException
+from restclients.exceptions import DataFailureException
 
 
 class UserBuilder(Builder):
@@ -11,5 +12,5 @@ class UserBuilder(Builder):
         try:
             person = get_person_by_netid(user.net_id)
             self.add_user_data_for_person(person, force=True)
-        except UserPolicyException as err:
+        except (UserPolicyException, DataFailureException) as err:
             self.logger.info('Skip user %s: %s' % (user.reg_id, err))
