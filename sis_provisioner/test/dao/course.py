@@ -1,6 +1,6 @@
 from django.test import TestCase
 from django.conf import settings
-from restclients.models.sws import Term, Section, TimeScheduleConstruction
+from restclients.models.sws import Term, Section
 from restclients.exceptions import DataFailureException
 from sis_provisioner.exceptions import CoursePolicyException
 from sis_provisioner.dao.course import *
@@ -235,13 +235,8 @@ class NewSectionQueryTest(TestCase):
 
 class TimeScheduleConstructionTest(TestCase):
     def test_by_campus(self):
-        #time_schedule_constructions = {
-        #    'seattle': False, 'tacoma': False, 'bothell': True}
-        time_schedule_constructions = [
-            TimeScheduleConstruction(campus='Seattle', is_on=False),
-            TimeScheduleConstruction(campus='Tacoma', is_on=False),
-            TimeScheduleConstruction(campus='Bothell', is_on=True),
-        ]
+        time_schedule_constructions = {
+            'seattle': False, 'tacoma': False, 'bothell': True}
 
         term = Term(year=2013, quarter='summer')
         term.time_schedule_construction = time_schedule_constructions

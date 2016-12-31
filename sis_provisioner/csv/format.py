@@ -4,6 +4,8 @@ from sis_provisioner.dao.term import (
 from sis_provisioner.dao.course import (
     is_active_section, section_short_name, section_long_name)
 from sis_provisioner.dao.user import user_sis_id, user_email, user_fullname
+from sis_provisioner.dao.registration import (
+    enrollment_status_from_registration)
 from sis_provisioner.models import Curriculum, Enrollment
 from sis_provisioner.exceptions import EnrollmentPolicyException
 import StringIO
@@ -154,7 +156,7 @@ class EnrollmentCSV(CSVFormat):
             person = registration.person
             section_id = registration.section.canvas_section_sis_id()
             role = Enrollment.STUDENT_ROLE
-            status = self._status_from_registration(registration)
+            status = enrollment_status_from_registration(registration)
 
         elif kwargs.get('instructor'):
             section = kwargs.get('section')
@@ -181,12 +183,6 @@ class EnrollmentCSV(CSVFormat):
 
         self.data = [course_id, None, user_id, role, None, section_id, status,
                      None]
-
-    def _status_from_registration(self, registration):
-        if registration.is_active:
-            return Enrollment.ACTIVE_STATUS
-
-        return Enrollment.DELETED_STATUS
 
 
 class UserCSV(CSVFormat):

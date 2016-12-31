@@ -1,8 +1,8 @@
 from django.test import TestCase
 from restclients.pws import PWS
-from restclients.sws.registration import get_all_registrations_by_section
 from sis_provisioner.models import Curriculum
 from sis_provisioner.dao.course import get_section_by_label
+from sis_provisioner.dao.registration import get_registrations_by_section
 from sis_provisioner.exceptions import (CoursePolicyException,
     EnrollmentPolicyException)
 from sis_provisioner.csv.format import *
@@ -127,7 +127,6 @@ class EnrollmentCSVTest(TestCase):
             data['section_id'] = 'abc--'
             self.assertEquals(str(EnrollmentCSV(**data)), 'abc,,9136CCB8F66711D5BE060004AC494FFE,Student,,abc--,active,\n')
 
-
     def test_student_enrollment_csv(self):
         with self.settings(
                 RESTCLIENTS_SWS_DAO_CLASS='restclients.dao_implementation.sws.File',
@@ -135,8 +134,15 @@ class EnrollmentCSVTest(TestCase):
 
             section = get_section_by_label('2013,winter,DROP_T,100/B')
 
-            for registration in get_all_registrations_by_section(section):
-                self.assertEquals(str(EnrollmentCSV(registration=registration)), ',,%s,Student,,2013-winter-DROP_T-100-B--,active,\n' % registration.person.uwregid)
+            registrations = get_registrations_by_section(section)
+
+            self.assertEquals(len(registrations), 2)
+
+            reg0 = registrations[0]
+            reg1 = registrations[1]
+
+            self.assertEquals(str(EnrollmentCSV(registration=reg0)), ',,260A0DEC95CB11D78BAA000629C31437,Student,,2013-winter-DROP_T-100-B--,inactive,\n')
+            self.assertEquals(str(EnrollmentCSV(registration=reg1)), ',,9136CCB8F66711D5BE060004AC494FFE,Student,,2013-winter-DROP_T-100-B--,active,\n')
 
 
     def test_instructor_enrollment_csv(self):
