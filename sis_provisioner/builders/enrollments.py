@@ -95,7 +95,9 @@ class EnrollmentBuilder(Builder):
     def _process_student_enrollment(self, enrollment):
         registration = Registration(section=enrollment.section,
                                     person=enrollment.person,
-                                    is_active=enrollment.is_active())
+                                    is_active=enrollment.is_active(),
+                                    request_date=enrollment.request_date,
+                                    request_status=enrollment.status)
         self.add_student_enrollment_data(registration)
         self.data.add(SectionCSV(section=enrollment.section))
 

@@ -1,7 +1,7 @@
 from sis_provisioner.builders import Builder
 from sis_provisioner.csv.format import CourseCSV, SectionCSV, TermCSV, XlistCSV
 from sis_provisioner.dao.course import (
-    is_active_section, get_section_by_url, canvas_xlist_id,
+    is_active_section, get_section_by_url, canvas_xlist_id, section_short_name,
     section_id_from_url)
 from sis_provisioner.dao.registration import get_registrations_by_section
 from sis_provisioner.dao.canvas import get_sis_sections_for_course
@@ -77,6 +77,7 @@ class CourseBuilder(Builder):
                     self.logger.info('Remove dummy section for %s' % course_id)
                     self.data.add(SectionCSV(section_id=dummy_section_id,
                                              course_id=course_id,
+                                             name=section_short_name(section),
                                              status='deleted'))
 
             for url in section.linked_section_urls:
