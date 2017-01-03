@@ -3,16 +3,16 @@ from sis_provisioner.models import Enrollment
 
 
 def enrollment_status_from_registration(registration):
-        request_status = registration.request_status.lower()
-        if (registration.is_active or request_status == 'added to standby' or
-                request_status == 'pending added to class'):
-            return Enrollment.ACTIVE_STATUS
+    request_status = registration.request_status.lower()
+    if (registration.is_active or request_status == 'added to standby' or
+            request_status == 'pending added to class'):
+        return Enrollment.ACTIVE_STATUS
 
-        if (registration.request_date >
-                registration.section.term.get_eod_census_day()):
-            return Enrollment.INACTIVE_STATUS
-        else:
-            return Enrollment.DELETED_STATUS
+    if (registration.request_date >
+            registration.section.term.get_eod_census_day()):
+        return Enrollment.INACTIVE_STATUS
+    else:
+        return Enrollment.DELETED_STATUS
 
 
 def get_registrations_by_section(section):
