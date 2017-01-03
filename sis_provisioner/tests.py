@@ -6,6 +6,8 @@ from sis_provisioner.test.dao.user import (
 from sis_provisioner.test.dao.group import (
     GroupPolicyTest, GroupModifiedTest, IsMemberTest, EffectiveMemberTest,
     SISImportMembersTest)
+from sis_provisioner.test.dao.registration import (
+    RegistrationsBySectionTest, EnrollmentStatusForRegistrationTest)
 from sis_provisioner.test.dao.term import ActiveTermTest, TermPolicyTest
 from sis_provisioner.test.dao.account import AccountPolicyTest
 from sis_provisioner.test.csv.data import CSVDataTest

@@ -1,8 +1,8 @@
 from django.test import TestCase
 from restclients.pws import PWS
-from restclients.sws.registration import get_all_registrations_by_section
 from sis_provisioner.models import Curriculum
 from sis_provisioner.dao.course import get_section_by_label
+from sis_provisioner.dao.registration import get_registrations_by_section
 from sis_provisioner.csv.data import Collector
 from sis_provisioner.csv.format import *
 import mock
@@ -92,17 +92,16 @@ class CSVDataTest(TestCase):
             self.assertEquals(len(csv.enrollments), 1)
 
             section = get_section_by_label('2013,winter,DROP_T,100/B')
-
-            for registration in get_all_registrations_by_section(section):
+            for registration in get_registrations_by_section(section):
                 self.assertEquals(csv.add(EnrollmentCSV(registration=registration)), True)
+            self.assertEquals(len(csv.enrollments), 3)
 
             section = get_section_by_label('2013,spring,TRAIN,101/A')
-
             for user in section.get_instructors():
                 self.assertEquals(csv.add(EnrollmentCSV(section=section,
                     instructor=user, status='active')), True)
 
-            self.assertEquals(len(csv.enrollments), 4)
+            self.assertEquals(len(csv.enrollments), 5)
             self.assertEquals(csv.has_data(), True)
 
     def test_xlists(self):
