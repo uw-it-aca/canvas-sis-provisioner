@@ -66,7 +66,19 @@ class CourseBuilder(Builder):
 
         course_id = section.canvas_course_sis_id()
         primary_instructors = section.get_instructors()
+        canvas_sections = get_sis_sections_for_course(course_id)
+
         if len(section.linked_section_urls):
+            dummy_section_id = '%s--' % course_id
+            for s in canvas_sections:
+                if s.sis_section_id == dummy_section_id:
+                    # Section has linked sections, but was originally
+                    # provisioned with a dummy section, which will be removed
+                    self.logger.info('Remove dummy section for %s' % course_id)
+                    self.data.add(SectionCSV(section_id=dummy_section_id,
+                                             course_id=course_id,
+                                             status='deleted'))
+
             for url in section.linked_section_urls:
                 try:
                     linked_course_id = section_id_from_url(url)
@@ -125,7 +137,7 @@ class CourseBuilder(Builder):
 
         # Find any sections that are manually cross-listed to this course,
         # so we can update enrollments for those
-        for s in get_sis_sections_for_course(course_id):
+        for s in canvas_sections:
             try:
                 course_model_id = re.sub(r'--$', '', s.sis_section_id)
                 course = Course.objects.get(course_id=course_model_id,
