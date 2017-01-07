@@ -5,6 +5,7 @@ from restclients.exceptions import DataFailureException
 from sis_provisioner.exceptions import CoursePolicyException
 from sis_provisioner.dao.course import *
 from datetime import datetime
+import mock
 
 
 class SectionPolicyTest(TestCase):
@@ -220,6 +221,11 @@ class XlistSectionTest(TestCase):
 
 
 class NewSectionQueryTest(TestCase):
+    @mock.patch('sis_provisioner.dao.course.get_changed_sections_by_term')
+    def test_changed_sections_by_term(self, mock_fn):
+        r = get_new_sections_by_term('2013-12-12', 'abc')
+        mock_fn.assert_called_with('2013-12-12', 'abc', transcriptable_course='all')
+
     def test_new_sections_by_term(self):
         with self.settings(
                 RESTCLIENTS_SWS_DAO_CLASS='restclients.dao_implementation.sws.File',
