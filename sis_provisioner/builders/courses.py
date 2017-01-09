@@ -1,8 +1,9 @@
 from sis_provisioner.builders import Builder
 from sis_provisioner.csv.format import CourseCSV, SectionCSV, TermCSV, XlistCSV
 from sis_provisioner.dao.course import (
-    is_active_section, get_section_by_url, canvas_xlist_id,
-    get_registrations_by_section, section_id_from_url)
+    is_active_section, get_section_by_url, canvas_xlist_id, section_short_name,
+    section_id_from_url)
+from sis_provisioner.dao.registration import get_registrations_by_section
 from sis_provisioner.dao.canvas import get_sis_sections_for_course
 from sis_provisioner.models import Course, PRIORITY_NONE
 from sis_provisioner.exceptions import CoursePolicyException
@@ -65,7 +66,25 @@ class CourseBuilder(Builder):
 
         course_id = section.canvas_course_sis_id()
         primary_instructors = section.get_instructors()
+        canvas_sections = get_sis_sections_for_course(course_id)
+
         if len(section.linked_section_urls):
+            # Don't alter the term in progress, remove this line after 3/28/17
+            if section.term.canvas_sis_id() != '2017-winter':
+                dummy_section_id = '%s--' % course_id
+                for s in canvas_sections:
+                    if s.sis_section_id == dummy_section_id:
+                        # Section has linked sections, but was originally
+                        # provisioned with a dummy section, which will be
+                        # removed
+                        self.logger.info('Remove dummy section for %s' % (
+                            course_id))
+                        self.data.add(SectionCSV(
+                            section_id=dummy_section_id,
+                            course_id=course_id,
+                            name=section_short_name(section),
+                            status='deleted'))
+
             for url in section.linked_section_urls:
                 try:
                     linked_course_id = section_id_from_url(url)
@@ -124,7 +143,7 @@ class CourseBuilder(Builder):
 
         # Find any sections that are manually cross-listed to this course,
         # so we can update enrollments for those
-        for s in get_sis_sections_for_course(course_id):
+        for s in canvas_sections:
             try:
                 course_model_id = re.sub(r'--$', '', s.sis_section_id)
                 course = Course.objects.get(course_id=course_model_id,
