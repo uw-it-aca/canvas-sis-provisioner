@@ -1,6 +1,5 @@
 from django.test import TestCase
 from restclients.models.sws import Campus, College, Department, Curriculum
-from sis_provisioner.dao import titleize
 from sis_provisioner.dao.account import *
 from sis_provisioner.exceptions import AccountPolicyException
 
@@ -51,21 +50,3 @@ class AccountPolicyTest(TestCase):
 
         curriculum.full_name = 'Name UW Bothell Campus'
         self.assertEquals(account_name(curriculum), 'Name [ABC]')
-
-    def test_titleize(self):
-        self.assertRaises(TypeError, titleize, None)
-        self.assertEquals(titleize(123), '123')
-        self.assertEquals(titleize(''), '')
-        self.assertEquals(titleize('abc'), 'Abc')
-        self.assertEquals(titleize('ABC'), 'Abc')
-        self.assertEquals(titleize('abc def'), 'Abc Def')
-        self.assertEquals(titleize('abc:def'), 'Abc:Def')
-        self.assertEquals(titleize('abc-def'), 'Abc-Def')
-        self.assertEquals(titleize('abc.def'), 'Abc.Def')
-        self.assertEquals(titleize('abc&def'), 'Abc&Def')
-        self.assertEquals(titleize('UW abc'), 'UW Abc')
-        self.assertEquals(titleize('ABC I'), 'Abc I')
-        self.assertEquals(titleize('ABC II'), 'Abc II')
-        self.assertEquals(titleize('ABC III'), 'Abc III')
-        self.assertEquals(titleize('ABC IV'), 'Abc IV')
-        self.assertEquals(titleize('abc (DEF)'), 'Abc (Def)')
