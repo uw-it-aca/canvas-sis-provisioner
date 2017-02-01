@@ -742,6 +742,10 @@ class GroupManager(models.Manager):
 
         return imp
 
+    def find_by_search(self, **kwargs):
+        kwargs['is_deleted__isnull'] = True
+        return super(GroupManager, self).get_queryset().filter(**kwargs)
+
     def get_active_by_course(self, course_id):
         return super(GroupManager, self).get_queryset().filter(
             course_id=course_id, is_deleted__isnull=True)
