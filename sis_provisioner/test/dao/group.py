@@ -17,7 +17,9 @@ class GroupPolicyTest(TestCase):
             self.assertEquals(valid_group_id('uw_faculty'), None)
 
             # Invalid
+            self.assertRaises(GroupPolicyException, valid_group_id, None)
             self.assertRaises(GroupPolicyException, valid_group_id, '')
+            self.assertRaises(GroupPolicyException, valid_group_id, 12345)
             self.assertRaises(GroupPolicyException, valid_group_id, '1')
             self.assertRaises(GroupPolicyException, valid_group_id, 'uw_student')
             self.assertRaises(GroupPolicyException, valid_group_id, 'uw_staff')

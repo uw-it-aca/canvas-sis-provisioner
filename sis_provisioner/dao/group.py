@@ -9,15 +9,15 @@ import re
 
 
 def valid_group_id(group_id):
-    if not GWS()._is_valid_group_id(group_id):
-        raise GroupPolicyException("Invalid Group ID: %s" % group_id)
-
-    else:
+    if (isinstance(group_id, basestring) and
+            GWS()._is_valid_group_id(group_id)):
         RE_GROUP_BLACKLIST = re.compile(r'^(%s).*$' % ('|'.join(
             getattr(settings, 'UW_GROUP_BLACKLIST', []))))
         if RE_GROUP_BLACKLIST.match(group_id):
             raise GroupPolicyException(
                 "This group cannot be used in Canvas: %s" % group_id)
+    else:
+        raise GroupPolicyException("Invalid Group ID: %s" % group_id)
 
 
 def is_modified_group(group_id, mtime):
