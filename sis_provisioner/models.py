@@ -985,8 +985,8 @@ class Curriculum(models.Model):
 class ImportManager(models.Manager):
     def find_by_requires_update(self):
         return super(ImportManager, self).get_queryset().filter(
-            (Q(canvas_warnings__isnull=True) & Q(canvas_errors__isnull=True)) |
-                Q(monitor_status__gte=500),
+            (Q(canvas_warnings__isnull=True) &
+                Q(canvas_errors__isnull=True)) | Q(monitor_status__gte=500),
             canvas_id__isnull=False,
             post_status=200)
 
