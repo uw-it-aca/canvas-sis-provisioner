@@ -11,6 +11,7 @@ from sis_provisioner.exceptions import (
     CoursePolicyException, MissingLoginIdException, EmptyQueueException,
     MissingImportPathException)
 from restclients.exceptions import DataFailureException
+from urllib3.exceptions import MaxRetryError
 from datetime import datetime, timedelta
 from logging import getLogger
 import json
@@ -1063,6 +1064,9 @@ class Import(models.Model):
             except DataFailureException as ex:
                 self.monitor_status = ex.status
                 self.canvas_errors = ex
+            except MaxRetryError as ex:
+                logger.info('Monitor error: %s' % ex)
+                return
 
             if self.is_cleanly_imported():
                 self.delete()
