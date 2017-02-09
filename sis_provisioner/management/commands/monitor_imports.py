@@ -9,7 +9,7 @@ class Command(SISProvisionerCommand):
     def handle(self, *args, **options):
         try:
             with Pidfile():
-                for imp in Import.objects.filter(canvas_id__isnull=False):
+                for imp in Import.objects.find_by_requires_update():
                     imp.update_import_status()
                 self.update_job()
         except ProcessRunningException as err:
