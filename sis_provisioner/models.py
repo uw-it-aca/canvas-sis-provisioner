@@ -1,4 +1,5 @@
 from django.db import models, IntegrityError
+from django.db.models import Q
 from django.conf import settings
 from django.utils.timezone import utc, localtime
 from sis_provisioner.dao.group import get_sis_import_members, is_modified_group
@@ -981,6 +982,15 @@ class Curriculum(models.Model):
     objects = CurriculumManager()
 
 
+class ImportManager(models.Manager):
+    def find_by_requires_update(self):
+        return super(ImportManager, self).get_queryset().filter(
+            (Q(canvas_warnings__isnull=True) & Q(canvas_errors__isnull=True)) |
+                Q(monitor_status__gte=500),
+            canvas_id__isnull=False,
+            post_status=200)
+
+
 class Import(models.Model):
     """ Represents a set of files that have been queued for import.
     """
@@ -1005,7 +1015,10 @@ class Import(models.Model):
     canvas_id = models.CharField(max_length=30, null=True)
     canvas_state = models.CharField(max_length=80, null=True)
     canvas_progress = models.SmallIntegerField(default=0)
+    canvas_warnings = models.TextField(null=True)
     canvas_errors = models.TextField(null=True)
+
+    objects = ImportManager()
 
     def json_data(self):
         return {
@@ -1018,6 +1031,7 @@ class Import(models.Model):
             "post_status": self.post_status,
             "canvas_state": self.canvas_state,
             "canvas_progress": self.canvas_progress,
+            "canvas_warnings": self.canvas_warnings,
             "canvas_errors": self.canvas_errors,
         }
 
@@ -1046,34 +1060,35 @@ class Import(models.Model):
         """
         Updates import attributes, based on the sis import resource.
         """
-        if (self.canvas_id and self.post_status == 200 and
-                (self.canvas_errors is None or
-                    self.monitor_status in [500, 503, 504])):
-            self.monitor_date = datetime.utcnow().replace(tzinfo=utc)
-            try:
-                sis_import = get_sis_import_status(self.canvas_id)
-                self.monitor_status = 200
-                self.canvas_errors = None
-                self.canvas_state = sis_import.workflow_state
-                self.canvas_progress = sis_import.progress
+        self.monitor_date = datetime.utcnow().replace(tzinfo=utc)
+        try:
+            sis_import = get_sis_import_status(self.canvas_id)
+            self.monitor_status = 200
+            self.canvas_state = sis_import.workflow_state
+            self.canvas_progress = sis_import.progress
 
-                if len(sis_import.processing_warnings):
-                    canvas_errors = json.dumps(sis_import.processing_warnings)
-                    self.canvas_errors = canvas_errors
+            self.canvas_warnings = None
+            if len(sis_import.processing_warnings):
+                self.canvas_warnings = json.dumps(
+                    sis_import.processing_warnings)
 
-            except DataFailureException as ex:
-                self.monitor_status = ex.status
-                self.canvas_errors = ex
-            except MaxRetryError as ex:
-                logger.info('Monitor error: %s' % ex)
-                return
+            self.canvas_errors = None
+            if len(sis_import.processing_errors):
+                self.canvas_errors = json.dumps(sis_import.processing_errors)
 
-            if self.is_cleanly_imported():
-                self.delete()
-            else:
-                self.save()
-                if self.is_imported():
-                    self.dequeue_dependent_models()
+        except DataFailureException as ex:
+            self.monitor_status = ex.status
+            self.canvas_errors = ex
+        except MaxRetryError as ex:
+            logger.info('Monitor error: %s' % ex)
+            return
+
+        if self.is_cleanly_imported():
+            self.delete()
+        else:
+            self.save()
+            if self.is_imported():
+                self.dequeue_dependent_models()
 
     def is_completed(self):
         return (self.post_status == 200 and
