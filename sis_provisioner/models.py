@@ -1048,10 +1048,8 @@ class Import(models.Model):
             self.post_status = 200
             self.canvas_id = sis_import.import_id
             self.canvas_state = sis_import.workflow_state
-        except DataFailureException as ex:
-            self.post_status = ex.status
-            self.canvas_errors = ex
-        except Exception as ex:
+        except (DataFailureException, MaxRetryError) as ex:
+            self.post_status = getattr(ex, 'status', None)
             self.canvas_errors = ex
 
         self.save()
@@ -1060,10 +1058,10 @@ class Import(models.Model):
         """
         Updates import attributes, based on the sis import resource.
         """
-        self.monitor_date = datetime.utcnow().replace(tzinfo=utc)
         try:
             sis_import = get_sis_import_status(self.canvas_id)
             self.monitor_status = 200
+            self.monitor_date = datetime.utcnow().replace(tzinfo=utc)
             self.canvas_state = sis_import.workflow_state
             self.canvas_progress = sis_import.progress
 
@@ -1076,10 +1074,7 @@ class Import(models.Model):
             if len(sis_import.processing_errors):
                 self.canvas_errors = json.dumps(sis_import.processing_errors)
 
-        except DataFailureException as ex:
-            self.monitor_status = ex.status
-            self.canvas_errors = ex
-        except MaxRetryError as ex:
+        except (DataFailureException, MaxRetryError) as ex:
             logger.info('Monitor error: %s' % ex)
             return
 
