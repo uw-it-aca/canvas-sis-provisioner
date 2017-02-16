@@ -19,7 +19,7 @@ class ActiveTermTest(TestCase):
     def test_all_active_terms(self):
         with self.settings(
                 RESTCLIENTS_SWS_DAO_CLASS='restclients.dao_implementation.sws.File'):
-           
+
             terms = get_all_active_terms(datetime(2013, 7, 15))
             self.assertEquals(terms[0].term_label(), '2013,summer')
             self.assertEquals(terms[1].term_label(), '2013,autumn')
@@ -59,17 +59,20 @@ class TermPolicyTest(TestCase):
             self.assertEquals(term_name(section), 'Individual Start')
 
     def test_term_start_date(self):
-         with self.settings(
-                 RESTCLIENTS_SWS_DAO_CLASS='restclients.dao_implementation.sws.File',
-                 RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
+        with self.settings(
+                RESTCLIENTS_SWS_DAO_CLASS='restclients.dao_implementation.sws.File',
+                RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
 
-             section = get_section_by_label('2013,summer,TRAIN,101/A')
+            section = get_section_by_label('2013,summer,TRAIN,101/A')
 
-             section.is_independent_start = False
-             self.assertEquals(term_start_date(section), '2013-06-24T00:00:00-0800')
+            self.assertEquals(
+                str(quarter_term_start_date(section.term)), '2013-06-24')
 
-             section.is_independent_start = True
-             self.assertEquals(term_start_date(section), None)
+            section.is_independent_start = False
+            self.assertEquals(term_start_date(section), '2013-06-24T00:00:00-0800')
+
+            section.is_independent_start = True
+            self.assertEquals(term_start_date(section), None)
 
     def test_term_end_date(self):
         with self.settings(
@@ -78,8 +81,20 @@ class TermPolicyTest(TestCase):
 
             section = get_section_by_label('2013,summer,TRAIN,101/A')
 
+            self.assertEquals(
+                str(quarter_term_end_date(section.term)), '2013-08-28')
+
             section.is_independent_start = False
             self.assertEquals(term_end_date(section), '2013-08-28T00:00:00-0800')
 
             section.is_independent_start = True
             self.assertEquals(term_end_date(section), None)
+
+    def test_term_overrides(self):
+        with self.settings(
+                RESTCLIENTS_SWS_DAO_CLASS='restclients.dao_implementation.sws.File'):
+
+            term = get_term_by_year_and_quarter(2013, 'summer')
+
+            self.assertEquals(term_date_overrides(term),
+                {'StudentEnrollment': {'start_at': '2012-06-24T00:00:00-0800', 'end_at': '2014-08-28T00:00:00-0800'}, 'TaEnrollment': {'start_at': '2012-06-24T00:00:00-0800', 'end_at': '2014-08-28T00:00:00-0800'}, 'TeacherEnrollment': {'start_at': '2012-06-24T00:00:00-0800', 'end_at': '2015-08-28T00:00:00-0800'}, 'DesignerEnrollment': {'start_at': '2012-06-24T00:00:00-0800', 'end_at': '2014-08-28T00:00:00-0800'}})

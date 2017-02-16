@@ -1,6 +1,7 @@
 from django.conf import settings
-from restclients.sws.term import get_term_by_year_and_quarter, get_term_after,\
-    get_term_by_date
+from restclients.sws.term import (
+    get_term_by_year_and_quarter, get_term_after, get_term_by_date)
+from restclients.models.canvas import CanvasEnrollment
 from restclients.exceptions import DataFailureException
 from datetime import timedelta
 
@@ -41,12 +42,43 @@ def term_start_date(section):
     if section.is_independent_start:
         return None
     else:
-        return section.term.first_day_quarter.strftime(TERM_DATE_FORMAT)
+        return quarter_term_start_date(section.term).strftime(TERM_DATE_FORMAT)
 
 
 def term_end_date(section):
     if section.is_independent_start:
         return None
     else:
-        return (section.term.grade_submission_deadline +
-                timedelta(days=1)).strftime(TERM_DATE_FORMAT)
+        return quarter_term_end_date(section.term).strftime(TERM_DATE_FORMAT)
+
+
+def term_date_overrides(term):
+    default_override_dates = {
+        'start_at': (quarter_term_start_date(term) -
+                     timedelta(days=365)).strftime(TERM_DATE_FORMAT),
+        'end_at': (quarter_term_end_date(term) +
+                   timedelta(days=365)).strftime(TERM_DATE_FORMAT)
+    }
+
+    overrides = {}
+    for role in CanvasEnrollment.ROLE_CHOICES:
+        if role[0] == CanvasEnrollment.OBSERVER:
+            continue
+        elif role[0] == CanvasEnrollment.TEACHER:
+            overrides[role[0]] = {
+                'start_at': default_override_dates['start_at'],
+                'end_at': (quarter_term_end_date(term) +
+                    timedelta(days=365*2)).strftime(TERM_DATE_FORMAT)
+            }
+        else:
+            overrides[role[0]] = default_override_dates
+
+    return overrides
+
+
+def quarter_term_start_date(term):
+    return term.first_day_quarter
+
+
+def quarter_term_end_date(term):
+    return (term.grade_submission_deadline + timedelta(days=1)).date()
