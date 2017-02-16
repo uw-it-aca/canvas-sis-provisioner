@@ -95,6 +95,5 @@ class TermPolicyTest(TestCase):
                 RESTCLIENTS_SWS_DAO_CLASS='restclients.dao_implementation.sws.File'):
 
             term = get_term_by_year_and_quarter(2013, 'summer')
-
             self.assertEquals(term_date_overrides(term),
-                {'StudentEnrollment': {'start_at': '2012-06-24T00:00:00-0800', 'end_at': '2014-08-28T00:00:00-0800'}, 'TaEnrollment': {'start_at': '2012-06-24T00:00:00-0800', 'end_at': '2014-08-28T00:00:00-0800'}, 'TeacherEnrollment': {'start_at': '2012-06-24T00:00:00-0800', 'end_at': '2015-08-28T00:00:00-0800'}, 'DesignerEnrollment': {'start_at': '2012-06-24T00:00:00-0800', 'end_at': '2014-08-28T00:00:00-0800'}})
+                {'StudentEnrollment': ('2012-06-24T00:00:00-0800', '2014-08-28T00:00:00-0800'), 'TaEnrollment': ('2012-06-24T00:00:00-0800', '2014-08-28T00:00:00-0800'), 'TeacherEnrollment': ('2012-06-24T00:00:00-0800', '2015-08-28T00:00:00-0800'), 'DesignerEnrollment': ('2012-06-24T00:00:00-0800', '2014-08-28T00:00:00-0800')})

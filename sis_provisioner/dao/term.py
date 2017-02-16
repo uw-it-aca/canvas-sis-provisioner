@@ -53,25 +53,23 @@ def term_end_date(section):
 
 
 def term_date_overrides(term):
-    default_override_dates = {
-        'start_at': (quarter_term_start_date(term) -
-                     timedelta(days=365)).strftime(TERM_DATE_FORMAT),
-        'end_at': (quarter_term_end_date(term) +
-                   timedelta(days=365)).strftime(TERM_DATE_FORMAT)
-    }
-
     overrides = {}
-    for role in CanvasEnrollment.ROLE_CHOICES:
-        if role[0] == CanvasEnrollment.OBSERVER:
+    for role_choice in CanvasEnrollment.ROLE_CHOICES:
+        role = role_choice[0]
+        if role == CanvasEnrollment.OBSERVER:
             continue
-        elif role[0] == CanvasEnrollment.TEACHER:
-            overrides[role[0]] = {
-                'start_at': default_override_dates['start_at'],
-                'end_at': (quarter_term_end_date(term) +
-                           timedelta(days=365*2)).strftime(TERM_DATE_FORMAT)
-            }
+        elif role == CanvasEnrollment.TEACHER:
+            overrides[role] = (
+                (quarter_term_start_date(term) - timedelta(days=365)).strftime(
+                    TERM_DATE_FORMAT),
+                (quarter_term_end_date(term) + timedelta(days=365*2)).strftime(
+                    TERM_DATE_FORMAT))
         else:
-            overrides[role[0]] = default_override_dates
+            overrides[role] = (
+                (quarter_term_start_date(term) - timedelta(days=365)).strftime(
+                    TERM_DATE_FORMAT),
+                (quarter_term_end_date(term) + timedelta(days=365)).strftime(
+                    TERM_DATE_FORMAT))
 
     return overrides
 
