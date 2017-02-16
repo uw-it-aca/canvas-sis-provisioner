@@ -68,7 +68,7 @@ def term_date_overrides(term):
             overrides[role[0]] = {
                 'start_at': default_override_dates['start_at'],
                 'end_at': (quarter_term_end_date(term) +
-                    timedelta(days=365*2)).strftime(TERM_DATE_FORMAT)
+                           timedelta(days=365*2)).strftime(TERM_DATE_FORMAT)
             }
         else:
             overrides[role[0]] = default_override_dates
