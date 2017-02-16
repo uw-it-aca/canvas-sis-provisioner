@@ -6,8 +6,10 @@ from sis_provisioner.dao.group import get_sis_import_members, is_modified_group
 from sis_provisioner.dao.user import get_person_by_netid
 from sis_provisioner.dao.course import (
     valid_canvas_section, get_new_sections_by_term)
+from sis_provisioner.dao.term import term_date_overrides
 from sis_provisioner.dao.canvas import (
-    get_active_courses_for_term, sis_import_by_path, get_sis_import_status)
+    get_active_courses_for_term, sis_import_by_path, get_sis_import_status,
+    update_term_overrides)
 from sis_provisioner.exceptions import (
     CoursePolicyException, MissingLoginIdException, EmptyQueueException,
     MissingImportPathException)
@@ -66,6 +68,13 @@ class Job(models.Model):
 
 
 class TermManager(models.Manager):
+    def update_override_dates(self):
+        for term in super(TermManager, self).get_queryset():
+            (year, quarter) = term.term_id.split('-')
+            sws_term = get_term_by_year_and_quarter(year, quarter)
+            update_term_overrides(term.term_id,
+                                  term_date_overrides(sws_term))
+
     def queue_unused_courses(self, term_id):
         try:
             term = Term.objects.get(term_id=term_id)
