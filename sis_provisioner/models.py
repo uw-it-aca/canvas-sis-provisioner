@@ -69,11 +69,20 @@ class Job(models.Model):
 
 class TermManager(models.Manager):
     def update_override_dates(self):
-        for term in super(TermManager, self).get_queryset():
+        for term in super(TermManager, self).get_queryset().filter(
+                updated_overrides_date__isnull=True):
+
             (year, quarter) = term.term_id.split('-')
-            sws_term = get_term_by_year_and_quarter(year, quarter)
-            update_term_overrides(term.term_id,
-                                  term_date_overrides(sws_term))
+            try:
+                sws_term = get_term_by_year_and_quarter(year, quarter)
+                update_term_overrides(term.term_id,
+                                      term_date_overrides(sws_term))
+                term.updated_overrides_date = datetime.utcnow().replace(
+                    tzinfo=utc)
+                term.save()
+
+            except (DataFailureException, MaxRetryError) as err:
+                logger.info('Unable to set term overrides: %s' % ex)
 
     def queue_unused_courses(self, term_id):
         try:
@@ -114,6 +123,7 @@ class Term(models.Model):
     last_course_search_date = models.DateTimeField(null=True)
     courses_changed_since_date = models.DateTimeField(null=True)
     deleted_unused_courses_date = models.DateTimeField(null=True)
+    updated_overrides_date = models.DateTimeField(null=True)
     queue_id = models.CharField(max_length=30, null=True)
 
     objects = TermManager()
