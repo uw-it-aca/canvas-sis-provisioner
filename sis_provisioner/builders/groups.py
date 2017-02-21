@@ -7,9 +7,8 @@ from sis_provisioner.dao.course import (
     group_section_sis_id, group_section_name)
 from sis_provisioner.dao.canvas import (
     get_course_by_id, get_course_by_sis_id, update_course_sis_id,
-    get_sis_enrollments_for_course)
-from sis_provisioner.models import (
-    Group, GroupMemberGroup, CourseMember, Enrollment)
+    get_sis_enrollments_for_course, ENROLLMENT_ACTIVE, ENROLLMENT_DELETED)
+from sis_provisioner.models import Group, GroupMemberGroup, CourseMember
 from sis_provisioner.exceptions import (
     CoursePolicyException, GroupPolicyException)
 from restclients.exceptions import DataFailureException
@@ -74,7 +73,7 @@ class GroupBuilder(Builder):
                     try:
                         self.add_group_enrollment_data(
                             member, group_section_id, member.role,
-                            status=Enrollment.DELETED_STATUS)
+                            status=ENROLLMENT_DELETED)
                     except Exception as err:
                         self.logger.info("Skip group member %s (%s)" % (
                             member.name, err))
@@ -89,7 +88,7 @@ class GroupBuilder(Builder):
                 try:
                     self.add_group_enrollment_data(
                         member, group_section_id, member.role,
-                        status=Enrollment.ACTIVE_STATUS)
+                        status=ENROLLMENT_ACTIVE)
                 except Exception as err:
                     self.logger.info("Skip group member %s (%s)" % (
                         member.name, err))

@@ -1,5 +1,8 @@
 from django.test import TestCase
 from sis_provisioner.dao.canvas import *
+from restclients.models.sws import Registration
+from sis_provisioner.dao.course import get_section_by_label
+from datetime import datetime
 import mock
 
 
@@ -74,7 +77,7 @@ class CanvasSectionsTest(TestCase):
 class CanvasTermsTest(TestCase):
     @mock.patch.object(Terms, 'get_term_by_sis_id')
     def test_get_term_by_sis_id(self, mock_method):
-        r = get_term_by_sis_id('abc') 
+        r = get_term_by_sis_id('abc')
         mock_method.assert_called_with('abc')
 
     @mock.patch.object(Terms, 'update_term_overrides')
@@ -85,6 +88,54 @@ class CanvasTermsTest(TestCase):
 
 
 class CanvasEnrollmentsTest(TestCase):
+    def test_valid_enrollment_status(self):
+        self.assertEquals(valid_enrollment_status('active'), True)
+        self.assertEquals(valid_enrollment_status('inactive'), True)
+        self.assertEquals(valid_enrollment_status('deleted'), True)
+        self.assertEquals(valid_enrollment_status('abc'), False)
+        self.assertEquals(valid_enrollment_status(None), False)
+        self.assertEquals(valid_enrollment_status(4), False)
+
+    def test_status_from_registration(self):
+        with self.settings(
+                RESTCLIENTS_SWS_DAO_CLASS='restclients.dao_implementation.sws.File',
+                RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
+
+            section = get_section_by_label('2013,winter,DROP_T,100/B')
+
+            reg = Registration(section=section,
+                               is_active=True)
+            self.assertEquals(enrollment_status_from_registration(reg), 'active')
+
+            reg = Registration(section=section,
+                               is_active=False,
+                               request_date=section.term.grade_submission_deadline)
+            self.assertEquals(enrollment_status_from_registration(reg), 'inactive')
+
+            reg = Registration(section=section,
+                               is_active=False,
+                               request_status='Added to Standby')
+            self.assertEquals(enrollment_status_from_registration(reg), 'active')
+
+            reg = Registration(section=section,
+                               is_active=False,
+                               request_status='PENDING ADDED TO CLASS')
+            self.assertEquals(enrollment_status_from_registration(reg), 'active')
+
+            # request_date equals term.first_day bod
+            reg = Registration(section=section,
+                               is_active=False,
+                               request_date=section.term.get_bod_first_day())
+            self.assertEquals(enrollment_status_from_registration(reg), 'deleted')
+
+            # request_date equals term.census_day bod
+            reg = Registration(section=section,
+                               is_active=False,
+                               request_date = datetime(section.term.census_day.year,
+                                                       section.term.census_day.month,
+                                                       section.term.census_day.day))
+            self.assertEquals(enrollment_status_from_registration(reg), 'deleted')
+
     @mock.patch.object(Enrollments, 'get_enrollments_for_section')
     @mock.patch.object(Sections, 'get_sections_in_course_by_sis_id')
     def test_get_sis_enrollments_for_course(self, mock_sections, mock_enrollments):
@@ -108,7 +159,10 @@ class CanvasSISImportsTest(TestCase):
     @mock.patch.object(SISImport, 'import_dir')
     def test_sis_import_by_path(self, mock_method):
         r = sis_import_by_path('/abc')
-        mock_method.assert_called_with('/abc')
+        mock_method.assert_called_with('/abc', params={})
+
+        r = sis_import_by_path('/abc', override_sis_stickiness=True)
+        mock_method.assert_called_with('/abc', params={'override_sis_stickiness': '1'})
 
     @mock.patch('sis_provisioner.dao.canvas.SISImportModel')
     @mock.patch.object(SISImport, 'get_import_status')

@@ -9,11 +9,13 @@ from restclients.canvas.roles import Roles
 from restclients.canvas.users import Users
 from restclients.canvas.terms import Terms
 from restclients.canvas.sis_import import SISImport
-from restclients.models.canvas import SISImport as SISImportModel
+from restclients.models.canvas import (
+    CanvasEnrollment, SISImport as SISImportModel)
 from restclients.exceptions import DataFailureException
 from restclients.util.retry import retry
 from sis_provisioner.dao.course import (
     valid_academic_course_sis_id, valid_academic_section_sis_id)
+from sis_provisioner.dao import localize
 from sis_provisioner.exceptions import CoursePolicyException
 from urllib3.exceptions import SSLError
 from logging import getLogger
@@ -21,6 +23,12 @@ from csv import reader
 
 
 logger = getLogger(__name__)
+
+INSTRUCTOR_ENROLLMENT = CanvasEnrollment.TEACHER.replace('Enrollment', '')
+STUDENT_ENROLLMENT = CanvasEnrollment.STUDENT.replace('Enrollment', '')
+ENROLLMENT_ACTIVE = CanvasEnrollment.STATUS_ACTIVE
+ENROLLMENT_INACTIVE = CanvasEnrollment.STATUS_INACTIVE
+ENROLLMENT_DELETED = CanvasEnrollment.STATUS_DELETED
 
 
 def valid_canvas_id(canvas_id):
@@ -99,6 +107,24 @@ def get_sis_sections_for_course(course_sis_id):
     return sis_sections
 
 
+def valid_enrollment_status(status):
+    return (status == ENROLLMENT_ACTIVE or status == ENROLLMENT_INACTIVE or
+            status == ENROLLMENT_DELETED)
+
+
+def enrollment_status_from_registration(registration):
+    request_status = registration.request_status.lower()
+    if (registration.is_active or request_status == 'added to standby' or
+            request_status == 'pending added to class'):
+        return ENROLLMENT_ACTIVE
+
+    if (localize(registration.request_date) >
+            localize(registration.section.term.get_eod_census_day())):
+        return ENROLLMENT_INACTIVE
+    else:
+        return ENROLLMENT_DELETED
+
+
 def get_sis_enrollments_for_course(course_sis_id):
     canvas = Enrollments()
     enrollments = []
@@ -160,8 +186,11 @@ def get_active_courses_for_term(term, account_id=None):
     return active_courses
 
 
-def sis_import_by_path(csv_path):
-    return SISImport().import_dir(csv_path)
+def sis_import_by_path(csv_path, override_sis_stickiness=False):
+    params = {}
+    if override_sis_stickiness:
+        params['override_sis_stickiness'] = '1'
+    return SISImport().import_dir(csv_path, params=params)
 
 
 def get_sis_import_status(import_id):

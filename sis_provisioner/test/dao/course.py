@@ -239,6 +239,18 @@ class NewSectionQueryTest(TestCase):
             self.assertRaises(DataFailureException, get_new_sections_by_term, changed_date, term)
 
 
+class RegistrationsBySectionTest(TestCase):
+    def test_get_registrations_by_section(self):
+        with self.settings(
+                RESTCLIENTS_SWS_DAO_CLASS='restclients.dao_implementation.sws.File',
+                RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
+
+            section = get_section_by_label('2013,winter,DROP_T,100/B')
+            registrations = get_registrations_by_section(section)
+
+            self.assertEquals(len(registrations), 2)
+
+
 class TimeScheduleConstructionTest(TestCase):
     def test_by_campus(self):
         time_schedule_constructions = {

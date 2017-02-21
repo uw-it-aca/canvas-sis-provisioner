@@ -2,8 +2,7 @@ from sis_provisioner.builders import Builder
 from sis_provisioner.csv.format import CourseCSV, SectionCSV, TermCSV, XlistCSV
 from sis_provisioner.dao.course import (
     is_active_section, get_section_by_url, canvas_xlist_id, section_short_name,
-    section_id_from_url)
-from sis_provisioner.dao.registration import get_registrations_by_section
+    section_id_from_url, get_registrations_by_section)
 from sis_provisioner.dao.canvas import get_sis_sections_for_course
 from sis_provisioner.models import Course, PRIORITY_NONE
 from sis_provisioner.exceptions import CoursePolicyException

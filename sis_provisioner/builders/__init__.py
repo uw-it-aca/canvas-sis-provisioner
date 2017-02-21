@@ -1,9 +1,9 @@
 from sis_provisioner.csv.data import Collector
 from sis_provisioner.csv.format import UserCSV, EnrollmentCSV
-from sis_provisioner.models import User, Course, Enrollment
 from sis_provisioner.dao.user import (
     valid_net_id, get_person_by_netid, get_person_by_gmail_id)
 from sis_provisioner.dao.course import get_section_by_id
+from sis_provisioner.dao.canvas import ENROLLMENT_ACTIVE
 from sis_provisioner.exceptions import (
     UserPolicyException, CoursePolicyException)
 from restclients.exceptions import DataFailureException
@@ -53,6 +53,7 @@ class Builder(object):
         if force is True:
             self.data.add(UserCSV(person))
         else:
+            from sis_provisioner.models import User
             user = User.objects.add_user(person)
             if user.provisioned_date is None:
                 if (self.data.add(UserCSV(person)) and user.queue_id is None):
@@ -87,7 +88,8 @@ class Builder(object):
                     status=status))
 
         elif member.is_eppn():
-            if status == Enrollment.ACTIVE_STATUS and hasattr(member, 'login'):
+            if (status == ENROLLMENT_ACTIVE and
+                    hasattr(member, 'login')):
                 person = get_person_by_gmail_id(member.login)
                 self.data.add(UserCSV(person))
             else:
@@ -101,6 +103,7 @@ class Builder(object):
         """
         Fetch the section resource for the passed section ID, and add to queue.
         """
+        from sis_provisioner.models import Course
         try:
             section = get_section_by_id(section_id)
             Course.objects.add_to_queue(section, self.queue_id)
