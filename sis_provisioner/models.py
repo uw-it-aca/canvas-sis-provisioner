@@ -6,7 +6,8 @@ from sis_provisioner.dao.group import get_sis_import_members, is_modified_group
 from sis_provisioner.dao.user import get_person_by_netid
 from sis_provisioner.dao.course import (
     valid_canvas_section, get_new_sections_by_term)
-from sis_provisioner.dao.term import term_date_overrides
+from sis_provisioner.dao.term import (
+    get_term_by_year_and_quarter, term_date_overrides)
 from sis_provisioner.dao.canvas import (
     get_active_courses_for_term, sis_import_by_path, get_sis_import_status,
     update_term_overrides)
