@@ -7,6 +7,7 @@ from restclients.canvas.enrollments import Enrollments
 from restclients.canvas.reports import Reports
 from restclients.canvas.roles import Roles
 from restclients.canvas.users import Users
+from restclients.canvas.terms import Terms
 from restclients.canvas.sis_import import SISImport
 from restclients.models.canvas import SISImport as SISImportModel
 from restclients.exceptions import DataFailureException
@@ -52,7 +53,7 @@ def create_user(person):
 
 
 def get_term_by_sis_id(term_sis_id):
-    return Courses().get_term_by_sis_id(term_sis_id)
+    return Terms().get_term_by_sis_id(term_sis_id)
 
 
 def get_course_by_id(course_id):
@@ -65,6 +66,14 @@ def get_course_by_sis_id(course_sis_id):
 
 def update_course_sis_id(course_id, course_sis_id):
     return Courses().update_sis_id(course_id, course_sis_id)
+
+
+def update_term_overrides(term_sis_id, override_dates):
+    overrides = {}
+    for role, dates in override_dates.iteritems():
+        overrides[role] = {'start_at': dates[0], 'end_at': dates[1]}
+
+    return Terms().update_term_overrides(term_sis_id, overrides=overrides)
 
 
 def get_sis_sections_for_course(course_sis_id):

@@ -47,11 +47,6 @@ class CanvasUsersTest(TestCase):
 
 
 class CanvasCoursesTest(TestCase):
-    @mock.patch.object(Courses, 'get_term_by_sis_id')
-    def test_get_term_by_sis_id(self, mock_method):
-        r = get_term_by_sis_id('abc')
-        mock_method.assert_called_with('abc')
-
     @mock.patch.object(Courses, 'get_course')
     def test_get_course_by_id(self, mock_method):
         r = get_course_by_id('abc')
@@ -74,6 +69,19 @@ class CanvasSectionsTest(TestCase):
         r = get_sis_sections_for_course('abc')
         mock_method.assert_called_with('abc')
         self.assertEquals(len(r), 0)
+
+
+class CanvasTermsTest(TestCase):
+    @mock.patch.object(Terms, 'get_term_by_sis_id')
+    def test_get_term_by_sis_id(self, mock_method):
+        r = get_term_by_sis_id('abc') 
+        mock_method.assert_called_with('abc')
+
+    @mock.patch.object(Terms, 'update_term_overrides')
+    def test_update_term_overrides(self, mock_method):
+        r = update_term_overrides('abc', {'xyz': ('somedate', 'anotherdate')})
+        mock_method.assert_called_with(
+            'abc', overrides={'xyz': {'start_at': 'somedate', 'end_at': 'anotherdate'}})
 
 
 class CanvasEnrollmentsTest(TestCase):

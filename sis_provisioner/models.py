@@ -6,8 +6,10 @@ from sis_provisioner.dao.group import get_sis_import_members, is_modified_group
 from sis_provisioner.dao.user import get_person_by_netid
 from sis_provisioner.dao.course import (
     valid_canvas_section, get_new_sections_by_term)
+from sis_provisioner.dao.term import term_date_overrides
 from sis_provisioner.dao.canvas import (
-    get_active_courses_for_term, sis_import_by_path, get_sis_import_status)
+    get_active_courses_for_term, sis_import_by_path, get_sis_import_status,
+    update_term_overrides)
 from sis_provisioner.exceptions import (
     CoursePolicyException, MissingLoginIdException, EmptyQueueException,
     MissingImportPathException)
@@ -66,6 +68,22 @@ class Job(models.Model):
 
 
 class TermManager(models.Manager):
+    def update_override_dates(self):
+        for term in super(TermManager, self).get_queryset().filter(
+                updated_overrides_date__isnull=True):
+
+            (year, quarter) = term.term_id.split('-')
+            try:
+                sws_term = get_term_by_year_and_quarter(year, quarter)
+                update_term_overrides(term.term_id,
+                                      term_date_overrides(sws_term))
+                term.updated_overrides_date = datetime.utcnow().replace(
+                    tzinfo=utc)
+                term.save()
+
+            except (DataFailureException, MaxRetryError) as err:
+                logger.info('Unable to set term overrides: %s' % ex)
+
     def queue_unused_courses(self, term_id):
         try:
             term = Term.objects.get(term_id=term_id)
@@ -105,6 +123,7 @@ class Term(models.Model):
     last_course_search_date = models.DateTimeField(null=True)
     courses_changed_since_date = models.DateTimeField(null=True)
     deleted_unused_courses_date = models.DateTimeField(null=True)
+    updated_overrides_date = models.DateTimeField(null=True)
     queue_id = models.CharField(max_length=30, null=True)
 
     objects = TermManager()
