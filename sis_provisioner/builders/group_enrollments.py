@@ -1,14 +1,14 @@
 from sis_provisioner.builders import Builder
 from sis_provisioner.dao.course import group_section_sis_id
-from sis_provisioner.models import Enrollment
+from sis_provisioner.dao.canvas import ENROLLMENT_ACTIVE, ENROLLMENT_DELETED
 
 
 class GroupEnrollmentBuilder(Builder):
     def _process(self, member):
         section_id = group_section_sis_id(member.course_id)
 
-        status = Enrollment.DELETED_STATUS if (
-            member.is_deleted) else Enrollment.ACTIVE_STATUS
+        status = ENROLLMENT_DELETED if (
+            member.is_deleted) else ENROLLMENT_ACTIVE
 
         if member.is_eppn():
             member.login = member.name

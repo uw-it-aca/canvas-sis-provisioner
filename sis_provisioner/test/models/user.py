@@ -1,5 +1,4 @@
 from django.test import TestCase
-from django.conf import settings
 from restclients.pws import PWS
 from sis_provisioner.models import User, PRIORITY_NONE, PRIORITY_HIGH
 import mock

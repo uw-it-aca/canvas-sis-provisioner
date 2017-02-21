@@ -10,7 +10,7 @@ from sis_provisioner.dao.term import (
     get_term_by_year_and_quarter, term_date_overrides)
 from sis_provisioner.dao.canvas import (
     get_active_courses_for_term, sis_import_by_path, get_sis_import_status,
-    update_term_overrides)
+    update_term_overrides, ENROLLMENT_ACTIVE)
 from sis_provisioner.exceptions import (
     CoursePolicyException, MissingLoginIdException, EmptyQueueException,
     MissingImportPathException)
@@ -18,6 +18,7 @@ from restclients.exceptions import DataFailureException
 from urllib3.exceptions import MaxRetryError
 from datetime import datetime, timedelta
 from logging import getLogger
+import traceback
 import json
 import re
 
@@ -412,7 +413,7 @@ class EnrollmentManager(models.Manager):
     def add_enrollment(self, enrollment_data):
         section = enrollment_data.get('Section')
         reg_id = enrollment_data.get('UWRegID')
-        role = enrollment_data.get('Role', Enrollment.STUDENT_ROLE)
+        role = enrollment_data.get('Role')
         status = enrollment_data.get('Status').lower()
         last_modified = enrollment_data.get('LastModified')
         request_date = enrollment_data.get('RequestDate')
@@ -440,7 +441,7 @@ class EnrollmentManager(models.Manager):
                                                     role=role)
                 if (last_modified > enrollment.last_modified or (
                         last_modified == enrollment.last_modified and
-                        status == Enrollment.ACTIVE_STATUS)):
+                        status == ENROLLMENT_ACTIVE)):
                     enrollment.status = status
                     enrollment.last_modified = last_modified
                     enrollment.request_date = request_date
@@ -499,31 +500,9 @@ class EnrollmentManager(models.Manager):
 class Enrollment(models.Model):
     """ Represents the provisioned state of an enrollment.
     """
-    ACTIVE_STATUS = "active"
-    INACTIVE_STATUS = "inactive"
-    DELETED_STATUS = "deleted"
-    COMPLETED_STATUS = "completed"
-
-    STATUS_CHOICES = (
-        (ACTIVE_STATUS, "Active"),
-        (INACTIVE_STATUS, "Inactive"),
-        (DELETED_STATUS, "Deleted"),
-        (COMPLETED_STATUS, "Completed")
-    )
-
-    STUDENT_ROLE = "Student"
-    AUDITOR_ROLE = "Auditor"
-    INSTRUCTOR_ROLE = "Teacher"
-
-    ROLE_CHOICES = (
-        (STUDENT_ROLE, "Student"),
-        (INSTRUCTOR_ROLE, "Teacher"),
-        (AUDITOR_ROLE, "Auditor")
-    )
-
     reg_id = models.CharField(max_length=32)
-    status = models.CharField(max_length=16, choices=STATUS_CHOICES)
-    role = models.CharField(max_length=32, choices=ROLE_CHOICES)
+    status = models.CharField(max_length=16)
+    role = models.CharField(max_length=32)
     course_id = models.CharField(max_length=80)
     last_modified = models.DateTimeField()
     request_date = models.DateTimeField(null=True)
@@ -535,16 +514,7 @@ class Enrollment(models.Model):
     objects = EnrollmentManager()
 
     def is_active(self):
-        return self.status == self.ACTIVE_STATUS
-
-    def is_student(self):
-        return self.role == self.STUDENT_ROLE
-
-    def is_instructor(self):
-        return self.role == self.INSTRUCTOR_ROLE
-
-    def is_auditor(self):
-        return self.role == self.AUDITOR_ROLE
+        return self.status == ENROLLMENT_ACTIVE
 
     def json_data(self):
         return {
@@ -582,7 +552,8 @@ class UserManager(models.Manager):
         if not len(pks):
             raise EmptyQueueException()
 
-        imp = Import(priority=priority, csv_type='user')
+        imp = Import(csv_type='user', priority=priority)
+        # override_sis_stickiness=(priority > PRIORITY_DEFAULT))
         imp.save()
 
         # Mark the users as in process, and reset the priority
@@ -964,32 +935,10 @@ class CurriculumManager(models.Manager):
     def dequeue(self, queue_id, provisioned_date=None):
         pass
 
-    def canvas_account_id(self, section):
-        course_id = section.canvas_course_sis_id()
-        try:
-            curr_abbr = section.curriculum_abbr
-            curriculum = Curriculum.objects.get(curriculum_abbr=curr_abbr)
-            account_id = curriculum.subaccount_id
-        except Curriculum.DoesNotExist:
-            account_id = None
-
-        lms_owner_accounts = getattr(settings, 'LMS_OWNERSHIP_SUBACCOUNT', {})
-        try:
-            account_id = lms_owner_accounts[section.lms_ownership]
-        except (AttributeError, KeyError):
-            if account_id is None and section.course_campus == 'PCE':
-                account_id = lms_owner_accounts['PCE_NONE']
-
-        try:
-            override = SubAccountOverride.objects.get(course_id=course_id)
-            account_id = override.subaccount_id
-        except SubAccountOverride.DoesNotExist:
-            pass
-
-        if account_id is None:
-            raise CoursePolicyException("No account_id for %s" % course_id)
-
-        return account_id
+    def accounts_by_curricula(self):
+        return dict((curr, account) for curr, account in (
+            super(CurriculumManager, self).get_queryset().values_list(
+                'curriculum_abbr', 'subaccount_id')))
 
 
 class Curriculum(models.Model):
@@ -1029,6 +978,7 @@ class Import(models.Model):
     csv_errors = models.TextField(null=True)
     added_date = models.DateTimeField(auto_now_add=True)
     priority = models.SmallIntegerField(default=1, choices=PRIORITY_CHOICES)
+    override_sis_stickiness = models.NullBooleanField()
     post_status = models.SmallIntegerField(null=True)
     monitor_date = models.DateTimeField(null=True)
     monitor_status = models.SmallIntegerField(null=True)
@@ -1047,6 +997,7 @@ class Import(models.Model):
             "type_name": self.get_csv_type_display(),
             "added_date": localtime(self.added_date).isoformat(),
             "priority": PRIORITY_CHOICES[self.priority][1],
+            "override_sis_stickiness": self.override_sis_stickiness,
             "csv_errors": self.csv_errors,
             "post_status": self.post_status,
             "canvas_state": self.canvas_state,
@@ -1064,7 +1015,8 @@ class Import(models.Model):
             raise MissingImportPathException()
 
         try:
-            sis_import = sis_import_by_path(self.csv_path)
+            sis_import = sis_import_by_path(self.csv_path,
+                                            self.override_sis_stickiness)
             self.post_status = 200
             self.canvas_id = sis_import.import_id
             self.canvas_state = sis_import.workflow_state
@@ -1115,7 +1067,7 @@ class Import(models.Model):
 
     def is_imported(self):
         return (self.is_completed() and
-                re.match(r'^imported', self.canvas_state) is not None)
+                re.match(r'^imported', str(self.canvas_state)) is not None)
 
     def dependent_model(self):
         return globals()[self.get_csv_type_display()]
@@ -1136,10 +1088,19 @@ class Import(models.Model):
         return super(Import, self).delete(*args, **kwargs)
 
 
+class SubAccountOverrideManager(models.Manager):
+    def overrides_by_course(self):
+        return dict((course_id, account) for course_id, account in (
+            super(SubAccountOverrideManager, self).get_queryset().values_list(
+                'course_id', 'subaccount_id')))
+
+
 class SubAccountOverride(models.Model):
     course_id = models.CharField(max_length=80)
     subaccount_id = models.CharField(max_length=100)
     reference_date = models.DateTimeField(auto_now_add=True)
+
+    objects = SubAccountOverrideManager()
 
 
 class TermOverride(models.Model):
