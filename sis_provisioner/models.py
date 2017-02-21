@@ -2,7 +2,6 @@ from django.db import models, IntegrityError
 from django.db.models import Q
 from django.conf import settings
 from django.utils.timezone import utc, localtime
-from sis_provisioner.builders.users import UserBuilder
 from sis_provisioner.dao.group import get_sis_import_members, is_modified_group
 from sis_provisioner.dao.user import get_person_by_netid
 from sis_provisioner.dao.course import (
@@ -537,9 +536,11 @@ class Enrollment(models.Model):
 
 
 class UserManager(models.Manager):
-    def import_by_priority(self, priority=PRIORITY_DEFAULT):
-        filter_limits = getattr(settings, 'SIS_IMPORT_LIMIT', {}).get('user')
-        filter_limit = filter_limits.get('default', 1000)
+    def queue_by_priority(self, priority=PRIORITY_DEFAULT):
+        if priority > PRIORITY_DEFAULT:
+            filter_limit = settings.SIS_IMPORT_LIMIT['user']['high']
+        else:
+            filter_limit = settings.SIS_IMPORT_LIMIT['user']['default']
 
         pks = super(UserManager, self).get_queryset().filter(
             priority=priority, queue_id__isnull=True
@@ -548,7 +549,7 @@ class UserManager(models.Manager):
         ).values_list('pk', flat=True)[:filter_limit]
 
         if not len(pks):
-            return
+            raise EmptyQueueException()
 
         imp = Import(csv_type='user', priority=priority)
         # override_sis_stickiness=(priority > PRIORITY_DEFAULT))
@@ -561,18 +562,7 @@ class UserManager(models.Manager):
             priority=PRIORITY_DEFAULT, queue_id=imp.pk
         )
 
-        try:
-            imp.csv_path = UserBuilder(imp.queued_objects()).build()
-        except:
-            imp.csv_errors = traceback.format_exc()
-
-        imp.save()
-
-        try:
-            imp.import_csv()
-        except MissingImportPathException as ex:
-            if not imp.csv_errors:
-                imp.delete()
+        return imp
 
     def queued(self, queue_id):
         return super(UserManager, self).get_queryset().filter(
