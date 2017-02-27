@@ -26,6 +26,7 @@ logger = getLogger(__name__)
 
 INSTRUCTOR_ENROLLMENT = CanvasEnrollment.TEACHER.replace('Enrollment', '')
 STUDENT_ENROLLMENT = CanvasEnrollment.STUDENT.replace('Enrollment', '')
+AUDITOR_ENROLLMENT = 'Auditor'
 ENROLLMENT_ACTIVE = CanvasEnrollment.STATUS_ACTIVE
 ENROLLMENT_INACTIVE = CanvasEnrollment.STATUS_INACTIVE
 ENROLLMENT_DELETED = CanvasEnrollment.STATUS_DELETED
