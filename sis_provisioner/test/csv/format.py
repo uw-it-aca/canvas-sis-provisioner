@@ -1,10 +1,10 @@
 from django.test import TestCase
 from restclients.pws import PWS
 from sis_provisioner.models import Curriculum
-from sis_provisioner.dao.course import get_section_by_label
-from sis_provisioner.dao.registration import get_registrations_by_section
+from sis_provisioner.dao.course import (
+    get_section_by_label, get_registrations_by_section)
 from sis_provisioner.exceptions import (CoursePolicyException,
-    EnrollmentPolicyException)
+    EnrollmentPolicyException, AccountPolicyException)
 from sis_provisioner.csv.format import *
 
 
@@ -46,7 +46,7 @@ class CourseCSVTest(TestCase):
                 LMS_OWNERSHIP_SUBACCOUNT={'PCE_NONE': 'pce_none_account'}):
 
             section = get_section_by_label('2013,spring,TRAIN,101/A')
-            self.assertRaises(CoursePolicyException, CourseCSV, section=section)
+            self.assertRaises(AccountPolicyException, CourseCSV, section=section)
 
             section.course_campus = 'PCE'
             self.assertEquals(str(CourseCSV(section=section)), '2013-spring-TRAIN-101-A,TRAIN 101 A,TRAIN 101 A Sp 13: Intro Train,pce_none_account,2013-spring,active,,\n')

@@ -8,33 +8,17 @@ import mock
 
 
 class EnrollmentModelTest(TestCase):
-    def test_roles(self):
-        student_enrollment = Enrollment(role=Enrollment.STUDENT_ROLE)
-        self.assertEquals(student_enrollment.is_student(), True)
-        self.assertEquals(student_enrollment.is_instructor(), False)
-        self.assertEquals(student_enrollment.is_auditor(), False)
-
-        instructor_enrollment = Enrollment(role=Enrollment.INSTRUCTOR_ROLE)
-        self.assertEquals(instructor_enrollment.is_student(), False)
-        self.assertEquals(instructor_enrollment.is_instructor(), True)
-        self.assertEquals(instructor_enrollment.is_auditor(), False)
-
-        auditor_enrollment = Enrollment(role=Enrollment.AUDITOR_ROLE)
-        self.assertEquals(auditor_enrollment.is_student(), False)
-        self.assertEquals(auditor_enrollment.is_instructor(), False)
-        self.assertEquals(auditor_enrollment.is_auditor(), True)
-
     def test_statuses(self):
-        active_enrollment = Enrollment(status=Enrollment.ACTIVE_STATUS)
+        active_enrollment = Enrollment(status='active')
         self.assertEquals(active_enrollment.is_active(), True)
 
-        inactive_enrollment = Enrollment(status=Enrollment.INACTIVE_STATUS)
+        inactive_enrollment = Enrollment(status='inactive')
         self.assertEquals(inactive_enrollment.is_active(), False)
 
-        deleted_enrollment = Enrollment(status=Enrollment.DELETED_STATUS)
+        deleted_enrollment = Enrollment(status='deleted')
         self.assertEquals(deleted_enrollment.is_active(), False)
 
-        completed_enrollment = Enrollment(status=Enrollment.COMPLETED_STATUS)
+        completed_enrollment = Enrollment(status='completed')
         self.assertEquals(completed_enrollment.is_active(), False)
 
     @mock.patch('sis_provisioner.models.logger')
@@ -46,7 +30,7 @@ class EnrollmentModelTest(TestCase):
             now_dt = datetime(2013, 1, 1).replace(tzinfo=utc)
             student_data = {'Section': get_section_by_id('2013-summer-TRAIN-101-A'),
                             'UWRegID': 'BCDEF1234567890ABCDEF1234567890',
-                            'Role': Enrollment.STUDENT_ROLE,
+                            'Role': 'Student',
                             'Status': 'Active',
                             'LastModified': now_dt,
                             'InstructorUWRegID': None}

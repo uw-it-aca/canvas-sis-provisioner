@@ -1,12 +1,12 @@
-from sis_provisioner.dao.account import account_name
+from sis_provisioner.dao.account import account_name, account_id_for_section
 from sis_provisioner.dao.term import (
     term_sis_id, term_name, term_start_date, term_end_date)
 from sis_provisioner.dao.course import (
     is_active_section, section_short_name, section_long_name)
 from sis_provisioner.dao.user import user_sis_id, user_email, user_fullname
-from sis_provisioner.dao.registration import (
-    enrollment_status_from_registration)
-from sis_provisioner.models import Curriculum, Enrollment
+from sis_provisioner.dao.canvas import (
+    valid_enrollment_status, enrollment_status_from_registration,
+    INSTRUCTOR_ENROLLMENT, STUDENT_ENROLLMENT)
 from sis_provisioner.exceptions import EnrollmentPolicyException
 import StringIO
 import csv
@@ -110,7 +110,7 @@ class CourseCSV(CSVFormat):
             self.data = [self.key,
                          section_short_name(section),
                          section_long_name(section),
-                         Curriculum.objects.canvas_account_id(section),
+                         account_id_for_section(section),
                          term_sis_id(section),
                          'active' if is_active_section(section) else 'deleted',
                          None, None]
@@ -155,14 +155,14 @@ class EnrollmentCSV(CSVFormat):
             registration = kwargs.get('registration')
             person = registration.person
             section_id = registration.section.canvas_section_sis_id()
-            role = Enrollment.STUDENT_ROLE
+            role = STUDENT_ENROLLMENT
             status = enrollment_status_from_registration(registration)
 
         elif kwargs.get('instructor'):
             section = kwargs.get('section')
             person = kwargs.get('instructor')
             section_id = section.canvas_section_sis_id()
-            role = Enrollment.INSTRUCTOR_ROLE
+            role = INSTRUCTOR_ENROLLMENT
             status = kwargs.get('status')
 
         else:
@@ -173,7 +173,7 @@ class EnrollmentCSV(CSVFormat):
             status = kwargs.get('status')
 
         user_id = user_sis_id(person)
-        if not any(status == val for (val, name) in Enrollment.STATUS_CHOICES):
+        if not valid_enrollment_status(status):
             raise EnrollmentPolicyException(
                 'Invalid enrollment status for %s: %s' % (user_id, status))
 

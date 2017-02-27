@@ -1,8 +1,8 @@
 from django.test import TestCase
 from restclients.pws import PWS
 from sis_provisioner.models import Curriculum
-from sis_provisioner.dao.course import get_section_by_label
-from sis_provisioner.dao.registration import get_registrations_by_section
+from sis_provisioner.dao.course import (
+    get_section_by_label, get_registrations_by_section)
 from sis_provisioner.csv.data import Collector
 from sis_provisioner.csv.format import *
 import mock
