@@ -1,6 +1,9 @@
 from django.test import TestCase
+from django.db.models.query import QuerySet
 from restclients.pws import PWS
-from sis_provisioner.models import User, PRIORITY_NONE, PRIORITY_HIGH
+from sis_provisioner.models import (
+    User, Import, PRIORITY_NONE, PRIORITY_DEFAULT, PRIORITY_HIGH)
+from datetime import datetime
 import mock
 
 
@@ -16,6 +19,22 @@ class UserModelTest(TestCase):
             user = User.objects.update_priority(person, PRIORITY_NONE)
             self.assertEquals(user.priority, PRIORITY_NONE)
             User.objects.all().delete()
+
+    @mock.patch.object(QuerySet, 'update')
+    def test_dequeue(self, mock_update):
+        dt = datetime.now()
+        r = User.objects.dequeue(Import(pk=1,
+                                        priority=PRIORITY_HIGH,
+                                        canvas_state='imported',
+                                        post_status=200,
+                                        canvas_progress=100,
+                                        monitor_date=dt))
+        mock_update.assert_called_with(
+            queue_id=None, priority=PRIORITY_DEFAULT, provisioned_date=dt)
+
+        r = User.objects.dequeue(Import(pk=1, priority=PRIORITY_HIGH))
+        mock_update.assert_called_with(
+            queue_id=None, priority=PRIORITY_HIGH)
 
     def test_add_user(self):
         with self.settings(
