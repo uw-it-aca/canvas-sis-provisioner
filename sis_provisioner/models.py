@@ -108,13 +108,13 @@ class TermManager(models.Manager):
         return super(TermManager, self).get_queryset().filter(
             queue_id=queue_id)
 
-    def dequeue(self, queue_id, provisioned_date=None):
+    def dequeue(self, sis_import):
         kwargs = {'queue_id': None}
-        if provisioned_date is not None:
+        if sis_import.is_imported():
             # Currently only handles the 'unused_course' type
-            kwargs['deleted_unused_courses_date'] = provisioned_date
+            kwargs['deleted_unused_courses_date'] = sis_import.monitor_date
 
-        self.queued(queue_id).update(**kwargs)
+        self.queued(sis_import.pk).update(**kwargs)
 
 
 class Term(models.Model):
@@ -173,13 +173,15 @@ class CourseManager(models.Manager):
         return super(CourseManager, self).get_queryset().filter(
             queue_id=queue_id)
 
-    def dequeue(self, queue_id, provisioned_date=None):
+    def dequeue(self, sis_import):
         kwargs = {'queue_id': None}
-        if provisioned_date is not None:
-            kwargs['provisioned_date'] = provisioned_date
+        if sis_import.is_imported():
+            kwargs['provisioned_date'] = sis_import.monitor_date
             kwargs['priority'] = PRIORITY_DEFAULT
+        else:
+            kwargs['priority'] = sis_import.priority
 
-        self.queued(queue_id).update(**kwargs)
+        self.queued(sis_import.pk).update(**kwargs)
 
     def add_to_queue(self, section, queue_id):
         if section.is_primary_section:
@@ -389,26 +391,15 @@ class EnrollmentManager(models.Manager):
         return super(EnrollmentManager, self).get_queryset().filter(
             queue_id=queue_id)
 
-    def dequeue(self, queue_id, provisioned_date=None):
-        Course.objects.dequeue(queue_id, provisioned_date)
-        if provisioned_date is None:
-            self.queued(queue_id).update(queue_id=None)
+    def dequeue(self, sis_import):
+        Course.objects.dequeue(sis_import)
+        kwargs = {'queue_id': None}
+        if sis_import.is_imported():
+            kwargs['priority'] = PRIORITY_NONE
         else:
-            super(EnrollmentManager, self).get_queryset().filter(
-                queue_id=queue_id,
-                priority=PRIORITY_DEFAULT
-            ).update(
-                priority=PRIORITY_NONE,
-                queue_id=None
-            )
+            kwargs['priority'] = sis_import.priority
 
-            super(EnrollmentManager, self).get_queryset().filter(
-                queue_id=queue_id,
-                priority=PRIORITY_HIGH
-            ).update(
-                priority=PRIORITY_DEFAULT,
-                queue_id=None
-            )
+        self.queued(sis_import.pk).update(**kwargs)
 
     def add_enrollment(self, enrollment_data):
         section = enrollment_data.get('Section')
@@ -570,13 +561,15 @@ class UserManager(models.Manager):
         return super(UserManager, self).get_queryset().filter(
             queue_id=queue_id)
 
-    def dequeue(self, queue_id, provisioned_date=None):
+    def dequeue(self, sis_import):
         kwargs = {'queue_id': None}
-        if provisioned_date is not None:
-            kwargs['provisioned_date'] = provisioned_date
+        if sis_import.is_imported():
+            kwargs['provisioned_date'] = sis_import.monitor_date
             kwargs['priority'] = PRIORITY_DEFAULT
+        else:
+            kwargs['priority'] = sis_import.priority
 
-        self.queued(queue_id).update(**kwargs)
+        self.queued(sis_import.pk).update(**kwargs)
 
     def add_all_users(self):
         existing_netids = dict((u, p) for u, p in (
@@ -748,13 +741,15 @@ class GroupManager(models.Manager):
         return super(GroupManager, self).get_queryset().filter(
             queue_id=queue_id)
 
-    def dequeue(self, queue_id, provisioned_date=None):
+    def dequeue(self, sis_import):
         kwargs = {'queue_id': None}
-        if provisioned_date is not None:
-            kwargs['provisioned_date'] = provisioned_date
+        if sis_import.is_imported():
+            kwargs['provisioned_date'] = sis_import.monitor_date
             kwargs['priority'] = PRIORITY_DEFAULT
+        else:
+            kwargs['priority'] = sis_import.priority
 
-        self.queued(queue_id).update(**kwargs)
+        self.queued(sis_import.pk).update(**kwargs)
 
     def dequeue_course(self, course_id):
         super(GroupManager, self).get_queryset().filter(
@@ -861,25 +856,14 @@ class CourseMemberManager(models.Manager):
         return super(CourseMemberManager, self).get_queryset().filter(
             queue_id=queue_id)
 
-    def dequeue(self, queue_id, provisioned_date=None):
-        if provisioned_date is None:
-            self.queued(queue_id).update(queue_id=None)
+    def dequeue(self, sis_import):
+        kwargs = {'queue_id': None}
+        if sis_import.is_imported():
+            kwargs['priority'] = PRIORITY_NONE
         else:
-            super(CourseMemberManager, self).get_queryset().filter(
-                queue_id=queue_id,
-                priority=PRIORITY_DEFAULT
-            ).update(
-                priority=PRIORITY_NONE,
-                queue_id=None
-            )
+            kwargs['priority'] = sis_import.priority
 
-            super(CourseMemberManager, self).get_queryset().filter(
-                queue_id=queue_id,
-                priority=PRIORITY_HIGH
-            ).update(
-                priority=PRIORITY_DEFAULT,
-                queue_id=None
-            )
+        self.queued(sis_import.pk).update(**kwargs)
 
     def get_by_course(self, course_id):
         return super(CourseMemberManager, self).get_queryset().filter(
@@ -933,7 +917,7 @@ class CurriculumManager(models.Manager):
     def queued(self, queue_id):
         return super(CurriculumManager, self).get_queryset()
 
-    def dequeue(self, queue_id, provisioned_date=None):
+    def dequeue(self, sis_import):
         pass
 
     def accounts_by_curricula(self):
@@ -1077,12 +1061,10 @@ class Import(models.Model):
         return self.dependent_model().objects.queued(self.pk)
 
     def dequeue_dependent_models(self):
-        provisioned_date = self.monitor_date if self.is_imported() else None
-
         if self.csv_type != 'user' and self.csv_type != 'account':
-            User.objects.dequeue(self.pk, provisioned_date)
+            User.objects.dequeue(self)
 
-        self.dependent_model().objects.dequeue(self.pk, provisioned_date)
+        self.dependent_model().objects.dequeue(self)
 
     def delete(self, *args, **kwargs):
         self.dequeue_dependent_models()

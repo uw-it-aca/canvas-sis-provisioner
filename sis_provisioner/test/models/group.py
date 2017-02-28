@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.db.models.query import QuerySet
 from sis_provisioner.models import (
-    Group, PRIORITY_NONE, PRIORITY_DEFAULT, PRIORITY_HIGH)
+    Group, Import, PRIORITY_NONE, PRIORITY_DEFAULT, PRIORITY_HIGH)
 from datetime import datetime
 import mock
 
@@ -26,13 +26,19 @@ class GroupModelTest(TestCase):
 
     @mock.patch.object(QuerySet, 'update')
     def test_dequeue(self, mock_update):
-        r = Group.objects.dequeue('123')
-        mock_update.assert_called_with(queue_id=None)
-
         dt = datetime.now()
-        r = Group.objects.dequeue('123', provisioned_date=dt)
+        r = Group.objects.dequeue(Import(pk=1,
+                                         priority=PRIORITY_HIGH,
+                                         canvas_state='imported',
+                                         post_status=200,
+                                         canvas_progress=100,
+                                         monitor_date=dt))
         mock_update.assert_called_with(
             queue_id=None, priority=PRIORITY_DEFAULT, provisioned_date=dt)
+
+        r = Group.objects.dequeue(Import(pk=1, priority=PRIORITY_HIGH))
+        mock_update.assert_called_with(
+            queue_id=None, priority=PRIORITY_HIGH)
 
     @mock.patch.object(QuerySet, 'update')
     def test_dequeue_course(self, mock_update):
