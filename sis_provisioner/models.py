@@ -553,7 +553,8 @@ class UserManager(models.Manager):
             raise EmptyQueueException()
 
         imp = Import(csv_type='user', priority=priority)
-        # override_sis_stickiness=(priority == PRIORITY_HIGH))
+        if priority == PRIORITY_HIGH:
+            imp.override_sis_stickiness = True
         imp.save()
 
         # Mark the users as in process, and reset the priority
