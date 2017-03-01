@@ -160,12 +160,8 @@ class CourseManager(models.Manager):
         imp = Import(priority=priority, csv_type='course')
         imp.save()
 
-        # Mark the courses as in process, and reset the priority
         super(CourseManager, self).get_queryset().filter(
-            pk__in=list(pks)
-        ).update(
-            priority=PRIORITY_DEFAULT, queue_id=imp.pk
-        )
+            pk__in=list(pks)).update(queue_id=imp.pk)
 
         return imp
 
@@ -177,9 +173,6 @@ class CourseManager(models.Manager):
         kwargs = {'queue_id': None}
         if sis_import.is_imported():
             kwargs['provisioned_date'] = sis_import.monitor_date
-            kwargs['priority'] = PRIORITY_DEFAULT
-        else:
-            kwargs['priority'] = sis_import.priority
 
         self.queued(sis_import.pk).update(**kwargs)
 
@@ -380,10 +373,8 @@ class EnrollmentManager(models.Manager):
         imp = Import(priority=priority, csv_type='enrollment')
         imp.save()
 
-        # Mark the enrollments as in process
         super(EnrollmentManager, self).get_queryset().filter(
-            pk__in=list(pks)
-        ).update(queue_id=imp.pk)
+            pk__in=list(pks)).update(queue_id=imp.pk)
 
         return imp
 
@@ -549,12 +540,8 @@ class UserManager(models.Manager):
             imp.override_sis_stickiness = True
         imp.save()
 
-        # Mark the users as in process, and reset the priority
         super(UserManager, self).get_queryset().filter(
-            pk__in=list(pks)
-        ).update(
-            priority=PRIORITY_DEFAULT, queue_id=imp.pk
-        )
+            pk__in=list(pks)).update(queue_id=imp.pk)
 
         return imp
 
@@ -566,9 +553,6 @@ class UserManager(models.Manager):
         kwargs = {'queue_id': None}
         if sis_import.is_imported():
             kwargs['provisioned_date'] = sis_import.monitor_date
-            kwargs['priority'] = PRIORITY_DEFAULT
-        else:
-            kwargs['priority'] = sis_import.priority
 
         self.queued(sis_import.pk).update(**kwargs)
 
@@ -721,12 +705,8 @@ class GroupManager(models.Manager):
         imp = Import(priority=PRIORITY_DEFAULT, csv_type='group')
         imp.save()
 
-        # Mark the groups as in process, and reset the priority
         super(GroupManager, self).get_queryset().filter(
-            course_id__in=list(course_ids)
-        ).update(
-            priority=PRIORITY_DEFAULT, queue_id=imp.pk
-        )
+            course_id__in=list(course_ids)).update(queue_id=imp.pk)
 
         return imp
 
@@ -746,9 +726,6 @@ class GroupManager(models.Manager):
         kwargs = {'queue_id': None}
         if sis_import.is_imported():
             kwargs['provisioned_date'] = sis_import.monitor_date
-            kwargs['priority'] = PRIORITY_DEFAULT
-        else:
-            kwargs['priority'] = sis_import.priority
 
         self.queued(sis_import.pk).update(**kwargs)
 
@@ -844,12 +821,8 @@ class CourseMemberManager(models.Manager):
         imp = Import(priority=priority, csv_type='coursemember')
         imp.save()
 
-        # Mark the coursemembers as in process, and reset the priority
         super(CourseMemberManager, self).get_queryset().filter(
-            pk__in=list(pks)
-        ).update(
-            priority=PRIORITY_DEFAULT, queue_id=imp.pk
-        )
+            pk__in=list(pks)).update(queue_id=imp.pk)
 
         return imp
 
