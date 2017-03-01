@@ -1,9 +1,10 @@
 from django.test import TestCase
-from django.conf import settings
+from django.db.models.query import QuerySet
 from django.utils.timezone import utc
 from datetime import datetime
 from sis_provisioner.dao.course import get_section_by_id
-from sis_provisioner.models import Course, PRIORITY_NONE, PRIORITY_DEFAULT
+from sis_provisioner.models import (
+    Course, Import, PRIORITY_NONE, PRIORITY_DEFAULT, PRIORITY_HIGH)
 import mock
 
 
@@ -99,3 +100,17 @@ class CourseModelTest(TestCase):
             self.assertEquals(course.priority, PRIORITY_NONE)
 
             Course.objects.all().delete()
+
+    @mock.patch.object(QuerySet, 'update')
+    def test_dequeue(self, mock_update):
+        dt = datetime.now()
+        r = Course.objects.dequeue(Import(pk=1,
+                                          priority=PRIORITY_HIGH,
+                                          canvas_state='imported',
+                                          post_status=200,
+                                          canvas_progress=100,
+                                          monitor_date=dt))
+        mock_update.assert_called_with(queue_id=None, provisioned_date=dt)
+
+        r = Course.objects.dequeue(Import(pk=1, priority=PRIORITY_HIGH))
+        mock_update.assert_called_with(queue_id=None)

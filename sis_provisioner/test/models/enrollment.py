@@ -1,9 +1,10 @@
 from django.test import TestCase
-from django.conf import settings
+from django.db.models.query import QuerySet
 from django.utils.timezone import utc
 from datetime import datetime
 from sis_provisioner.dao.course import get_section_by_id
-from sis_provisioner.models import Course, Enrollment
+from sis_provisioner.models import (
+    Course, Enrollment, Import, PRIORITY_NONE, PRIORITY_DEFAULT, PRIORITY_HIGH)
 import mock
 
 
@@ -62,3 +63,20 @@ class EnrollmentModelTest(TestCase):
 
             Course.objects.all().delete()
             Enrollment.objects.all().delete()
+
+    @mock.patch.object(QuerySet, 'filter')
+    def test_dequeue_imported(self, mock_filter):
+        dt = datetime.now()
+        r = Enrollment.objects.dequeue(Import(pk=1,
+                                              priority=PRIORITY_HIGH,
+                                              canvas_state='imported',
+                                              post_status=200,
+                                              canvas_progress=100,
+                                              monitor_date=dt))
+
+        mock_filter.assert_called_with(queue_id=1, priority__gt=PRIORITY_NONE)
+
+    @mock.patch.object(QuerySet, 'update')
+    def test_dequeue_not_imported(self, mock_update):
+        r = Enrollment.objects.dequeue(Import(pk=1, priority=PRIORITY_HIGH))
+        mock_update.assert_called_with(queue_id=None)
