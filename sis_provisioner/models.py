@@ -1,5 +1,5 @@
 from django.db import models, IntegrityError
-from django.db.models import Q
+from django.db.models import F, Q
 from django.conf import settings
 from django.utils.timezone import utc, localtime
 from sis_provisioner.dao.group import get_sis_import_members, is_modified_group
@@ -393,13 +393,14 @@ class EnrollmentManager(models.Manager):
 
     def dequeue(self, sis_import):
         Course.objects.dequeue(sis_import)
-        kwargs = {'queue_id': None}
         if sis_import.is_imported():
-            kwargs['priority'] = PRIORITY_NONE
+            # Decrement the priority
+            super(EnrollmentManager, self).get_queryset().filter(
+                queue_id=sis_import.pk, priority__gt=PRIORITY_NONE
+            ).update(
+                queue_id=None, priority=F('priority') - 1)
         else:
-            kwargs['priority'] = sis_import.priority
-
-        self.queued(sis_import.pk).update(**kwargs)
+            self.queued(sis_import.pk).update(queue_id=None)
 
     def add_enrollment(self, enrollment_data):
         section = enrollment_data.get('Section')
@@ -857,13 +858,14 @@ class CourseMemberManager(models.Manager):
             queue_id=queue_id)
 
     def dequeue(self, sis_import):
-        kwargs = {'queue_id': None}
         if sis_import.is_imported():
-            kwargs['priority'] = PRIORITY_NONE
+            # Decrement the priority
+            super(CourseMemberManager, self).get_queryset().filter(
+                queue_id=sis_import.pk, priority__gt=PRIORITY_NONE
+            ).update(
+                queue_id=None, priority=F('priority') - 1)
         else:
-            kwargs['priority'] = sis_import.priority
-
-        self.queued(sis_import.pk).update(**kwargs)
+            self.queued(sis_import.pk).update(queue_id=None)
 
     def get_by_course(self, course_id):
         return super(CourseMemberManager, self).get_queryset().filter(

@@ -27,4 +27,5 @@ from sis_provisioner.test.models.enrollment import EnrollmentModelTest
 from sis_provisioner.test.models.user import UserModelTest
 from sis_provisioner.test.models.group import GroupModelTest
 from sis_provisioner.test.models.term import TermModelTest
+from sis_provisioner.test.models.course_member import CourseMemberModelTest
 from sis_provisioner.test.models.sisimport import ImportModelTest

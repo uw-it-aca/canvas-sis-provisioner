@@ -64,8 +64,8 @@ class EnrollmentModelTest(TestCase):
             Course.objects.all().delete()
             Enrollment.objects.all().delete()
 
-    @mock.patch.object(QuerySet, 'update')
-    def test_dequeue(self, mock_update):
+    @mock.patch.object(QuerySet, 'filter')
+    def test_dequeue_imported(self, mock_filter):
         dt = datetime.now()
         r = Enrollment.objects.dequeue(Import(pk=1,
                                               priority=PRIORITY_HIGH,
@@ -73,10 +73,10 @@ class EnrollmentModelTest(TestCase):
                                               post_status=200,
                                               canvas_progress=100,
                                               monitor_date=dt))
-        mock_update.assert_called_with(
-            queue_id=None, priority=PRIORITY_NONE)
 
-        r = Enrollment.objects.dequeue(
-            Import(pk=1, priority=PRIORITY_HIGH))
-        mock_update.assert_called_with(
-            queue_id=None, priority=PRIORITY_HIGH)
+        mock_filter.assert_called_with(queue_id=1, priority__gt=PRIORITY_NONE)
+
+    @mock.patch.object(QuerySet, 'update')
+    def test_dequeue_not_imported(self, mock_update):
+        r = Enrollment.objects.dequeue(Import(pk=1, priority=PRIORITY_HIGH))
+        mock_update.assert_called_with(queue_id=None)
