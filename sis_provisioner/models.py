@@ -10,7 +10,7 @@ from sis_provisioner.dao.term import (
     get_term_by_year_and_quarter, term_date_overrides)
 from sis_provisioner.dao.canvas import (
     get_active_courses_for_term, sis_import_by_path, get_sis_import_status,
-    update_term_overrides, ENROLLMENT_ACTIVE)
+    update_term_overrides, ENROLLMENT_ACTIVE, INSTRUCTOR_ENROLLMENT)
 from sis_provisioner.exceptions import (
     CoursePolicyException, MissingLoginIdException, EmptyQueueException,
     MissingImportPathException)
@@ -497,7 +497,10 @@ class Enrollment(models.Model):
     objects = EnrollmentManager()
 
     def is_active(self):
-        return self.status == ENROLLMENT_ACTIVE
+        return self.status.lower() == ENROLLMENT_ACTIVE.lower()
+
+    def is_instructor(self):
+        return self.role.lower() == INSTRUCTOR_ENROLLMENT.lower()
 
     def json_data(self):
         return {
