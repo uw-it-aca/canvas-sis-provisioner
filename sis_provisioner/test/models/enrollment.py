@@ -9,9 +9,15 @@ import mock
 
 
 class EnrollmentModelTest(TestCase):
-    def test_statuses(self):
+    def test_is_active(self):
         active_enrollment = Enrollment(status='active')
         self.assertEquals(active_enrollment.is_active(), True)
+
+        active_enrollment = Enrollment(status='Active')
+        self.assertEquals(active_enrollment.is_active(), True)
+
+        inactive_enrollment = Enrollment()
+        self.assertEquals(inactive_enrollment.is_active(), False)
 
         inactive_enrollment = Enrollment(status='inactive')
         self.assertEquals(inactive_enrollment.is_active(), False)
@@ -21,6 +27,22 @@ class EnrollmentModelTest(TestCase):
 
         completed_enrollment = Enrollment(status='completed')
         self.assertEquals(completed_enrollment.is_active(), False)
+
+    def test_is_instructor(self):
+        enrollment = Enrollment(role='teacher')
+        self.assertEquals(enrollment.is_instructor(), True)
+
+        enrollment = Enrollment(role='Teacher')
+        self.assertEquals(enrollment.is_instructor(), True)
+
+        enrollment = Enrollment(role='instructor')
+        self.assertEquals(enrollment.is_instructor(), False)
+
+        enrollment = Enrollment(role='student')
+        self.assertEquals(enrollment.is_instructor(), False)
+
+        enrollment = Enrollment()
+        self.assertEquals(enrollment.is_instructor(), False)
 
     @mock.patch('sis_provisioner.models.logger')
     def test_add_enrollment(self, mock_logger):
