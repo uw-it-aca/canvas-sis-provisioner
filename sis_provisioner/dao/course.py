@@ -184,7 +184,7 @@ def get_new_sections_by_term(changed_since_date, term, existing={}):
                                      section_ref.course_number,
                                      section_ref.section_id.upper())
 
-        if not existing.get(course_id, None):
+        if course_id not in existing:
             try:
                 label = section_ref.section_label()
                 section = get_section_by_label(label)
@@ -201,7 +201,7 @@ def get_new_sections_by_term(changed_since_date, term, existing={}):
             if section.is_independent_study:
                 for instructor in section.get_instructors():
                     ind_course_id = '%s-%s' % (course_id, instructor.uwregid)
-                    if not existing.get(ind_course_id, None):
+                    if ind_course_id not in existing:
                         sections.append({'course_id': ind_course_id,
                                          'primary_id': primary_id})
             else:

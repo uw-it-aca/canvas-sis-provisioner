@@ -54,7 +54,7 @@ class Builder(object):
         if force is True:
             self.data.add(UserCSV(person))
         else:
-            user = User.objects.add_user(person)
+            user = User.objects.get_user(person)
             if user.provisioned_date is None:
                 if (self.data.add(UserCSV(person)) and user.queue_id is None):
                     user.queue_id = self.queue_id

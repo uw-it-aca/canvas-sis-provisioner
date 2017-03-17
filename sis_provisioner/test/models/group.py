@@ -33,7 +33,8 @@ class GroupModelTest(TestCase):
                                          post_status=200,
                                          canvas_progress=100,
                                          monitor_date=dt))
-        mock_update.assert_called_with(queue_id=None, provisioned_date=dt)
+        mock_update.assert_called_with(
+            priority=PRIORITY_DEFAULT, queue_id=None, provisioned_date=dt)
 
         r = Group.objects.dequeue(Import(pk=1, priority=PRIORITY_HIGH))
         mock_update.assert_called_with(queue_id=None)

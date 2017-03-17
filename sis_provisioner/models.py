@@ -173,6 +173,7 @@ class CourseManager(models.Manager):
         kwargs = {'queue_id': None}
         if sis_import.is_imported():
             kwargs['provisioned_date'] = sis_import.monitor_date
+            kwargs['priority'] = PRIORITY_DEFAULT
 
         self.queued(sis_import.pk).update(**kwargs)
 
@@ -556,6 +557,7 @@ class UserManager(models.Manager):
         kwargs = {'queue_id': None}
         if sis_import.is_imported():
             kwargs['provisioned_date'] = sis_import.monitor_date
+            kwargs['priority'] = PRIORITY_DEFAULT
 
         self.queued(sis_import.pk).update(**kwargs)
 
@@ -573,7 +575,7 @@ class UserManager(models.Manager):
                 except Exception as err:
                     logger.info('User: SKIP %s, %s' % (member.name, err))
 
-    def _find_existing(self, net_id, reg_id, priority=PRIORITY_HIGH):
+    def _find_existing(self, net_id, reg_id):
         if net_id is None:
             raise MissingLoginIdException()
 
@@ -585,13 +587,13 @@ class UserManager(models.Manager):
             user = users[0]
         elif len(users) > 1:
             users.delete()
-            user = User(net_id=net_id, reg_id=reg_id, priority=priority)
+            user = User(net_id=net_id, reg_id=reg_id, priority=PRIORITY_HIGH)
             user.save()
 
         return user
 
     def update_priority(self, person, priority):
-        user = self._find_existing(person.uwnetid, person.uwregid, priority)
+        user = self._find_existing(person.uwnetid, person.uwregid)
 
         if (user is not None and user.priority != priority):
             user.priority = priority
@@ -599,8 +601,16 @@ class UserManager(models.Manager):
 
         return user
 
+    def get_user(self, person):
+        user = self._find_existing(person.uwnetid, person.uwregid)
+
+        if user is None:
+            user = self.add_user(person)
+
+        return user
+
     def add_user(self, person, priority=PRIORITY_HIGH):
-        user = self._find_existing(person.uwnetid, person.uwregid, priority)
+        user = self._find_existing(person.uwnetid, person.uwregid)
 
         if user is None:
             user = User()
@@ -729,6 +739,7 @@ class GroupManager(models.Manager):
         kwargs = {'queue_id': None}
         if sis_import.is_imported():
             kwargs['provisioned_date'] = sis_import.monitor_date
+            kwargs['priority'] = PRIORITY_DEFAULT
 
         self.queued(sis_import.pk).update(**kwargs)
 
