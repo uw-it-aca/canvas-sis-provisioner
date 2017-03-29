@@ -141,7 +141,7 @@ class EnrollmentCSVTest(TestCase):
             reg0 = registrations[0]
             reg1 = registrations[1]
 
-            self.assertEquals(str(EnrollmentCSV(registration=reg0)), ',,260A0DEC95CB11D78BAA000629C31437,Student,,2013-winter-DROP_T-100-B--,inactive,\n')
+            self.assertEquals(str(EnrollmentCSV(registration=reg0)), ',,260A0DEC95CB11D78BAA000629C31437,Student,,2013-winter-DROP_T-100-B--,active,\n')
             self.assertEquals(str(EnrollmentCSV(registration=reg1)), ',,9136CCB8F66711D5BE060004AC494FFE,Student,,2013-winter-DROP_T-100-B--,active,\n')
 
 
