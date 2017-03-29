@@ -218,9 +218,11 @@ def get_registrations_by_section(section):
     registrations = get_all_registrations_by_section(
         section, transcriptable_course='all')
 
-    # Sort by regid-duplicate code, and keep the last one
-    registrations.sort(key=lambda r: (r.person.uwregid, r.duplicate_code))
+    # Sort by regid, is_active, duplicate code
+    registrations.sort(key=lambda r: (
+        r.person.uwregid, r.is_active, r.duplicate_code))
 
+    # Keep the last instance of a regid
     uniques = {}
     for registration in registrations:
         uniques[registration.person.uwregid] = registration
