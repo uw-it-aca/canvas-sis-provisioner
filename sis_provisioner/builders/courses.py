@@ -68,21 +68,18 @@ class CourseBuilder(Builder):
         canvas_sections = get_sis_sections_for_course(course_id)
 
         if len(section.linked_section_urls):
-            # Don't alter the term in progress, remove this line after 3/28/17
-            if section.term.canvas_sis_id() != '2017-winter':
-                dummy_section_id = '%s--' % course_id
-                for s in canvas_sections:
-                    if s.sis_section_id == dummy_section_id:
-                        # Section has linked sections, but was originally
-                        # provisioned with a dummy section, which will be
-                        # removed
-                        self.logger.info('Remove dummy section for %s' % (
-                            course_id))
-                        self.data.add(SectionCSV(
-                            section_id=dummy_section_id,
-                            course_id=course_id,
-                            name=section_short_name(section),
-                            status='deleted'))
+            dummy_section_id = '%s--' % course_id
+            for s in canvas_sections:
+                if s.sis_section_id == dummy_section_id:
+                    # Section has linked sections, but was originally
+                    # provisioned with a dummy section, which will be
+                    # removed
+                    self.logger.info('Remove dummy section for %s' % course_id)
+                    self.data.add(SectionCSV(
+                        section_id=dummy_section_id,
+                        course_id=course_id,
+                        name=section_short_name(section),
+                        status='deleted'))
 
             for url in section.linked_section_urls:
                 try:
