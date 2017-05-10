@@ -44,7 +44,6 @@ INSTALLED_APPS = (
     'blti',
     'canvas_admin',
     'astra',
-    'events',
     'groups',
     'libguide',
     'course_roster',
