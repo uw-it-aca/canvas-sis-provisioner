@@ -14,9 +14,15 @@ setup(
     packages=['sis_provisioner'],
     include_package_data=True,
     install_requires = [
-        'setuptools',
-        'django',
-        'nameparser>=0.2.8'
+        'Django==1.10.5',
+        'urllib3==1.10.2',
+        'PyCrypto',
+        'PyOpenSSL',
+        'oauth>=1.0.1',
+        'python-dateutil',
+        'nameparser>=0.2.9',
+        'mock==2.0.0',
+        'django-aws-message>=0.1',
     ],
     license='Apache License, Version 2.0',  # example license
     description='An application that manages SIS imports to Canvas',
