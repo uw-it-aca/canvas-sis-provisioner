@@ -31,6 +31,10 @@ class GroupUnauthorizedException(GroupPolicyException):
     pass
 
 
+class GroupEventException(Exception):
+    pass
+
+
 class CoursePolicyException(Exception):
     pass
 
@@ -48,4 +52,12 @@ class EmptyQueueException(Exception):
 
 
 class MissingImportPathException(Exception):
+    pass
+
+
+class EventException(Exception):
+    pass
+
+
+class UnhandledActionCodeException(Exception):
     pass

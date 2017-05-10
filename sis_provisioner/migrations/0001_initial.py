@@ -195,6 +195,72 @@ class Migration(migrations.Migration):
             },
             bases=(models.Model,),
         ),
+        migrations.CreateModel(
+            name='EnrollmentLog',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('minute', models.IntegerField(default=0)),
+                ('event_count', models.SmallIntegerField(default=0)),
+            ],
+            options={
+                'db_table': 'events_enrollmentlog',
+            },
+        ),
+        migrations.CreateModel(
+            name='GroupEvent',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('group_id', models.CharField(max_length=256)),
+                ('reg_id', models.CharField(max_length=32, unique=True)),
+            ],
+            options={
+                'db_table': 'events_groupevent',
+            },
+        ),
+        migrations.CreateModel(
+            name='GroupLog',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('minute', models.IntegerField(default=0)),
+                ('event_count', models.SmallIntegerField(default=0)),
+            ],
+            options={
+                'db_table': 'events_grouplog',
+            },
+        ),
+        migrations.CreateModel(
+            name='GroupRename',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('old_name', models.CharField(max_length=256)),
+                ('new_name', models.CharField(max_length=256)),
+            ],
+            options={
+                'db_table': 'events_grouprename',
+            },
+        ),
+        migrations.CreateModel(
+            name='InstructorLog',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('minute', models.IntegerField(default=0)),
+                ('event_count', models.SmallIntegerField(default=0)),
+            ],
+            options={
+                'db_table': 'events_instructorlog',
+            },
+        ),
+        migrations.CreateModel(
+            name='PersonLog',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('minute', models.IntegerField(default=0)),
+                ('event_count', models.SmallIntegerField(default=0)),
+            ],
+            options={
+                'db_table': 'events_personlog',
+            },
+        ),
         migrations.AlterUniqueTogether(
             name='instructor',
             unique_together=set([('section_id', 'reg_id')]),

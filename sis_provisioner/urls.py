@@ -8,8 +8,8 @@ from sis_provisioner.views.terms import TermListView
 from sis_provisioner.views.canvas import CanvasCourseView, CanvasAccountView
 from sis_provisioner.views.imports import ImportView, ImportListView
 from sis_provisioner.views.jobs import JobView, JobListView
+from sis_provisioner.views.events import EventListView
 from astra.views import AdminSearch, AccountSearch, AccountSoC
-from events.views import EventListView
 
 
 urlpatterns = [
