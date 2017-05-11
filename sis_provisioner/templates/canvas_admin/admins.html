@@ -1,0 +1,28 @@
+{% extends 'canvas_admin/base.html' %}
+
+{% block admin_content %}
+
+<h2>Canvas Admins <span id="admin-count" class="badge">0</span></h2>
+
+<div class="user-manager pull-left">
+    <div class="query-tabs clearfix">
+      <div id="show-deleted" class="checkbox" style="display: none; padding-right: 20px;">
+        Deleted Administrators <input type="checkbox" checked data-toggle="toggle" data-width="80" data-on="<span style='padding-left: 8px;'>Hidden</span>" data-off="<span style='padding-left: 16px;'>Shown</span>">
+      </div>
+      <table id="admin-table" class="admin-table table table-striped">
+        <thead>
+          <tr>
+            <th>UW Net ID</th>
+            <th>Role</th>
+            <th>Account ID</th>
+            <th>Added Date</th>
+            <th>Deleted</th>
+          </tr>
+        </thead>
+        <tbody class="scrollable"><tr><td colspan="5" class="waiting"><i class="fa fa-spin"></i></td></tr></tbody>
+      </table>
+    </div>
+</div>
+
+{% include "handlebars/canvas_admin/admin_table_row.html" %}
+{% endblock %}

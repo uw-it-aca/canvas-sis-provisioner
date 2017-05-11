@@ -1,0 +1,62 @@
+{% extends 'canvas_admin/base.html' %}
+
+{% block admin_content %}
+<h2>Search Courses</h2>
+
+<div class="course-filter query-tabs clearfix">
+
+    <ul class="nav nav-tabs" style="margin-bottom: 1em;">
+        <li role="presentation" class="active"><a href="#search-tab-course" aria-controls="search-tab-course" role="tab" data-toggle="tab">... by Course</a></li>
+        <li role="presentation"><a href="#search-tab-instructor" aria-controls="search-tab-instructor" role="tab" data-toggle="tab">... by Instructor</a></li>
+        <li role="presentation"><a href="#search-tab-sisid" aria-controls="search-tab-sisid" role="tab" data-toggle="tab">... by SIS ID</a></li>
+        <li role="presentation"><a href="#search-tab-canvasurl" aria-controls="search-tab-canvasurl" role="tab" data-toggle="tab">... by Canvas URL</a></li>
+    </ul>
+
+    <div class="tab-content">
+        <div id="search-tab-course" class="control-group validate-group form-inline tab-pane active">
+
+            <p><label for="courseTerm">Term:</label> <select id="courseTerm" class="valid-require form-control"></select></p>
+
+            <p><label for="courseCurriculum">Curriculum:</label> <input class="input-small validate valid-require valid-nonnull form-control" id="courseCurriculum" placeholder="MATH" size="6" type="text" autofocus />&nbsp;&nbsp;
+
+            <label for="courseNumber">Number:</label> <input class="input-small validate valid-num form-control" id="courseNumber" placeholder="124" size="6" type="text">&nbsp;&nbsp;
+
+            <label for="courseSection">Section:</label> <input class="input-small form-control" id="courseSection" placeholder="AA" size="6" type="text" maxlength="2"></p>
+
+        </div>
+        <div id="search-tab-instructor" class="control-group validate-group form-inline tab-pane">
+            <p><label for="instructorTerm">Term:</label> <select id="instructorTerm" class="form-control"></select></p>
+
+            <p><select id="netregid" class="form-control">
+                <option value="net_id">Instructor NetId:</option>
+                <option value="reg_id">Instructor RegId:</option>
+            </select>
+            <input class="validate valid-nonnull valid-require form-control" id="instructorID" placeholder="UW ID" size="40" type="text" autofocus /></p>
+        </div>
+        <div id="search-tab-sisid" class="control-group validate-group form-inline tab-pane">
+            <p><label for="courseID">Course ID:</label> <input class="validate valid-require valid-nonnull form-control" id="courseID" placeholder="2012-spring-psych-999-XX" size="30" type="text" autofocus /></p>
+        </div>
+        <div id="search-tab-canvasurl" class="control-group validate-group form-inline tab-pane">
+            <p><label for="canvasURL">Canvas URL:</label> <input class="validate valid-require valid-nonnull form-control" id="canvasURL" placeholder="https://canvas.uw.edu/courses/000000" size="60" type="text" autofocus /></p>
+        </div>
+    </div>
+</div>
+
+<div style="border-top:solid 1px #ddd;padding-top:10px;">
+    <button class="btn" type="button" disabled="true" id="admin_search_button">Show Matching Courses</button>
+</div>
+
+<div class="course-list">
+    <!-- just example output below -->
+    <h3 class="list-header">Search Results <span class="badge">0</span></h3>
+
+    <div class="clearfix">
+        <div class="course-info pull-left">
+            <div class="course-name">Search Results Displayed Here</div>
+        </div>
+    </div>
+</div>
+
+{% include "handlebars/canvas_admin/course_list_item.html" %}    
+{% include "handlebars/canvas_admin/waiting.html" %}
+{% endblock %}

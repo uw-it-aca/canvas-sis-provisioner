@@ -1,6 +1,6 @@
 from django.conf import settings
-from restclients.gws import GWS
-from restclients.exceptions import DataFailureException
+from uw_gws import GWS
+from restclients_core.exceptions import DataFailureException
 from sis_provisioner.dao.user import valid_net_id, valid_gmail_id
 from sis_provisioner.exceptions import (
     UserPolicyException, GroupPolicyException, GroupNotFoundException,

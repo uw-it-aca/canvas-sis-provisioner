@@ -14,7 +14,7 @@ from sis_provisioner.dao.canvas import (
 from sis_provisioner.exceptions import (
     CoursePolicyException, MissingLoginIdException, EmptyQueueException,
     MissingImportPathException)
-from restclients.exceptions import DataFailureException
+from restclients_core.exceptions import DataFailureException
 from urllib3.exceptions import MaxRetryError
 from datetime import datetime, timedelta
 from logging import getLogger

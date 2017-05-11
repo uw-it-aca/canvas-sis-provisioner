@@ -1,0 +1,11 @@
+{% load templatetag_handlebars %}
+{% tplhandlebars "provision-error-list-item" %}
+ {{# each errors}}
+  <li>
+<!--    <a href="javascript:void(0);" class="action action-requeue" title="Requeue course"></a> -->
+<!--    <a href="javascript:void(0);" class="action action-delete" title="Remove course"></a> -->
+    <h5>{{course_id}} ({{priority}})</h5>
+    <p>Error: {{provisioned_status}}</p>
+  </li>
+ {{/each}}
+{% endtplhandlebars %}

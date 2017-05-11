@@ -1,0 +1,31 @@
+{% load templatetag_handlebars %}
+{% tplhandlebars "enrollment-list-item" %}
+  <h3 class="list-header">{{header}} <span class="badge">{{enrollment_count}}</span></h3>
+  <div class="panel-group" id="enrollment-accordion">
+{{# each enrollments}}
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h5 class="panel-title">
+        <a class='accordion-toggle' data-toggle="collapse" data-target="#collapse_{{this.random}}" data-parent="#enrollment-accordion">
+          <i class="fa fa-chevron-right"></i>
+        </a>
+        <span class="course-name">{{this.course_id}}</span> <span>{{ this.reg_id }}</span> <span class="enrollment-{{this.status}}">{{this.status}}</span>
+      </h5>
+    </div>
+    <div id="collapse_{{this.random}}" class="panel-collapse collapse">
+      <div class="panel-body">
+        <ul>
+          <li><a class="js-sws-person" href="/restclients/view/pws/identity/v1/person/{{this.reg_id}}"><i class="fa fa-database"></i> View user details in the Person Web Service</a></li>
+          <li><a class="js-sws-enrollment" href="/restclients/view/sws/student/v5/enrollment?reg_id={{this.reg_id}}"><i class="fa fa-database"></i> View user enrollments in the Student Web Service</a></li>
+          {{# if this.sws_id}}
+          <li><a class="js-sws-course" href="/restclients/view/sws/student/v5/course/{{this.sws_id}}" title="View {{this.course_id}} in SWS"><i class="fa fa-database"></i> View course details in the Student Web Service</a></li>
+          {{/if}}
+          <li><i class="fa fa-spinner fa-spin"></i> This course <span class="workflow_state">published state is unknown</span> in Canvas</li>
+          <li><a class="canvas-course-link" data-course-id="{{this.course_id}}" href="javascript:void(0);" title="View {{this.course_id}} in Canvas" target="_blank"><i class="fa fa-external-link"></i> View this course in Canvas</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+{{/each}}
+  </div>
+{% endtplhandlebars %}

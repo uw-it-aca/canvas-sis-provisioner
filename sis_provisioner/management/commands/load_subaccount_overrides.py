@@ -2,8 +2,8 @@ from django.core.management.base import BaseCommand
 from optparse import make_option
 from sis_provisioner.models import SubAccountOverride
 from sis_provisioner.builders import Builder
-from restclients.sws.section import get_joint_sections
-from restclients.pws import PWS
+from uw_sws.section import get_joint_sections
+from uw_pws import PWS
 import json
 import sys
 import re

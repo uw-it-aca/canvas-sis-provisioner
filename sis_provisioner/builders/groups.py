@@ -11,7 +11,7 @@ from sis_provisioner.dao.canvas import (
 from sis_provisioner.models import Group, GroupMemberGroup, CourseMember
 from sis_provisioner.exceptions import (
     CoursePolicyException, GroupPolicyException)
-from restclients.exceptions import DataFailureException
+from restclients_core.exceptions import DataFailureException
 
 
 class GroupBuilder(Builder):

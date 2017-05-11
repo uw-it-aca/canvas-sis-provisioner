@@ -1,11 +1,10 @@
 from django.core.management.base import BaseCommand
-from restclients.canvas.accounts import Accounts as CanvasAccounts
-from restclients.canvas.courses import Courses as CanvasCourses
-from restclients.canvas.sections import Sections as CanvasSections
-from restclients.sws import SWS
-from restclients.exceptions import DataFailureException
-from sis_provisioner.models import Course
-from sis_provisioner.models import PRIORITY_HIGH
+from uw_canvas.accounts import Accounts as CanvasAccounts
+from uw_canvas.courses import Courses as CanvasCourses
+from uw_canvas.sections import Sections as CanvasSections
+from restclients_core.exceptions import DataFailureException
+from sis_provisioner.models import Course, PRIORITY_HIGH
+from sis_provisioner.dao.course import get_section_by_label
 from optparse import make_option
 import re
 
@@ -32,7 +31,6 @@ class Command(BaseCommand):
                     default=False, help='print deltas, do not update Course models'),
         )
 
-    _sws = SWS()
     _re_canvas_id = re.compile(r'^\d+$')
     _re_independent_study = re.compile(r"""[0-9]{4}-
                                            (winter|spring|summer|autumn)-
@@ -121,7 +119,7 @@ class Command(BaseCommand):
         label = "%s,%s,%s,%s/%s" % (str(year), quarter.lower(),
                                     curr_abbr.upper(), course_num, section_id)
 
-        return self._sws.get_section_by_label(label)
+        return get_section_by_label(label)
 
     def _section_data_from_id(self, section_id):
         section_id = re.sub(r'--$', '', section_id)

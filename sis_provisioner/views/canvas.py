@@ -1,11 +1,14 @@
-import json
-from logging import getLogger
 from django.conf import settings
 from sis_provisioner.models import Course
-from sis_provisioner.views.rest_dispatch import RESTDispatch
-from sis_provisioner.dao.canvas import get_account_by_id, get_course_by_id,\
-    get_course_by_sis_id
-from canvas_admin.views import can_view_source_data
+from sis_provisioner.views.rest_dispatch import (
+    RESTDispatch, OpenRESTDispatch)
+from sis_provisioner.views.admin import can_view_source_data
+from sis_provisioner.dao.canvas import (
+    get_account_by_id, get_course_by_id, get_course_by_sis_id)
+from logging import getLogger
+from bs4 import BeautifulSoup
+import urllib2
+import json
 import re
 
 
@@ -83,3 +86,56 @@ class CanvasAccountView(RESTDispatch):
             return self.json_response(
                 '{"error": "Unable to retrieve account: %s"' % (e) + ' }',
                 status=400)
+
+
+class CanvasStatus(OpenRESTDispatch):
+    def __init__(self):
+        self.status_url = 'http://status.instructure.com'
+
+    def GET(self, request, **kwargs):
+        try:
+            page = urllib2.urlopen(self.status_url)
+            soup = BeautifulSoup(page, 'html.parser')
+            components = []
+            for x in soup.body.find_all(
+                    'div', class_='component-inner-container'):
+                name = x.find(
+                    'span', class_='name').get_text(strip=True).encode('utf-8')
+                status = x.find(
+                    'span', class_='component-status').get_text(
+                        strip=True).encode('utf-8')
+                state = 'status-unknown'
+
+                for c in x['class']:
+                    if 'status-' in c:
+                        state = c
+                        break
+
+                try:
+                    name = re.sub(r'Support:', '', name)
+                    name = re.sub(r'[^\/\w\s]', '', name)
+                    name = name.strip()
+                except (TypeError, AttributeError):
+                    pass
+
+                components.append({
+                    'url': self.status_url,
+                    'component': name,
+                    'status': status,
+                    'state': state
+                })
+
+        except Exception, err:
+            components = [{
+                'component': 'Canvas',
+                'status': 'Unknown',
+                'state': 'status-unknown',
+                'url': self.status_url
+            }, {
+                'component': 'Status currently unavailable',
+                'status': 'Unknown',
+                'state':"status-unknown",
+                'url': self.status_url
+            }]
+
+        return self.json_response(json.dumps(components))

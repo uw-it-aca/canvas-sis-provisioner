@@ -1,16 +1,18 @@
 sudo: false
 language: python
 python:
-  - "2.7"
+- '2.7'                                                                         
+- '3.4'                                                                         
+- '3.5'                                                                         
+- '3.6'
 install: pip install -r requirements.txt
 before_script:
-  - pip install coverage
-  - pip install python-coveralls
-  - pip install pep8
-  - cp travis-ci/manage.py manage.py
+- pip install coverage
+- pip install python-coveralls
+- pip install pep8
+- cp travis-ci/manage.py manage.py
 script:
-  - pep8 sis_provisioner/ --exclude=migrations,management,test
-  - coverage run --source=sis_provisioner/ manage.py test sis_provisioner
-after_script:
-  - coveralls
-notifications:
+- pep8 sis_provisioner/ --exclude=migrations,management,test
+- coverage run --source=sis_provisioner/ manage.py test sis_provisioner
+after_success:
+- coveralls

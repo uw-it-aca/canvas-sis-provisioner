@@ -1,18 +1,17 @@
 from django.conf import settings
-from restclients.canvas import Canvas
-from restclients.canvas.accounts import Accounts
-from restclients.canvas.courses import Courses
-from restclients.canvas.sections import Sections
-from restclients.canvas.enrollments import Enrollments
-from restclients.canvas.reports import Reports
-from restclients.canvas.roles import Roles
-from restclients.canvas.users import Users
-from restclients.canvas.terms import Terms
-from restclients.canvas.sis_import import SISImport
-from restclients.models.canvas import (
-    CanvasEnrollment, SISImport as SISImportModel)
-from restclients.exceptions import DataFailureException
-from restclients.util.retry import retry
+from uw_canvas import Canvas
+from uw_canvas.accounts import Accounts
+from uw_canvas.courses import Courses
+from uw_canvas.sections import Sections
+from uw_canvas.enrollments import Enrollments
+from uw_canvas.reports import Reports
+from uw_canvas.roles import Roles
+from uw_canvas.users import Users
+from uw_canvas.terms import Terms
+from uw_canvas.sis_import import SISImport
+from uw_canvas.models import CanvasEnrollment, SISImport as SISImportModel
+from restclients_core.exceptions import DataFailureException
+from sis_provisioner.util.retry import retry
 from sis_provisioner.dao.course import (
     valid_academic_course_sis_id, valid_academic_section_sis_id)
 from sis_provisioner.dao import localize

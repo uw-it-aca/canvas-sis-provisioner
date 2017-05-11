@@ -38,11 +38,9 @@ INSTALLED_APPS = (
     'compressor',
     'templatetag_handlebars',
     'sis_provisioner.apps.SISProvisionerConfig',
-    'restclients',
     'userservice',
     'authz_group',
     'blti',
-    'canvas_admin',
     'astra',
     'groups',
     'libguide',
@@ -51,7 +49,8 @@ INSTALLED_APPS = (
     'analytics',
     'grade_conversion_calculator',
     'grading_standard',
-    'lti_manager'
+    'lti_manager',
+    'rc_django',
 )
 
 MIDDLEWARE_CLASSES = (
