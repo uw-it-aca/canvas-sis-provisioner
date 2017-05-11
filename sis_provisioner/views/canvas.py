@@ -134,7 +134,7 @@ class CanvasStatus(OpenRESTDispatch):
             }, {
                 'component': 'Status currently unavailable',
                 'status': 'Unknown',
-                'state':"status-unknown",
+                'state': 'status-unknown',
                 'url': self.status_url
             }]
 
