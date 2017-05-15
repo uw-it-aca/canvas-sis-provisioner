@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 from django.db import models, migrations
+import django.db.models.deletion
 
 
 class Migration(migrations.Migration):
@@ -305,6 +306,39 @@ class Migration(migrations.Migration):
                 'db_table': 'astra_admin',
             },
             bases=(models.Model,),
+        ),
+        migrations.CreateModel(
+            name='ExternalTool',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('canvas_id', models.CharField(max_length=20, unique=True)),
+                ('config', models.TextField()),
+                ('changed_by', models.CharField(max_length=32)),
+                ('changed_date', models.DateTimeField()),
+                ('provisioned_date', models.DateTimeField(null=True)),
+            ],
+            options={
+                'db_table': 'lti_manager_externaltool',
+            },
+            bases=(models.Model,),
+        ),
+        migrations.CreateModel(
+            name='ExternalToolAccount',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('account_id', models.CharField(max_length=100, unique=True)),
+                ('sis_account_id', models.CharField(max_length=100, null=True)),
+                ('name', models.CharField(max_length=250, null=True)),
+            ],
+            options={
+                'db_table': 'lti_manager_externaltoolaccount',
+            },
+            bases=(models.Model,),
+        ),
+        migrations.AddField(
+            model_name='externaltool',
+            name='account',
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='sis_provisioner.ExternalToolAccount'),
         ),
         migrations.AlterUniqueTogether(
             name='instructor',
