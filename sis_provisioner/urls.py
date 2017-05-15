@@ -2,7 +2,7 @@ from django.conf.urls import url, include
 from django.views.generic.base import TemplateView
 from sis_provisioner.views.admin import (
     ImportStatus, ManageUsers, ManageCourses, ManageGroups, ManageAdmins,
-    ManageJobs)
+    ManageJobs, ManageExternalTools)
 from sis_provisioner.views.course import CourseView, CourseListView
 from sis_provisioner.views.enrollment import EnrollmentListView
 from sis_provisioner.views.group import GroupListView
@@ -14,7 +14,8 @@ from sis_provisioner.views.imports import ImportView, ImportListView
 from sis_provisioner.views.jobs import JobView, JobListView
 from sis_provisioner.views.events import EventListView
 from sis_provisioner.views.astra import AdminSearch, AccountSearch, AccountSoC
-from lti_manager.views import ManageExternalTools
+from sis_provisioner.views.external_tools import (
+    ExternalToolView, ExternalToolListView)
 
 
 urlpatterns = [
@@ -29,7 +30,6 @@ urlpatterns = [
     url(r'^jobs$', ManageJobs, name='ManageJobs'),
     url(r'^external_tools$', ManageExternalTools,
         name='admin_manage_external_tools'),
-    url(r'^lti_manager/', include('lti_manager.urls')),
 
     # API urls
     url(r'api/v1/canvas$', CanvasStatus().run)
@@ -54,4 +54,7 @@ urlpatterns = [
     url(r'api/v1/soc/?$', AccountSoC().run),
     url(r'api/v1/job/(?P<job_id>[0-9]+)?$', JobView().run),
     url(r'api/v1/jobs/?$', JobListView().run),
+    url(r'api/v1/external_tool/(?P<canvas_id>[0-9]+)?$',
+        ExternalToolView().run),
+    url(r'api/v1/external_tools/?$', ExternalToolListView().run),
 ]
