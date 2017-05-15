@@ -1,4 +1,3 @@
 -e .
--e git+https://github.com/uw-it-aca/canvas-admin-reconciler#egg=astra-reconciler
 -e git+https://github.com/uw-it-aca/canvas-analytics#egg=canvas-analytics
 -e git+https://github.com/uw-it-aca/canvas-lti-manager/#egg=lti-manager
