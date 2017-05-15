@@ -72,7 +72,7 @@ class Command(BaseCommand):
                         and re.match('^%s-' % options['term'], course.sis_course_id)
                         and not self._is_independent_study(course.sis_course_id)):
                         n_courses += 1
-                        sections = canvas_sections.get_sections_with_students_in_course_by_sis_id(course.sis_course_id) 
+                        sections = canvas_sections.get_sections_with_students_in_course_by_sis_id(course.sis_course_id)
                         for section in sections:
                             if section.sis_section_id is not None:
                                 section_id = section.sis_section_id
@@ -80,7 +80,7 @@ class Command(BaseCommand):
 
                                 try:
                                     s = self.get_section_by_id(section_id)
-                                except DataFailureException, err:
+                                except DataFailureException as err:
                                     print '# BAD SECTION: %s' % err
                                     continue
 
@@ -108,7 +108,7 @@ class Command(BaseCommand):
                               % (n_bad_sections, n_sections,
                                  ((n_bad_sections/float(n_sections)) * 100),
                                  n_courses, options['term']))
-                
+
     def get_section_by_id(self, section_id):
         """
         Fetch the section resource for the passed section ID.

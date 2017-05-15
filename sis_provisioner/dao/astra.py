@@ -65,7 +65,7 @@ class HTTPSConnectionClientCertV3(httplib.HTTPSConnection):
         try:
             self.sock = ssl.wrap_socket(sock, self.key_file, self.cert_file,
                                         ssl_version=ssl.PROTOCOL_TLSv1)
-        except ssl.SSLError, e:
+        except ssl.SSLError as err:
             self.sock = ssl.wrap_socket(sock, self.key_file, self.cert_file,
                                         ssl_version=ssl.PROTOCOL_SSLv3)
 
@@ -90,7 +90,7 @@ class Admins():
         try:
             result = self._astra.service[port][methodName](params)
             return result
-        except WebFault, err:
+        except WebFault as err:
             self._log.error(err)
         except:
             self._log.error('Other error: ' + str(sys.exc_info()[1]))
@@ -131,7 +131,7 @@ class Admins():
 
                 User.objects.add_user(person)
 
-            except Exception, err:
+            except Exception as err:
                 self._log.info('Skipped admin: %s (%s)' % (netid, err))
                 return
 
@@ -191,7 +191,7 @@ class Admins():
                         soc[0]._code,
                         self._re_non_academic_code.match(soc[0]._code).group(1)
                     )
-                except Exception, err:
+                except Exception as err:
                     raise ASTRAException('Unknown non-academic code: %s %s' % (
                         soc[0]._code, err))
             elif soc[0]._type == 'SWSCampus':
@@ -299,8 +299,8 @@ class Admins():
                         raise ASTRAException(
                             "Missing required SpanOfControl: %s" % auth.party)
 
-                except ASTRAException, errstr:
-                    self._log.error('%s\n AUTH: %s' % (errstr, auth))
+                except ASTRAException as errstr:
+                    self._log.error('%s\n AUTH: %s' % (err, auth))
 
         # log who fell from ASTRA
         for d in Admin.objects.get_deleted():

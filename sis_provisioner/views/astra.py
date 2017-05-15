@@ -96,7 +96,8 @@ class AccountSearch(RESTDispatch):
             'added_date': account.added_date.isoformat() if (
                 account.added_date is not None) else '',
             'is_deleted': account.is_deleted,
-            'is_blessed_for_course_request': account.is_blessed_for_course_request
+            'is_blessed_for_course_request': (
+                account.is_blessed_for_course_request),
         }
 
 
