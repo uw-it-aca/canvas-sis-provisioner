@@ -43,6 +43,10 @@ def get_account_by_sis_id(sis_account_id):
     return Accounts().get_account_by_sis_id(sis_account_id)
 
 
+def get_sub_accounts(account_id):
+    return Accounts().get_sub_accounts(account_id)
+
+
 def get_all_sub_accounts(account_id):
     return Accounts().get_all_sub_accounts(account_id)
 
