@@ -61,3 +61,7 @@ class EventException(Exception):
 
 class UnhandledActionCodeException(Exception):
     pass
+
+
+class ASTRAException(Exception):
+    pass

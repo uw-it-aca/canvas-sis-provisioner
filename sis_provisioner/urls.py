@@ -13,7 +13,7 @@ from sis_provisioner.views.canvas import (
 from sis_provisioner.views.imports import ImportView, ImportListView
 from sis_provisioner.views.jobs import JobView, JobListView
 from sis_provisioner.views.events import EventListView
-from astra.views import AdminSearch, AccountSearch, AccountSoC
+from sis_provisioner.views.astra import AdminSearch, AccountSearch, AccountSoC
 from lti_manager.views import ManageExternalTools
 
 

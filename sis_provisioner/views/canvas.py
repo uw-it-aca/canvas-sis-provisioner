@@ -125,7 +125,7 @@ class CanvasStatus(OpenRESTDispatch):
                     'state': state
                 })
 
-        except Exception, err:
+        except Exception as err:
             components = [{
                 'component': 'Canvas',
                 'status': 'Unknown',
