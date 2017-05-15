@@ -1,7 +1,4 @@
 -e .
--e git+https://github.com/uw-it-aca/grading-standard-lti#egg=grading_standard
--e git+https://github.com/uw-it-aca/grade-conversion-calculator#egg=grade_conversion_calculator
 -e git+https://github.com/uw-it-aca/canvas-admin-reconciler#egg=astra-reconciler
 -e git+https://github.com/uw-it-aca/canvas-analytics#egg=canvas-analytics
--e git+https://github.com/uw-it-aca/course-roster-lti#egg=course-roster-lti
 -e git+https://github.com/uw-it-aca/canvas-lti-manager/#egg=lti-manager
