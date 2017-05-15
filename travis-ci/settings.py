@@ -47,7 +47,6 @@ INSTALLED_APPS = (
     'canvas_users',
     'analytics',
     'grading_standard',
-    'lti_manager',
     'rc_django',
 )
 

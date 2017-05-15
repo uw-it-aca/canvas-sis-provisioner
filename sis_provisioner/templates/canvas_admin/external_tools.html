@@ -1,0 +1,107 @@
+{% extends 'supporttools/base.html' %}
+
+{% load compress %}
+{% load staticfiles %}
+
+{% block extra_css %}
+<!-- add admin mobile styles -->
+<link rel="stylesheet" type="text/css" href="//cdn.datatables.net/1.10.4/css/jquery.dataTables.min.css" />
+<link rel="stylesheet" type="text/css" href="//cdn.datatables.net/plug-ins/9dcbecd42ad/integration/bootstrap/3/dataTables.bootstrap.css" />
+<link href="https://gitcdn.github.io/bootstrap-toggle/2.2.0/css/bootstrap-toggle.min.css" rel="stylesheet">
+<link rel="stylesheet" type="text/css" href="{% static 'vendor/css/jsoneditor.css' media='screen, handheld' %}" />
+{% compress css %}
+<link rel="stylesheet" type="text/less" href="{% static 'canvas_admin/css/mobile.less' media='screen, handheld' %}" />
+{% endcompress %}
+
+{% if not request.is_mobile and not request.is_tablet %}
+<!-- add admin desktop styles -->
+{% compress css %}
+<link rel="stylesheet" type="text/less" href="{% static 'canvas_admin/css/desktop.less' media='screen and (min-width: 480px)' %}" />
+{% endcompress %}
+{% endif %}
+<style>
+  .json-editor { padding-top: 0px; }
+  .json-editor .property { width: 160px; }
+  .json-editor .item.appender .property { width: 160px; }
+  .json-editor .value { width: 400px; }
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+{% csrf_token %}
+
+<div id="main" role="main">
+    <div class="inner">
+        <h2>Manage External Tools</h2>
+
+        {% if not read_only %}
+        <div class="pull-right">
+            <button type="button" class="btn btn-primary et-add" title="Add an external tool"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Add external tool</button>
+        </div>
+        {% endif %}
+
+        <div class="user-manager pull-left">
+            <div class="query-tabs clearfix">
+                <table id="external-tools-table" class="admin-table table table-striped">
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                        <th>Canvas ID</th>
+                        <th>Subaccount</th>
+                        <th>Consumer Key</th>
+                        <th>Last Changed</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody class="scrollable"><!-- <tr><td colspan="4" class="waiting"><i class="fa fa-spin"></i></td></tr>--></tbody>
+                </table>
+            </div>
+        </div>
+        <div id="external-tool-editor" class="modal fade" role="dialog">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h4 id="et-modal-title" class="modal-title"></h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-danger" id="et-alert" role="alert">
+                            <strong>Error:</strong> <span class="et-errors"></span>
+                        </div>
+                        <form>
+                            <div class="form-group">
+                                <label for="et-json-editor">LTI Configuration:</label>
+                                <div id="et-json-editor" class="json-editor"></div>
+                                <div style="display: none;"><textarea id="et-config-input" style="width: 300px; height: 400px;"></textarea></div>
+                            </div>
+                            <div class="form-group">
+                                <label for="et-account-input">Subaccount ID:</label><br/>
+                                <input id="et-account-input" type="text" name="name" value=""/>
+                            </div>
+                            <input id="et-id-input" type="hidden" value=""/>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary save-btn" title="Save"><span class="glyphicon" aria-hidden="true"></span>Save</button>
+                        <button type="button" class="btn btn-default cancel-btn" title="Cancel" data-dismiss="modal"><span class="glyphicon" aria-hidden="true"></span>Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% include "handlebars/canvas_admin/external_tool_table_row.html" %}
+{% endblock content %}
+
+{% block extra_js %}
+<script src="//cdn.datatables.net/1.10.4/js/jquery.dataTables.min.js"></script>
+<script src="//cdn.datatables.net/plug-ins/9dcbecd42ad/integration/bootstrap/3/dataTables.bootstrap.js"></script>
+<script src="https://gitcdn.github.io/bootstrap-toggle/2.2.0/js/bootstrap-toggle.min.js"></script>
+<script src="{% static 'vendor/js/jquery-ui-1.9.2.custom.min.js' %}"></script>
+<script src="{% static 'vendor/js/moment.min.js' %}"></script>
+<script src="{% static 'vendor/js/jquery.jsoneditor.min.js' %}"></script>
+<script src="{% static 'lti_manager/js/config.js' %}"></script>
+{% compress js %}
+<script src="{% static 'lti_manager/js/main.js' %}"></script>
+{% endcompress %}
+{% endblock extra_js %}

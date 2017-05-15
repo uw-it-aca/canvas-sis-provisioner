@@ -7,9 +7,11 @@ before_script:
 - pip install coverage
 - pip install python-coveralls
 - pip install pep8
+- npm install jshint
 - cp travis-ci/manage.py manage.py
 script:
 - pep8 sis_provisioner/ --exclude=migrations,management,test
+- jshint sis_provisioner/static/ --verbose
 - coverage run --source=sis_provisioner/ manage.py test sis_provisioner
 after_success:
 - coveralls
