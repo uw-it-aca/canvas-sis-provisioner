@@ -1,8 +1,9 @@
 from django.conf import settings
-from restclients.pws import PWS
-from restclients.gws import GWS
-from restclients.models.canvas import CanvasUser
-from restclients.exceptions import DataFailureException, InvalidGroupID
+from uw_pws import PWS
+from uw_gws import GWS
+from uw_gws.exceptions import InvalidGroupID
+from uw_canvas.models import CanvasUser
+from restclients_core.exceptions import DataFailureException
 from sis_provisioner.exceptions import (
     UserPolicyException, MissingLoginIdException, TemporaryNetidException,
     InvalidLoginIdException)

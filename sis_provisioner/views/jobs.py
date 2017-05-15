@@ -1,8 +1,8 @@
 from logging import getLogger
 from sis_provisioner.models import Job
 from sis_provisioner.views.rest_dispatch import RESTDispatch
+from sis_provisioner.views.admin import can_manage_jobs
 from userservice.user import UserService
-from canvas_admin.views import can_manage_jobs
 from django.utils.timezone import utc
 from datetime import datetime
 import json

@@ -3,9 +3,12 @@ from django.conf import settings
 from sis_provisioner.dao.course import get_section_by_label
 from sis_provisioner.dao.account import *
 from sis_provisioner.exceptions import AccountPolicyException
-from restclients.models.sws import Campus, College, Department, Curriculum
+from uw_sws.models import Campus, College, Department, Curriculum
+from uw_sws.util import fdao_sws_override
+from uw_pws.util import fdao_pws_override
 
 
+@fdao_sws_override
 class AccountPolicyTest(TestCase):
     def test_account_sis_id(self):
         self.assertEquals(account_sis_id(['abc']), 'abc')
@@ -57,9 +60,7 @@ class AccountPolicyTest(TestCase):
         with self.settings(
                 LMS_OWNERSHIP_SUBACCOUNT={
                     'PCE_OL': 'uwcourse:uweo:ol-managed',
-                    'PCE_NONE': 'uwcourse:uweo:noncredit-campus-managed'},
-                RESTCLIENTS_SWS_DAO_CLASS='restclients.dao_implementation.sws.File',
-                RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
+                    'PCE_NONE': 'uwcourse:uweo:noncredit-campus-managed'}):
 
             section = get_section_by_label('2013,spring,TRAIN,101/A')
 

@@ -1,7 +1,9 @@
 from django.test import TestCase
 from sis_provisioner.dao.canvas import *
-from restclients.models.sws import Registration
 from sis_provisioner.dao.course import get_section_by_label
+from uw_pws.util import fdao_pws_override
+from uw_sws.util import fdao_sws_override
+from uw_sws.models import Registration
 from datetime import datetime
 import mock
 
@@ -87,6 +89,8 @@ class CanvasTermsTest(TestCase):
             'abc', overrides={'xyz': {'start_at': 'somedate', 'end_at': 'anotherdate'}})
 
 
+@fdao_sws_override
+@fdao_pws_override
 class CanvasEnrollmentsTest(TestCase):
     def test_valid_enrollment_status(self):
         self.assertEquals(valid_enrollment_status('active'), True)
@@ -97,44 +101,40 @@ class CanvasEnrollmentsTest(TestCase):
         self.assertEquals(valid_enrollment_status(4), False)
 
     def test_status_from_registration(self):
-        with self.settings(
-                RESTCLIENTS_SWS_DAO_CLASS='restclients.dao_implementation.sws.File',
-                RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
+        section = get_section_by_label('2013,winter,DROP_T,100/B')
 
-            section = get_section_by_label('2013,winter,DROP_T,100/B')
+        reg = Registration(section=section,
+                           is_active=True)
+        self.assertEquals(enrollment_status_from_registration(reg), 'active')
 
-            reg = Registration(section=section,
-                               is_active=True)
-            self.assertEquals(enrollment_status_from_registration(reg), 'active')
+        reg = Registration(section=section,
+                           is_active=False,
+                           request_date=section.term.grade_submission_deadline)
+        self.assertEquals(enrollment_status_from_registration(reg), 'inactive')
 
-            reg = Registration(section=section,
-                               is_active=False,
-                               request_date=section.term.grade_submission_deadline)
-            self.assertEquals(enrollment_status_from_registration(reg), 'inactive')
+        reg = Registration(section=section,
+                           is_active=False,
+                           request_status='Added to Standby')
+        self.assertEquals(enrollment_status_from_registration(reg), 'active')
 
-            reg = Registration(section=section,
-                               is_active=False,
-                               request_status='Added to Standby')
-            self.assertEquals(enrollment_status_from_registration(reg), 'active')
+        reg = Registration(section=section,
+                           is_active=False,
+                           request_status='PENDING ADDED TO CLASS')
+        self.assertEquals(enrollment_status_from_registration(reg), 'active')
 
-            reg = Registration(section=section,
-                               is_active=False,
-                               request_status='PENDING ADDED TO CLASS')
-            self.assertEquals(enrollment_status_from_registration(reg), 'active')
+        # request_date equals term.first_day bod
+        reg = Registration(section=section,
+                           is_active=False,
+                           request_date=section.term.get_bod_first_day())
+        self.assertEquals(enrollment_status_from_registration(reg), 'deleted')
 
-            # request_date equals term.first_day bod
-            reg = Registration(section=section,
-                               is_active=False,
-                               request_date=section.term.get_bod_first_day())
-            self.assertEquals(enrollment_status_from_registration(reg), 'deleted')
-
-            # request_date equals term.census_day bod
-            reg = Registration(section=section,
-                               is_active=False,
-                               request_date = datetime(section.term.census_day.year,
-                                                       section.term.census_day.month,
-                                                       section.term.census_day.day))
-            self.assertEquals(enrollment_status_from_registration(reg), 'deleted')
+        # request_date equals term.census_day bod
+        reg = Registration(section=section,
+                           is_active=False,
+                           request_date = datetime(section.term.census_day.year,
+                                                   section.term.census_day.month,
+                                                   section.term.census_day.day))
+        self.assertEquals(enrollment_status_from_registration(reg), 'deleted')
 
     @mock.patch.object(Enrollments, 'get_enrollments_for_section')
     @mock.patch.object(Sections, 'get_sections_in_course_by_sis_id')

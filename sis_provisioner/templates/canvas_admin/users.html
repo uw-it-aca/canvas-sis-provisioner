@@ -1,0 +1,42 @@
+{% extends 'canvas_admin/base.html' %}
+
+{% block admin_content %}
+
+<h2>Canvas Users</h2>
+
+<div class="user-manager pull-left">
+<div class="event-freq clearfix">
+
+    <div id="event-tab-1" class="pull-left" style="width:65%;">
+        <h3>Person Event Frequency <span id="event-count" class="badge">0</span></h3>
+        <div id="event-graph"></div>
+        <p>Highlight to zoom!</p>
+    </div>
+    <div id="event-tab-2" class="pull-right" style="width:35%;">
+        <h3>Person Event Rate</h3>
+        <div id="event-gauge"></div>
+    </div>
+</div>
+
+<br/>
+<div class="clearfix">
+    <h3>Search Users</h3>
+        <div id="user-search" class="form-inline">
+            <select id="user_search_id" class="form-control">
+                <option value="net_id">User NetId:</option>
+                <option value="reg_id">User RegId:</option>
+                <option value="gmail_id">User Gmail Id:</option>
+            </select>
+            <input class="validate valid-nonnull valid-require form-control" id="userID" placeholder="javerage" size="40" type="text">
+            <button class="btn" type="button" id="user_search_button">Find User</button>
+
+            <h3>Results</h3>
+            <div id="user_search_result">
+                <div>Search Results Displayed Here</div>
+            </div>
+        </div>
+</div>
+</div>
+
+{% include "handlebars/canvas_admin/user_info.html" %}
+{% endblock %}

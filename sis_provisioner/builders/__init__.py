@@ -7,7 +7,7 @@ from sis_provisioner.dao.course import get_section_by_id
 from sis_provisioner.dao.canvas import ENROLLMENT_ACTIVE
 from sis_provisioner.exceptions import (
     UserPolicyException, CoursePolicyException)
-from restclients.exceptions import DataFailureException
+from restclients_core.exceptions import DataFailureException
 from logging import getLogger
 import json
 

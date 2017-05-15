@@ -1,0 +1,80 @@
+{% extends 'canvas_admin/base.html' %}
+{% load templatetag_handlebars %}
+
+{% block admin_content %}
+
+<h2>Status and General Health</h2>
+
+<h3>Canvas System Status</h3>
+<div class="canvas-status">
+  <a href="#" class="status-unknown">Overall Performance</a>
+  <a href="#" class="status-fetching"><i class="fa fa-spinner fa-spin"></i></a>
+</div>
+
+    
+<div class="event-freq clearfix">
+
+    <div id="event-tab-1" class="pull-left" style="width:65%;">
+        <h3>Event frequency <span id="event-count" class="badge">0</span><span id="term-info"></span></h3>
+        <div id="event-graph"></div>
+        <p>Highlight to zoom!</p>
+    </div>
+    <div id="event-tab-2" class="pull-right" style="width:35%;">
+        <h3>Event Rate</h3>
+        <div id="event-gauge"></div>
+    </div>
+</div>
+
+<div class="import-health clearfix" style="margin-top: 2em;">
+    <div class="query-tabs clearfix">
+
+        <ul class="nav nav-tabs" role="tablist" style="margin-bottom: 1em;">
+            <li role="presentation" class="active"><a href="#course-tab-1" aria-controls="course-tab-1" role="tab" data-toggle="tab">Import Status <span id="import-count" class="badge"></span></a></li>
+            <li role="presentation"><a href="#course-tab-2"  aria-controls="course-tab-2" role="tab" data-toggle="tab">Course Errors <span id="course-error-count" class="badge"></span></a></li>
+        </ul>
+
+        <div class="tab-content">
+            
+            <div id="course-tab-1" class="tab-pane active">
+                <p class="import-update" style="text-align: right;">As of <span></span>, <a href="javascript:void(0);">refresh</a> in <span></span></p>
+                <div class="waiting import-status">
+                    <ul class="import-list"></ul>
+                </div>
+               
+                <div class="status-result-list">
+                    <h3 class="list-header">Import details <span class="badge">0</span></h3>
+                    <div class="clearfix">
+                        <div class="course-info pull-left">
+                            <div class="course-name">Search Results Displayed Here</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div id="course-tab-2" class="tab-pane">
+                <p class="error-update" style="text-align: right;">As of <span></span></p>
+                <div class="waiting provision-errors">
+                    <ul class="provision-error-list"></ul>
+                </div>
+            </div>
+            
+        </div>
+        
+    </div>
+</div>
+
+{% tplhandlebars "canvas-system-status" %}
+<a href="{{url}}" title="Status: {{overall_status}}" class="{{overall_state}}" target="_blank">Overall Performance</a>
+{{# each components}}
+<a href="{{url}}" title="Status: {{this.status}}" class="{{this.state}}" target="_blank">{{this.component}}</a>
+{{/each}}
+</a>
+{% endtplhandlebars %}
+
+
+{% include "handlebars/canvas_admin/error_list_item.html" %}
+{% include "handlebars/canvas_admin/import_list_item.html" %}
+{% include "handlebars/canvas_admin/course_list_item.html" %}
+{% include "handlebars/canvas_admin/enrollment_list_item.html" %}
+{% include "handlebars/canvas_admin/waiting.html" %}
+{% endblock %}

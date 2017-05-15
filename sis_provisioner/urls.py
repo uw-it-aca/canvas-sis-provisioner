@@ -1,21 +1,38 @@
 from django.conf.urls import url, include
 from django.views.generic.base import TemplateView
+from sis_provisioner.views.admin import (
+    ImportStatus, ManageUsers, ManageCourses, ManageGroups, ManageAdmins,
+    ManageJobs)
 from sis_provisioner.views.course import CourseView, CourseListView
 from sis_provisioner.views.enrollment import EnrollmentListView
 from sis_provisioner.views.group import GroupListView
 from sis_provisioner.views.user import UserView
 from sis_provisioner.views.terms import TermListView
-from sis_provisioner.views.canvas import CanvasCourseView, CanvasAccountView
+from sis_provisioner.views.canvas import (
+    CanvasCourseView, CanvasAccountView, CanvasStatus)
 from sis_provisioner.views.imports import ImportView, ImportListView
 from sis_provisioner.views.jobs import JobView, JobListView
 from sis_provisioner.views.events import EventListView
 from astra.views import AdminSearch, AccountSearch, AccountSoC
+from lti_manager.views import ManageExternalTools
 
 
 urlpatterns = [
     url(r'^$', TemplateView.as_view(template_name='index.html')),
     url(r'^robots\.txt$', TemplateView.as_view(template_name='robots.txt',
                                                content_type='text/plain')),
+    url(r'^$', ImportStatus, name='ImportStatus'),
+    url(r'^users$', ManageUsers, name='ManageUsers'),
+    url(r'^courses$', ManageCourses, name='ManageCourses'),
+    url(r'^groups$', ManageGroups, name='ManageGroups'),
+    url(r'^admins$', ManageAdmins, name='ManageAdmins'),
+    url(r'^jobs$', ManageJobs, name='ManageJobs'),
+    url(r'^external_tools$', ManageExternalTools,
+        name='admin_manage_external_tools'),
+    url(r'^lti_manager/', include('lti_manager.urls')),
+
+    # API urls
+    url(r'api/v1/canvas$', CanvasStatus().run)
     url(r'api/v1/canvas/course/(?P<sis_id>[a-zA-Z0-9 &-]+)$',
         CanvasCourseView().run),
     url(r'api/v1/canvas/account/(?P<account_id>[0-9]+)$',

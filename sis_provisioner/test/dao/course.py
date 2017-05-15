@@ -1,13 +1,17 @@
 from django.test import TestCase
 from django.conf import settings
-from restclients.models.sws import Term, Section
-from restclients.exceptions import DataFailureException
+from uw_sws.models import Term, Section
+from uw_sws.util import fdao_sws_override
+from uw_pws.util import fdao_pws_override
+from restclients_core.exceptions import DataFailureException
 from sis_provisioner.exceptions import CoursePolicyException
 from sis_provisioner.dao.course import *
 from datetime import datetime
 import mock
 
 
+@fdao_sws_override
+@fdao_pws_override
 class SectionPolicyTest(TestCase):
     def test_valid_canvas_course_id(self):
         self.assertEquals(valid_canvas_course_id(12345), None)
@@ -111,115 +115,92 @@ class SectionPolicyTest(TestCase):
         self.assertRaises(CoursePolicyException, instructor_regid_from_section_id, None)
 
     def test_valid_canvas_section(self):
-        with self.settings(
-                RESTCLIENTS_SWS_DAO_CLASS='restclients.dao_implementation.sws.File',
-                RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
+        section = get_section_by_label('2013,spring,TRAIN,101/A')
 
-            section = get_section_by_label('2013,spring,TRAIN,101/A')
+        section.primary_lms = None
+        self.assertEquals(valid_canvas_section(section), None)
 
-            section.primary_lms = None
-            self.assertEquals(valid_canvas_section(section), None)
+        section.primary_lms = Section.LMS_CANVAS
+        self.assertEquals(valid_canvas_section(section), None)
 
-            section.primary_lms = Section.LMS_CANVAS
-            self.assertEquals(valid_canvas_section(section), None)
+        section.primary_lms = 'ABC'
+        self.assertRaises(CoursePolicyException, valid_canvas_section, section)
 
-            section.primary_lms = 'ABC'
-            self.assertRaises(CoursePolicyException, valid_canvas_section, section)
+        section.primary_lms = Section.LMS_CANVAS
+        section.is_withdrawn = False
+        self.assertEquals(is_active_section(section), True)
 
-            section.primary_lms = Section.LMS_CANVAS
-            section.is_withdrawn = False
-            self.assertEquals(is_active_section(section), True)
+        section.is_withdrawn = True
+        self.assertEquals(is_active_section(section), False)
 
-            section.is_withdrawn = True
-            self.assertEquals(is_active_section(section), False)
-
-            section.primary_lms = 'ABC'
-            section.is_withdrawn = False
-            self.assertEquals(is_active_section(section), False)
+        section.primary_lms = 'ABC'
+        section.is_withdrawn = False
+        self.assertEquals(is_active_section(section), False)
 
     def test_section_short_name(self):
-        with self.settings(
-                RESTCLIENTS_SWS_DAO_CLASS='restclients.dao_implementation.sws.File',
-                RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
-
-            section = get_section_by_label('2013,spring,TRAIN,101/A')
-            self.assertEquals(section_short_name(section), 'TRAIN 101 A')
+        section = get_section_by_label('2013,spring,TRAIN,101/A')
+        self.assertEquals(section_short_name(section), 'TRAIN 101 A')
 
     def test_section_long_name(self):
-        with self.settings(
-                RESTCLIENTS_SWS_DAO_CLASS='restclients.dao_implementation.sws.File',
-                RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
+        section = get_section_by_id('2013-spring-TRAIN-101-A')
+        self.assertEquals(section_long_name(section), 'TRAIN 101 A Sp 13: Intro Train')
 
-            section = get_section_by_id('2013-spring-TRAIN-101-A')
-            self.assertEquals(section_long_name(section), 'TRAIN 101 A Sp 13: Intro Train')
+        section.course_title_long = ''
+        self.assertEquals(section_long_name(section), 'TRAIN 101 A Sp 13')
 
-            section.course_title_long = ''
-            self.assertEquals(section_long_name(section), 'TRAIN 101 A Sp 13')
+        section.course_title_long = 'Intro Train'
+        section.is_independent_start = True
+        self.assertEquals(section_long_name(section), 'TRAIN 101 A Sp 13: Intro Train')
 
-            section.course_title_long = 'Intro Train'
-            section.is_independent_start = True
-            self.assertEquals(section_long_name(section), 'TRAIN 101 A Sp 13: Intro Train')
-
-            section.course_title_long = ''
-            self.assertEquals(section_long_name(section), 'TRAIN 101 A Sp 13')
+        section.course_title_long = ''
+        self.assertEquals(section_long_name(section), 'TRAIN 101 A Sp 13')
 
 
     def test_independent_study_section_long_name(self):
-        with self.settings(
-                RESTCLIENTS_SWS_DAO_CLASS='restclients.dao_implementation.sws.File',
-                RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
+        section = get_section_by_id('2013-autumn-REHAB-591-C-8BD26A286A7D11D5A4AE0004AC494FFE')
+        self.assertEquals(section_long_name(section), 'REHAB 591 C Au 13: Graduate Project (Bill Teacher)')
 
-            section = get_section_by_id('2013-autumn-REHAB-591-C-8BD26A286A7D11D5A4AE0004AC494FFE')
-            self.assertEquals(section_long_name(section), 'REHAB 591 C Au 13: Graduate Project (Bill Teacher)')
+        section.course_title_long = None
+        self.assertEquals(section_long_name(section), 'REHAB 591 C Au 13 (Bill Teacher)')
 
-            section.course_title_long = None
-            self.assertEquals(section_long_name(section), 'REHAB 591 C Au 13 (Bill Teacher)')
-
-            section.course_title_long = ''
-            self.assertEquals(section_long_name(section), 'REHAB 591 C Au 13 (Bill Teacher)')
+        section.course_title_long = ''
+        self.assertEquals(section_long_name(section), 'REHAB 591 C Au 13 (Bill Teacher)')
 
 
+@fdao_sws_override
+@fdao_pws_override
 class SectionByIDTest(TestCase):
     def test_section_by_id(self):
-        with self.settings(
-                RESTCLIENTS_SWS_DAO_CLASS='restclients.dao_implementation.sws.File',
-                RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
-
-            section = get_section_by_id('2013-summer-TRAIN-101-A')
-
-            self.assertEquals(section.section_label(), '2013,summer,TRAIN,101/A')
+        section = get_section_by_id('2013-summer-TRAIN-101-A')
+        self.assertEquals(section.section_label(), '2013,summer,TRAIN,101/A')
 
     def test_independent_study_section_by_id(self):
-        with self.settings(
-                RESTCLIENTS_SWS_DAO_CLASS='restclients.dao_implementation.sws.File',
-                RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
-
-            section = get_section_by_id('2013-autumn-REHAB-591-C-8BD26A286A7D11D5A4AE0004AC494FFE')
-            self.assertEquals(section.section_label(), '2013,autumn,REHAB,591/C')
-            self.assertEquals(section.independent_study_instructor_regid, '8BD26A286A7D11D5A4AE0004AC494FFE')
+        section = get_section_by_id('2013-autumn-REHAB-591-C-8BD26A286A7D11D5A4AE0004AC494FFE')
+        self.assertEquals(section.section_label(), '2013,autumn,REHAB,591/C')
+        self.assertEquals(section.independent_study_instructor_regid, '8BD26A286A7D11D5A4AE0004AC494FFE')
 
 
+@fdao_sws_override
+@fdao_pws_override
 class XlistSectionTest(TestCase):
     def test_canvas_xlist_id(self):
-        with self.settings(
-                RESTCLIENTS_SWS_DAO_CLASS='restclients.dao_implementation.sws.File',
-                RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
+        section = get_section_by_id('2013-summer-TRAIN-101-A')
+        self.assertEquals(canvas_xlist_id([section]), '2013-summer-TRAIN-101-A')
 
-            section = get_section_by_id('2013-summer-TRAIN-101-A')
-            self.assertEquals(canvas_xlist_id([section]), '2013-summer-TRAIN-101-A')
+        section.is_withdrawn = True
+        self.assertEquals(canvas_xlist_id([section]), None)
 
-            section.is_withdrawn = True
-            self.assertEquals(canvas_xlist_id([section]), None)
+        section1 = get_section_by_id('2013-spring-TRAIN-101-A')
+        section2 = get_section_by_id('2013-summer-TRAIN-101-A')
 
-            section1 = get_section_by_id('2013-spring-TRAIN-101-A')
-            section2 = get_section_by_id('2013-summer-TRAIN-101-A')
+        self.assertEquals(canvas_xlist_id([section1, section2]), '2013-spring-TRAIN-101-A')
 
-            self.assertEquals(canvas_xlist_id([section1, section2]), '2013-spring-TRAIN-101-A')
-
-            section2.lms_ownership = Section.LMS_OWNER_OL
-            self.assertEquals(canvas_xlist_id([section1, section2]), '2013-summer-TRAIN-101-A')
+        section2.lms_ownership = Section.LMS_OWNER_OL
+        self.assertEquals(canvas_xlist_id([section1, section2]), '2013-summer-TRAIN-101-A')
 
 
+@fdao_sws_override
+@fdao_pws_override
 class NewSectionQueryTest(TestCase):
     @mock.patch('sis_provisioner.dao.course.get_changed_sections_by_term')
     def test_changed_sections_by_term(self, mock_fn):
@@ -227,30 +208,26 @@ class NewSectionQueryTest(TestCase):
         mock_fn.assert_called_with('2013-12-12', 'abc', transcriptable_course='all')
 
     def test_new_sections_by_term(self):
-        with self.settings(
-                RESTCLIENTS_SWS_DAO_CLASS='restclients.dao_implementation.sws.File',
-                RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
+        changed_date = datetime(2013, 12, 12).date()
+        term = Term(quarter="winter", year=2013)
+        existing = {}
 
-            changed_date = datetime(2013, 12, 12).date()
-            term = Term(quarter="winter", year=2013)
-            existing = {}
-
-            # 404, no resource
-            self.assertRaises(DataFailureException, get_new_sections_by_term, changed_date, term)
+        # 404, no resource
+        self.assertRaises(DataFailureException, get_new_sections_by_term, changed_date, term)
 
 
+@fdao_sws_override
+@fdao_pws_override
 class RegistrationsBySectionTest(TestCase):
     def test_get_registrations_by_section(self):
-        with self.settings(
-                RESTCLIENTS_SWS_DAO_CLASS='restclients.dao_implementation.sws.File',
-                RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
+        section = get_section_by_label('2013,winter,DROP_T,100/B')
+        registrations = get_registrations_by_section(section)
 
-            section = get_section_by_label('2013,winter,DROP_T,100/B')
-            registrations = get_registrations_by_section(section)
-
-            self.assertEquals(len(registrations), 2)
+        self.assertEquals(len(registrations), 2)
 
 
+@fdao_sws_override
+@fdao_pws_override
 class TimeScheduleConstructionTest(TestCase):
     def test_by_campus(self):
         time_schedule_constructions = {
