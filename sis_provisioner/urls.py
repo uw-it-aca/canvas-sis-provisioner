@@ -32,7 +32,7 @@ urlpatterns = [
         name='admin_manage_external_tools'),
 
     # API urls
-    url(r'api/v1/canvas$', CanvasStatus().run)
+    url(r'api/v1/canvas$', CanvasStatus().run),
     url(r'api/v1/canvas/course/(?P<sis_id>[a-zA-Z0-9 &-]+)$',
         CanvasCourseView().run),
     url(r'api/v1/canvas/account/(?P<account_id>[0-9]+)$',
