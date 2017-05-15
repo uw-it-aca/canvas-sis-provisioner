@@ -40,6 +40,7 @@ setup(
         'UW-RestClients-Canvas>=0.2,<1.0',
         'UW-RestClients-Django-Utils>=0.6.5,<1.0',
         'Django-SupportTools>=1.1',
+        'django_mobileesp',
     ],
     license='Apache License, Version 2.0',
     description='An application that manages SIS imports to Canvas',
