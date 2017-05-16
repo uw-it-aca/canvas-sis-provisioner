@@ -11,6 +11,9 @@ class ExternalToolAccount(models.Model):
     sis_account_id = models.CharField(max_length=100, null=True)
     name = models.CharField(max_length=250, null=True)
 
+    class Meta:
+        db_table = 'lti_manager_externaltoolaccount'
+
 
 class ExternalToolManager(models.Manager):
     def get_by_hostname(self, hostname):
@@ -38,6 +41,9 @@ class ExternalTool(models.Model):
     changed_by = models.CharField(max_length=32)
     changed_date = models.DateTimeField()
     provisioned_date = models.DateTimeField(null=True)
+
+    class Meta:
+        db_table = 'lti_manager_externaltool'
 
     objects = ExternalToolManager()
 
