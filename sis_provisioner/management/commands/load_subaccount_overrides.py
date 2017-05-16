@@ -17,16 +17,6 @@ class CourseTermException(Exception):
 class Command(BaseCommand):
     help = "Load Course Sub Account Override list"
 
-    option_list = BaseCommand.option_list + (
-        make_option('--subaccount', dest='subaccount', default=False, help='Overriding subaccount'),
-        make_option('--term', dest='term', default=False, help='Term id or JSON map of codes to course_id terms'),
-        make_option('--verbose', dest='verbose', default=0, type='int', help='Verbose mode'),
-        make_option('--delimiter', dest='delimiter', default=',', help='CSV file delimiter'),
-        make_option('--quotechar', dest='quotechar', default='"', help='CSV file quote character'),
-        make_option('--remove', action="store_true", dest='remove', default=False, help='remove course from subaccount override'),
-        make_option('--reconcile', action="store_true", dest='reconcile', default=False, help='provided overrides are authoratative for contained quarter'),
-    )
-
     _builder = Builder()
 
     _pws = PWS()
@@ -40,6 +30,30 @@ class Command(BaseCommand):
         'courseSection': 'course_section',
         'instructorEmployeeID': 'instructor_eid'
     }
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--subaccount', dest='subaccount', default=False,
+            help='Overriding subaccount')
+        parser.add_argument(
+            '--term', dest='term', default=False,
+            help='Term id or JSON map of codes to course_id terms')
+        parser.add_argument(
+            '--verbose', dest='verbose', default=0, type='int',
+            help='Verbose mode')
+        parser.add_argument(
+            '--delimiter', dest='delimiter', default=',',
+            help='CSV file delimiter')
+        parser.add_argument(
+            '--quotechar', dest='quotechar', default='"',
+            help='CSV file quote character')
+        parser.add_argument(
+            '--remove', action='store_true', dest='remove', default=False,
+            help='Remove course from subaccount override')
+        parser.add_argument(
+            '--reconcile', action='store_true', dest='reconcile',
+            default=False,
+            help='Provided overrides are authoratative for contained quarter')
 
     def handle(self, *args, **options):
         if options['verbose'] > 0:
@@ -209,7 +223,7 @@ class Command(BaseCommand):
         if not (netid and len(netid)):
             raise Exception("cannot get regid without netid")
 
-        return 
+        return
 
     def _term(self, term_code):
         if re.match(r'^20[0-9]{2}0[1234]$', term_code):

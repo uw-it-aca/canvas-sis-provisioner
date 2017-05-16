@@ -14,23 +14,6 @@ default_term = '2013-spring'
 class Command(BaseCommand):
     help = "Reconcile enrollment differences between Canvas and UW-SWS"
 
-    option_list = BaseCommand.option_list + (
-        make_option('-r', '--root-account', action='store', dest='root_account', type="string",
-                    default=default_account,
-                    help='reconcile sections at and below root account (default: %s)' % default_account),
-        make_option('-t', '--term', action='store', dest='term', type="string",
-                    default=default_term,
-                    help='reconcile sections offered during term (default: %s)' % default_term),
-        make_option('-o', '--threshold', action='store', dest='threshold', type="int",
-                    default=1, help='ignore deltas below threshold, default 1'),
-        make_option('-a', '--all-courses', action='store_true', dest='all_courses',
-                    default=False, help='reconcile all courses, default is only published courses'),
-        make_option('-p', '--print', action='store_true', dest='print',
-                    default=False, help='print deltas'),
-        make_option('-d', '--dry-run', action='store_true', dest='dry_run',
-                    default=False, help='print deltas, do not update Course models'),
-        )
-
     _re_canvas_id = re.compile(r'^\d+$')
     _re_independent_study = re.compile(r"""[0-9]{4}-
                                            (winter|spring|summer|autumn)-
@@ -40,6 +23,27 @@ class Command(BaseCommand):
                                            [A-Z0-9]+$
                                         """,
                                        re.X)
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '-r', '--root-account', action='store', dest='root_account',
+            type='string', default=default_account,
+            help='reconcile sections at and below root account (default: %s)' % default_account)
+        parser.add_argument(
+            '-t', '--term', action='store', dest='term', type='string',
+            default=default_term,
+            help='reconcile sections offered during term (default: %s)' % default_term)
+        parser.add_argument(
+            '-o', '--threshold', action='store', dest='threshold', type='int',
+            default=1, help='ignore deltas below threshold, default 1')
+        parser.add_argument(
+            '-a', '--all-courses', action='store_true', dest='all_courses',
+            default=False, help='reconcile all courses, default is only published courses')
+        parser.add_argument(
+            '-p', '--print', action='store_true', dest='print', default=False,
+            help='print deltas')
+        parser.add_argument(
+            '-d', '--dry-run', action='store_true', dest='dry_run',
+            default=False, help='print deltas, do not update Course models')
 
     def handle(self, *args, **options):
         if options['print'] or options['dry_run']:

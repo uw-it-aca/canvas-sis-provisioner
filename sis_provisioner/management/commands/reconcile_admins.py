@@ -24,22 +24,28 @@ class AncillaryException(Exception):
 class Command(SISProvisionerCommand):
     help = "Reconcile ASTRA / Canvas Administrators"
 
-    option_list = BaseCommand.option_list + (
-        make_option('-r', '--root-account', action='store', dest='root_account', type="string",
-                    default=settings.RESTCLIENTS_CANVAS_ACCOUNT_ID,
-                    help='reconcile sections at and below root account (default: %s)'
-                    % settings.RESTCLIENTS_CANVAS_ACCOUNT_ID),
-        make_option('-c', '--commit', action='store_true', dest='commit',
-                    default=False, help='update Canvas with ASTRA admins and roles'),
-        make_option('-a', '--astra-is-authoritative', action='store_true', dest='remove_non_astra',
-                    default=False, help='Remove Canvas admins not found in ASTRA'),
-        make_option('-o', '--override', action='store', dest='override_id',
-                    default=0, help='Override blocked Canvas admins import of given process id'),
-        )
-
     max_retry = 5
     sleep_interval = 5
     retry_status_codes = [408, 500, 502, 503, 504]
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '-r', '--root-account', action='store', dest='root_account',
+            type='string', default=settings.RESTCLIENTS_CANVAS_ACCOUNT_ID,
+            help='Reconcile sections at and below root account (default: %s)' % (
+                settings.RESTCLIENTS_CANVAS_ACCOUNT_ID))
+        parser.add_argument(
+            '-c', '--commit', action='store_true', dest='commit',
+            default=False,
+            help='update Canvas with ASTRA admins and roles')
+        parser.add_argument(
+            '-a', '--astra-is-authoritative', action='store_true',
+            dest='remove_non_astra', default=False,
+            help='Remove Canvas admins not found in ASTRA')
+        parser.add_argument(
+            '-o', '--override', action='store', dest='override_id', default=0,
+            help='Override blocked Canvas admins import of given process id')
+
 
     def handle(self, *args, **options):
         self._options = options

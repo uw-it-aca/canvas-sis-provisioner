@@ -16,11 +16,14 @@ class Command(SISProvisionerCommand):
     args = "<priority>"
     help = "Builds csv files for group membership."
 
-    option_list = BaseCommand.option_list + (
-        make_option('-m', '--mtime', dest='mtime', default=None, help='membership modified since, e.g., 2015-12-31T14:30+8 or -30m or -1d or '),
-        make_option('-a', '--all-enrollments', action='store_true', dest='all_enrollments',
-                    default=False, help='Generate complete CSV (default is only changes since last import)'),
-    )
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '-m', '--mtime', dest='mtime', default=None,
+            help='Membership modified since, e.g., 2015-12-31T14:30+8 or -30m or -1d or ')
+        parser.add_argument(
+            '-a', '--all-enrollments', action='store_true',
+            dest='all_enrollments', default=False,
+            help='Generate complete CSV (default is only changes since last import)')
 
     def handle(self, *args, **options):
         priority = PRIORITY_DEFAULT
