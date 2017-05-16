@@ -23,7 +23,7 @@ setup(
         'django-compressor',
         'django-templatetag-handlebars',
         'beautifulsoup4',
-        'suds==0.4',
+        'suds-jurko==0.6',
         'django-userservice==1.2.1',
         'AuthZ-Group',
         'django-blti==0.2',
