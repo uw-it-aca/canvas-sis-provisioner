@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 from logging import getLogger
 from sis_provisioner.models import Curriculum
+from sis_provisioner.dao.canvas import get_account_by_id, get_all_sub_accounts
 
 logger = getLogger(__name__)
 
@@ -62,6 +63,16 @@ class Admin(models.Model):
 
 
 class AccountManager(models.Manager):
+    def add_all_accounts(self):
+        root_id = settings.RESTCLIENTS_CANVAS_ACCOUNT_ID
+        accounts = [get_account_by_id(root_id)]
+        accounts.extend(get_all_sub_accounts(root_id))
+
+        super(AccountManager, self).get_queryset().update(is_deleted=True)
+
+        for account in accounts:
+            self.add_account(account)
+
     def add_account(self, account):
         sis_id = None
         account_type = Account.ADHOC_TYPE

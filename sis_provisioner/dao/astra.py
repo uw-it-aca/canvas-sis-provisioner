@@ -14,8 +14,7 @@ from sis_provisioner.dao.account import (
 from sis_provisioner.dao.user import (
     get_person_by_netid, user_fullname, user_email)
 from sis_provisioner.dao.canvas import (
-    get_user_by_sis_id, create_user, get_account_by_id, get_account_by_sis_id,
-    get_all_sub_accounts)
+    get_user_by_sis_id, create_user, get_account_by_sis_id)
 from sis_provisioner.exceptions import ASTRAException
 import urllib2
 import socket
@@ -309,14 +308,3 @@ class Admins():
 
         # tidy up
         Admin.objects.dequeue()
-
-
-def load_all_accounts(self):
-    root_id = settings.RESTCLIENTS_CANVAS_ACCOUNT_ID
-    accounts = [get_account_by_id(root_id)]
-    accounts.extend(get_all_sub_accounts(root_id))
-
-    Account.objects.all().update(is_deleted=True)
-
-    for account in accounts:
-        Account.objects.add_account(account)
