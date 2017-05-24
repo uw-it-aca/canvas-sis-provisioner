@@ -31,7 +31,7 @@ class Command(SISProvisionerCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             '-r', '--root-account', action='store', dest='root_account',
-            type='string', default=settings.RESTCLIENTS_CANVAS_ACCOUNT_ID,
+            default=settings.RESTCLIENTS_CANVAS_ACCOUNT_ID,
             help='Reconcile sections at and below root account (default: %s)' % (
                 settings.RESTCLIENTS_CANVAS_ACCOUNT_ID))
         parser.add_argument(

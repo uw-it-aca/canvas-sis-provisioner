@@ -20,7 +20,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             '-a', '--account', action='store', dest='account_id',
-            type='string', default=default_account,
+            default=default_account,
             help='show external tools in account by id or sis_id (default: %s)' % (
                 default_account))
         parser.add_argument(
@@ -30,8 +30,8 @@ class Command(BaseCommand):
             '-c', '--courses', action='store_true', dest='courses',
             default=False, help='include account courses in report')
         parser.add_argument(
-            '-t', '--term', action='store', dest='term', type='string',
-            default='', help='include only courses in given term')
+            '-t', '--term', action='store', dest='term', default='',
+            help='include only courses in given term')
         parser.add_argument(
             '-s', '--sessionless-url', action='store_true', dest='sessionless',
             default=False, help='show sessionless url with each external tool')

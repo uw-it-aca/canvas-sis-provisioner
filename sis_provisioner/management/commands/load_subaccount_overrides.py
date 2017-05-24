@@ -39,8 +39,7 @@ class Command(BaseCommand):
             '--term', dest='term', default=False,
             help='Term id or JSON map of codes to course_id terms')
         parser.add_argument(
-            '--verbose', dest='verbose', default=0, type='int',
-            help='Verbose mode')
+            '--verbose', dest='verbose', default=0, help='Verbose mode')
         parser.add_argument(
             '--delimiter', dest='delimiter', default=',',
             help='CSV file delimiter')

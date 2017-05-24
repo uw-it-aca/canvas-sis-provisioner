@@ -31,7 +31,7 @@ setup(
         'UW-Canvas-Users-LTI>=0.2,<1.0',
         'UW-Groups-LTI>=0.2.1,<1.0',
         'UW-Course-Roster-LTI>=0.2.1,<1.0',
-        'UW-Grading-Standard-LTI>=0.2.1,<1.0',
+        'UW-Grading-Standard-LTI>=0.2.2,<1.0',
         'UW-Library-Guides-LTI>=0.2,<1.0',
         'UW-RestClients-SWS>=1.0,<2.0',
         'UW-RestClients-PWS>=0.5,<1.0',

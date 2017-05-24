@@ -26,14 +26,13 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             '-r', '--root-account', action='store', dest='root_account',
-            type='string', default=default_account,
+            default=default_account,
             help='reconcile sections at and below root account (default: %s)' % default_account)
         parser.add_argument(
-            '-t', '--term', action='store', dest='term', type='string',
-            default=default_term,
+            '-t', '--term', action='store', dest='term', default=default_term,
             help='reconcile sections offered during term (default: %s)' % default_term)
         parser.add_argument(
-            '-o', '--threshold', action='store', dest='threshold', type='int',
+            '-o', '--threshold', action='store', dest='threshold',
             default=1, help='ignore deltas below threshold, default 1')
         parser.add_argument(
             '-a', '--all-courses', action='store_true', dest='all_courses',
