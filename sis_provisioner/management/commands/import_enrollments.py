@@ -11,7 +11,6 @@ class Command(SISProvisionerCommand):
 
     def handle(self, *args, **options):
         priority = PRIORITY_DEFAULT
-
         try:
             imp = Enrollment.objects.queue_by_priority(priority)
         except EmptyQueueException as ex:

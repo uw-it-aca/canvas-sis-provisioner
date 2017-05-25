@@ -7,15 +7,17 @@ from datetime import datetime
 
 
 class Command(BaseCommand):
-    args = "<term_sis_id>"
     help = "Create a csv import file of unused courses for the specified \
             term. The csv file can be used to delete unused courses from \
             Canvas."
 
-    def handle(self, *args, **options):
+    def add_arguments(self, parser):
+        parser.add_argument('-t', '--term-sis-id', help='Term SIS ID')
 
-        if len(args):
-            (year, quarter) = args[0].split('-')
+    def handle(self, *args, **options):
+        term_sis_id = options.get('term-sis-id')
+        if term_sis_id:
+            (year, quarter) = term_sis_id.split('-')
             term = get_term_by_year_and_quarter(year, quarter)
         else:
             term = get_term_by_date(datetime.now().date())

@@ -1,4 +1,4 @@
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from django.conf import settings
 from uw_canvas.reports import Reports
 from uw_canvas.courses import Courses
@@ -16,12 +16,11 @@ class Command(BaseCommand):
     help = "Create a report of courses containing non-empty syllabus \
             descriptions, for the specified term."
 
-    def handle(self, *args, **options):
+    def add_arguments(self, parser):
+        parser.add_argument('term_sis_id', help='Term to search')
 
-        if len(args):
-            sis_term_id = args[0]
-        else:
-            raise CommandError("term_sis_id is required")
+    def handle(self, *args, **options):
+	sis_term_id = options.get('term_sis_id')
 
         report_client = Reports()
 

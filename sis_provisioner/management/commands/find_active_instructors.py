@@ -1,4 +1,4 @@
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from django.conf import settings
 from uw_pws import PWS
 from uw_canvas.accounts import Accounts
@@ -10,17 +10,17 @@ import sys
 
 
 class Command(BaseCommand):
-    args = "<subaccount_id> <term_id>"
     help = "Create a list of active teacher email addresses for a sub-account \
             and term. Used for creating the recipient list for the ACA Canvas \
             newsletter."
 
+    def add_arguments(self, parser):
+        parser.add_argument('subaccount_id', help='Subaccount ID')
+        parser.add_argument('term_id', help='SIS Term ID')
+
     def handle(self, *args, **options):
-        if len(args) == 2:
-            subaccount_id = args[0]
-            sis_term_id = args[1]
-        else:
-            raise CommandError("find_active_instructors <subaccount_id> <term_id>")
+        subaccount_id = options.get('subaccount_id')
+        sis_term_id = options.get('term_id')
 
         accounts = Accounts()
         reports = Reports()

@@ -1,4 +1,4 @@
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from django.conf import settings
 from sis_provisioner.dao.user import get_person_by_netid, user_sis_id
 from sis_provisioner.dao.canvas import INSTRUCTOR_ENROLLMENT, ENROLLMENT_ACTIVE
@@ -12,19 +12,18 @@ import sys
 
 
 class Command(BaseCommand):
-    args = "<file_path> <workshop_name> <term_sis_id>"
     help = "Creates a course for each workshop participant from the specified \
             file_path, using the passed <workshop_name> and <term_sis_id>."
 
+    def add_arguments(self, parser):
+        parser.add_argument('file_path', help='File path')
+        parser.add_argument('workshop_name', help='Workshop name')
+        parser.add_argument('term_sis_id', help='Term SIS ID')
+
     def handle(self, *args, **options):
-
-        if not len(args):
-            raise CommandError("Usage: create_workshop_courses <path> "
-                               "<workshop_name><term_sis_id>")
-
-        file_path = args[0]
-        workshop_name = args[1]
-        term_sis_id = args[2]
+        file_path = options.get('file_path')
+        workshop_name = options.get('workshop_name')
+        term_sis_id = options.get('term_sis_id')
         account_sis_id = 'course-request-sandbox'
 
         with open(file_path, 'r') as infile:

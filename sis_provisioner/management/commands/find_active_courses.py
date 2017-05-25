@@ -1,4 +1,4 @@
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from django.conf import settings
 from uw_canvas.reports import Reports
 from uw_canvas.courses import Courses
@@ -12,19 +12,17 @@ import re
 
 
 class Command(BaseCommand):
-    args = "<term_sis_id>"
     help = "Create a report of active (published) courses, for the specified term."
 
-    def handle(self, *args, **options):
+    def add_arguments(self, parser):
+        parser.add_argument('term_sis_id', help='Term SIS ID')
 
-        if len(args):
-            sis_term_id = args[0]
-        else:
-            raise CommandError("term_sis_id is required")
+    def handle(self, *args, **options):
+        term_sis_id = options.get('term_sis_id')
 
         report_client = Reports()
 
-        term = report_client.get_term_by_sis_id(sis_term_id)
+        term = report_client.get_term_by_sis_id(term_sis_id)
 
         user_report = report_client.create_course_provisioning_report(
             settings.RESTCLIENTS_CANVAS_ACCOUNT_ID, term_id=term.term_id)

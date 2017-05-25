@@ -13,9 +13,13 @@ class Command(SISProvisionerCommand):
             term. The csv file will be used to delete unused courses from \
             Canvas."
 
+    def add_arguments(self, parser):
+        parser.add_argument('-t', '--term-sis-id', help='Term SIS ID')
+
     def handle(self, *args, **options):
-	if len(args):
-            (year, quarter) = args[0].split('-')
+	term_sis_id = options.get('term-sis-id')
+        if term_sis_id:
+            (year, quarter) = term_sis_id.split('-')
             target_term = get_term_by_year_and_quarter(year, quarter)
 
         else:
