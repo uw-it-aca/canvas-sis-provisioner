@@ -5,14 +5,13 @@ from time import time, gmtime, strftime
 from calendar import timegm
 from math import floor
 import dateutil.parser
-import json
 
 
 class EventListView(RESTDispatch):
     """
     Expose ranges of event counts
     """
-    def GET(self, request, **kwargs):
+    def get(self, request, *args, **kwargs):
         try:
             event_types = request.GET.get('type', 'enrollment')
             start_sample = int(floor(time() / 60))  # default to now
@@ -67,10 +66,9 @@ class EventListView(RESTDispatch):
                     except:
                         pass
 
-            return self.json_response(json.dumps(events))
+            return self.json_response(events)
         except Exception as err:
-            return self.json_response('{"error":"Invalid event search %s"}' % (
-                err), status=404)
+            return self.error_response(400, "Invalid event search: %s" % err)
 
     def _start_minutes(self, utc_str):
         utc = dateutil.parser.parse(utc_str)

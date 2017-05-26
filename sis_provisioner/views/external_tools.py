@@ -23,7 +23,7 @@ class ExternalToolView(RESTDispatch):
         GET returns 200 with ExternalTool details.
         PUT returns 200.
     """
-    def GET(self, request, **kwargs):
+    def get(self, request, *args, **kwargs):
         canvas_id = kwargs['canvas_id']
         read_only = False if can_manage_external_tools() else True
         try:
@@ -37,26 +37,24 @@ class ExternalToolView(RESTDispatch):
                 data['config']['shared_secret'] = keystore.shared_secret
 
         except ExternalTool.DoesNotExist:
-            return self.json_response(
-                '{"error":"external tool %s not found"}' % canvas_id,
-                status=404)
+            return self.error_response(
+                404, "External tool %s not found" % canvas_id)
         except BLTIKeyStore.DoesNotExist:
             pass
 
-        return self.json_response(json.dumps({'external_tool': data},
-                                             sort_keys=True))
+        return self.json_response({'external_tool': data})
 
-    def PUT(self, request, **kwargs):
+    def put(self, request, *args, **kwargs):
         if not can_manage_external_tools():
-            return self.json_response('{"error":"Unauthorized"}', status=401)
+            return self.error_response(401, "Unauthorized")
 
         canvas_id = kwargs['canvas_id']
         try:
             json_data = json.loads(request.body).get('external_tool', {})
-            self.validate(json_data)
+            self._validate(json_data)
         except Exception as ex:
             logger.error('PUT ExternalTool error: %s' % ex)
-            return self.json_response('{"error": "%s"}' % ex, status=400)
+            return self.error_response(400, ex)
 
         try:
             external_tool = ExternalTool.objects.get(canvas_id=canvas_id)
@@ -64,9 +62,8 @@ class ExternalToolView(RESTDispatch):
             keystore = BLTIKeyStore.objects.get(
                 consumer_key=curr_data['consumer_key'])
         except ExternalTool.DoesNotExist:
-            return self.json_response(
-                '{"error":"external_tool %s not found"}' % canvas_id,
-                status=404)
+            return self.error_response(
+                404, "External_tool %s not found" % canvas_id)
         except BLTIKeyStore.DoesNotExist:
             keystore = BLTIKeyStore()
 
@@ -101,31 +98,29 @@ class ExternalToolView(RESTDispatch):
                 external_tool.changed_by, external_tool.canvas_id))
 
         except DataFailureException as err:
-            return self.json_response(
-                '{"error":"%s: %s"}' % (err.status, err.msg), status=500)
+            return self.error_response(500, "%s: %s" % (err.status, err.msg))
 
-        return self.json_response(json.dumps({
-            'external_tool': external_tool.json_data()}))
+        return self.json_response({
+            'external_tool': external_tool.json_data()})
 
-    def POST(self, request, **kwargs):
+    def post(self, request, *args, **kwargs):
         if not can_manage_external_tools():
-            return self.json_response('{"error":"Unauthorized"}', status=401)
+            return self.error_response(401, "Unauthorized")
 
         try:
             json_data = json.loads(request.body).get('external_tool', {})
-            self.validate(json_data)
+            self._validate(json_data)
         except Exception as ex:
             logger.error('POST ExternalTool error: %s' % ex)
-            return self.json_response('{"error": "%s"}' % ex, status=400)
+            return self.error_response(400, ex)
 
         account_id = json_data['account_id']
         canvas_id = json_data['config'].get('id')
 
         try:
             external_tool = ExternalTool.objects.get(canvas_id=canvas_id)
-            return self.json_response(
-                '{"error": "External tool %s already exists"}' % ex,
-                status=400)
+            return self.error_response(
+                400, "External tool %s already exists" % ex)
         except ExternalTool.DoesNotExist:
             pass
 
@@ -192,15 +187,14 @@ class ExternalToolView(RESTDispatch):
             external_tool.save()
 
         except DataFailureException as err:
-            return self.json_response(
-                '{"error":"%s: %s"}' % (err.status, err.msg), status=500)
+            return self.error_response(500, "%s: %s" % (err.status, err.msg))
 
-        return self.json_response(json.dumps({
-            'external_tool': external_tool.json_data()}))
+        return self.json_response({
+            'external_tool': external_tool.json_data()})
 
-    def DELETE(self, request, **kwargs):
+    def delete(self, request, *args, **kwargs):
         if not can_manage_external_tools():
-            return self.json_response('{"error":"Unauthorized"}', status=401)
+            return self.error_response(401, "Unauthorized")
 
         canvas_id = kwargs['canvas_id']
         try:
@@ -210,9 +204,8 @@ class ExternalToolView(RESTDispatch):
                 consumer_key=curr_data['consumer_key'])
 
         except ExternalTool.DoesNotExist:
-            return self.json_response(
-                '{"error":"external_tool %s not found"}' % canvas_id,
-                status=404)
+            return self.error_response(
+                404, "External_tool %s not found" % canvas_id)
         except BLTIKeyStore.DoesNotExist:
             keystore = None
 
@@ -223,8 +216,8 @@ class ExternalToolView(RESTDispatch):
             if err.status == 404:
                 pass
             else:
-                return self.json_response(
-                    '{"error":"%s: %s"}' % (err.status, err.msg), status=500)
+                return self.error_response(
+                    500, "%s: %s" % (err.status, err.msg))
 
         external_tool.delete()
         if keystore is not None:
@@ -233,10 +226,10 @@ class ExternalToolView(RESTDispatch):
         logger.info('%s deleted ExternalTool "%s"' % (
             external_tool.changed_by, external_tool.canvas_id))
 
-        return self.json_response(json.dumps({
-            'external_tool': external_tool.json_data()}))
+        return self.json_response({
+            'external_tool': external_tool.json_data()})
 
-    def validate(self, json_data):
+    def _validate(self, json_data):
         account_id = json_data.get('account_id', None)
         if account_id is None or not len(account_id):
             raise Exception('Subaccount ID is required')
@@ -260,7 +253,7 @@ class ExternalToolView(RESTDispatch):
 class ExternalToolListView(RESTDispatch):
     """ Retrieves a list of ExternalTools.
     """
-    def GET(self, request, **kwargs):
+    def get(self, request, *args, **kwargs):
         read_only = False if can_manage_external_tools() else True
         external_tools = []
         for external_tool in ExternalTool.objects.all():
@@ -271,5 +264,4 @@ class ExternalToolListView(RESTDispatch):
             del data['config']
             external_tools.append(data)
 
-        return self.json_response(
-            json.dumps({'external_tools': external_tools}))
+        return self.json_response({'external_tools': external_tools})

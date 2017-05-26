@@ -39,6 +39,10 @@ def _admin(request, template):
     return render(request, template, params)
 
 
+def user_login(request):
+    return HttpResponseRedirect(request.GET.get('next', '/'))
+
+
 @login_required
 def ImportStatus(request, template='canvas_admin/status.html'):
     return _admin(request, template)

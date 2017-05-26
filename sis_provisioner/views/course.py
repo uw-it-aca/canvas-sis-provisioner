@@ -1,5 +1,4 @@
 import re
-import json
 from logging import getLogger
 from sis_provisioner.dao.course import (
     get_sections_by_instructor_and_term, valid_academic_course_sis_id,
@@ -14,6 +13,9 @@ from sis_provisioner.views.admin import can_view_source_data
 from sis_provisioner.exceptions import CoursePolicyException
 
 
+logger = getLogger(__name__)
+
+
 class CourseInvalidException(Exception):
     pass
 
@@ -23,38 +25,31 @@ class CourseView(RESTDispatch):
         GET returns 200 with Course details.
         PUT returns 200 and updates the Course information.
     """
-    def __init__(self):
-        self._log = getLogger(__name__)
-
-    def GET(self, request, **kwargs):
+    def get(self, request, *args, **kwargs):
         try:
             course = Course.objects.get(
                 course_id=self._normalize(kwargs['course_id']))
             json_data = course.json_data(can_view_source_data())
-            return self.json_response(json.dumps(json_data))
+            return self.json_response(json_data)
 
         except Exception as err:
-            return self.json_response(
-                '{"error":"Course not found (%s)"}' % err, status=404)
+            return self.error_response(404, "Course not found: %s" % err)
 
-    def PUT(self, request, **kwargs):
+    def put(self, request, *args, **kwargs):
         try:
             course = Course.objects.get(
                 course_id=self._normalize(kwargs['course_id']))
         except Exception as err:
-            return self.json_response(
-                '{"error":"Course not found (%s)"}' % err, status=404)
+            return self.error_response(404, "Course not found: %s" % err)
 
         if course.queue_id is not None:
-            return self.json_response(
-                '{"error":"Course already being provisioned"}', status=409)
+            return self.error_response(409, "Course already being provisioned")
 
         body = request.read()
         try:
             new_values = json.loads(body)
         except Exception as err:
-            return self.json_response(
-                '{"error":"Unable to parse JSON (%s)" }' % err, status=400)
+            return self.error_response(400, "Unable to parse JSON: %s" % err)
 
         try:
             # only priority PUTable right now
@@ -72,9 +67,9 @@ class CourseView(RESTDispatch):
                 raise Exception("Invalid priority: '%s'" % param)
 
             json_data = course.json_data(can_view_source_data())
-            return self.json_response(json.dumps(json_data))
+            return self.json_response(json_data)
         except Exception as err:
-            return self.json_response('{"error":"%s"}' % err, status=400)
+            return self.error_response(400, err)
 
     def _normalize(self, course):
         """ normalize course id case
@@ -125,9 +120,8 @@ class CourseListView(RESTDispatch):
                 'case': 'upper'
             }
         ]
-        self._log = getLogger(__name__)
 
-    def GET(self, request, **kwargs):
+    def get(self, request, *args, **kwargs):
         json_rep = {
             'courses': []
         }
@@ -140,8 +134,8 @@ class CourseListView(RESTDispatch):
                 filt_kwargs = {'queue_id': queue_id}
             else:
                 err = 'invalid queue_id: %s' % queue_id
-                self._log.error(err)
-                return self.json_response('{"error":"%s"}' % err, status=400)
+                logger.error(err)
+                return self.error_response(400, err)
         else:
             provisioned_error = request.GET.get('provisioned_error')
             if provisioned_error:
@@ -161,10 +155,10 @@ class CourseListView(RESTDispatch):
                     json_data = course.json_data(include_sws_url)
                     json_rep['courses'].append(json_data)
 
-                return self.json_response(json.dumps(json_rep))
+                return self.json_response(json_rep)
             except Exception as err:
-                self._log.error('course kwargs search fail: %s' + err)
-                return self.json_response('{"error":"%s"}' % err, status=400)
+                logger.error('course kwargs search fail: %s' + err)
+                return self.error_response(400, err)
 
         net_id = None
         reg_id = None
@@ -176,15 +170,15 @@ class CourseListView(RESTDispatch):
             else:
                 self._criteria[2]['required'] = True
 
-            filter_terms = self._validCourseFilter(request)
+            filter_terms = self._valid_course_filter(request)
             filter_prefix = '-'.join(filter_terms)
             course_list = list(Course.objects.filter(
                 course_id__startswith=filter_prefix).order_by('course_id'))
         except CourseInvalidException as err:
-            return self.json_response('{"error":"%s"}' % err, status=400)
+            return self.error_response(400, err)
         except Exception as err:
-            self._log.error('course filter fail: %s' % err)
-            return self.json_response('{"error":"%s"}' % err, status=400)
+            logger.error('course filter fail: %s' % err)
+            return self.error_response(400, err)
 
         if (net_id is not None or reg_id is not None) and len(course_list):
             try:
@@ -207,8 +201,8 @@ class CourseListView(RESTDispatch):
                         section.section_id.upper()]))
 
             except Exception as err:
-                self._log.error('section search fail: %s' % err)
-                return self.json_response('{"error":"%s"}' % err, status=400)
+                logger.error('section search fail: %s' % err)
+                return self.error_response(400, err)
 
         include_sws_url = can_view_source_data()
         for course in course_list:
@@ -218,9 +212,9 @@ class CourseListView(RESTDispatch):
             json_data = course.json_data(include_sws_url)
             json_rep['courses'].append(json_data)
 
-        return self.json_response(json.dumps(json_rep))
+        return self.json_response(json_rep)
 
-    def _validCourseFilter(self, request):
+    def _valid_course_filter(self, request):
         values = []
         for filter in self._criteria:
             value = request.GET.get(filter['term'], '').strip()

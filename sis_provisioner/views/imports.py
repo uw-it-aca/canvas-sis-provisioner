@@ -8,6 +8,9 @@ from sis_provisioner.models import Import, User
 from sis_provisioner.views.rest_dispatch import RESTDispatch
 
 
+logger = getLogger(__name__)
+
+
 class ImportInvalidException(Exception):
     pass
 
@@ -17,41 +20,33 @@ class ImportView(RESTDispatch):
         GET returns 200 with Import details.
         DELETE returns 200.
     """
-    def __init__(self):
-        self._log = getLogger(__name__)
-
-    def GET(self, request, **kwargs):
+    def get(self, request, *args, **kwargs):
+        import_id = kwargs['import_id']
         try:
-            imp = Import.objects.get(id=kwargs['import_id'])
-            return self.json_response(json.dumps(imp.json_data()))
+            imp = Import.objects.get(id=import_id)
+            return self.json_response(imp.json_data())
         except Import.DoesNotExist:
-            return self.json_response(
-                '{"error":"import %s not found"}' % (kwargs['import_id']),
-                status=404)
+            return self.error_response(404, "Import %s not found" % import_id)
         except ImportInvalidException as err:
-            return self.json_response('{"error":"%s"}' % err, status=400)
+            return self.error_response(400, err)
 
-    def POST(self, request, **kwargs):
+    def post(self, request, *args, **kwargs):
         body = json.loads(request.read())
         mode = body.get('mode', None)
         if mode == 'group':
-            self._log.info('imports (%s): POST: import_group' % (
-                request.user))
+            logger.info('imports (%s): POST: import_group' % (request.user))
             call_command('import_groups')
-            json_rep = {"import": "started"}
-            return self.json_response(json.dumps(json_rep))
+            return self.json_response({"import": "started"})
         else:
-            self._log.info('imports (%s): POST: unknown command' % (
-                request.user))
-            return self.json_response('{"error":"unknown import mode"}',
-                                      status=400)
+            logger.info('imports (%s): POST: unknown command' % (request.user))
+            return self.error_response(400, "Unknown import mode")
 
-    def DELETE(self, request, **kwargs):
+    def delete(self, request, *args, **kwargs):
         import_id = kwargs['import_id']
         try:
             imp = Import.objects.get(id=import_id)
 
-            self._log.info(
+            logger.info(
                 'imports (%s): DELETE: type: %s, queue_id: %s, '
                 'post_status: %s, canvas_state: %s' % (
                     request.user, imp.csv_type, imp.pk, imp.post_status,
@@ -59,20 +54,19 @@ class ImportView(RESTDispatch):
 
             imp.delete()
 
-            return self.json_response('{}')
+            return self.json_response()
 
         except Import.DoesNotExist:
-            return self.json_response('{"error":"import %s not found"}' % (
-                import_id), status=404)
+            return self.error_response(404, "Import %s not found" % import_id)
         except ImportInvalidException as err:
-            return self.json_response('{"error":"%s"}' % err, status=400)
+            return self.error_response(400, err)
 
 
 class ImportListView(RESTDispatch):
     """ Retrieves a list of Imports at /api/v1/imports/?<criteria[&criteria]>.
         GET returns 200 with Import details.
     """
-    def GET(self, request, **kwargs):
+    def get(self, request, *args, **kwargs):
         json_rep = {
             'imports': []
         }
@@ -80,9 +74,9 @@ class ImportListView(RESTDispatch):
         try:
             import_list = list(Import.objects.all())
         except ImportInvalidException as err:
-            return self.json_response('{"error":"%s"}' % err, status=400)
+            return self.error_response(400, err)
 
         for imp in import_list:
             json_rep['imports'].append(imp.json_data())
 
-        return self.json_response(json.dumps(json_rep))
+        return self.json_response(json_rep)

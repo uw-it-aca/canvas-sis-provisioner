@@ -1,21 +1,20 @@
 import re
-import json
 from django.conf import settings
 from logging import getLogger
 from django.db.models import Q
 from django.utils.timezone import localtime
 from sis_provisioner.models.astra import Admin, Account
-from sis_provisioner.views.rest_dispatch import RESTDispatch, OpenRESTDispatch
+from sis_provisioner.views.rest_dispatch import RESTDispatch
+
+
+logger = getLogger(__name__)
 
 
 class AdminSearch(RESTDispatch):
     """ Performs query of Admin models at /api/v1/admins/?.
         GET returns 200 with Admin models
     """
-    def __init__(self):
-        self._log = getLogger(__name__)
-
-    def GET(self, request, **kwargs):
+    def get(self, request, *args, **kwargs):
         json_rep = {
             'admins': []
         }
@@ -23,9 +22,9 @@ class AdminSearch(RESTDispatch):
         for admin in list(Admin.objects.all()):
             json_rep['admins'].append(self._serializeAdmin(admin))
 
-        return self.json_response(json.dumps(json_rep))
+        return self.json_response(json_rep)
 
-    def display_datetime(self, datetime):
+    def _display_datetime(self, datetime):
         if datetime is None:
                 return ""
         datetime = localtime(datetime)
@@ -40,10 +39,10 @@ class AdminSearch(RESTDispatch):
             'canvas_id': admin.canvas_id,
             'account_link': '%s/accounts/%s' % (
                 settings.RESTCLIENTS_CANVAS_HOST, admin.canvas_id),
-            'added_date': self.display_datetime(admin.added_date),
-            'provisioned_date': self.display_datetime(admin.provisioned_date),
+            'added_date': self._display_datetime(admin.added_date),
+            'provisioned_date': self._display_datetime(admin.provisioned_date),
             'is_deleted': True if admin.is_deleted else False,
-            'deleted_date': self.display_datetime(admin.deleted_date),
+            'deleted_date': self._display_datetime(admin.deleted_date),
             'queue_id': (admin.queue_id if admin.queue_id else '')
         }
 
@@ -54,9 +53,8 @@ class AccountSearch(RESTDispatch):
     """
     def __init__(self):
         self._re_true = re.compile('^(1|true)$', re.I)
-        self._log = getLogger(__name__)
 
-    def GET(self, request, **kwargs):
+    def get(self, request, *args, **kwargs):
         json_rep = {
             'accounts': []
         }
@@ -79,14 +77,14 @@ class AccountSearch(RESTDispatch):
 
         account_list = list(Account.objects.filter(**filter))
         for account in account_list:
-            json_rep['accounts'].append(self._serializeAccount(account))
+            json_rep['accounts'].append(self._serialize_account(account))
 
-        return self.json_response(json.dumps(json_rep))
+        return self.json_response(json_rep)
 
     def _is_boolean_true(self, val):
         return self._re_true.match(val)
 
-    def _serializeAccount(self, account):
+    def _serialize_account(self, account):
         return {
             'canvas_id': account.canvas_id,
             'sis_id': account.sis_id,
@@ -101,15 +99,12 @@ class AccountSearch(RESTDispatch):
         }
 
 
-class AccountSoC(OpenRESTDispatch):
+class AccountSoC(RESTDispatch):
     """ Performs query of Account models returning Spans of Control
         for ASTRA consumption
         GET returns 200 with SOC list
     """
-    def __init__(self):
-        self._log = getLogger(__name__)
-
-    def GET(self, request, **kwargs):
+    def get(self, request, *args, **kwargs):
         json_rep = []
         q = Q(account_type=Account.ADHOC_TYPE) | \
             Q(account_type=Account.TEST_TYPE)
@@ -129,11 +124,11 @@ class AccountSoC(OpenRESTDispatch):
 
         if q:
             for account in list(Account.objects.filter(q)):
-                json_rep.append(self._serializeSoC(account))
+                json_rep.append(self._serialize_soc(account))
 
-        return self.json_response(json.dumps(json_rep))
+        return self.json_response(json_rep)
 
-    def _serializeSoC(self, account):
+    def _serialize_soc(self, account):
         type_name = 'Unknown'
         if account.is_root():
             type_name = 'Root'

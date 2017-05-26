@@ -1,7 +1,6 @@
 import re
 import json
 import datetime
-from django.http import HttpResponse
 from logging import getLogger
 from restclients_core.exceptions import (
     InvalidNetID, InvalidRegID, DataFailureException)
@@ -15,15 +14,15 @@ from sis_provisioner.views import regid_from_request, netid_from_request
 from sis_provisioner.views.admin import can_view_source_data
 
 
+logger = logging.getLogger(__name__)
+
+
 class UserView(RESTDispatch):
     """ Performs actions on a Course at /api/v1/user/<reg id>.
         GET returns 200 with User model (augmented with person)
         PUT returns 200 and updates User model
     """
-    def __init__(self):
-        self._log = getLogger(__name__)
-
-    def GET(self, request, **kwargs):
+    def get(self, request, *args, **kwargs):
         try:
             if 'gmail_id' in request.GET:
                 gmail_id = request.GET.get('gmail_id', '').strip()
@@ -38,18 +37,16 @@ class UserView(RESTDispatch):
                 person = get_person_by_regid(reg_id)
                 return self.response_for_person(person)
             else:
-                return self.json_response('{"error":"Unrecognized user ID"}',
-                                          status=400)
+                return self.error_response(400, "Unrecognized user ID")
 
         except DataFailureException as err:
             data = json.loads(err.msg)
-            return self.json_response('{"error":"%s %s"}' % (
-                err.status, data["StatusDescription"]), status=400)
-
+            return self.error_response(
+                400, "%s %s" % (err.status, data["StatusDescription"]))
         except Exception as err:
-            return self.json_response('{"error":"%s"}' % err, status=400)
+            return self.error_response(400, err)
 
-    def POST(self, request, **kwargs):
+    def post(self, request, *args, **kwargs):
         try:
             rep = json.loads(request.read())
 
@@ -57,23 +54,22 @@ class UserView(RESTDispatch):
                 gmail_id = rep.get('gmail_id', '').strip()
                 person = get_person_by_gmail_id(gmail_id)
                 user = create_user(person)
-                return HttpResponse()
+                return self.json_response()
             else:
                 net_id = netid_from_request(rep)
                 user = User.objects.get(net_id=net_id)
-                return self.json_response('{"error":"User already exists"}',
-                                          status=409)
+                return self.error_response(409, "User already exists")
         except User.DoesNotExist:
             try:
                 user = User.objects.add_user(get_person_by_netid(net_id),
                                              priority=PRIORITY_IMMEDIATE)
-                return HttpResponse()
+                return self.json_response()
 
             except Exception as err:
-                return self.json_response('{"error": "%s"}' % err, status=400)
+                return self.error_response(400, err)
 
         except Exception as err:
-            return self.json_response('{"error": "%s"}' % err, status=400)
+            return self.error_response(400, err)
 
     def response_for_person(self, person):
         response = {
@@ -104,7 +100,7 @@ class UserView(RESTDispatch):
         except User.DoesNotExist:
             pass
 
-        return self.json_response(json.dumps(response))
+        return self.json_response(response)
 
     def response_for_google_person(self, person):
         response = {
@@ -127,4 +123,4 @@ class UserView(RESTDispatch):
         except DataFailureException:
             pass
 
-        return self.json_response(json.dumps(response))
+        return self.json_response(response)
