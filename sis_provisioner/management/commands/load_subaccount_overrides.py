@@ -56,12 +56,15 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if options['verbose'] > 0:
-            print >> sys.stderr, "delimiter is '{0}'".format(options['delimiter'])
-            print >> sys.stderr, "quote character is '{0}'".format(options['quotechar'])
+            print("delimiter is '{0}'".format(options['delimiter']),
+                  file=sys.stderr)
+            print("quote character is '{0}'".format(options['quotechar']),
+                  file=sys.stderr)
 
         if not options['subaccount']:
-            print >> sys.stderr, "Missing overriding subbccount --subaccount"
-            exit(1)
+            print("Missing overriding subbccount --subaccount",
+                  file=sys.stderr)
+            sys.exit(1)
 
         if options['term']:
             if options['term'][0] == '{':
@@ -89,7 +92,8 @@ class Command(BaseCommand):
                             else:
                                 data.append({ 'field': label })
                                 if options['verbose'] > 0:
-                                    print >> sys.stderr, "Uknown column: '{0}'".format(label)
+                                    print("Unknown column: '%s'" % label,
+                                          file=sys.stderr)
                     else:
                         columns = {}
                         for i in range(len(data)):
@@ -103,9 +107,10 @@ class Command(BaseCommand):
 
                         try:
                             if options['verbose'] > 2:
-                                print >> sys.stderr, "'Line:"
+                                print("'Line:", file=sys.stderr)
                                 for k,v in self._field_map.iteritems():
-                                    print >> sys.stderr, '  {0} = {1}'.format(v, columns[v])
+                                    print('  {0} = {1}'.format(v, columns[v]),
+                                          file=sys.stderr)
 
                             has_course_section = (len(columns['course_section']) > 0)
 
@@ -124,7 +129,7 @@ class Command(BaseCommand):
                                         except:
                                             self._remove_override(course_id, options)
                                             if options['verbose'] > 0:
-                                                print >> sys.stderr, 'Skipping: independent study: "{0}"'.format(course_id)
+                                                print('Skipping: independent study: "{0}"'.format(course_id), file=sys.stderr)
 
                                                 continue
 
@@ -132,7 +137,7 @@ class Command(BaseCommand):
                                     if len(joint) > 0:
                                         if course_id in joint_courses:
                                             if options['verbose'] > 1:
-                                                print >> sys.stderr, 'course appears in joint list: {0}'.format(course_id)
+                                                print('course appears in joint list: {0}'.format(course_id), file=sys.stderr)
 
                                             continue
 
@@ -140,24 +145,24 @@ class Command(BaseCommand):
                                         if override:
                                             joint_courses.append(course_id)
                                         elif options['verbose'] > 0:
-                                            print >> sys.stderr, 'Skipping: cross listed: {0}'.format(course_id)
+                                            print('Skipping: cross listed: {0}'.format(course_id), file=sys.stderr)
 
                                         for s in joint:
                                             linked_course_id = re.sub(r"[,/]", '-', s.section_label())
                                             if override:
                                                 joint_courses.append(linked_course_id)
                                                 if options['remove']:
-                                                    print >> sys.stderr, 'Removing cross listed course: "{0}"'.format(linked_course_id)
+                                                    print('Removing cross listed course: "{0}"'.format(linked_course_id), file=sys.stderr)
                                                     self._remove_override(linked_course_id, options)
                                                 else:
-                                                    print >> sys.stderr, 'Adding cross listed course: "{0}"'.format(linked_course_id)
+                                                    print('Adding cross listed course: "{0}"'.format(linked_course_id), file=sys.stderr)
                                                     self._update_override(linked_course_id, options)
                                                     if options['reconcile']:
                                                         try:
                                                             current.remove(linked_course_id)
                                                         except (AttributeError, ValueError): pass
                                             elif options['verbose'] > 1:
-                                                print >> sys.stderr, '    with: {0}'.format(linked_course_id)
+                                                print('    with: {0}'.format(linked_course_id), file=sys.stderr)
 
                                         if not override:
                                             continue
@@ -168,7 +173,7 @@ class Command(BaseCommand):
                                 # until non-credit courses appear
                                 self._remove_override(course_id, options)
                                 if options['verbose'] > 0:
-                                    print >> sys.stderr, 'Skipping: missing course section: "{0}"'.format(course_id)
+                                    print('Skipping: missing course section: "{0}"'.format(course_id), file=sys.stderr)
 
                                 continue
 
@@ -183,12 +188,12 @@ class Command(BaseCommand):
 
                         except CourseTermException as err:
                             if options['verbose'] > 0:
-                                print >> sys.stderr, 'Skipping: {0}'.format(err)
+                                print('Skipping: {0}'.format(err), file=sys.stderr)
 
             if options['reconcile'] and current:
                 for course_id in current:
                     if options['verbose'] > 0:
-                        print >> sys.stderr, 'Reconcile removing: {0}'.format(course_id)
+                        print('Reconcile removing: {0}'.format(course_id), file=sys.stderr)
 
                     self._remove_override(course_id, options)
 
@@ -197,13 +202,13 @@ class Command(BaseCommand):
             override = SubAccountOverride.objects.get(course_id=course_id)
             override.subaccount_id = options['subaccount']
             if options['verbose'] > 0:
-                print >> sys.stderr, 'Update override of |{0}| to "{1}"'.format(course_id, options['subaccount'])
+                print('Update override of |{0}| to "{1}"'.format(course_id, options['subaccount']), file=sys.stderr)
 
         except SubAccountOverride.DoesNotExist:
             override = SubAccountOverride(course_id=course_id,
                                           subaccount_id=options['subaccount'])
             if options['verbose'] > 0:
-                print >> sys.stderr, 'Set override of |{0}| to "{1}"'.format(course_id, options['subaccount'])
+                print('Set override of |{0}| to "{1}"'.format(course_id, options['subaccount']), file=sys.stderr)
 
         override.save()
 
@@ -213,7 +218,7 @@ class Command(BaseCommand):
             override = SubAccountOverride.objects.get(course_id=course_id)
             override.delete()
             if options['verbose'] > 0:
-                print >> sys.stderr, 'Removed override: "{0}"'.format(course_id)
+                print('Removed override: "{0}"'.format(course_id), file=sys.stderr)
 
         except SubAccountOverride.DoesNotExist:
             pass

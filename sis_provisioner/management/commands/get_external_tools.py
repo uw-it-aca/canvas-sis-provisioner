@@ -63,7 +63,8 @@ class Command(BaseCommand):
 
         except DataFailureException as err:
             if err.status == 404:
-                print >> sys.stderr, 'Unknown Sub-Account \"%s\"' % (options['account_id'])
+                print('Unknown Sub-Account \"%s\"' % (options['account_id']),
+                      file=sys.stderr)
 
     def report_external_tools(self, account):
         tools = self._tools.get_external_tools_in_account(account.account_id)
@@ -83,7 +84,7 @@ class Command(BaseCommand):
             for course in courses:
                 tools = self._tools.get_external_tools_in_course(course.course_id)
                 self._print_tools(tools, account, course)
-                
+
         if self._options['recurse']:
             subaccounts = self._accounts.get_sub_accounts(account.account_id)
             for account in subaccounts:
@@ -94,7 +95,7 @@ class Command(BaseCommand):
             if self._headers:
                 self._writer.writerow(self._headers)
                 self._headers = None
-            
+
             for tool in tools:
                 tool_types = []
                 for tt in ['account', 'course', 'user']:

@@ -3,6 +3,7 @@ from django.core.management.base import BaseCommand, CommandError
 from restclients_core.exceptions import DataFailureException
 from uw_canvas.external_tools import ExternalTools
 import os
+import sys
 import json
 
 
@@ -13,16 +14,19 @@ class Command(BaseCommand):
     app configs.
     """
 
+    def add_arguments(self, parser):
+        parser.add_argument('config_path', help='Config filepath')
 
     def handle(self, *args, **options):
+        config_path = options.get('config_path')
         self.external_tools = ExternalTools()
         self.tool_set = {}
-        if len(args) != 1 or not os.access(args[0], os.R_OK):
-            print >> self.stderr, "ERROR: invalid json config"
+        if not os.access(config_path, os.R_OK):
+            print("ERROR: invalid json config", file=sys.stderr)
             return
 
         try:
-            with open(args[0], 'r') as jsonfile:
+            with open(config_path, 'r') as jsonfile:
                 lticonf = json.loads(jsonfile.read())
 
             if isinstance(lticonf, list):
@@ -31,7 +35,7 @@ class Command(BaseCommand):
             else:
                 self.load_lti(lticonf)
         except Exception as err:
-            print >> self.stderr, 'ERROR: %s' % err
+            print('ERROR: %s' % err, file=sys.stderr)
 
     def load_lti(self, conf):
         try:
@@ -48,7 +52,8 @@ class Command(BaseCommand):
             for tool in self.tool_set[canvas_account]:
                 if (tool.get('url') == conf.get('url')
                     and tool.get('consumer_key') == conf.get('consumer_key')):
-                    print >> self.stderr, '"%s" already installed in %s' % (conf.get('name'), canvas_account)
+                    print('"%s" already installed in %s' % (
+                        conf.get('name'), canvas_account), file=sys.stderr)
                     return
 
             tool = self.external_tools.add_external_tool_to_account(canvas_account, **conf)
