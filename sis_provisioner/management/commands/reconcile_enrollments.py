@@ -46,7 +46,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if options['print'] or options['dry_run']:
-            print "section_id,canvas_enrollments,sws_enrollments,delta"
+            print("section_id,canvas_enrollments,sws_enrollments,delta")
 
         canvas_courses = CanvasCourses(per_page=50)
         canvas_sections = CanvasSections(per_page=50)
@@ -54,9 +54,9 @@ class Command(BaseCommand):
         for account in canvas_accounts.get_all_sub_accounts_by_sis_id(options['root_account']):
 
             if options['print']:
-                print '# Account: "%s" (%s, %s)' % (account.name,
+                print('# Account: "%s" (%s, %s)' % (account.name,
                                                     account.sis_account_id,
-                                                    account.account_id)
+                                                    account.account_id))
 
             if (account.sis_account_id is not None
                 and re.match(r'^(([^:]+:){4}|curriculum-).*$', str(account.sis_account_id))):
@@ -84,7 +84,7 @@ class Command(BaseCommand):
                                 try:
                                     s = self.get_section_by_id(section_id)
                                 except DataFailureException as err:
-                                    print '# BAD SECTION: %s' % err
+                                    print('# BAD SECTION: %s' % err)
                                     continue
 
                                 enrollments = (s.current_enrollment + s.auditors)
@@ -92,7 +92,7 @@ class Command(BaseCommand):
                                 if delta >= options['threshold']:
                                     n_bad_sections += 1
                                     if options['print'] or options['dry_run']:
-                                        print "%s,%s,%s,%s" % (section_id, len(section.students), enrollments, delta)
+                                        print("%s,%s,%s,%s" % (section_id, len(section.students), enrollments, delta))
 
                                     if not options['dry_run']:
                                         try:

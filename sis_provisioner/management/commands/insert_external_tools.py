@@ -44,7 +44,7 @@ class Command(BaseCommand):
             if canvas_account:
                 if canvas_account not in self.tool_set:
                     self.tool_set[canvas_account] = self.external_tools.get_external_tools_in_account(canvas_account)
-            
+
             for tool in self.tool_set[canvas_account]:
                 if (tool.get('url') == conf.get('url')
                     and tool.get('consumer_key') == conf.get('consumer_key')):
@@ -53,7 +53,8 @@ class Command(BaseCommand):
 
             tool = self.external_tools.add_external_tool_to_account(canvas_account, **conf)
 
-            print 'Installed \"%s\" (%s) in %s' % (conf.get('name'), tool.get('id'), canvas_account)
+            print('Installed \"%s\" (%s) in %s' % (
+                conf.get('name'), tool.get('id'), canvas_account))
 
         except DataFailureException as err:
             raise

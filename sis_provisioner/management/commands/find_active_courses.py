@@ -50,4 +50,4 @@ class Command(BaseCommand):
                 continue
 
             if status is not None and status == "active":
-                print sis_course_id
+                print(sis_course_id)

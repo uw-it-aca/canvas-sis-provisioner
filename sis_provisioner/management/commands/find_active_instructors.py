@@ -105,4 +105,4 @@ class Command(BaseCommand):
         reports.delete_report(enrollment_report)
         reports.delete_report(course_report)
 
-        print outpath
+        print(outpath)

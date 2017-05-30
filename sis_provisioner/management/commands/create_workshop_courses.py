@@ -36,7 +36,7 @@ class Command(BaseCommand):
             try:
                 person = get_person_by_netid(netid.strip())
             except UserPolicyException as err:
-                print "Skipped user %s: %s" % (netid, err)
+                print("Skipped user %s: %s" % (netid, err))
                 continue
 
             if not csvdata.add(UserCSV(person)):

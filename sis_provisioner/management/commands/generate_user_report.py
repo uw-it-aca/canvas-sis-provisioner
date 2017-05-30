@@ -74,28 +74,30 @@ class Command(BaseCommand):
 
                         except UserPolicyException:
                             users_unknown += 1
-                            #print sis_user_id
                 else:
                     if row[2] != 'Student, Test':
                         users_no_sisid += 1
 
 
-        print '\n\n'
-        print 'All users: %s' % users_all
-        print 'UW users: %s' % users_uw
-        print 'UW users with 0 enrollments: %s' % users_uw_no_enrollments
-        print 'UW users with 0 logins: %s' % users_uw_login_never
-        print 'UW users who have not logged in the past year: %s' % users_uw_login_one_year
-        print '\n\n'
-        print 'Google users: %s' % users_google
-        print 'Google users with 0 enrollments: %s' % users_google_no_enrollments
-        print 'Google users with 0 logins: %s' % users_google_login_never
-        print 'Google users who have not logged in the past year: %s' % users_google_login_one_year
-        print '\n\n'
-        print 'No SIS ID users: %s' % users_no_sisid
-        print 'Bad SIS ID users: %s' % users_unknown
-        print '\n\n'
-    
+        print('\n\n')
+        print('All users: %s' % users_all)
+        print('UW users: %s' % users_uw)
+        print('UW users with 0 enrollments: %s' % users_uw_no_enrollments)
+        print('UW users with 0 logins: %s' % users_uw_login_never)
+        print('UW users who have not logged in the past year: %s' % (
+            users_uw_login_one_year))
+        print('\n\n')
+        print('Google users: %s' % users_google)
+        print('Google users with 0 enrollments: %s' % (
+            users_google_no_enrollments))
+        print('Google users with 0 logins: %s' % users_google_login_never)
+        print('Google users who have not logged in the past year: %s' % (
+            users_google_login_one_year))
+        print('\n\n')
+        print('No SIS ID users: %s' % users_no_sisid)
+        print('Bad SIS ID users: %s' % users_unknown)
+        print('\n\n')
+
     def logged_in_past_year(self, last_access_str):
         last_access_dt = datetime.strptime(last_access_str[:-6],
                                            '%Y-%m-%dT%H:%M:%S')

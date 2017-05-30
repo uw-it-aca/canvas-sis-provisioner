@@ -25,4 +25,4 @@ class Command(BaseCommand):
         csv_path = UnusedCourseBuilder().build()
 
         if not settings.SIS_IMPORT_CSV_DEBUG:
-            print csv_path
+            print(csv_path)
