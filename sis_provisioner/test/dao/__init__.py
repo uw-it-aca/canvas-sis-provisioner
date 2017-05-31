@@ -24,8 +24,8 @@ class DaoTest(TestCase):
         self.assertEquals(titleize('abc (DEF)'), 'Abc (Def)')
 
     def test_localize(self):
-	with self.settings(TIME_ZONE='America/Los_Angeles'):
-	    self.assertRaises(AttributeError, localize, None)
+        with self.settings(TIME_ZONE='America/Los_Angeles'):
+            self.assertRaises(AttributeError, localize, None)
 
             dt = datetime(2013, 1, 1)
             self.assertEquals(str(localize(dt)), '2013-01-01 00:00:00-08:00')
