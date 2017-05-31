@@ -8,7 +8,10 @@ from sis_provisioner.dao.canvas import (
     valid_enrollment_status, enrollment_status_from_registration,
     INSTRUCTOR_ENROLLMENT, STUDENT_ENROLLMENT)
 from sis_provisioner.exceptions import EnrollmentPolicyException
-import StringIO
+try:
+    from io import StringIO
+except ImportError:
+    from StringIO import StringIO
 import csv
 
 
@@ -21,7 +24,7 @@ class CSVFormat(object):
         """
         Creates a line of csv data from the obj data attribute
         """
-        s = StringIO.StringIO()
+        s = StringIO()
 
         csv.register_dialect('unix_newline', lineterminator='\n')
         csv.writer(s, dialect='unix_newline').writerow(self.data)
