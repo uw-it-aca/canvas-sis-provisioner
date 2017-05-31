@@ -82,8 +82,11 @@ def update_course_sis_id(course_id, course_sis_id):
 
 def update_term_overrides(term_sis_id, override_dates):
     overrides = {}
-    for role, dates in override_dates.iteritems():
-        overrides[role] = {'start_at': dates[0], 'end_at': dates[1]}
+    for role in override_dates.keys():
+        overrides[role] = {
+            'start_at': override_dates[role][0],
+            'end_at': override_dates[role][1]
+        }
 
     return Terms().update_term_overrides(term_sis_id, overrides=overrides)
 

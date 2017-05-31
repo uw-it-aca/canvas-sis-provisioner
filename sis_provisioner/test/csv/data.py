@@ -18,7 +18,8 @@ class InvalidFormat(CSVFormat):
 @fdao_pws_override
 class CSVDataTest(TestCase):
     def test_accounts(self):
-        formatter = AccountCSV('account_id', 'parent_id', Curriculum())
+        context = Curriculum(full_name='abc')
+        formatter = AccountCSV('account_id', 'parent_id', context)
 
         csv = Collector()
         self.assertEquals(len(csv.accounts), 0)

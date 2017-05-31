@@ -19,11 +19,11 @@ def titleize(s):
     Capitalizes the first letter of every word, effective only in
     ASCII region.
     """
-    if s is None:
+    if not isinstance(s, str):
         raise TypeError('String is required')
 
     new_s = ''
-    for word in re.split(RE_WORD_BOUNDS, str(s)):
+    for word in re.split(RE_WORD_BOUNDS, s):
         new_s += word.capitalize()
 
     new_s = re.sub(RE_TITLE_ABBR, lambda m: m.group(0).upper(), new_s)

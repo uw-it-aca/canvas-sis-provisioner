@@ -79,7 +79,7 @@ class EventBase(object):
     def extract(self):
         try:
             if 'Encoding' not in self._header:
-                if isinstance(self._body, basestring):
+                if isinstance(self._body, str):
                     return(json.loads(
                         self._re_json_cruft.sub(r'\g<1>', self._body)))
                 elif isinstance(self._body, dict):

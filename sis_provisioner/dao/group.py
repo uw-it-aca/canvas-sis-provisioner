@@ -9,8 +9,7 @@ import re
 
 
 def valid_group_id(group_id):
-    if (isinstance(group_id, basestring) and
-            GWS()._is_valid_group_id(group_id)):
+    if (isinstance(group_id, str) and GWS()._is_valid_group_id(group_id)):
         RE_GROUP_BLACKLIST = re.compile(r'^(%s).*$' % ('|'.join(
             getattr(settings, 'UW_GROUP_BLACKLIST', []))))
         if RE_GROUP_BLACKLIST.match(group_id):

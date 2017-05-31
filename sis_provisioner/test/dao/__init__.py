@@ -7,11 +7,12 @@ from datetime import datetime
 class DaoTest(TestCase):
     def test_titleize(self):
         self.assertRaises(TypeError, titleize, None)
-        self.assertEquals(titleize(123), '123')
+        self.assertRaises(TypeError, titleize, 123)
         self.assertEquals(titleize(''), '')
         self.assertEquals(titleize('abc'), 'Abc')
         self.assertEquals(titleize('ABC'), 'Abc')
         self.assertEquals(titleize('abc def'), 'Abc Def')
+        self.assertEquals(titleize('abc    def'), 'Abc    Def')
         self.assertEquals(titleize('abc:def'), 'Abc:Def')
         self.assertEquals(titleize('abc-def'), 'Abc-Def')
         self.assertEquals(titleize('abc.def'), 'Abc.Def')
@@ -22,6 +23,7 @@ class DaoTest(TestCase):
         self.assertEquals(titleize('ABC III'), 'Abc III')
         self.assertEquals(titleize('ABC IV'), 'Abc IV')
         self.assertEquals(titleize('abc (DEF)'), 'Abc (Def)')
+        self.assertEquals(titleize('abc\'s def'), 'Abc\'s Def')
 
     def test_localize(self):
         with self.settings(TIME_ZONE='America/Los_Angeles'):
