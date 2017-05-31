@@ -11,6 +11,7 @@ from sis_provisioner.exceptions import EnrollmentPolicyException
 import csv
 import io
 
+
 class CSVFormat(object):
     def __init__(self):
         self.key = None
