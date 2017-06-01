@@ -7,7 +7,7 @@ from datetime import datetime
 class DaoTest(TestCase):
     def test_titleize(self):
         self.assertRaises(TypeError, titleize, None)
-        self.assertRaises(TypeError, titleize, 123)
+        self.assertEquals(titleize(123), '123')
         self.assertEquals(titleize(''), '')
         self.assertEquals(titleize('abc'), 'Abc')
         self.assertEquals(titleize('ABC'), 'Abc')

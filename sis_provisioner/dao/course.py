@@ -152,8 +152,7 @@ def section_long_name(section):
 
     if (section.course_title_long is not None and
             len(section.course_title_long)):
-        name = '%s: %s' % (name, titleize(
-            section.course_title_long.encode('ascii', 'ignore')))
+        name = '%s: %s' % (name, titleize(section.course_title_long))
 
     if section.is_independent_study:
         for person in section.get_instructors():
