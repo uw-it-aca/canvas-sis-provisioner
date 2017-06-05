@@ -3,11 +3,13 @@ from sis_provisioner.csv.format import CourseCSV, SectionCSV, TermCSV, XlistCSV
 from sis_provisioner.dao.course import (
     is_active_section, get_section_by_url, canvas_xlist_id, section_short_name,
     section_id_from_url, get_registrations_by_section)
-from sis_provisioner.dao.canvas import get_sis_sections_for_course
+from sis_provisioner.dao.canvas import (
+    get_sis_sections_for_course, get_unused_course_report_data)
 from sis_provisioner.models import Course, PRIORITY_NONE
 from sis_provisioner.exceptions import CoursePolicyException
-from restclients.exceptions import (
-    DataFailureException, InvalidCanvasIndependentStudyCourse)
+from restclients_core.exceptions import DataFailureException
+from uw_sws.exceptions import InvalidCanvasIndependentStudyCourse
+import csv
 import re
 
 
@@ -271,3 +273,28 @@ class CourseBuilder(Builder):
             if (new_xlist_id is not None and new_xlist_id != course_id):
                 self.data.add(XlistCSV(new_xlist_id, linked_section_id,
                                        status='active'))
+
+
+class UnusedCourseBuilder(Builder):
+    def _init_build(self, **kwargs):
+        report_data = get_unused_course_report_data(term_sis_id)
+        header = report_data.pop(0)
+        for row in csv.reader(report_data):
+            if len(row):
+                self.items.append(row)
+
+    def _process(self, row):
+        course_id = row[1]
+        if course_id is None or not len(course_id):
+            return
+
+        status = row[4]
+        if status == 'unpublished':
+            kwargs = {'course_id': course_id,
+                      'short_name': row[2],
+                      'long_name': row[3],
+                      'account_id': None,
+                      'term_id': term_sis_id,
+                      'status': 'deleted'}
+
+            self.data.add(CourseCSV(**kwargs))

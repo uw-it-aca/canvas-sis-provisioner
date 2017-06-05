@@ -1,18 +1,17 @@
 from django.conf import settings
-from restclients.canvas import Canvas
-from restclients.canvas.accounts import Accounts
-from restclients.canvas.courses import Courses
-from restclients.canvas.sections import Sections
-from restclients.canvas.enrollments import Enrollments
-from restclients.canvas.reports import Reports
-from restclients.canvas.roles import Roles
-from restclients.canvas.users import Users
-from restclients.canvas.terms import Terms
-from restclients.canvas.sis_import import SISImport
-from restclients.models.canvas import (
-    CanvasEnrollment, SISImport as SISImportModel)
-from restclients.exceptions import DataFailureException
-from restclients.util.retry import retry
+from uw_canvas import Canvas
+from uw_canvas.accounts import Accounts
+from uw_canvas.courses import Courses
+from uw_canvas.sections import Sections
+from uw_canvas.enrollments import Enrollments
+from uw_canvas.reports import Reports
+from uw_canvas.roles import Roles
+from uw_canvas.users import Users
+from uw_canvas.terms import Terms
+from uw_canvas.sis_import import SISImport
+from uw_canvas.models import CanvasEnrollment, SISImport as SISImportModel
+from restclients_core.exceptions import DataFailureException
+from sis_provisioner.util.retry import retry
 from sis_provisioner.dao.course import (
     valid_academic_course_sis_id, valid_academic_section_sis_id)
 from sis_provisioner.dao import localize
@@ -42,6 +41,10 @@ def get_account_by_id(account_id):
 
 def get_account_by_sis_id(sis_account_id):
     return Accounts().get_account_by_sis_id(sis_account_id)
+
+
+def get_sub_accounts(account_id):
+    return Accounts().get_sub_accounts(account_id)
 
 
 def get_all_sub_accounts(account_id):
@@ -79,8 +82,11 @@ def update_course_sis_id(course_id, course_sis_id):
 
 def update_term_overrides(term_sis_id, override_dates):
     overrides = {}
-    for role, dates in override_dates.iteritems():
-        overrides[role] = {'start_at': dates[0], 'end_at': dates[1]}
+    for role in override_dates.keys():
+        overrides[role] = {
+            'start_at': override_dates[role][0],
+            'end_at': override_dates[role][1]
+        }
 
     return Terms().update_term_overrides(term_sis_id, overrides=overrides)
 
@@ -185,6 +191,20 @@ def get_active_courses_for_term(term, account_id=None):
     reports.delete_report(unused_course_report)
     reports.delete_report(all_course_report)
     return active_courses
+
+
+def get_unused_course_report_data(term_sis_id):
+    reports = Reports()
+    term = reports.get_term_by_sis_id(term_sis_id)
+    account_id = getattr(settings, 'RESTCLIENTS_CANVAS_ACCOUNT_ID', None)
+
+    unused_course_report = reports.create_unused_courses_report(
+        account_id, term_id=term.term_id)
+
+    report_data = reports.get_report_data(unused_course_report)
+
+    reports.delete_report(unused_course_report)
+    return report_data
 
 
 def sis_import_by_path(csv_path, override_sis_stickiness=False):

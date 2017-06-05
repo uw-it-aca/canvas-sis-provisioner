@@ -1,8 +1,9 @@
 from django.conf import settings
-from restclients.sws.term import (
-    get_term_by_year_and_quarter, get_term_after, get_term_by_date)
-from restclients.models.canvas import CanvasEnrollment
-from restclients.exceptions import DataFailureException
+from uw_sws.term import (
+    get_term_by_year_and_quarter, get_term_after, get_term_before,
+    get_term_by_date)
+from uw_canvas.models import CanvasEnrollment
+from restclients_core.exceptions import DataFailureException
 from datetime import timedelta
 
 

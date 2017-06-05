@@ -1,6 +1,6 @@
-from django.core.management.base import CommandError
 from sis_provisioner.management.commands import SISProvisionerCommand
-from sis_provisioner.models import Course, PRIORITY_DEFAULT, PRIORITY_IMMEDIATE
+from sis_provisioner.models import (
+    Course, PRIORITY_DEFAULT, PRIORITY_HIGH, PRIORITY_IMMEDIATE)
 from sis_provisioner.exceptions import (
     EmptyQueueException, MissingImportPathException)
 from sis_provisioner.builders.courses import CourseBuilder
@@ -8,17 +8,16 @@ import traceback
 
 
 class Command(SISProvisionerCommand):
-    args = "<priority>"
     help = "Builds csv files for courses."
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'priority', type=int, default=PRIORITY_DEFAULT,
+            choices=[PRIORITY_DEFAULT, PRIORITY_HIGH, PRIORITY_IMMEDIATE],
+            help='Import courses with priority <priority>')
+
     def handle(self, *args, **options):
-        priority = PRIORITY_DEFAULT
-
-        if len(args):
-            priority = int(args[0])
-            if priority < PRIORITY_DEFAULT or priority > PRIORITY_IMMEDIATE:
-                raise CommandError('Invalid priority: %s' % priority)
-
+        priority = options.get('priority')
         try:
             imp = Course.objects.queue_by_priority(priority)
         except EmptyQueueException as ex:

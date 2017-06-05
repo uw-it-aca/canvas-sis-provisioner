@@ -2,8 +2,8 @@ from django.core.management.base import BaseCommand
 from optparse import make_option
 from sis_provisioner.models import SubAccountOverride
 from sis_provisioner.builders import Builder
-from restclients.sws.section import get_joint_sections
-from restclients.pws import PWS
+from uw_sws.section import get_joint_sections
+from uw_pws import PWS
 import json
 import sys
 import re
@@ -16,16 +16,6 @@ class CourseTermException(Exception):
 
 class Command(BaseCommand):
     help = "Load Course Sub Account Override list"
-
-    option_list = BaseCommand.option_list + (
-        make_option('--subaccount', dest='subaccount', default=False, help='Overriding subaccount'),
-        make_option('--term', dest='term', default=False, help='Term id or JSON map of codes to course_id terms'),
-        make_option('--verbose', dest='verbose', default=0, type='int', help='Verbose mode'),
-        make_option('--delimiter', dest='delimiter', default=',', help='CSV file delimiter'),
-        make_option('--quotechar', dest='quotechar', default='"', help='CSV file quote character'),
-        make_option('--remove', action="store_true", dest='remove', default=False, help='remove course from subaccount override'),
-        make_option('--reconcile', action="store_true", dest='reconcile', default=False, help='provided overrides are authoratative for contained quarter'),
-    )
 
     _builder = Builder()
 
@@ -41,14 +31,40 @@ class Command(BaseCommand):
         'instructorEmployeeID': 'instructor_eid'
     }
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--subaccount', dest='subaccount', default=False,
+            help='Overriding subaccount')
+        parser.add_argument(
+            '--term', dest='term', default=False,
+            help='Term id or JSON map of codes to course_id terms')
+        parser.add_argument(
+            '--verbose', dest='verbose', default=0, help='Verbose mode')
+        parser.add_argument(
+            '--delimiter', dest='delimiter', default=',',
+            help='CSV file delimiter')
+        parser.add_argument(
+            '--quotechar', dest='quotechar', default='"',
+            help='CSV file quote character')
+        parser.add_argument(
+            '--remove', action='store_true', dest='remove', default=False,
+            help='Remove course from subaccount override')
+        parser.add_argument(
+            '--reconcile', action='store_true', dest='reconcile',
+            default=False,
+            help='Provided overrides are authoratative for contained quarter')
+
     def handle(self, *args, **options):
         if options['verbose'] > 0:
-            print >> sys.stderr, "delimiter is '{0}'".format(options['delimiter'])
-            print >> sys.stderr, "quote character is '{0}'".format(options['quotechar'])
+            print("delimiter is '{0}'".format(options['delimiter']),
+                  file=sys.stderr)
+            print("quote character is '{0}'".format(options['quotechar']),
+                  file=sys.stderr)
 
         if not options['subaccount']:
-            print >> sys.stderr, "Missing overriding subbccount --subaccount"
-            exit(1)
+            print("Missing overriding subbccount --subaccount",
+                  file=sys.stderr)
+            sys.exit(1)
 
         if options['term']:
             if options['term'][0] == '{':
@@ -76,7 +92,8 @@ class Command(BaseCommand):
                             else:
                                 data.append({ 'field': label })
                                 if options['verbose'] > 0:
-                                    print >> sys.stderr, "Uknown column: '{0}'".format(label)
+                                    print("Unknown column: '%s'" % label,
+                                          file=sys.stderr)
                     else:
                         columns = {}
                         for i in range(len(data)):
@@ -90,9 +107,10 @@ class Command(BaseCommand):
 
                         try:
                             if options['verbose'] > 2:
-                                print >> sys.stderr, "'Line:"
+                                print("'Line:", file=sys.stderr)
                                 for k,v in self._field_map.iteritems():
-                                    print >> sys.stderr, '  {0} = {1}'.format(v, columns[v])
+                                    print('  {0} = {1}'.format(v, columns[v]),
+                                          file=sys.stderr)
 
                             has_course_section = (len(columns['course_section']) > 0)
 
@@ -111,7 +129,7 @@ class Command(BaseCommand):
                                         except:
                                             self._remove_override(course_id, options)
                                             if options['verbose'] > 0:
-                                                print >> sys.stderr, 'Skipping: independent study: "{0}"'.format(course_id)
+                                                print('Skipping: independent study: "{0}"'.format(course_id), file=sys.stderr)
 
                                                 continue
 
@@ -119,7 +137,7 @@ class Command(BaseCommand):
                                     if len(joint) > 0:
                                         if course_id in joint_courses:
                                             if options['verbose'] > 1:
-                                                print >> sys.stderr, 'course appears in joint list: {0}'.format(course_id)
+                                                print('course appears in joint list: {0}'.format(course_id), file=sys.stderr)
 
                                             continue
 
@@ -127,24 +145,24 @@ class Command(BaseCommand):
                                         if override:
                                             joint_courses.append(course_id)
                                         elif options['verbose'] > 0:
-                                            print >> sys.stderr, 'Skipping: cross listed: {0}'.format(course_id)
+                                            print('Skipping: cross listed: {0}'.format(course_id), file=sys.stderr)
 
                                         for s in joint:
                                             linked_course_id = re.sub(r"[,/]", '-', s.section_label())
                                             if override:
                                                 joint_courses.append(linked_course_id)
                                                 if options['remove']:
-                                                    print >> sys.stderr, 'Removing cross listed course: "{0}"'.format(linked_course_id)
+                                                    print('Removing cross listed course: "{0}"'.format(linked_course_id), file=sys.stderr)
                                                     self._remove_override(linked_course_id, options)
                                                 else:
-                                                    print >> sys.stderr, 'Adding cross listed course: "{0}"'.format(linked_course_id)
+                                                    print('Adding cross listed course: "{0}"'.format(linked_course_id), file=sys.stderr)
                                                     self._update_override(linked_course_id, options)
                                                     if options['reconcile']:
                                                         try:
                                                             current.remove(linked_course_id)
                                                         except (AttributeError, ValueError): pass
                                             elif options['verbose'] > 1:
-                                                print >> sys.stderr, '    with: {0}'.format(linked_course_id)
+                                                print('    with: {0}'.format(linked_course_id), file=sys.stderr)
 
                                         if not override:
                                             continue
@@ -155,7 +173,7 @@ class Command(BaseCommand):
                                 # until non-credit courses appear
                                 self._remove_override(course_id, options)
                                 if options['verbose'] > 0:
-                                    print >> sys.stderr, 'Skipping: missing course section: "{0}"'.format(course_id)
+                                    print('Skipping: missing course section: "{0}"'.format(course_id), file=sys.stderr)
 
                                 continue
 
@@ -170,12 +188,12 @@ class Command(BaseCommand):
 
                         except CourseTermException as err:
                             if options['verbose'] > 0:
-                                print >> sys.stderr, 'Skipping: {0}'.format(err)
+                                print('Skipping: {0}'.format(err), file=sys.stderr)
 
             if options['reconcile'] and current:
                 for course_id in current:
                     if options['verbose'] > 0:
-                        print >> sys.stderr, 'Reconcile removing: {0}'.format(course_id)
+                        print('Reconcile removing: {0}'.format(course_id), file=sys.stderr)
 
                     self._remove_override(course_id, options)
 
@@ -184,13 +202,13 @@ class Command(BaseCommand):
             override = SubAccountOverride.objects.get(course_id=course_id)
             override.subaccount_id = options['subaccount']
             if options['verbose'] > 0:
-                print >> sys.stderr, 'Update override of |{0}| to "{1}"'.format(course_id, options['subaccount'])
+                print('Update override of |{0}| to "{1}"'.format(course_id, options['subaccount']), file=sys.stderr)
 
         except SubAccountOverride.DoesNotExist:
             override = SubAccountOverride(course_id=course_id,
                                           subaccount_id=options['subaccount'])
             if options['verbose'] > 0:
-                print >> sys.stderr, 'Set override of |{0}| to "{1}"'.format(course_id, options['subaccount'])
+                print('Set override of |{0}| to "{1}"'.format(course_id, options['subaccount']), file=sys.stderr)
 
         override.save()
 
@@ -200,7 +218,7 @@ class Command(BaseCommand):
             override = SubAccountOverride.objects.get(course_id=course_id)
             override.delete()
             if options['verbose'] > 0:
-                print >> sys.stderr, 'Removed override: "{0}"'.format(course_id)
+                print('Removed override: "{0}"'.format(course_id), file=sys.stderr)
 
         except SubAccountOverride.DoesNotExist:
             pass
@@ -209,7 +227,7 @@ class Command(BaseCommand):
         if not (netid and len(netid)):
             raise Exception("cannot get regid without netid")
 
-        return 
+        return
 
     def _term(self, term_code):
         if re.match(r'^20[0-9]{2}0[1234]$', term_code):

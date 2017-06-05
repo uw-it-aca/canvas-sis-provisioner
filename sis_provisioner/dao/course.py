@@ -1,15 +1,18 @@
 from django.conf import settings
-from restclients.sws.section import (
+from uw_sws.section import (
     get_section_by_label, get_section_by_url, get_changed_sections_by_term,
     get_sections_by_instructor_and_term)
-from restclients.sws.registration import get_all_registrations_by_section
-from restclients.models.sws import Section
-from restclients.exceptions import DataFailureException
+from uw_sws.registration import get_all_registrations_by_section
+from uw_sws.models import Section
+from restclients_core.exceptions import DataFailureException
 from sis_provisioner.exceptions import CoursePolicyException
 from sis_provisioner.dao.user import user_fullname
 from sis_provisioner.dao import titleize
 from logging import getLogger
-from urllib import unquote
+try:
+    from urllib.parse import unquote
+except ImportError:
+    from urllib import unquote
 import re
 
 
@@ -149,8 +152,7 @@ def section_long_name(section):
 
     if (section.course_title_long is not None and
             len(section.course_title_long)):
-        name = '%s: %s' % (name, titleize(
-            section.course_title_long.encode('ascii', 'ignore')))
+        name = '%s: %s' % (name, titleize(section.course_title_long))
 
     if section.is_independent_study:
         for person in section.get_instructors():

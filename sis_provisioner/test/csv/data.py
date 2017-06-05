@@ -1,5 +1,7 @@
 from django.test import TestCase
-from restclients.pws import PWS
+from uw_pws import PWS
+from uw_pws.util import fdao_pws_override
+from uw_sws.util import fdao_sws_override
 from sis_provisioner.models import Curriculum
 from sis_provisioner.dao.course import (
     get_section_by_label, get_registrations_by_section)
@@ -12,9 +14,12 @@ class InvalidFormat(CSVFormat):
     pass
 
 
+@fdao_sws_override
+@fdao_pws_override
 class CSVDataTest(TestCase):
     def test_accounts(self):
-        formatter = AccountCSV('account_id', 'parent_id', Curriculum())
+        context = Curriculum(full_name='abc')
+        formatter = AccountCSV('account_id', 'parent_id', context)
 
         csv = Collector()
         self.assertEquals(len(csv.accounts), 0)
@@ -29,24 +34,18 @@ class CSVDataTest(TestCase):
         self.assertEquals(csv.has_data(), False)
 
     def test_terms(self):
-        with self.settings(
-                RESTCLIENTS_SWS_DAO_CLASS='restclients.dao_implementation.sws.File',
-                RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
+        section = get_section_by_label('2013,summer,TRAIN,101/A')
+        formatter = TermCSV(section)
 
-            section = get_section_by_label('2013,summer,TRAIN,101/A')
-            formatter = TermCSV(section)
-
-            csv = Collector()
-            self.assertEquals(len(csv.terms), 0)
-            self.assertEquals(csv.add(formatter), True)
-            self.assertEquals(len(csv.terms), 1)
-            self.assertEquals(csv.add(formatter), False)
-            self.assertEquals(csv.has_data(), True)
+        csv = Collector()
+        self.assertEquals(len(csv.terms), 0)
+        self.assertEquals(csv.add(formatter), True)
+        self.assertEquals(len(csv.terms), 1)
+        self.assertEquals(csv.add(formatter), False)
+        self.assertEquals(csv.has_data(), True)
 
     def test_courses(self):
         with self.settings(
-                RESTCLIENTS_SWS_DAO_CLASS='restclients.dao_implementation.sws.File',
-                RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File',
                 LMS_OWNERSHIP_SUBACCOUNT={'PCE_NONE': 'pce_none_account'}):
 
             section = get_section_by_label('2013,spring,TRAIN,101/A')
@@ -61,48 +60,40 @@ class CSVDataTest(TestCase):
             self.assertEquals(csv.has_data(), True)
 
     def test_sections(self):
-        with self.settings(
-                RESTCLIENTS_SWS_DAO_CLASS='restclients.dao_implementation.sws.File',
-                RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
+        section = get_section_by_label('2013,spring,TRAIN,101/A')
+        formatter = SectionCSV(section=section)
 
-            section = get_section_by_label('2013,spring,TRAIN,101/A')
-            formatter = SectionCSV(section=section)
-
-            csv = Collector()
-            self.assertEquals(len(csv.sections), 0)
-            self.assertEquals(csv.add(formatter), True)
-            self.assertEquals(len(csv.sections), 1)
-            self.assertEquals(csv.add(formatter), False)
-            self.assertEquals(csv.add(SectionCSV(section_id='abc', course_id='abc',
-                name='abc', status='active')), True)
-            self.assertEquals(len(csv.sections), 2)
-            self.assertEquals(csv.has_data(), True)
+        csv = Collector()
+        self.assertEquals(len(csv.sections), 0)
+        self.assertEquals(csv.add(formatter), True)
+        self.assertEquals(len(csv.sections), 1)
+        self.assertEquals(csv.add(formatter), False)
+        self.assertEquals(csv.add(SectionCSV(section_id='abc', course_id='abc',
+            name='abc', status='active')), True)
+        self.assertEquals(len(csv.sections), 2)
+        self.assertEquals(csv.has_data(), True)
 
     def test_enrollments(self):
-        with self.settings(
-                RESTCLIENTS_SWS_DAO_CLASS='restclients.dao_implementation.sws.File',
-                RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
+        user = PWS().get_person_by_netid('javerage')
 
-            user = PWS().get_person_by_netid('javerage')
+        csv = Collector()
+        self.assertEquals(len(csv.enrollments), 0)
+        self.assertEquals(csv.add(EnrollmentCSV(section_id='abc', person=user,
+            role='Student', status='active')), True)
+        self.assertEquals(len(csv.enrollments), 1)
 
-            csv = Collector()
-            self.assertEquals(len(csv.enrollments), 0)
-            self.assertEquals(csv.add(EnrollmentCSV(section_id='abc', person=user,
-                role='Student', status='active')), True)
-            self.assertEquals(len(csv.enrollments), 1)
+        section = get_section_by_label('2013,winter,DROP_T,100/B')
+        for registration in get_registrations_by_section(section):
+            self.assertEquals(csv.add(EnrollmentCSV(registration=registration)), True)
+        self.assertEquals(len(csv.enrollments), 3)
 
-            section = get_section_by_label('2013,winter,DROP_T,100/B')
-            for registration in get_registrations_by_section(section):
-                self.assertEquals(csv.add(EnrollmentCSV(registration=registration)), True)
-            self.assertEquals(len(csv.enrollments), 3)
+        section = get_section_by_label('2013,spring,TRAIN,101/A')
+        for user in section.get_instructors():
+            self.assertEquals(csv.add(EnrollmentCSV(section=section,
+                instructor=user, status='active')), True)
 
-            section = get_section_by_label('2013,spring,TRAIN,101/A')
-            for user in section.get_instructors():
-                self.assertEquals(csv.add(EnrollmentCSV(section=section,
-                    instructor=user, status='active')), True)
-
-            self.assertEquals(len(csv.enrollments), 5)
-            self.assertEquals(csv.has_data(), True)
+        self.assertEquals(len(csv.enrollments), 5)
+        self.assertEquals(csv.has_data(), True)
 
     def test_xlists(self):
         csv = Collector()
@@ -112,17 +103,14 @@ class CSVDataTest(TestCase):
         self.assertEquals(csv.has_data(), True)
 
     def test_users(self):
-        with self.settings(
-                RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
+        user = PWS().get_person_by_netid('javerage')
 
-            user = PWS().get_person_by_netid('javerage')
-
-            csv = Collector()
-            self.assertEquals(len(csv.users), 0)
-            self.assertEquals(csv.add(UserCSV(user, 'active')), True)
-            self.assertEquals(len(csv.users), 1)
-            self.assertEquals(csv.add(UserCSV(user, 'active')), False)
-            self.assertEquals(csv.has_data(), True)
+        csv = Collector()
+        self.assertEquals(len(csv.users), 0)
+        self.assertEquals(csv.add(UserCSV(user, 'active')), True)
+        self.assertEquals(len(csv.users), 1)
+        self.assertEquals(csv.add(UserCSV(user, 'active')), False)
+        self.assertEquals(csv.has_data(), True)
 
     @mock.patch('sis_provisioner.csv.data.stat')
     @mock.patch('sis_provisioner.csv.data.os')

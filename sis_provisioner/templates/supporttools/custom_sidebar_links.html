@@ -1,0 +1,20 @@
+<h3>Canvas Support Tools</h3>
+<ul>
+    <li><a href="{% url 'ImportStatus' %}">Status and General Health</a></li>
+    <li><a href="{% url 'ManageUsers' %}">Manage Users</a></li>
+    <li><a href="{% url 'ManageCourses' %}">Search Courses</a></li>
+    <li><a href="{% url 'ManageGroups' %}">Canvas Course Groups</a></li>
+    <li><a href="{% url 'ManageAdmins' %}">Canvas Sub-Account Admins</a></li>
+    <li><a href="{% url 'ManageExternalTools' %}">Manage External Tools</a></li>
+    <li><a href="{% url 'ManageJobs' %}">Manage Provisioning Jobs</a></li>
+</ul>
+
+{% if can_view_restclients|default_if_none:True %}
+{% include 'supporttools/default_sidelinks.html' %}
+{% endif %}
+
+{% if can_manage_admin_group|default_if_none:False %}
+<ul>
+    <li><a href="https://groups.uw.edu/group/{{ admin_group }}" title="Add and remove people who can use these tools" target="_blank">Manage Support Admins</a></li>
+</ul>
+{% endif %}

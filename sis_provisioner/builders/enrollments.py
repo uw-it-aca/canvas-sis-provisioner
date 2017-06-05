@@ -5,9 +5,9 @@ from sis_provisioner.dao.user import get_person_by_regid
 from sis_provisioner.dao.course import is_active_section, section_id_from_url
 from sis_provisioner.exceptions import (
     UserPolicyException, MissingLoginIdException)
-from restclients.models.sws import Registration
-from restclients.exceptions import (
-    DataFailureException, InvalidCanvasIndependentStudyCourse)
+from uw_sws.models import Registration
+from uw_sws.exceptions import InvalidCanvasIndependentStudyCourse
+from restclients_core.exceptions import DataFailureException
 from datetime import datetime, timedelta
 from django.conf import settings
 from django.utils.timezone import utc

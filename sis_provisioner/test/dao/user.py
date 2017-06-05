@@ -1,16 +1,20 @@
 from django.test import TestCase
-from restclients.pws import PWS
-from restclients.exceptions import DataFailureException
+from uw_pws import PWS
+from uw_pws.util import fdao_pws_override
+from uw_gws.utilities import fdao_gws_override
+from restclients_core.exceptions import DataFailureException
 from sis_provisioner.dao.user import *
-from sis_provisioner.exceptions import UserPolicyException,\
-    MissingLoginIdException, InvalidLoginIdException,\
-    TemporaryNetidException
+from sis_provisioner.exceptions import (
+    UserPolicyException, MissingLoginIdException, InvalidLoginIdException,
+    TemporaryNetidException)
 
 
 class InvalidPerson(object):
     pass
 
 
+@fdao_pws_override
+@fdao_gws_override
 class UserPolicyTest(TestCase):
     def test_valid_canvas_user_id(self):
         self.assertEquals(valid_canvas_user_id(12345), None)
@@ -22,10 +26,7 @@ class UserPolicyTest(TestCase):
         self.assertRaises(UserPolicyException, valid_canvas_user_id, '1234z')
 
     def test_user_sis_id(self):
-        with self.settings(
-                LOGIN_DOMAIN_WHITELIST=['gmail.com'],
-                RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
-
+        with self.settings(LOGIN_DOMAIN_WHITELIST=['gmail.com']):
             user = PWS().get_person_by_netid('javerage')
             self.assertEquals(user_sis_id(user), '9136CCB8F66711D5BE060004AC494FFE')
 
@@ -33,10 +34,7 @@ class UserPolicyTest(TestCase):
             self.assertEquals(user_sis_id(user), 'johnsmith@gmail.com')
 
     def test_user_email(self):
-        with self.settings(
-                LOGIN_DOMAIN_WHITELIST=['gmail.com'],
-                RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
-
+        with self.settings(LOGIN_DOMAIN_WHITELIST=['gmail.com']):
             user = PWS().get_person_by_netid('javerage')
             self.assertEquals(user_email(user), 'javerage@uw.edu')
 
@@ -56,10 +54,7 @@ class UserPolicyTest(TestCase):
 
 
     def test_user_fullname(self):
-        with self.settings(
-                LOGIN_DOMAIN_WHITELIST=['gmail.com'],
-                RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
-
+        with self.settings(LOGIN_DOMAIN_WHITELIST=['gmail.com']):
             user = PWS().get_person_by_netid('javerage')
             user.display_name = None
             self.assertEquals(user_fullname(user), 'James Student')
@@ -84,13 +79,11 @@ class UserPolicyTest(TestCase):
             self.assertRaises(UserPolicyException, user_fullname, user)
 
 
+@fdao_pws_override
+@fdao_gws_override
 class NetidPolicyTest(TestCase):
     def test_get_person_by_netid(self):
-        with self.settings(
-                NONPERSONAL_NETID_EXCEPTION_GROUP='u_acadev_unittest',
-                RESTCLIENTS_GWS_DAO_CLASS='restclients.dao_implementation.gws.File',
-                RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
-
+        with self.settings(NONPERSONAL_NETID_EXCEPTION_GROUP='u_acadev_unittest'):
             self.assertEquals(get_person_by_netid('javerage').uwnetid, 'javerage')
 
             self.assertRaises(DataFailureException, get_person_by_netid, 'a_canvas_application')
@@ -131,9 +124,7 @@ class NetidPolicyTest(TestCase):
         self.assertRaises(UserPolicyException, valid_application_net_id, 'javerage')
 
     def test_nonpersonal_netid(self):
-        with self.settings(
-                NONPERSONAL_NETID_EXCEPTION_GROUP='u_acadev_unittest',
-                RESTCLIENTS_GWS_DAO_CLASS='restclients.dao_implementation.gws.File'):
+        with self.settings(NONPERSONAL_NETID_EXCEPTION_GROUP='u_acadev_unittest'):
 
             # Valid
             self.assertEquals(valid_nonpersonal_net_id('a_canvas_application'), None)
@@ -143,10 +134,7 @@ class NetidPolicyTest(TestCase):
             # Invalid
             self.assertRaises(InvalidLoginIdException, valid_nonpersonal_net_id, 'canvas')
 
-        with self.settings(
-                NONPERSONAL_NETID_EXCEPTION_GROUP='',
-                RESTCLIENTS_GWS_DAO_CLASS='restclients.dao_implementation.gws.File'):
-
+        with self.settings(NONPERSONAL_NETID_EXCEPTION_GROUP=''):
             self.assertRaises(InvalidLoginIdException, valid_nonpersonal_net_id, 'canvas')
 
 
@@ -160,13 +148,11 @@ class NetidPolicyTest(TestCase):
         self.assertRaises(UserPolicyException, valid_canvas_user_id, '1234z')
 
 
+@fdao_pws_override
+@fdao_gws_override
 class RegidPolicyTest(TestCase):
     def test_get_person_by_regid(self):
-        with self.settings(
-                NONPERSONAL_NETID_EXCEPTION_GROUP='u_acadev_unittest',
-                RESTCLIENTS_GWS_DAO_CLASS='restclients.dao_implementation.gws.File',
-                RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
-
+        with self.settings(NONPERSONAL_NETID_EXCEPTION_GROUP='u_acadev_unittest'):
             user = get_person_by_regid('9136CCB8F66711D5BE060004AC494FFE')
             self.assertEquals(user.uwregid, '9136CCB8F66711D5BE060004AC494FFE')
 
@@ -184,6 +170,8 @@ class RegidPolicyTest(TestCase):
         self.assertRaises(UserPolicyException, valid_reg_id, 'javerage')
 
 
+@fdao_pws_override
+@fdao_gws_override
 class GmailPolicyTest(TestCase):
     valid_domains = ['gmail.com', 'google.com', 'googlemail.com']
     valid_users = [
@@ -204,9 +192,7 @@ class GmailPolicyTest(TestCase):
     ]
 
     def test_get_person_by_gmail_id(self):
-        with self.settings(
-                LOGIN_DOMAIN_WHITELIST=self.valid_domains):
-
+        with self.settings(LOGIN_DOMAIN_WHITELIST=self.valid_domains):
             default_user = "johnsmith@gmail.com"
 
             for user in self.valid_users:
@@ -216,9 +202,7 @@ class GmailPolicyTest(TestCase):
                 self.assertRaises(UserPolicyException, get_person_by_gmail_id, user)
 
     def test_valid_domains(self):
-        with self.settings(
-                LOGIN_DOMAIN_WHITELIST=self.valid_domains):
-
+        with self.settings(LOGIN_DOMAIN_WHITELIST=self.valid_domains):
             default_user = "johnsmith"
 
             invalid_domains = [
@@ -235,9 +219,7 @@ class GmailPolicyTest(TestCase):
                 self.assertRaises(InvalidLoginIdException, valid_gmail_id, user)
 
     def test_valid_user(self):
-        with self.settings(
-                LOGIN_DOMAIN_WHITELIST=self.valid_domains):
-
+        with self.settings(LOGIN_DOMAIN_WHITELIST=self.valid_domains):
             default_user = "johnsmith@gmail.com"
 
             self.assertEquals(valid_gmail_id(default_user), default_user, "Default user is not changed")

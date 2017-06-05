@@ -55,7 +55,7 @@ def priority_user_import(sender, **kwargs):
                 user.save()
                 imp.delete()
 
-        except Exception, err:
+        except Exception as err:
             log.error('Immediate user provision failed: %s' % (err))
             user.priority = PRIORITY_HIGH
             user.save()

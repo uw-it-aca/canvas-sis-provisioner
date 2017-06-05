@@ -1,0 +1,44 @@
+{% extends 'canvas_admin/base.html' %}
+
+{% block admin_content %}
+
+<h2>Canvas Course Groups <span id="group-count" class="badge">0</span></h2>
+
+<div class="user-manager pull-left">
+<div class="event-freq clearfix">
+
+    <div id="event-tab-1" class="pull-left" style="width:65%;">
+        <h3>Group Event Frequency <span id="event-count" class="badge">0</span></h3>
+        <div id="event-graph"></div>
+        <p>Highlight to zoom!</p>
+    </div>
+    <div id="event-tab-2" class="pull-right" style="width:35%;">
+        <h3>Group Event Rate</h3>
+        <div id="event-gauge"></div>
+    </div>
+</div>
+    </div>
+    <div class="clearfix">
+      <h3>Courses and Groups</h3>
+      <div id="show-deleted" class="checkbox" style="display: none; padding-right: 20px;">
+        Deleted Groups <input type="checkbox" checked data-toggle="toggle" data-width="80" data-on="<span style='padding-left: 8px;'>Hidden</span>" data-off="<span style='padding-left: 16px;'>Shown</span>">
+      </div>
+        <table id="group-table" class="group-table table table-striped">
+            <thead>
+                <tr>
+                    <th>UW Group ID</th>
+                    <th>Role</th>
+                    <th>Course SIS ID</th>
+                    <th>Added By</th>
+                    <th>Added Date</th>
+                    <th>Updated</th>
+                    <th>Deleted</th>
+              </tr>
+           </thead>
+           <tbody class="scrollable"><tr><td colspan="7" class="waiting"><i class="fa fa-spin"></i></td></tr></tbody>
+        </table>
+    </div>
+</div>
+
+{% include "handlebars/canvas_admin/group_table_row.html" %}
+{% endblock %}

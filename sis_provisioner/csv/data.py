@@ -139,7 +139,7 @@ class Collector(object):
             self._init_data()
 
         if getattr(settings, 'SIS_IMPORT_CSV_DEBUG', False):
-            print 'CSV PATH: %s' % filepath
+            print('CSV PATH: %s' % filepath)
             return None
         else:
             return filepath

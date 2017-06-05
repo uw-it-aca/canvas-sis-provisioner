@@ -1,6 +1,6 @@
 from django.conf import settings
-from restclients.gws import GWS
-from restclients.exceptions import DataFailureException
+from uw_gws import GWS
+from restclients_core.exceptions import DataFailureException
 from sis_provisioner.dao.user import valid_net_id, valid_gmail_id
 from sis_provisioner.exceptions import (
     UserPolicyException, GroupPolicyException, GroupNotFoundException,
@@ -9,8 +9,7 @@ import re
 
 
 def valid_group_id(group_id):
-    if (isinstance(group_id, basestring) and
-            GWS()._is_valid_group_id(group_id)):
+    if (isinstance(group_id, str) and GWS()._is_valid_group_id(group_id)):
         RE_GROUP_BLACKLIST = re.compile(r'^(%s).*$' % ('|'.join(
             getattr(settings, 'UW_GROUP_BLACKLIST', []))))
         if RE_GROUP_BLACKLIST.match(group_id):

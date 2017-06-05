@@ -1,0 +1,123 @@
+{% load templatetag_handlebars %}
+{% tplhandlebars "import-list-item" %}
+{{# if import_count}}
+ {{# each imports}}
+  <li class="clearfix" id="canvas_import_{{queue_id}}">
+    <span>
+    {{# if is_pending}}
+      <i class="fa fa-cloud-upload staged" title="Preparing to post the import to Canvas"></i>
+    {{else}}
+      {{#if canvas_finished}}
+         {{#if import_failed}}
+           <i class="fa fa-warning failure" title="Import Failed"></i>
+         {{else}}
+
+           <span class="fa-stack fa-lg success" style="font-size: 57%;" title="Import Succeeded"><i class="fa fa-cloud fa-stack-2x"></i><i class="fa fa-check fa-stack-1x fa-inverse"></i></span>
+         {{/if}}
+      {{else}}
+        {{#if exception_failure}}
+          <i class="fa fa-warning failure" title="Import Failed"></i>
+        {{else}}
+          {{#if post_failed}}
+            <i class="fa fa-warning failure" title="Import Failed"></i>
+          {{else}}
+            {{#if csv_failed}}
+              <i class="fa fa-warning failure" title="Import Failed"></i>
+            {{else}}
+               {{#if in_progress}}
+                 {{#if canvas_output}}
+                   <i class="fa fa-warning failure" title="Import Failed"></i>
+                 {{else}}
+                   <i class="fa fa-cloud-upload working" title="We're preparing the import"></i>
+                 {{/if}}
+               {{else}}
+                   <i class="fa fa-cloud-upload success" title="Import Uploading"></i>
+               {{/if}}
+             {{/if}}
+          {{/if}}
+        {{/if}}
+      {{/if}}
+    {{/if}}
+    {{#if immediate_priority}}
+    <i class="fa fa-flash lightning" title="Immediate Priority"></i>
+    {{else}}
+      {{#if high_priority}}
+        <i class="fa fa-exclamation working" title="High Priority"></i>
+      {{/if}}
+    {{/if}}
+    </span>
+    <a href="javascript:void(0);" class="examine-import" data-type="{{ type }}" title="Show {{ type }}s for {{#if immediate_priority}}immediate priority {{else}}{{#if high_priority}}high priority {{/if}}{{/if}}import ID {{ queue_id }}">{{type_name}}</a> started {{added_date}} ({{added_date_relative}})
+    {{#if import_failed}}
+    <a href="javascript:void(0);" class="action action-requeue" title="Requeue import ID {{ queue_id }}"></a>
+    {{else}}
+      {{#if canvas_finished}}
+        {{#if with_messages}}
+    <a href="javascript:void(0);" class="action action-delete" title="Clear status for import ID {{ queue_id }}"></a>
+        {{/if}}
+      {{/if}}
+    {{/if}}
+    {{# if is_pending}}
+    &ndash; Pending
+    {{else}}
+      {{#if canvas_finished}}
+         {{#if import_failed}}
+           &ndash; <span class="failure">{{canvas_state}}</span>
+          {{#if raw_canvas_output}}{{> raw-output-link}}{{/if}}
+         {{else}}
+           &ndash; {{canvas_state}}
+         {{/if}}
+      {{else}}
+        {{#if exception_failure}}
+          &ndash; <span class="failure">Preparation failure</span>
+          {{#if raw_canvas_output}}{{> raw-output-link}}{{/if}}
+        {{else}}
+          {{#if post_failed}}
+            &ndash; <span class="failure">POST failed</span> {{#if post_status}}({{post_status}}){{/if}}
+            {{#if raw_canvas_output}}{{> raw-output-link}}{{/if}}
+          {{else}}
+            {{#if csv_failed}}
+             &ndash; <span class="failure">CSV failed</span>
+             {{#if raw_canvas_output}}{{> raw-output-link}}{{/if}}
+            {{else}}
+               {{#if in_progress}}
+                 {{#if canvas_output}}
+                   &ndash; <span class="failure">Monitor Query Failed</span>
+                   {{#if raw_canvas_output}}{{> raw-output-link}}{{/if}}
+                 {{else}}
+              <div class="progress">
+                <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="{{this.canvas_progress}}" aria-valuemin="0" aria-valuemax="100" style="width: {{this.canvas_progress}}%;" data-import-id="{{this.queue_id}}">
+                  Import at <span>{{this.canvas_progress}}</span>%
+                </div>
+              </div>
+                 {{/if}}
+               {{else}}
+                 {{#if canvas_state}}
+                 &ndash; {{canvas_state}}
+                 {{/if}}
+               {{/if}}
+             {{/if}}
+          {{/if}}
+        {{/if}}
+      {{/if}}
+    {{/if}}
+    {{#if has_canvas_output}}
+    <div class="import-output">
+      {{#if raw_canvas_output}}
+      <div class="hidden raw-output"><span>{{raw_canvas_output}}</span></div>
+      {{/if}}
+      {{#each canvas_output}}
+      <div>{{#if this.type}}{{this.type}}: {{/if}}<span>{{this.message}}</span></div>
+      {{/each}}
+    </div>
+    {{/if}}
+  </li>
+ {{/each}}
+{{else}}
+  <li>No Active Imports - {{import_count}}</li>
+{{/if}}
+{% endtplhandlebars %}
+
+
+{% tplhandlebars "raw-output-link-partial" %}
+  <a href='#' class="has-response" title="Show me the literal response"><span class="fa-stack fa-lg" style="font-size: 60%;"><i class="fa fa-circle fa-stack-2x"></i><i class="fa fa-ellipsis-h fa-stack-1x fa-inverse"></i></span></a>
+{% endtplhandlebars %}

@@ -1,7 +1,7 @@
 from sis_provisioner.builders import Builder
 from sis_provisioner.dao.user import get_person_by_netid
 from sis_provisioner.exceptions import UserPolicyException
-from restclients.exceptions import DataFailureException
+from restclients_core.exceptions import DataFailureException
 
 
 class UserBuilder(Builder):

@@ -5,9 +5,13 @@ from datetime import datetime
 from sis_provisioner.dao.course import get_section_by_id
 from sis_provisioner.models import (
     Course, Import, PRIORITY_NONE, PRIORITY_DEFAULT, PRIORITY_HIGH)
+from uw_sws.util import fdao_sws_override
+from uw_pws.util import fdao_pws_override
 import mock
 
 
+@fdao_sws_override
+@fdao_pws_override
 class CourseModelTest(TestCase):
     def test_types(self):
         sdb_course = Course(course_type=Course.SDB_TYPE)
@@ -28,78 +32,66 @@ class CourseModelTest(TestCase):
         self.assertEquals(adhoc_course.sws_url(), None)
 
     def test_add_to_queue(self):
-        with self.settings(
-                RESTCLIENTS_SWS_DAO_CLASS='restclients.dao_implementation.sws.File',
-                RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
+        section = get_section_by_id('2013-summer-TRAIN-101-A')
+        course = Course.objects.add_to_queue(section, queue_id=1)
+        self.assertEquals(course.queue_id, 1)
+        self.assertEquals(course.primary_id, None)
 
-            section = get_section_by_id('2013-summer-TRAIN-101-A')
-            course = Course.objects.add_to_queue(section, queue_id=1)
-            self.assertEquals(course.queue_id, 1)
-            self.assertEquals(course.primary_id, None)
+        section = get_section_by_id('2013-summer-TRAIN-100-AB')
+        course = Course.objects.add_to_queue(section, queue_id=2)
+        self.assertEquals(course.queue_id, 2)
+        self.assertEquals(course.primary_id, '2013-summer-TRAIN-100-A')
 
-            section = get_section_by_id('2013-summer-TRAIN-100-AB')
-            course = Course.objects.add_to_queue(section, queue_id=2)
-            self.assertEquals(course.queue_id, 2)
-            self.assertEquals(course.primary_id, '2013-summer-TRAIN-100-A')
-
-            Course.objects.all().delete()
+        Course.objects.all().delete()
 
     def test_remove_from_queue(self):
-        with self.settings(
-                RESTCLIENTS_SWS_DAO_CLASS='restclients.dao_implementation.sws.File',
-                RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
+        course_id = '2013-summer-TRAIN-101-A'
 
-            course_id = '2013-summer-TRAIN-101-A'
+        section = get_section_by_id(course_id)
+        course = Course.objects.add_to_queue(section, queue_id='1')
+        course = Course.objects.get(course_id=course_id)
+        self.assertEquals(course.queue_id, '1')
 
-            section = get_section_by_id(course_id)
-            course = Course.objects.add_to_queue(section, queue_id='1')
-            course = Course.objects.get(course_id=course_id)
-            self.assertEquals(course.queue_id, '1')
+        Course.objects.remove_from_queue(course_id)
+        course = Course.objects.get(course_id=course_id)
+        self.assertEquals(course.queue_id, None)
+        self.assertEquals(course.provisioned_error, None)
+        self.assertEquals(course.provisioned_status, None)
 
-            Course.objects.remove_from_queue(course_id)
-            course = Course.objects.get(course_id=course_id)
-            self.assertEquals(course.queue_id, None)
-            self.assertEquals(course.provisioned_error, None)
-            self.assertEquals(course.provisioned_status, None)
+        # Remove with error
+        course = Course.objects.add_to_queue(section, queue_id='2')
+        course = Course.objects.get(course_id=course_id)
+        self.assertEquals(course.queue_id, '2')
 
-            # Remove with error
-            course = Course.objects.add_to_queue(section, queue_id='2')
-            course = Course.objects.get(course_id=course_id)
-            self.assertEquals(course.queue_id, '2')
+        Course.objects.remove_from_queue(course_id, error='oops')
+        course = Course.objects.get(course_id=course_id)
+        self.assertEquals(course.queue_id, None)
+        self.assertEquals(course.provisioned_error, True)
+        self.assertEquals(course.provisioned_status, 'oops')
 
-            Course.objects.remove_from_queue(course_id, error='oops')
-            course = Course.objects.get(course_id=course_id)
-            self.assertEquals(course.queue_id, None)
-            self.assertEquals(course.provisioned_error, True)
-            self.assertEquals(course.provisioned_status, 'oops')
-
-            Course.objects.all().delete()
+        Course.objects.all().delete()
 
     def test_update_status(self):
-        with self.settings(
-                RESTCLIENTS_SWS_DAO_CLASS='restclients.dao_implementation.sws.File',
-                RESTCLIENTS_PWS_DAO_CLASS='restclients.dao_implementation.pws.File'):
+        course_id = '2013-summer-TRAIN-101-A'
 
-            course_id = '2013-summer-TRAIN-101-A'
+        section = get_section_by_id(course_id)
 
-            section = get_section_by_id(course_id)
+        course = Course.objects.add_to_queue(section, queue_id='3')
+        Course.objects.update_status(section)
+        course = Course.objects.get(course_id=course_id)
+        self.assertEquals(course.queue_id, '3')
+        self.assertEquals(course.provisioned_status, None)
+        self.assertEquals(course.priority, PRIORITY_DEFAULT)
 
-            course = Course.objects.add_to_queue(section, queue_id='3')
-            Course.objects.update_status(section)
-            course = Course.objects.get(course_id=course_id)
-            self.assertEquals(course.queue_id, '3')
-            self.assertEquals(course.provisioned_status, None)
-            self.assertEquals(course.priority, PRIORITY_DEFAULT)
+        section.is_withdrawn = True
+        course = Course.objects.add_to_queue(section, queue_id='4')
+        Course.objects.update_status(section)
+        course = Course.objects.get(course_id=course_id)
+        self.assertEquals(course.queue_id, '4')
+        self.assertEquals(course.provisioned_status, None)
+        self.assertEquals(course.priority, PRIORITY_NONE)
 
-            section.is_withdrawn = True
-            course = Course.objects.add_to_queue(section, queue_id='4')
-            Course.objects.update_status(section)
-            course = Course.objects.get(course_id=course_id)
-            self.assertEquals(course.queue_id, '4')
-            self.assertEquals(course.provisioned_status, None)
-            self.assertEquals(course.priority, PRIORITY_NONE)
-
-            Course.objects.all().delete()
+        Course.objects.all().delete()
 
     @mock.patch.object(QuerySet, 'update')
     def test_dequeue(self, mock_update):

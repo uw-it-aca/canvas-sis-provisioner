@@ -1,9 +1,9 @@
 from django.conf import settings
-from restclients.sws.campus import get_all_campuses
-from restclients.sws.college import get_all_colleges
-from restclients.sws.curriculum import get_curricula_by_department
-from restclients.sws.department import get_departments_by_college
-from restclients.models.sws import Curriculum
+from uw_sws.campus import get_all_campuses
+from uw_sws.college import get_all_colleges
+from uw_sws.curriculum import get_curricula_by_department
+from uw_sws.department import get_departments_by_college
+from uw_sws.models import Curriculum
 from sis_provisioner.exceptions import AccountPolicyException
 from sis_provisioner.dao import titleize
 import string
