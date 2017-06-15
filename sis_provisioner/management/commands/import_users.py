@@ -1,5 +1,6 @@
 from sis_provisioner.management.commands import SISProvisionerCommand
-from sis_provisioner.models import User, PRIORITY_DEFAULT, PRIORITY_IMMEDIATE
+from sis_provisioner.models import (
+    User, PRIORITY_DEFAULT, PRIORITY_HIGH, PRIORITY_IMMEDIATE)
 from sis_provisioner.exceptions import (
     EmptyQueueException, MissingImportPathException)
 from sis_provisioner.builders.users import UserBuilder

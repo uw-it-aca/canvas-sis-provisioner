@@ -12,7 +12,7 @@ class Command(SISProvisionerCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            'priority', type=int, default=PRIORITY_DEFAULT,
+            '--priority', type=int, default=PRIORITY_DEFAULT,
             choices=[PRIORITY_DEFAULT, PRIORITY_HIGH, PRIORITY_IMMEDIATE],
             help='Import group members with priority <priority>')
 
