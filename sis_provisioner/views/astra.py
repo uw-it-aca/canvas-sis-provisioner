@@ -1,10 +1,13 @@
-import re
 from django.conf import settings
-from logging import getLogger
+from django.views import View
+from django.http import HttpResponse
 from django.db.models import Q
 from django.utils.timezone import localtime
 from sis_provisioner.models.astra import Admin, Account
 from sis_provisioner.views.rest_dispatch import RESTDispatch
+from logging import getLogger
+import json
+import re
 
 
 logger = getLogger(__name__)
@@ -99,7 +102,7 @@ class AccountSearch(RESTDispatch):
         }
 
 
-class AccountSoC(RESTDispatch):
+class AccountSoC(View):
     """ Performs query of Account models returning Spans of Control
         for ASTRA consumption
         GET returns 200 with SOC list
@@ -124,24 +127,7 @@ class AccountSoC(RESTDispatch):
 
         if q:
             for account in list(Account.objects.filter(q)):
-                json_rep.append(self._serialize_soc(account))
+                json_rep.append(account.soc_json_data())
 
-        return self.json_response(json_rep)
-
-    def _serialize_soc(self, account):
-        type_name = 'Unknown'
-        if account.is_root():
-            type_name = 'Root'
-        elif account.is_sdb():
-            type_name = 'SDB'
-        elif account.is_adhoc():
-            type_name = 'Non-Academic'
-        elif account.is_test():
-            type_name = 'Test-Account'
-
-        return {
-            'id': 'canvas_%s' % account.canvas_id,
-            'type': type_name,
-            'description': account.account_name,
-            'short_description': account.account_short_name
-        }
+        return HttpResponse(json.dumps(json_rep),
+                            content_type='application/json')

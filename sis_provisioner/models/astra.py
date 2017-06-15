@@ -151,3 +151,21 @@ class Account(models.Model):
 
     def is_test(self):
         return self.account_type == self.TEST_TYPE
+
+    def soc_json_data(self):
+        type_name = 'Unknown'
+        if self.is_root():
+            type_name = 'Root'
+        elif self.is_sdb():
+            type_name = 'SDB'
+        elif self.is_adhoc():
+            type_name = 'Non-Academic'
+        elif self.is_test():
+            type_name = 'Test-Account'
+
+        return {
+            'id': 'canvas_%s' % self.canvas_id,
+            'type': type_name,
+            'description': self.account_name,
+            'short_description': self.account_short_name
+        }
