@@ -6,8 +6,7 @@ import json
 import re
 
 
-@method_decorator(login_required, name='dispatch')
-class RESTDispatch(View):
+class OpenRESTDispatch(View):
     def error_response(self, status, message='', content={}):
         content['error'] = message
         return HttpResponse(json.dumps(content),
@@ -18,3 +17,8 @@ class RESTDispatch(View):
         return HttpResponse(json.dumps(content, sort_keys=True),
                             status=status,
                             content_type='application/json')
+
+
+@method_decorator(login_required, name='dispatch')
+class RESTDispatch(OpenRESTDispatch):
+    pass

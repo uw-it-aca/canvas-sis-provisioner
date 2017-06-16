@@ -1,12 +1,6 @@
-from django.conf import settings
-from django.views import View
-from django.http import HttpResponse
-from django.db.models import Q
-from django.utils.timezone import localtime
 from sis_provisioner.models.astra import Admin, Account
-from sis_provisioner.views.rest_dispatch import RESTDispatch
+from sis_provisioner.views.rest_dispatch import RESTDispatch, OpenRESTDispatch
 from logging import getLogger
-import json
 import re
 
 
@@ -18,36 +12,11 @@ class AdminSearch(RESTDispatch):
         GET returns 200 with Admin models
     """
     def get(self, request, *args, **kwargs):
-        json_rep = {
-            'admins': []
-        }
-
+        admins = []
         for admin in list(Admin.objects.all()):
-            json_rep['admins'].append(self._serializeAdmin(admin))
+            admins.append(admin.json_data())
 
-        return self.json_response(json_rep)
-
-    def _display_datetime(self, datetime):
-        if datetime is None:
-                return ""
-        datetime = localtime(datetime)
-        return datetime.strftime("%m/%d/%Y %l:%M %p")
-
-    def _serializeAdmin(self, admin):
-        return {
-            'net_id': admin.net_id,
-            'reg_id': admin.reg_id,
-            'role': admin.role,
-            'account_id': admin.account_id,
-            'canvas_id': admin.canvas_id,
-            'account_link': '%s/accounts/%s' % (
-                settings.RESTCLIENTS_CANVAS_HOST, admin.canvas_id),
-            'added_date': self._display_datetime(admin.added_date),
-            'provisioned_date': self._display_datetime(admin.provisioned_date),
-            'is_deleted': True if admin.is_deleted else False,
-            'deleted_date': self._display_datetime(admin.deleted_date),
-            'queue_id': (admin.queue_id if admin.queue_id else '')
-        }
+        return self.json_response({'admins': admins})
 
 
 class AccountSearch(RESTDispatch):
@@ -58,76 +27,31 @@ class AccountSearch(RESTDispatch):
         self._re_true = re.compile('^(1|true)$', re.I)
 
     def get(self, request, *args, **kwargs):
-        json_rep = {
-            'accounts': []
-        }
-
-        filter = {}
-
         account_type = request.GET.get('type')
-        if account_type:
-            filter['account_type'] = account_type
+        is_deleted = request.GET.get('is_deleted', '')
+        is_deleted = self._is_boolean_true(is_deleted)
 
-        is_blessed = request.GET.get('is_blessed_for_course_request')
-        if is_blessed:
-            filter['is_blessed_for_course_request'] = 1 if (
-                self._is_boolean_true(is_blessed)) else None
+        accounts = []
+        for account in list(Account.objects.find_by_type(
+                account_type=account_type, deleted=deleted)):
+            accounts.append(account.json_data())
 
-        is_deleted = request.GET.get('is_deleted')
-        if is_deleted:
-            filter['is_deleted'] = 1 if (
-                self._is_boolean_true(is_deleted)) else None
-
-        account_list = list(Account.objects.filter(**filter))
-        for account in account_list:
-            json_rep['accounts'].append(self._serialize_account(account))
-
-        return self.json_response(json_rep)
+        return self.json_response({'accounts': accounts})
 
     def _is_boolean_true(self, val):
         return self._re_true.match(val)
 
-    def _serialize_account(self, account):
-        return {
-            'canvas_id': account.canvas_id,
-            'sis_id': account.sis_id,
-            'account_name': account.account_name,
-            'account_short_name': account.account_short_name,
-            'account_type': account.account_type,
-            'added_date': account.added_date.isoformat() if (
-                account.added_date is not None) else '',
-            'is_deleted': account.is_deleted,
-            'is_blessed_for_course_request': (
-                account.is_blessed_for_course_request),
-        }
 
-
-class AccountSoC(View):
+class AccountSoC(OpenRESTDispatch):
     """ Performs query of Account models returning Spans of Control
         for ASTRA consumption
         GET returns 200 with SOC list
     """
     def get(self, request, *args, **kwargs):
+        account_type = request.GET.get('type', '')
+
         json_rep = []
-        q = Q(account_type=Account.ADHOC_TYPE) | \
-            Q(account_type=Account.TEST_TYPE)
+        for account in list(Account.objects.find_by_soc(account_type)):
+            json_rep.append(account.soc_json_data())
 
-        t = request.GET.get('type', 'None')
-        if t.lower() == 'academic':
-            q = Q(account_type=Account.SDB_TYPE)
-        elif t.lower() == 'non-academic':
-            q = Q(account_type=Account.ADHOC_TYPE)
-        elif t.lower() == 'test-account':
-            q = Q(account_type=Account.TEST_TYPE)
-        elif t == 'all':
-            q = Q(account_type=Account.ROOT_TYPE) | \
-                Q(account_type=Account.SDB_TYPE) | \
-                Q(account_type=Account.ADHOC_TYPE) | \
-                Q(account_type=Account.TEST_TYPE)
-
-        if q:
-            for account in list(Account.objects.filter(q)):
-                json_rep.append(account.soc_json_data())
-
-        return HttpResponse(json.dumps(json_rep),
-                            content_type='application/json')
+        return self.json_response(json_rep)
