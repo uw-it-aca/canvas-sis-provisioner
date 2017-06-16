@@ -1,8 +1,11 @@
 from django.db import models
+from django.db.models import Q
 from django.conf import settings
+from django.utils.timezone import localtime
 from logging import getLogger
 from sis_provisioner.models import Curriculum
 from sis_provisioner.dao.canvas import get_account_by_id, get_all_sub_accounts
+
 
 logger = getLogger(__name__)
 
@@ -34,9 +37,8 @@ class AdminManager(models.Manager):
 
     def is_account_admin(self, net_id):
         try:
-            admin = Admin.objects.get(net_id=net_id,
-                                      role='accountadmin',
-                                      deleted_date__isnull=True)
+            admin = Admin.objects.get(
+                net_id=net_id, role='accountadmin', deleted_date__isnull=True)
             return True
         except Admin.DoesNotExist:
             return False
@@ -61,8 +63,56 @@ class Admin(models.Model):
     class Meta:
         db_table = 'astra_admin'
 
+    def json_data(self):
+        date_fmt = '%m/%d/%Y %l:%M %p'
+        return {
+            'net_id': self.net_id,
+            'reg_id': self.reg_id,
+            'role': self.role,
+            'account_id': self.account_id,
+            'canvas_id': self.canvas_id,
+            'account_link': '%s/accounts/%s' % (
+                settings.RESTCLIENTS_CANVAS_HOST, self.canvas_id),
+            'added_date': localtime(self.added_date).strftime(date_fmt) if (
+                self.added_date is not None) else '',
+            'provisioned_date': localtime(self.provisioned_date).strftime(
+                date_fmt) if (self.provisioned_date is not None) else '',
+            'is_deleted': True if self.is_deleted else False,
+            'deleted_date': localtime(self.deleted_date).strftime(
+                date_fmt) if (self.deleted_date is not None) else '',
+            'queue_id': self.queue_id
+        }
+
 
 class AccountManager(models.Manager):
+    def find_by_type(self, account_type=None, deleted=False):
+        filter = {}
+        if account_type:
+            filter['account_type'] = account_type
+        if deleted:
+            filter['is_deleted'] = 1
+
+        return super(AccountManager, self).get_queryset().filter(**filter)
+
+    def find_by_soc(self, account_type=''):
+        t = account_type.lower()
+        if t == 'academic':
+            q = Q(account_type=Account.SDB_TYPE)
+        elif t == 'non-academic':
+            q = Q(account_type=Account.ADHOC_TYPE)
+        elif t == 'test-account':
+            q = Q(account_type=Account.TEST_TYPE)
+        elif t == 'all':
+            q = (Q(account_type=Account.ROOT_TYPE) |
+                 Q(account_type=Account.SDB_TYPE) |
+                 Q(account_type=Account.ADHOC_TYPE) |
+                 Q(account_type=Account.TEST_TYPE))
+        else:
+            q = (Q(account_type=Account.ADHOC_TYPE) |
+                 Q(account_type=Account.TEST_TYPE))
+
+        return super(AccountManager, self).get_queryset().filter(q)
+
     def add_all_accounts(self):
         root_id = settings.RESTCLIENTS_CANVAS_ACCOUNT_ID
         accounts = [get_account_by_id(root_id)]
@@ -151,6 +201,19 @@ class Account(models.Model):
 
     def is_test(self):
         return self.account_type == self.TEST_TYPE
+
+    def json_data(self):
+        return {
+            'canvas_id': self.canvas_id,
+            'sis_id': self.sis_id,
+            'account_name': self.account_name,
+            'account_short_name': self.account_short_name,
+            'account_type': self.account_type,
+            'added_date': self.added_date.isoformat() if (
+                self.added_date is not None) else '',
+            'is_deleted': self.is_deleted,
+            'is_blessed_for_course_request': (
+                self.is_blessed_for_course_request)}
 
     def soc_json_data(self):
         type_name = 'Unknown'

@@ -21,6 +21,7 @@ from sis_provisioner.test.builders import BuilderTest
 from sis_provisioner.test.builders.courses import CourseBuilderTest
 from sis_provisioner.test.builders.enrollments import EnrollmentBuilderTest
 from sis_provisioner.test.builders.groups import GroupBuilderTest
+from sis_provisioner.test.models.astra import AdminModelTest, AccountModelTest
 from sis_provisioner.test.models.course import CourseModelTest
 from sis_provisioner.test.models.curriculum import CurriculumModelTest
 from sis_provisioner.test.models.enrollment import EnrollmentModelTest
