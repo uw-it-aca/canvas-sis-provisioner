@@ -1,5 +1,6 @@
+from django.views import View
 from sis_provisioner.models.astra import Admin, Account
-from sis_provisioner.views.rest_dispatch import RESTDispatch, OpenRESTDispatch
+from sis_provisioner.views.rest_dispatch import RESTDispatch
 from logging import getLogger
 import re
 
@@ -33,7 +34,7 @@ class AccountSearch(RESTDispatch):
 
         accounts = []
         for account in list(Account.objects.find_by_type(
-                account_type=account_type, deleted=deleted)):
+                account_type=account_type, deleted=is_deleted)):
             accounts.append(account.json_data())
 
         return self.json_response({'accounts': accounts})
@@ -42,7 +43,7 @@ class AccountSearch(RESTDispatch):
         return self._re_true.match(val)
 
 
-class AccountSoC(OpenRESTDispatch):
+class AccountSoC(View):
     """ Performs query of Account models returning Spans of Control
         for ASTRA consumption
         GET returns 200 with SOC list
@@ -54,4 +55,4 @@ class AccountSoC(OpenRESTDispatch):
         for account in list(Account.objects.find_by_soc(account_type)):
             json_rep.append(account.soc_json_data())
 
-        return self.json_response(json_rep)
+        return RESTDispatch.json_response(json_rep)
