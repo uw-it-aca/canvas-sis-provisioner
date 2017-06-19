@@ -2,6 +2,7 @@ import re
 import json
 import datetime
 from logging import getLogger
+from django.contrib.auth.decorators import login_required
 from restclients_core.exceptions import (
     InvalidNetID, InvalidRegID, DataFailureException)
 from uw_sws.models import Person
@@ -22,6 +23,7 @@ class UserView(RESTDispatch):
         GET returns 200 with User model (augmented with person)
         PUT returns 200 and updates User model
     """
+    @login_required
     def get(self, request, *args, **kwargs):
         try:
             if 'gmail_id' in request.GET:
@@ -46,6 +48,7 @@ class UserView(RESTDispatch):
         except Exception as err:
             return self.error_response(400, err)
 
+    @login_required
     def post(self, request, *args, **kwargs):
         try:
             rep = json.loads(request.read())

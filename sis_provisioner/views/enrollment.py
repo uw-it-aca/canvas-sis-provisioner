@@ -1,5 +1,6 @@
 import re
 from logging import getLogger
+from django.contrib.auth.decorators import login_required
 from sis_provisioner.models import Enrollment, PRIORITY_NONE
 from sis_provisioner.views.rest_dispatch import RESTDispatch
 from sis_provisioner.views import regid_from_request, netid_from_request
@@ -48,6 +49,7 @@ class EnrollmentListView(RESTDispatch):
             }
         ]
 
+    @login_required
     def get(self, request, *args, **kwargs):
         json_rep = {
             'enrollments': []

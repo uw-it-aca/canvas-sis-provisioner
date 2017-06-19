@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.contrib.auth.decorators import login_required
 from sis_provisioner.models import Course
 from sis_provisioner.views.rest_dispatch import RESTDispatch
 from sis_provisioner.views.admin import can_view_source_data
@@ -17,6 +18,7 @@ class CanvasCourseView(RESTDispatch):
     """ Performs query for Canvas course by sis_id.
         GET returns 200 with Canvas Course model
     """
+    @login_required
     def get(self, request, *args, **kwargs):
         try:
             sis_id = kwargs.get('sis_id')
@@ -62,6 +64,7 @@ class CanvasAccountView(RESTDispatch):
     """ Performs query for Canvas account by account_id
         GET returns 200 with Canvas Course model
     """
+    @login_required
     def get(self, request, *args, **kwargs):
         try:
             account = get_account_by_id(kwargs.get('account_id'))
