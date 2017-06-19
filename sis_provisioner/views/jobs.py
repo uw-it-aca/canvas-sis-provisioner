@@ -1,4 +1,6 @@
 from logging import getLogger
+from django.utils.decorators import method_decorator
+from django.contrib.auth.decorators import login_required
 from sis_provisioner.models import Job
 from sis_provisioner.views.rest_dispatch import RESTDispatch
 from sis_provisioner.views.admin import can_manage_jobs
@@ -24,6 +26,7 @@ class JobView(RESTDispatch):
         except Job.DoesNotExist:
             return self.error_response(404, "Job %s not found" % job_id)
 
+    @method_decorator(login_required)
     def put(self, request, *args, **kwargs):
         if not can_manage_jobs():
             return self.error_response(401, "Unauthorized")
@@ -48,6 +51,7 @@ class JobView(RESTDispatch):
         except Job.DoesNotExist:
             return self.error_response(404, "Job %s not found" % job_id)
 
+    @method_decorator(login_required)
     def delete(self, request, *args, **kwargs):
         if not can_manage_jobs():
             return self.error_response(401, "Unauthorized")

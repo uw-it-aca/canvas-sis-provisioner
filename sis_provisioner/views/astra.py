@@ -1,5 +1,7 @@
+from django.utils.decorators import method_decorator
+from django.contrib.auth.decorators import login_required
 from sis_provisioner.models.astra import Admin, Account
-from sis_provisioner.views.rest_dispatch import RESTDispatch, OpenRESTDispatch
+from sis_provisioner.views.rest_dispatch import RESTDispatch
 from logging import getLogger
 import re
 
@@ -11,6 +13,7 @@ class AdminSearch(RESTDispatch):
     """ Performs query of Admin models at /api/v1/admins/?.
         GET returns 200 with Admin models
     """
+    @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
         admins = []
         for admin in list(Admin.objects.all()):
@@ -26,6 +29,7 @@ class AccountSearch(RESTDispatch):
     def __init__(self):
         self._re_true = re.compile('^(1|true)$', re.I)
 
+    @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
         account_type = request.GET.get('type')
         is_deleted = request.GET.get('is_deleted', '')
@@ -33,7 +37,7 @@ class AccountSearch(RESTDispatch):
 
         accounts = []
         for account in list(Account.objects.find_by_type(
-                account_type=account_type, deleted=deleted)):
+                account_type=account_type, deleted=is_deleted)):
             accounts.append(account.json_data())
 
         return self.json_response({'accounts': accounts})
@@ -42,7 +46,7 @@ class AccountSearch(RESTDispatch):
         return self._re_true.match(val)
 
 
-class AccountSoC(OpenRESTDispatch):
+class AccountSoC(RESTDispatch):
     """ Performs query of Account models returning Spans of Control
         for ASTRA consumption
         GET returns 200 with SOC list

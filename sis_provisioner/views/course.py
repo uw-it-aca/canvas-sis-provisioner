@@ -1,5 +1,5 @@
-import re
-from logging import getLogger
+from django.utils.decorators import method_decorator
+from django.contrib.auth.decorators import login_required
 from sis_provisioner.dao.course import (
     get_sections_by_instructor_and_term, valid_academic_course_sis_id,
     valid_adhoc_course_sis_id)
@@ -11,6 +11,9 @@ from sis_provisioner.views.rest_dispatch import RESTDispatch
 from sis_provisioner.views import regid_from_request, netid_from_request
 from sis_provisioner.views.admin import can_view_source_data
 from sis_provisioner.exceptions import CoursePolicyException
+from logging import getLogger
+import json
+import re
 
 
 logger = getLogger(__name__)
@@ -25,6 +28,7 @@ class CourseView(RESTDispatch):
         GET returns 200 with Course details.
         PUT returns 200 and updates the Course information.
     """
+    @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
         try:
             course = Course.objects.get(
@@ -35,6 +39,7 @@ class CourseView(RESTDispatch):
         except Exception as err:
             return self.error_response(404, "Course not found: %s" % err)
 
+    @method_decorator(login_required)
     def put(self, request, *args, **kwargs):
         try:
             course = Course.objects.get(

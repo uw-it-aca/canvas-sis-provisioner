@@ -1,4 +1,6 @@
 from django.conf import settings
+from django.utils.decorators import method_decorator
+from django.contrib.auth.decorators import login_required
 from logging import getLogger
 from sis_provisioner.models.external_tools import (
     ExternalTool, ExternalToolAccount)
@@ -23,6 +25,7 @@ class ExternalToolView(RESTDispatch):
         GET returns 200 with ExternalTool details.
         PUT returns 200.
     """
+    @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
         canvas_id = kwargs['canvas_id']
         read_only = False if can_manage_external_tools() else True
@@ -44,6 +47,7 @@ class ExternalToolView(RESTDispatch):
 
         return self.json_response({'external_tool': data})
 
+    @method_decorator(login_required)
     def put(self, request, *args, **kwargs):
         if not can_manage_external_tools():
             return self.error_response(401, "Unauthorized")
@@ -103,6 +107,7 @@ class ExternalToolView(RESTDispatch):
         return self.json_response({
             'external_tool': external_tool.json_data()})
 
+    @method_decorator(login_required)
     def post(self, request, *args, **kwargs):
         if not can_manage_external_tools():
             return self.error_response(401, "Unauthorized")
@@ -192,6 +197,7 @@ class ExternalToolView(RESTDispatch):
         return self.json_response({
             'external_tool': external_tool.json_data()})
 
+    @method_decorator(login_required)
     def delete(self, request, *args, **kwargs):
         if not can_manage_external_tools():
             return self.error_response(401, "Unauthorized")
@@ -253,6 +259,7 @@ class ExternalToolView(RESTDispatch):
 class ExternalToolListView(RESTDispatch):
     """ Retrieves a list of ExternalTools.
     """
+    @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
         read_only = False if can_manage_external_tools() else True
         external_tools = []
