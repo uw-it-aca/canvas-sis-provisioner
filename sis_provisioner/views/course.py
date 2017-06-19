@@ -1,3 +1,4 @@
+from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
 from sis_provisioner.dao.course import (
     get_sections_by_instructor_and_term, valid_academic_course_sis_id,
@@ -27,7 +28,7 @@ class CourseView(RESTDispatch):
         GET returns 200 with Course details.
         PUT returns 200 and updates the Course information.
     """
-    @login_required
+    @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
         try:
             course = Course.objects.get(
@@ -38,7 +39,7 @@ class CourseView(RESTDispatch):
         except Exception as err:
             return self.error_response(404, "Course not found: %s" % err)
 
-    @login_required
+    @method_decorator(login_required)
     def put(self, request, *args, **kwargs):
         try:
             course = Course.objects.get(

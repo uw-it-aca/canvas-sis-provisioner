@@ -4,6 +4,7 @@ import dateutil.parser
 from django.utils.timezone import utc
 from logging import getLogger
 from django.core.management import call_command
+from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
 from sis_provisioner.models import Import, User
 from sis_provisioner.views.rest_dispatch import RESTDispatch
@@ -31,7 +32,7 @@ class ImportView(RESTDispatch):
         except ImportInvalidException as err:
             return self.error_response(400, err)
 
-    @login_required
+    @method_decorator(login_required)
     def post(self, request, *args, **kwargs):
         body = json.loads(request.read())
         mode = body.get('mode', None)
@@ -43,7 +44,7 @@ class ImportView(RESTDispatch):
             logger.info('imports (%s): POST: unknown command' % (request.user))
             return self.error_response(400, "Unknown import mode")
 
-    @login_required
+    @method_decorator(login_required)
     def delete(self, request, *args, **kwargs):
         import_id = kwargs['import_id']
         try:

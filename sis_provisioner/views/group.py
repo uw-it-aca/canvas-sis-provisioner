@@ -1,3 +1,4 @@
+from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
 from sis_provisioner.models import Group
 from sis_provisioner.views.rest_dispatch import RESTDispatch
@@ -7,7 +8,7 @@ class GroupListView(RESTDispatch):
     """ Performs query of Group models at /api/v1/groups/?.
         GET returns 200 with Group models
     """
-    @login_required
+    @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
         json_rep = {
             'groups': []

@@ -1,3 +1,4 @@
+from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
 from sis_provisioner.models.astra import Admin, Account
 from sis_provisioner.views.rest_dispatch import RESTDispatch
@@ -12,7 +13,7 @@ class AdminSearch(RESTDispatch):
     """ Performs query of Admin models at /api/v1/admins/?.
         GET returns 200 with Admin models
     """
-    @login_required
+    @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
         admins = []
         for admin in list(Admin.objects.all()):
@@ -28,7 +29,7 @@ class AccountSearch(RESTDispatch):
     def __init__(self):
         self._re_true = re.compile('^(1|true)$', re.I)
 
-    @login_required
+    @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
         account_type = request.GET.get('type')
         is_deleted = request.GET.get('is_deleted', '')
