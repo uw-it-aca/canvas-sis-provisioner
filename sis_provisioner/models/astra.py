@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, IntegrityError
 from django.db.models import Q
 from django.conf import settings
 from django.utils.timezone import localtime
@@ -153,7 +153,6 @@ class AccountManager(models.Manager):
         except IntegrityError as err:
             logger.error('ACCOUNT LOAD FAIL: canvas_id: %s, sis_id: %s, %s' % (
                     account.account_id, account.sis_account_id, err))
-            raise
 
         return a
 
