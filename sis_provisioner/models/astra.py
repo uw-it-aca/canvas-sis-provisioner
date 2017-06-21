@@ -3,8 +3,9 @@ from django.db.models import Q
 from django.conf import settings
 from django.utils.timezone import localtime
 from logging import getLogger
-from sis_provisioner.models import Curriculum
+from sis_provisioner.dao.account import valid_account_sis_id
 from sis_provisioner.dao.canvas import get_account_by_id, get_all_sub_accounts
+from sis_provisioner.exceptions import AccountPolicyException
 
 
 logger = getLogger(__name__)
@@ -114,7 +115,7 @@ class AccountManager(models.Manager):
         return super(AccountManager, self).get_queryset().filter(q)
 
     def add_all_accounts(self):
-        root_id = settings.RESTCLIENTS_CANVAS_ACCOUNT_ID
+        root_id = getattr(settings, 'RESTCLIENTS_CANVAS_ACCOUNT_ID')
         accounts = [get_account_by_id(root_id)]
         accounts.extend(get_all_sub_accounts(root_id))
 
@@ -124,28 +125,26 @@ class AccountManager(models.Manager):
             self.add_account(account)
 
     def add_account(self, account):
-        sis_id = None
         account_type = Account.ADHOC_TYPE
-        if account.account_id == int(settings.RESTCLIENTS_CANVAS_ACCOUNT_ID):
+        if account.account_id == int(getattr(settings,
+                                             'RESTCLIENTS_CANVAS_ACCOUNT_ID')):
             account_type = Account.ROOT_TYPE
         elif account.sis_account_id is not None:
-            sis_id = account.sis_account_id
             try:
-                curriculum = Curriculum.objects.get(
-                    subaccount_id=account.sis_account_id)
+                valid_account_sis_id(account.sis_account_id)
                 account_type = Account.SDB_TYPE
-            except Curriculum.DoesNotExist:
+            except AccountPolicyException:
                 pass
 
         try:
             a = Account.objects.get(canvas_id=account.account_id)
-            a.sis_id = sis_id
+            a.sis_id = account.sis_account_id
             a.account_name = account.name
             a.account_type = account_type
             a.is_deleted = None
         except Account.DoesNotExist:
             a = Account(canvas_id=account.account_id,
-                        sis_id=sis_id,
+                        sis_id=account.sis_account_id,
                         account_name=account.name,
                         account_type=account_type)
 
@@ -153,7 +152,7 @@ class AccountManager(models.Manager):
             a.save()
         except IntegrityError as err:
             logger.error('ACCOUNT LOAD FAIL: canvas_id: %s, sis_id: %s, %s' % (
-                    account.account_id, sis_id, err))
+                    account.account_id, account.sis_account_id, err))
             raise
 
         return a
