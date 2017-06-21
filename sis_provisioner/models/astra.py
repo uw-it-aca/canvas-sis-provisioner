@@ -3,7 +3,7 @@ from django.db.models import Q
 from django.conf import settings
 from django.utils.timezone import localtime
 from logging import getLogger
-from sis_provisioner.dao.account import valid_account_sis_id
+from sis_provisioner.dao.account import valid_academic_account_sis_id
 from sis_provisioner.dao.canvas import get_account_by_id, get_all_sub_accounts
 from sis_provisioner.exceptions import AccountPolicyException
 
@@ -131,7 +131,7 @@ class AccountManager(models.Manager):
             account_type = Account.ROOT_TYPE
         elif account.sis_account_id is not None:
             try:
-                valid_account_sis_id(account.sis_account_id)
+                valid_academic_account_sis_id(account.sis_account_id)
                 account_type = Account.SDB_TYPE
             except AccountPolicyException:
                 pass

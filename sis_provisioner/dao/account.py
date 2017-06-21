@@ -29,6 +29,19 @@ def valid_account_sis_id(account_id):
     raise AccountPolicyException("Invalid account SIS ID: %s" % account_id)
 
 
+def valid_academic_account_sis_id(account_id):
+    valid_account_sis_id(account_id)
+    try:
+        campus = account_id.split(":")[1]
+        if re.match(r"^(?:seattle|bothell|tacoma)$", campus):
+            return
+    except IndexError:
+        pass
+
+    raise AccountPolicyException(
+        "Invalid academic account SIS ID: %s" % account_id)
+
+
 def account_sis_id(accounts):
     """
     Generates the unique identifier for a sub-account in the form of
