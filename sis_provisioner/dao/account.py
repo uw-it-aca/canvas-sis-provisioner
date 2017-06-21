@@ -20,6 +20,15 @@ def valid_account_id(account_id):
         raise AccountPolicyException("Invalid account ID: %s" % account_id)
 
 
+def valid_account_sis_id(account_id):
+    if account_id is not None:
+        sis_root = getattr(settings, "SIS_IMPORT_ROOT_ACCOUNT_ID")
+        if (account_id == sis_root or
+                re.match(r"^%s\:\w+" % re.escape(sis_root), account_id)):
+            return
+    raise AccountPolicyException("Invalid account SIS ID: %s" % account_id)
+
+
 def account_sis_id(accounts):
     """
     Generates the unique identifier for a sub-account in the form of

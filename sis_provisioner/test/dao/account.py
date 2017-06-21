@@ -10,6 +10,21 @@ from uw_pws.util import fdao_pws_override
 
 @fdao_sws_override
 class AccountPolicyTest(TestCase):
+    def test_valid_sccount_sis_id(self):
+        with self.settings(SIS_IMPORT_ROOT_ACCOUNT_ID='sis_root'):
+            self.assertEquals(valid_account_sis_id('sis_root'), None)
+            self.assertEquals(valid_account_sis_id('sis_root:courses'), None)
+            self.assertEquals(valid_account_sis_id('sis_root:abc:def'), None)
+
+            self.assertRaises(
+                AccountPolicyException, valid_account_sis_id, 'course')
+            self.assertRaises(
+                AccountPolicyException, valid_account_sis_id, 'sis_root:')
+            self.assertRaises(
+                AccountPolicyException, valid_account_sis_id, 'sis_root:%')
+            self.assertRaises(
+                AccountPolicyException, valid_account_sis_id, None)
+
     def test_account_sis_id(self):
         self.assertEquals(account_sis_id(['abc']), 'abc')
         self.assertEquals(account_sis_id(['ab&c']), 'ab&c')
