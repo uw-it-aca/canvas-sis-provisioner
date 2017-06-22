@@ -162,7 +162,7 @@ class CourseListView(RESTDispatch):
 
                 return self.json_response(json_rep)
             except Exception as err:
-                logger.error('course kwargs search fail: %s' + err)
+                logger.error('Course search fail: %s' % err)
                 return self.error_response(400, err)
 
         net_id = None
@@ -182,7 +182,7 @@ class CourseListView(RESTDispatch):
         except CourseInvalidException as err:
             return self.error_response(400, err)
         except Exception as err:
-            logger.error('course filter fail: %s' % err)
+            logger.error('Course filter fail: %s' % err)
             return self.error_response(400, err)
 
         if (net_id is not None or reg_id is not None) and len(course_list):
@@ -206,7 +206,7 @@ class CourseListView(RESTDispatch):
                         section.section_id.upper()]))
 
             except Exception as err:
-                logger.error('section search fail: %s' % err)
+                logger.error('Section search fail: %s' % err)
                 return self.error_response(400, err)
 
         include_sws_url = can_view_source_data()
