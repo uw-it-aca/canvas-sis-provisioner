@@ -22,7 +22,7 @@ class Command(BaseCommand):
         else:
             term = get_term_by_date(datetime.now().date())
 
-        csv_path = UnusedCourseBuilder().build()
+        csv_path = UnusedCourseBuilder().build(term_sis_id=term_sis_id)
 
         if not settings.SIS_IMPORT_CSV_DEBUG:
             print(csv_path)
