@@ -194,10 +194,10 @@ def get_active_courses_for_term(term, account_id=None):
 
 
 def get_unused_course_report_data(term_sis_id):
-    reports = Reports()
-    term = reports.get_term_by_sis_id(term_sis_id)
+    term = Terms().get_term_by_sis_id(term_sis_id)
     account_id = getattr(settings, 'RESTCLIENTS_CANVAS_ACCOUNT_ID', None)
 
+    reports = Reports()
     unused_course_report = reports.create_unused_courses_report(
         account_id, term_id=term.term_id)
 

@@ -277,7 +277,8 @@ class CourseBuilder(Builder):
 
 class UnusedCourseBuilder(Builder):
     def _init_build(self, **kwargs):
-        report_data = get_unused_course_report_data(term_sis_id)
+        self.term_sis_id = kwargs.get('term_sis_id')
+        report_data = get_unused_course_report_data(self.term_sis_id)
         header = report_data.pop(0)
         for row in csv.reader(report_data):
             if len(row):
@@ -294,7 +295,7 @@ class UnusedCourseBuilder(Builder):
                       'short_name': row[2],
                       'long_name': row[3],
                       'account_id': None,
-                      'term_id': term_sis_id,
+                      'term_id': self.term_sis_id,
                       'status': 'deleted'}
 
             self.data.add(CourseCSV(**kwargs))

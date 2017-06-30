@@ -40,7 +40,7 @@ class Command(SISProvisionerCommand):
             return
 
         try:
-            imp.csv_path = UnusedCourseBuilder().build()
+            imp.csv_path = UnusedCourseBuilder().build(term_sis_id=term_sis_id)
         except:
             imp.csv_errors = traceback.format_exc()
 
