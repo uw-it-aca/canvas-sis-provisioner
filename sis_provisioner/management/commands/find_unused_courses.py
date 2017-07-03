@@ -12,7 +12,7 @@ class Command(BaseCommand):
             Canvas."
 
     def add_arguments(self, parser):
-        parser.add_argument('-t', '--term-sis-id', help='Term SIS ID')
+        parser.add_argument('term-sis-id', help='Term SIS ID')
 
     def handle(self, *args, **options):
         term_sis_id = options.get('term-sis-id')
@@ -22,6 +22,7 @@ class Command(BaseCommand):
         else:
             term = get_term_by_date(datetime.now().date())
 
+        term_sis_id = term.canvas_sis_id()
         csv_path = UnusedCourseBuilder().build(term_sis_id=term_sis_id)
 
         if not settings.SIS_IMPORT_CSV_DEBUG:
