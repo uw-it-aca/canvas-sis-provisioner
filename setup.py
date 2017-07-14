@@ -37,7 +37,7 @@ setup(
         'UW-RestClients-PWS>=0.5,<1.0',
         'UW-RestClients-GWS>=0.3,<1.0',
         'UW-RestClients-KWS>=0.1,<1.0',
-        'UW-RestClients-Canvas>=0.4,<1.0',
+        'UW-RestClients-Canvas>=0.6.2,<1.0',
         'UW-RestClients-Django-Utils>=0.6.5,<1.0',
         'Django-SupportTools>=1.1',
         'django_mobileesp',
