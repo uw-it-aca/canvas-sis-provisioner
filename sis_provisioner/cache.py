@@ -7,18 +7,17 @@ import re
 class RestClientsCache(TimedCache):
     """ A custom cache implementation for Canvas """
 
-    canvas_url_roles = '/api/v1/accounts/%s/roles'
     kws_url_current_key = '/key/v1/type/%s/encryption/current'
     kws_url_key = '/key/v1/encryption/%s.json'
 
     url_policies = {}
     url_policies["sws"] = (
-        (re.compile(r"^/student/v5/term/"), 60 * 60 * 10),
-        (re.compile(r"^/student/v5/course/"), 60 * 5),
+        (re.compile(r"^/student/v\d/term/"), 60 * 60 * 10),
+        (re.compile(r"^/student/v\d/course/"), 60 * 5),
     )
     url_policies["pws"] = (
-        (re.compile(r"^/identity/v1/person/"), 60 * 60),
-        (re.compile(r"^/identity/v1/entity/"), 60 * 60),
+        (re.compile(r"^/identity/v\d/person/"), 60 * 60),
+        (re.compile(r"^/identity/v\d/entity/"), 60 * 60),
     )
     url_policies["kws"] = (
         (re.compile(r"^%s" % (
@@ -27,15 +26,15 @@ class RestClientsCache(TimedCache):
             kws_url_current_key % "[\-\da-zA-Z]+")), 60 * 60 * 24 * 7),
     )
     url_policies["gws"] = (
-        (re.compile(r"^/group_sws/v2/group/%s/effective_member/" % (
+        (re.compile(r"^/group_sws/v\d/group/%s/effective_member/" % (
             getattr(settings, 'NONPERSONAL_NETID_EXCEPTION_GROUP', 'none'))),
             60 * 60),
     )
     url_policies["canvas"] = (
-        (re.compile(r"^%s" % (canvas_url_roles % '\d+')), 60 * 60 * 4),
+        (re.compile(r"^/api/v\d/accounts/\d+/roles"), 60 * 60 * 4),
     )
     url_policies["libcurrics"] = (
-        (re.compile(r"^/currics_db/api/v1/data/course/"), 60 * 60 * 4),
+        (re.compile(r"^/currics_db/api/v\d/data/course/"), 60 * 60 * 4),
     )
 
     def deleteCache(self, service, url):
