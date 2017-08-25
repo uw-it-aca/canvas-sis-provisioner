@@ -125,6 +125,11 @@ def enrollment_status_from_registration(registration):
             request_status == 'pending added to class'):
         return ENROLLMENT_ACTIVE
 
+    if registration.request_date is None:
+        logger.info('Missing request_date: %s %s' % (
+            registration.section.section_label(), registration.person.uwregid))
+        return ENROLLMENT_DELETED
+
     if (localize(registration.request_date) >
             localize(registration.section.term.get_eod_census_day())):
         return ENROLLMENT_INACTIVE
