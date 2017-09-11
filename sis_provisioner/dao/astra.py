@@ -298,7 +298,7 @@ class Admins():
                         raise ASTRAException(
                             "Missing required SpanOfControl: %s" % auth.party)
 
-                except ASTRAException as errstr:
+                except ASTRAException as err:
                     self._log.error('%s\n AUTH: %s' % (err, auth))
 
         # log who fell from ASTRA
