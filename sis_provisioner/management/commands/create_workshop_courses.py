@@ -58,7 +58,7 @@ class Command(BaseCommand):
                 course_id=course_sis_id, person=person,
                 role=INSTRUCTOR_ENROLLMENT, status=ENROLLMENT_ACTIVE))
 
-        csv_path = csvdata.write()
+        csv_path = csvdata.write_files()
 
         if csv_path:
             imp = Import(priority=PRIORITY_DEFAULT, csv_type='course',
