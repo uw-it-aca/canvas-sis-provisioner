@@ -14,27 +14,25 @@ import mock
 @fdao_pws_override
 class SectionPolicyTest(TestCase):
     def test_valid_canvas_course_id(self):
-        self.assertEquals(valid_canvas_course_id(12345), None)
         self.assertEquals(valid_canvas_course_id('12345'), None)
-        self.assertEquals(valid_canvas_course_id(0), None)
-        self.assertEquals(valid_canvas_course_id(1111111111), None)
+        self.assertEquals(valid_canvas_course_id('0'), None)
+        self.assertEquals(valid_canvas_course_id('1111111111'), None)
         self.assertRaises(CoursePolicyException, valid_canvas_course_id, None)
         self.assertRaises(CoursePolicyException, valid_canvas_course_id, 'abc')
         self.assertRaises(CoursePolicyException, valid_canvas_course_id, '1234z')
 
     def test_valid_course_sis_id(self):
-        self.assertEquals(valid_course_sis_id(12345), None)
+        self.assertEquals(valid_course_sis_id('12345'), None)
         self.assertEquals(valid_course_sis_id('abc'), None)
         self.assertEquals(valid_course_sis_id('0'), None)
         self.assertRaises(CoursePolicyException, valid_course_sis_id, None)
-        self.assertRaises(CoursePolicyException, valid_course_sis_id, 0)
         self.assertRaises(CoursePolicyException, valid_course_sis_id, '')
 
     def test_valid_adhoc_course_sis_id(self):
         self.assertEquals(valid_adhoc_course_sis_id('course_12345'), None)
         self.assertEquals(valid_adhoc_course_sis_id('course_1'), None)
         self.assertRaises(CoursePolicyException, valid_adhoc_course_sis_id, None)
-        self.assertRaises(CoursePolicyException, valid_adhoc_course_sis_id, 0)
+        self.assertRaises(CoursePolicyException, valid_adhoc_course_sis_id, '0')
         self.assertRaises(CoursePolicyException, valid_adhoc_course_sis_id, '')
         self.assertRaises(CoursePolicyException, valid_adhoc_course_sis_id, 'abc')
 
@@ -46,7 +44,7 @@ class SectionPolicyTest(TestCase):
         self.assertEquals(valid_academic_course_sis_id('2016-autumn-A B-100-A'), None)
         self.assertEquals(valid_academic_course_sis_id('2016-autumn-ABC-100-A-ABCDEF1234567890ABCDEF1234567890'), None)
         self.assertRaises(CoursePolicyException, valid_academic_course_sis_id, None)
-        self.assertRaises(CoursePolicyException, valid_academic_course_sis_id, 0)
+        self.assertRaises(CoursePolicyException, valid_academic_course_sis_id, '0')
         self.assertRaises(CoursePolicyException, valid_academic_course_sis_id, '')
         self.assertRaises(CoursePolicyException, valid_academic_course_sis_id, 'abc')
         self.assertRaises(CoursePolicyException, valid_academic_course_sis_id, '2016-autumn-abc-100-a')
@@ -64,14 +62,13 @@ class SectionPolicyTest(TestCase):
         self.assertEquals(valid_academic_section_sis_id('2016-autumn-A B-100-AA'), None)
         self.assertEquals(valid_academic_section_sis_id('2016-autumn-ABC-100-A-ABCDEF1234567890ABCDEF1234567890--'), None)
         self.assertRaises(CoursePolicyException, valid_academic_section_sis_id, None)
-        self.assertRaises(CoursePolicyException, valid_academic_section_sis_id, 0)
+        self.assertRaises(CoursePolicyException, valid_academic_section_sis_id, '0')
         self.assertRaises(CoursePolicyException, valid_academic_section_sis_id, '')
         self.assertRaises(CoursePolicyException, valid_academic_section_sis_id, 'abc')
         self.assertRaises(CoursePolicyException, valid_academic_section_sis_id, '2016-autumn-ABC-100-ABC')
 
     def test_adhoc_course_sis_id(self):
         self.assertEquals(adhoc_course_sis_id('12345'), 'course_12345')
-        self.assertEquals(adhoc_course_sis_id(12345), 'course_12345')
         self.assertEquals(adhoc_course_sis_id('0'), 'course_0')
         self.assertRaises(CoursePolicyException, adhoc_course_sis_id, None)
         self.assertRaises(CoursePolicyException, adhoc_course_sis_id, 'abc')
@@ -109,10 +106,9 @@ class SectionPolicyTest(TestCase):
         self.assertEquals(instructor_regid_from_section_id('2016-autumn-ABC-100-A-ABCDEF1234567890ABCDEF1234567890'), 'ABCDEF1234567890ABCDEF1234567890')
         self.assertEquals(instructor_regid_from_section_id('2016-autumn-ABC-100-A--'), None)
         self.assertEquals(instructor_regid_from_section_id('2016-autumn-ABC-100-A-ABCDEF1234567890ABCDEF1234567890--'), 'ABCDEF1234567890ABCDEF1234567890')
-
-        self.assertRaises(CoursePolicyException, instructor_regid_from_section_id, '2016-autumn-ABC-100')
-        self.assertRaises(CoursePolicyException, instructor_regid_from_section_id, '')
-        self.assertRaises(CoursePolicyException, instructor_regid_from_section_id, None)
+        self.assertEquals(instructor_regid_from_section_id('2016-autumn-ABC-100'), None)
+        self.assertEquals(instructor_regid_from_section_id(''), None)
+        self.assertEquals(instructor_regid_from_section_id(None), None)
 
     def test_valid_canvas_section(self):
         section = get_section_by_label('2013,spring,TRAIN,101/A')

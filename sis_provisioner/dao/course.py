@@ -4,6 +4,7 @@ from uw_sws.section import (
     get_sections_by_instructor_and_term)
 from uw_sws.registration import get_all_registrations_by_section
 from uw_sws.models import Section
+from uw_canvas.models import CanvasCourse, CanvasSection
 from restclients_core.exceptions import DataFailureException
 from sis_provisioner.exceptions import CoursePolicyException
 from sis_provisioner.dao.user import user_fullname
@@ -15,53 +16,35 @@ except ImportError:
     from urllib import unquote
 import re
 
-
 logger = getLogger(__name__)
-
-RE_COURSE_SIS_ID = re.compile(
-    "^\d{4}-"                           # year
-    "(?:winter|spring|summer|autumn)-"  # quarter
-    "[\w& ]+-"                          # curriculum
-    "\d{3}-"                            # course number
-    "[A-Z][A-Z0-9]?"                    # section id
-    "(?:-[A-F0-9]{32})?$",              # ind. study instructor regid
-    re.VERBOSE)
-
-RE_SECTION_SIS_ID = re.compile(
-    "^\d{4}-"                                  # year
-    "(?:winter|spring|summer|autumn)-"         # quarter
-    "[\w& ]+-"                                 # curriculum
-    "\d{3}-"                                   # course number
-    "[A-Z](?:[A-Z0-9]|--|-[A-F0-9]{32}--)?$",  # section id|regid
-    re.VERBOSE)
 
 RE_CANVAS_ID = re.compile(r"^\d+$")
 RE_ADHOC_COURSE_SIS_ID = re.compile(r"^course_\d+$")
 
 
 def valid_canvas_course_id(canvas_id):
-    if (RE_CANVAS_ID.match(str(canvas_id)) is None):
+    if (canvas_id is None or RE_CANVAS_ID.match(canvas_id) is None):
         raise CoursePolicyException("Invalid Canvas ID: %s" % canvas_id)
 
 
 def valid_course_sis_id(sis_id):
-    if not (sis_id and len(str(sis_id)) > 0):
+    if (sis_id is None or not len(sis_id)):
         raise CoursePolicyException("Invalid course SIS ID: %s" % sis_id)
 
 
 def valid_adhoc_course_sis_id(sis_id):
-    if (RE_ADHOC_COURSE_SIS_ID.match(str(sis_id)) is None):
+    if (sis_id is None or RE_ADHOC_COURSE_SIS_ID.match(sis_id) is None):
         raise CoursePolicyException("Invalid course SIS ID: %s" % sis_id)
 
 
 def valid_academic_course_sis_id(sis_id):
-    if (RE_COURSE_SIS_ID.match(str(sis_id)) is None):
+    if not CanvasCourse(sis_course_id=sis_id).is_academic_sis_id():
         raise CoursePolicyException(
             "Invalid academic course SIS ID: %s" % sis_id)
 
 
 def valid_academic_section_sis_id(sis_id):
-    if (RE_SECTION_SIS_ID.match(str(sis_id)) is None):
+    if not CanvasSection(sis_section_id=sis_id).is_academic_sis_id():
         raise CoursePolicyException(
             "Invalid academic section SIS ID: %s" % sis_id)
 
@@ -95,28 +78,22 @@ def section_id_from_url(url):
 
 
 def section_label_from_section_id(section_id):
-    section_id = re.sub(r'--$', '', str(section_id))
-    valid_academic_course_sis_id(section_id)
-    try:
-        (year, quarter, curr_abbr, course_num,
-            section_id, reg_id) = section_id.split('-', 5)
-    except ValueError:
-        (year, quarter, curr_abbr, course_num,
-            section_id) = section_id.split('-', 4)
-
-    return '%s,%s,%s,%s/%s' % (str(year), quarter.lower(), curr_abbr.upper(),
-                               course_num, section_id)
+    canvas_section = CanvasSection(sis_section_id=section_id)
+    section_label = canvas_section.sws_section_id()
+    if section_label is None:
+        valid_academic_course_sis_id(section_id)
+        canvas_course = CanvasCourse(sis_course_id=section_id)
+        section_label = canvas_course.sws_course_id()
+    return section_label
 
 
 def instructor_regid_from_section_id(section_id):
-    section_id = re.sub(r'--$', '', str(section_id))
-    valid_academic_course_sis_id(section_id)
-    try:
-        (year, quarter, curr_abbr, course_num, section_id,
-            reg_id) = section_id.split('-', 5)
-        return reg_id
-    except ValueError:
-        return None
+    canvas_section = CanvasSection(sis_section_id=section_id)
+    reg_id = canvas_section.sws_instructor_regid()
+    if reg_id is None:
+        canvas_course = CanvasCourse(sis_course_id=section_id)
+        reg_id = canvas_course.sws_instructor_regid()
+    return reg_id
 
 
 def valid_canvas_section(section):
