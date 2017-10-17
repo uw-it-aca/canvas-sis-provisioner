@@ -130,7 +130,7 @@ class EventBase(object):
             self._log.error(
                 "Error: %s\nHEADER: %s\nBODY: %s" % (
                     err, self._header, self._body))
-            raise
+            raise EventException('Cannot decrypt: %s' % (err))
         except DataFailureException as err:
             msg = "Request failure for %s: %s (%s)" % (
                 err.url, err.msg, err.status)
