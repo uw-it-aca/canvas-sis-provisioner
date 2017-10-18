@@ -121,7 +121,15 @@ class EventBase(object):
             self._log.error(
                 "Key Error: %s\nHEADER: %s" % (err, self._header))
             raise
-        except (ValueError, CryptoException) as err:
+        except ValueError as err:
+            self._log.error(
+                "Error: %s\nHEADER: %s\nBODY: %s" % (
+                    err, self._header, self._body))
+            return {}
+        except CryptoException as err:
+            self._log.error(
+                "Error: %s\nHEADER: %s\nBODY: %s" % (
+                    err, self._header, self._body))
             raise EventException('Cannot decrypt: %s' % (err))
         except DataFailureException as err:
             msg = "Request failure for %s: %s (%s)" % (
