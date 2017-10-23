@@ -31,7 +31,7 @@ class Enrollment(EventBase):
 
     def process_events(self, events):
         enrollments = []
-        for event in events['Events']:
+        for event in events.get('Events', []):
             section_data = event['Section']
             course_data = section_data['Course']
 
