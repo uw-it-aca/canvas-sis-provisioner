@@ -185,6 +185,8 @@ class EnrollmentCSV(CSVFormat):
             raise EnrollmentPolicyException(
                 'Missing course and section for %s: %s' % (user_id, status))
 
+        self.key = '%s:%s:%s:%s:%s' % (course_id, section_id, user_id, role,
+                                       status)
         self.data = [course_id, None, user_id, role, None, section_id, status,
                      None]
 

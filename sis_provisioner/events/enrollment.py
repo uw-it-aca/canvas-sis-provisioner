@@ -1,7 +1,8 @@
 from sis_provisioner.events import EventBase
 from sis_provisioner.models.events import EnrollmentLog
+from sis_provisioner.dao.user import valid_reg_id
 from sis_provisioner.exceptions import (
-    EventException, UnhandledActionCodeException)
+    EventException, InvalidLoginIdException, UnhandledActionCodeException)
 from uw_sws.models import Term, Section
 from uw_canvas.models import CanvasEnrollment
 from dateutil.parser import parse as date_parse
@@ -56,6 +57,7 @@ class Enrollment(EventBase):
                         event['PrimarySection']['SectionID']
 
             try:
+                valid_reg_id(event['Person']['UWRegID'])
                 data = {
                     'Section': section,
                     'Role': CanvasEnrollment.STUDENT.replace('Enrollment', ''),
@@ -81,6 +83,10 @@ class Enrollment(EventBase):
                     event['Person']['UWRegID'],
                     event['LastModified']))
                 pass
+            except InvalidLoginIdException:
+                self._log.warning("%s INVALID UWRegID %s, Href: %s" % (
+                    log_prefix, event['Person']['UWRegID'],
+                    event['Person']['Href']))
 
         self.load_enrollments(enrollments)
 
