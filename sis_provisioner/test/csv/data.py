@@ -91,9 +91,23 @@ class CSVDataTest(TestCase):
         for user in section.get_instructors():
             self.assertEquals(csv.add(EnrollmentCSV(section=section,
                 instructor=user, status='active')), True)
+            # Duplicate
+            self.assertEquals(csv.add(EnrollmentCSV(section=section,
+                instructor=user, status='active')), False)
 
         self.assertEquals(len(csv.enrollments), 5)
         self.assertEquals(csv.has_data(), True)
+
+        # Ad-hoc enrollment
+        self.assertEquals(csv.add(EnrollmentCSV(
+            course_id='course_123', section_id='section_123',
+            person=user, role='Observer', status='active')), True)
+        self.assertEquals(len(csv.enrollments), 6)
+
+        # Duplicate
+        self.assertEquals(csv.add(EnrollmentCSV(
+            course_id='course_123', section_id='section_123',
+            person=user, role='Observer', status='active')), False)
 
     def test_xlists(self):
         csv = Collector()

@@ -20,6 +20,7 @@ class Collector(object):
         self.courses = {}
         self.sections = {}
         self.enrollments = []
+        self.enrollment_keys = {}
         self.xlists = []
         self.users = {}
         self.headers = {
@@ -91,8 +92,11 @@ class Collector(object):
         return False
 
     def _add_enrollment(self, formatter):
-        self.enrollments.append(formatter)
-        return True
+        if formatter.key not in self.enrollment_keys:
+            self.enrollment_keys[formatter.key] = True
+            self.enrollments.append(formatter)
+            return True
+        return False
 
     def _add_xlist(self, formatter):
         self.xlists.append(formatter)
