@@ -63,7 +63,7 @@ class EventListView(RESTDispatch):
                     try:
                         events[event_type]['points'][
                             o.minute - start_sample] = o.event_count
-                    except:
+                    except Exception:
                         pass
 
             return self.json_response(events)
