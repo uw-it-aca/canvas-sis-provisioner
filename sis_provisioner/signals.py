@@ -44,7 +44,7 @@ def priority_user_import(sender, **kwargs):
 
             try:
                 imp.csv_path = UserBuilder([user]).build()
-            except:
+            except Exception:
                 imp.csv_errors = traceback.format_exc()
 
             if imp.csv_path:

@@ -159,7 +159,7 @@ class EventBase(object):
 
             try:
                 self.record_success(enrollment_count)
-            except:
+            except Exception:
                 pass
 
     def record_success_to_log(self, log_model, event_count):

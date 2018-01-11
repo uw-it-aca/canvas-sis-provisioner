@@ -68,7 +68,7 @@ def valid_gmail_id(login_id):
         username = username.split("+", 1)[0].replace(".", "")
         if not len(username):
             raise InvalidLoginIdException("Invalid username: %s" % login_id)
-    except:
+    except Exception:
         raise InvalidLoginIdException("Invalid username: %s" % login_id)
 
     if domain not in getattr(settings, 'LOGIN_DOMAIN_WHITELIST', []):
