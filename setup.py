@@ -26,7 +26,7 @@ setup(
         'suds-jurko==0.6',
         'django-userservice==1.2.1',
         'AuthZ-Group',
-        'django-blti==1.2.3',
+        'django-blti==1.2.4',
         'django-aws-message>=0.1,<1.0',
         'UW-Canvas-Users-LTI>=0.4,<1.0',
         'UW-Groups-LTI>=0.4,<1.0',
