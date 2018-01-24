@@ -91,7 +91,7 @@ class Admins():
             return result
         except WebFault as err:
             self._log.error(err)
-        except:
+        except Exception:
             self._log.error('Other error: ' + str(sys.exc_info()[1]))
 
         return None
@@ -240,7 +240,7 @@ class Admins():
                 os.kill(queued[0].queue_id, 0)
                 raise ASTRAException('loader already running %s' % (
                     queued[0].queue_id))
-            except:
+            except Exception:
                 override = options.get('override', 0)
                 if override > 0 and override == queued[0].queue_id:
                     Admin.objects.dequeue(queue_id=override)

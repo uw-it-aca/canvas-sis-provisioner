@@ -2,5 +2,5 @@ from django.conf.urls import url, include
 
 
 urlpatterns = [
-    url(r'^', include('sis_provisoner.urls')),
+    url(r'^', include('sis_provisioner.urls')),
 ]

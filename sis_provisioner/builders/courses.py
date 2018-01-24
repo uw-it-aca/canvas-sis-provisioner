@@ -32,7 +32,7 @@ class CourseBuilder(Builder):
 
         try:
             section = self.get_section_resource_by_id(section_id)
-        except:
+        except Exception:
             return
 
         if section.is_independent_study:
