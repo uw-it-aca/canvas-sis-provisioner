@@ -14,7 +14,7 @@ setup(
     packages=['sis_provisioner'],
     include_package_data=True,
     install_requires = [
-        'Django==1.10.5',
+        'Django==1.11.10',
         'urllib3==1.10.2',
         'lxml',
         'python-dateutil',
