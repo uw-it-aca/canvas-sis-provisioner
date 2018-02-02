@@ -8,7 +8,10 @@ from sis_provisioner.dao.canvas import (
     get_account_by_id, get_course_by_id, get_course_by_sis_id)
 from logging import getLogger
 from bs4 import BeautifulSoup
-import urllib2
+try:
+    from urllib2 import urlopen  # python2.7
+except ImportError:
+    from urllib.request import urlopen
 import re
 
 
@@ -89,7 +92,7 @@ class CanvasStatus(RESTDispatch):
     def get(self, request, *args, **kwargs):
         status_url = 'http://status.instructure.com'
         try:
-            page = urllib2.urlopen(status_url)
+            page = urlopen(status_url)
             soup = BeautifulSoup(page, 'html.parser')
             components = []
             for x in soup.body.find_all(

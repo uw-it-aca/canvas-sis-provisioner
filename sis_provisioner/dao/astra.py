@@ -16,7 +16,10 @@ from sis_provisioner.dao.user import (
 from sis_provisioner.dao.canvas import (
     get_user_by_sis_id, create_user, get_account_by_sis_id)
 from sis_provisioner.exceptions import ASTRAException
-import urllib2
+try:
+    from urllib2 import build_opener, HTTPSHandler  # python2.7
+except ImportError:
+    from urllib.request import build_opener, HTTPSHandler
 import socket
 import ssl
 import httplib
@@ -31,7 +34,7 @@ class HTTPSTransportV3(HttpTransport):
 
     def u2open(self, u2request):
         tm = self.options.timeout
-        url = urllib2.build_opener(HTTPSClientAuthHandler())
+        url = build_opener(HTTPSClientAuthHandler())
         if self.u2ver() < 2.6:
             socket.setdefaulttimeout(tm)
             return url.open(u2request)
@@ -39,9 +42,9 @@ class HTTPSTransportV3(HttpTransport):
             return url.open(u2request, timeout=tm)
 
 
-class HTTPSClientAuthHandler(urllib2.HTTPSHandler):
+class HTTPSClientAuthHandler(HTTPSHandler):
     def __init__(self):
-        urllib2.HTTPSHandler.__init__(self)
+        HTTPSHandler.__init__(self)
 
     def https_open(self, req):
         return self.do_open(HTTPSConnectionClientCertV3, req)
