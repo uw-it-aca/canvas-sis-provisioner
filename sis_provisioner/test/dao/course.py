@@ -123,15 +123,22 @@ class SectionPolicyTest(TestCase):
         self.assertRaises(CoursePolicyException, valid_canvas_section, section)
 
         section.primary_lms = Section.LMS_CANVAS
-        section.is_withdrawn = False
+        section.delete_flag = Section.DELETE_FLAG_ACTIVE
         self.assertEquals(is_active_section(section), True)
 
-        section.is_withdrawn = True
+        section.delete_flag = Section.DELETE_FLAG_WITHDRAWN
         self.assertEquals(is_active_section(section), False)
 
         section.primary_lms = 'ABC'
-        section.is_withdrawn = False
+        section.delete_flag = Section.DELETE_FLAG_ACTIVE
         self.assertEquals(is_active_section(section), False)
+
+    def test_suspended_canvas_section(self):
+        section = get_section_by_label('2013,winter,BIGDATA,220/A')
+        self.assertEquals(section.is_active(), False)
+        self.assertEquals(section.is_withdrawn(), False)
+        self.assertEquals(section.is_suspended(), True)
+        self.assertEquals(is_active_section(section), True)
 
     def test_section_short_name(self):
         section = get_section_by_label('2013,spring,TRAIN,101/A')
@@ -183,7 +190,7 @@ class XlistSectionTest(TestCase):
         section = get_section_by_id('2013-summer-TRAIN-101-A')
         self.assertEquals(canvas_xlist_id([section]), '2013-summer-TRAIN-101-A')
 
-        section.is_withdrawn = True
+        section.delete_flag = Section.DELETE_FLAG_WITHDRAWN
         self.assertEquals(canvas_xlist_id([section]), None)
 
         section1 = get_section_by_id('2013-spring-TRAIN-101-A')
@@ -201,7 +208,11 @@ class NewSectionQueryTest(TestCase):
     @mock.patch('sis_provisioner.dao.course.get_changed_sections_by_term')
     def test_changed_sections_by_term(self, mock_fn):
         r = get_new_sections_by_term('2013-12-12', 'abc')
-        mock_fn.assert_called_with('2013-12-12', 'abc', transcriptable_course='all')
+        mock_fn.assert_called_with(
+            '2013-12-12', 'abc',
+            delete_flag=[Section.DELETE_FLAG_ACTIVE, Section.DELETE_FLAG_SUSPENDED],
+            future_terms=0, include_secondaries='on',
+            transcriptable_course='all')
 
     def test_new_sections_by_term(self):
         changed_date = datetime(2013, 12, 12).date()

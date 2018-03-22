@@ -229,7 +229,7 @@ class CourseManager(models.Manager):
                 course.provisioned_status = 'Primary LMS: %s (%s)' % (
                     section.primary_lms, err)
 
-            if section.is_withdrawn:
+            if section.is_withdrawn():
                 course.priority = PRIORITY_NONE
 
             course.save()
@@ -1041,7 +1041,8 @@ class Import(models.Model):
 
     def is_imported(self):
         return (self.is_completed() and
-                re.match(r'^imported', str(self.canvas_state)) is not None)
+                self.canvas_state is not None and
+                re.match(r'^imported', self.canvas_state) is not None)
 
     def dependent_model(self):
         return globals()[self.get_csv_type_display()]

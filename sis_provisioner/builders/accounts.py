@@ -33,7 +33,7 @@ class AccountBuilder(Builder):
                 self.data.add(AccountCSV(dept_id, college_id, department))
 
                 for curriculum in get_curricula_by_department(
-                        department, future_terms=2):
+                        department, future_terms=2, view_unpublished=True):
                     curr_id = account_sis_id([root_id, college.campus_label,
                                               college.name, department.label,
                                               curriculum.label])

@@ -68,7 +68,7 @@ class EnrollmentBuilder(Builder):
                                                  enrollment.person,
                                                  enrollment.status)
             else:
-                enrollment.section.is_withdrawn = True
+                enrollment.section.delete_flag = section.DELETE_FLAG_WITHDRAWN
 
             # Add or remove independent study course
             self.data.add(CourseCSV(section=enrollment.section))

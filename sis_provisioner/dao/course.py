@@ -107,7 +107,7 @@ def valid_canvas_section(section):
 def is_active_section(section):
     try:
         valid_canvas_section(section)
-        return not section.is_withdrawn
+        return not section.is_withdrawn()
     except CoursePolicyException:
         return False
 
@@ -153,9 +153,16 @@ def get_section_by_id(section_id):
 
 
 def get_new_sections_by_term(changed_since_date, term, existing={}):
+    kwargs = {
+        'future_terms': 0,
+        'transcriptable_course': 'all',
+        'include_secondaries': 'on',
+        'delete_flag': [Section.DELETE_FLAG_ACTIVE,
+                        Section.DELETE_FLAG_SUSPENDED]
+    }
     sections = []
     for section_ref in get_changed_sections_by_term(
-            changed_since_date, term, transcriptable_course='all'):
+            changed_since_date, term, **kwargs):
 
         primary_id = None
         course_id = '%s-%s-%s-%s' % (section_ref.term.canvas_sis_id(),

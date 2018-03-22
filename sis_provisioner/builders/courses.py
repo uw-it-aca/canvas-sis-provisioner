@@ -40,7 +40,7 @@ class CourseBuilder(Builder):
 
             # This handles ind. study sections that were initially created
             # in the sdb without the ind. study flag set
-            if section.is_withdrawn:
+            if section.is_withdrawn():
                 course.priority = PRIORITY_NONE
                 course.save()
         else:

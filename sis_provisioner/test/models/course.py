@@ -83,7 +83,7 @@ class CourseModelTest(TestCase):
         self.assertEquals(course.provisioned_status, None)
         self.assertEquals(course.priority, PRIORITY_DEFAULT)
 
-        section.is_withdrawn = True
+        section.delete_flag = section.DELETE_FLAG_WITHDRAWN
         course = Course.objects.add_to_queue(section, queue_id='4')
         Course.objects.update_status(section)
         course = Course.objects.get(course_id=course_id)
