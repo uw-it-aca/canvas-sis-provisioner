@@ -37,7 +37,7 @@ setup(
         'UW-Library-Guides-LTI>=0.4,<1.0',
         'Anonymous-Feedback-LTI>=0.2.2,<1.0',
         'UW-RestClients-Core==0.9.6',
-        'UW-RestClients-SWS>=1.5,<2.0',
+        'UW-RestClients-SWS>=1.5.1,<2.0',
         'UW-RestClients-PWS>=0.6,<1.0',
         'UW-RestClients-GWS>=0.4.1,<1.0',
         'UW-RestClients-KWS>=0.1,<1.0',
