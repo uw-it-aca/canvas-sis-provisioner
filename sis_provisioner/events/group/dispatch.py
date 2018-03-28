@@ -260,6 +260,7 @@ class UWGroupDispatch(Dispatch):
             user_id, group.course_id, group.role))
 
     _MEMBER_CACHE = {}
+
     def _user_in_member_group(self, group, member):
         if self._has_member_groups(group):
             key = '%s:%s:%s' % (group.group_id, member.name, group.added_by)
