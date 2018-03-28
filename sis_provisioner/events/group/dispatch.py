@@ -259,10 +259,17 @@ class UWGroupDispatch(Dispatch):
             log_prefix, 'DELETED' if is_deleted else 'ACTIVE',
             user_id, group.course_id, group.role))
 
+    _MEMBER_CACHE = {}
     def _user_in_member_group(self, group, member):
         if self._has_member_groups(group):
-            return is_member(
-                group.group_id, member.name, act_as=group.added_by)
+            key = '%s:%s:%s' % (group.group_id, member.name, group.added_by)
+
+            if key not in UWGroupDispatch._MEMBER_CACHE:
+                UWGroupDispatch._MEMBER_CACHE[key] = is_member(
+                    group.group_id, member.name, act_as=group.added_by)
+
+            return UWGroupDispatch._MEMBER_CACHE[key]
+
         return False
 
     def _user_in_course(self, group, member):
