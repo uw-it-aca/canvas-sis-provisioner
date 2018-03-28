@@ -89,10 +89,15 @@ class UWGroupDispatch(Dispatch):
         super(UWGroupDispatch, self).__init__(config, message)
         self._valid_members = []
 
+    def _find_group_models(self, group_id):
+        return GroupModel.objects.filter(group_id=group_id,
+                                         priority__gt=PRIORITY_NONE,
+                                         is_deleted__isnull=True)
+
     def mine(self, group):
-        self._groups = GroupModel.objects.filter(group_id=group)
-        self._membergroups = GroupMemberGroupModel \
-            .objects.filter(group_id=group)
+        self._groups = self._find_group_models(group)
+        self._membergroups = GroupMemberGroupModel.objects.filter(
+            group_id=group)
         return len(self._groups) > 0 or len(self._membergroups) > 0
 
     def update_members(self, group_id):
@@ -112,14 +117,12 @@ class UWGroupDispatch(Dispatch):
         for update in updates:
             for member in update['members']:
                 for group in self._groups:
-                    if not group.is_deleted:
-                        self._update_group(group, member, update['is_deleted'])
+                    self._update_group(group, member, update['is_deleted'])
 
                 for member_group in self._membergroups:
                     if not member_group.is_deleted:
-                        for group in GroupModel.objects.filter(
-                                group_id=member_group.root_group_id,
-                                is_deleted__isnull=True):
+                        for group in self._find_group_models(
+                                member_group.root_group_id):
                             self._update_group(group, member,
                                                update['is_deleted'])
 
