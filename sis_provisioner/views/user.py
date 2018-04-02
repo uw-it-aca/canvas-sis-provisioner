@@ -2,8 +2,8 @@ import re
 import json
 import datetime
 from logging import getLogger
+from django.conf import settings
 from django.utils.decorators import method_decorator
-from django.contrib.auth.decorators import login_required
 from restclients_core.exceptions import (
     InvalidNetID, InvalidRegID, DataFailureException)
 from uw_sws.models import Person
@@ -12,19 +12,21 @@ from sis_provisioner.dao.user import (
     get_person_by_netid, get_person_by_regid, get_person_by_gmail_id)
 from sis_provisioner.models import User, PRIORITY_IMMEDIATE
 from sis_provisioner.views.rest_dispatch import RESTDispatch
-from sis_provisioner.views import regid_from_request, netid_from_request
+from sis_provisioner.views import (
+    group_required, regid_from_request, netid_from_request)
 from sis_provisioner.views.admin import can_view_source_data
 
 
 logger = getLogger(__name__)
 
 
+@method_decorator(group_required(settings.CANVAS_MANAGER_ADMIN_GROUP),
+                  name='dispatch')
 class UserView(RESTDispatch):
     """ Performs actions on a Course at /api/v1/user/<reg id>.
         GET returns 200 with User model (augmented with person)
         PUT returns 200 and updates User model
     """
-    @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
         try:
             if 'gmail_id' in request.GET:
@@ -49,7 +51,6 @@ class UserView(RESTDispatch):
         except Exception as err:
             return self.error_response(400, err)
 
-    @method_decorator(login_required)
     def post(self, request, *args, **kwargs):
         try:
             rep = json.loads(request.read())
@@ -91,7 +92,7 @@ class UserView(RESTDispatch):
             'enrollment_url': None
         }
 
-        if can_view_source_data():
+        if can_view_source_data(self.request):
             response['person_url'] = '%s/person/%s.json' % (
                 '/restclients/view/pws/identity/v1', person.uwregid)
             response['enrollment_url'] = '%s/enrollment.json?reg_id=%s' % (

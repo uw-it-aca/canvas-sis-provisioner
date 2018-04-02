@@ -1,7 +1,8 @@
+from django.conf import settings
 from django.utils.decorators import method_decorator
-from django.contrib.auth.decorators import login_required
 from sis_provisioner.models.astra import Admin, Account
 from sis_provisioner.views.rest_dispatch import RESTDispatch
+from sis_provisioner.views import group_required
 from logging import getLogger
 import re
 
@@ -9,11 +10,12 @@ import re
 logger = getLogger(__name__)
 
 
+@method_decorator(group_required(settings.CANVAS_MANAGER_ADMIN_GROUP),
+                  name='dispatch')
 class AdminSearch(RESTDispatch):
     """ Performs query of Admin models at /api/v1/admins/?.
         GET returns 200 with Admin models
     """
-    @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
         admins = []
         for admin in list(Admin.objects.all()):
@@ -22,6 +24,8 @@ class AdminSearch(RESTDispatch):
         return self.json_response({'admins': admins})
 
 
+@method_decorator(group_required(settings.CANVAS_MANAGER_ADMIN_GROUP),
+                  name='dispatch')
 class AccountSearch(RESTDispatch):
     """ Performs query of Account models at /api/v1/accounts/?.
         GET returns 200 with Account models
@@ -29,7 +33,6 @@ class AccountSearch(RESTDispatch):
     def __init__(self):
         self._re_true = re.compile('^(1|true)$', re.I)
 
-    @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
         account_type = request.GET.get('type')
         is_deleted = request.GET.get('is_deleted', '')

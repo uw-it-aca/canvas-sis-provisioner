@@ -1,10 +1,10 @@
 from logging import getLogger
+from django.conf import settings
 from django.utils.decorators import method_decorator
-from django.contrib.auth.decorators import login_required
 from sis_provisioner.models import Job
 from sis_provisioner.views.rest_dispatch import RESTDispatch
 from sis_provisioner.views.admin import can_manage_jobs
-from userservice.user import UserService
+from sis_provisioner.views import group_required, get_user
 from django.utils.timezone import utc
 from datetime import datetime
 import json
@@ -13,6 +13,8 @@ import json
 logger = getLogger(__name__)
 
 
+@method_decorator(group_required(settings.CANVAS_MANAGER_ADMIN_GROUP),
+                  name='dispatch')
 class JobView(RESTDispatch):
     """ Retrieves a Job model.
         GET returns 200 with Job details.
@@ -26,9 +28,8 @@ class JobView(RESTDispatch):
         except Job.DoesNotExist:
             return self.error_response(404, "Job %s not found" % job_id)
 
-    @method_decorator(login_required)
     def put(self, request, *args, **kwargs):
-        if not can_manage_jobs():
+        if not can_manage_jobs(request):
             return self.error_response(401, "Unauthorized")
 
         job_id = kwargs['job_id']
@@ -38,7 +39,7 @@ class JobView(RESTDispatch):
             data = json.loads(request.body).get('job', {})
             if 'is_active' in data:
                 job.is_active = data['is_active']
-                job.changed_by = UserService().get_original_user()
+                job.changed_by = get_user(request)
                 job.changed_date = datetime.utcnow().replace(tzinfo=utc)
                 job.save()
 
@@ -51,9 +52,8 @@ class JobView(RESTDispatch):
         except Job.DoesNotExist:
             return self.error_response(404, "Job %s not found" % job_id)
 
-    @method_decorator(login_required)
     def delete(self, request, *args, **kwargs):
-        if not can_manage_jobs():
+        if not can_manage_jobs(request):
             return self.error_response(401, "Unauthorized")
 
         job_id = kwargs['job_id']
@@ -72,7 +72,7 @@ class JobListView(RESTDispatch):
     """ Retrieves a list of Jobs.
     """
     def get(self, request, *args, **kwargs):
-        read_only = False if can_manage_jobs() else True
+        read_only = False if can_manage_jobs(request) else True
         jobs = []
         for job in Job.objects.all().order_by('title'):
             data = job.json_data()

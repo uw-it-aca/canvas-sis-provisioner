@@ -1,15 +1,14 @@
 from django.conf import settings
 from django.utils.decorators import method_decorator
-from django.contrib.auth.decorators import login_required
 from logging import getLogger
 from sis_provisioner.models.external_tools import (
     ExternalTool, ExternalToolAccount)
+from sis_provisioner.views import group_required, get_user
 from sis_provisioner.views.admin import can_manage_external_tools
 from sis_provisioner.views.rest_dispatch import RESTDispatch
 from sis_provisioner.dao.canvas import get_account_by_id
 from uw_canvas.external_tools import ExternalTools
 from restclients_core.exceptions import DataFailureException
-from userservice.user import UserService
 from django.utils.timezone import utc
 from blti.models import BLTIKeyStore
 from datetime import datetime
@@ -20,15 +19,16 @@ import re
 logger = getLogger(__name__)
 
 
+@method_decorator(group_required(settings.CANVAS_MANAGER_ADMIN_GROUP),
+                  name='dispatch')
 class ExternalToolView(RESTDispatch):
     """ Retrieves an ExternalTool model.
         GET returns 200 with ExternalTool details.
         PUT returns 200.
     """
-    @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
         canvas_id = kwargs['canvas_id']
-        read_only = False if can_manage_external_tools() else True
+        read_only = False if can_manage_external_tools(request) else True
         try:
             external_tool = ExternalTool.objects.get(canvas_id=canvas_id)
             data = external_tool.json_data()
@@ -47,9 +47,8 @@ class ExternalToolView(RESTDispatch):
 
         return self.json_response({'external_tool': data})
 
-    @method_decorator(login_required)
     def put(self, request, *args, **kwargs):
-        if not can_manage_external_tools():
+        if not can_manage_external_tools(request):
             return self.error_response(401, "Unauthorized")
 
         canvas_id = kwargs['canvas_id']
@@ -73,7 +72,7 @@ class ExternalToolView(RESTDispatch):
 
         # PUT does not update canvas_id or account_id
         external_tool.config = json.dumps(json_data['config'])
-        external_tool.changed_by = UserService().get_original_user()
+        external_tool.changed_by = get_user(request)
         external_tool.changed_date = datetime.utcnow().replace(tzinfo=utc)
         external_tool.save()
 
@@ -107,9 +106,8 @@ class ExternalToolView(RESTDispatch):
         return self.json_response({
             'external_tool': external_tool.json_data()})
 
-    @method_decorator(login_required)
     def post(self, request, *args, **kwargs):
-        if not can_manage_external_tools():
+        if not can_manage_external_tools(request):
             return self.error_response(401, "Unauthorized")
 
         try:
@@ -144,7 +142,7 @@ class ExternalToolView(RESTDispatch):
         external_tool = ExternalTool(canvas_id=canvas_id)
         external_tool.account = account
         external_tool.config = json.dumps(json_data['config'])
-        external_tool.changed_by = UserService().get_original_user()
+        external_tool.changed_by = get_user(request)
         external_tool.changed_date = datetime.utcnow().replace(tzinfo=utc)
 
         try:
@@ -197,9 +195,8 @@ class ExternalToolView(RESTDispatch):
         return self.json_response({
             'external_tool': external_tool.json_data()})
 
-    @method_decorator(login_required)
     def delete(self, request, *args, **kwargs):
-        if not can_manage_external_tools():
+        if not can_manage_external_tools(request):
             return self.error_response(401, "Unauthorized")
 
         canvas_id = kwargs['canvas_id']
@@ -256,12 +253,13 @@ class ExternalToolView(RESTDispatch):
             raise Exception('consumer_key is required')
 
 
+@method_decorator(group_required(settings.CANVAS_MANAGER_ADMIN_GROUP),
+                  name='dispatch')
 class ExternalToolListView(RESTDispatch):
     """ Retrieves a list of ExternalTools.
     """
-    @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
-        read_only = False if can_manage_external_tools() else True
+        read_only = False if can_manage_external_tools(request) else True
         external_tools = []
         for external_tool in ExternalTool.objects.all():
             data = external_tool.json_data()

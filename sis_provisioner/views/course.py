@@ -1,5 +1,5 @@
+from django.conf import settings
 from django.utils.decorators import method_decorator
-from django.contrib.auth.decorators import login_required
 from sis_provisioner.dao.course import (
     get_sections_by_instructor_and_term, valid_academic_course_sis_id,
     valid_adhoc_course_sis_id)
@@ -8,7 +8,8 @@ from sis_provisioner.dao.user import get_person_by_netid, get_person_by_regid
 from sis_provisioner.models import (
     Course, Group, PRIORITY_NONE, PRIORITY_CHOICES)
 from sis_provisioner.views.rest_dispatch import RESTDispatch
-from sis_provisioner.views import regid_from_request, netid_from_request
+from sis_provisioner.views import (
+    group_required, regid_from_request, netid_from_request)
 from sis_provisioner.views.admin import can_view_source_data
 from sis_provisioner.exceptions import CoursePolicyException
 from logging import getLogger
@@ -23,23 +24,23 @@ class CourseInvalidException(Exception):
     pass
 
 
+@method_decorator(group_required(settings.CANVAS_MANAGER_ADMIN_GROUP),
+                  name='dispatch')
 class CourseView(RESTDispatch):
     """ Performs actions on a Course at /api/v1/course/<course id>.
         GET returns 200 with Course details.
         PUT returns 200 and updates the Course information.
     """
-    @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
         try:
             course = Course.objects.get(
                 course_id=self._normalize(kwargs['course_id']))
-            json_data = course.json_data(can_view_source_data())
+            json_data = course.json_data(can_view_source_data(request))
             return self.json_response(json_data)
 
         except Exception as err:
             return self.error_response(404, "Course not found: %s" % err)
 
-    @method_decorator(login_required)
     def put(self, request, *args, **kwargs):
         try:
             course = Course.objects.get(
@@ -71,7 +72,7 @@ class CourseView(RESTDispatch):
             else:
                 raise Exception("Invalid priority: '%s'" % param)
 
-            json_data = course.json_data(can_view_source_data())
+            json_data = course.json_data(can_view_source_data(request))
             return self.json_response(json_data)
         except Exception as err:
             return self.error_response(400, err)
@@ -155,7 +156,7 @@ class CourseListView(RESTDispatch):
                 course_list = list(Course.objects.filter(
                     **filt_kwargs).order_by('course_id'))
 
-                include_sws_url = can_view_source_data()
+                include_sws_url = can_view_source_data(request)
                 for course in course_list:
                     json_data = course.json_data(include_sws_url)
                     json_rep['courses'].append(json_data)
@@ -209,7 +210,7 @@ class CourseListView(RESTDispatch):
                 logger.error('Section search fail: %s' % err)
                 return self.error_response(400, err)
 
-        include_sws_url = can_view_source_data()
+        include_sws_url = can_view_source_data(request)
         for course in course_list:
             if 'white_list' in locals() and course.course_id not in white_list:
                 continue
