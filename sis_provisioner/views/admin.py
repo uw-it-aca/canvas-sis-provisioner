@@ -1,13 +1,10 @@
 from django.conf import settings
-from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect
+from sis_provisioner.dao.group import is_admin
 from sis_provisioner.dao.term import get_term_by_date
 from sis_provisioner.models.astra import AdminManager
-from userservice.user import UserService
-from authz_group import Group
-from uw_gws import GWS
-from uw_gws.models import GroupUser
+from sis_provisioner.views import group_required, get_user, is_member_of_group
 from restclients_core.exceptions import DataFailureException
 from datetime import datetime
 import json
@@ -15,9 +12,6 @@ import re
 
 
 def _admin(request, template):
-    if not can_view_support_app():
-        return HttpResponseRedirect('/')
-
     curr_date = datetime.now().date()
     try:
         term = get_term_by_date(curr_date)
@@ -32,76 +26,61 @@ def _admin(request, template):
         'IMPORT_UPDATE_FREQ': settings.ADMIN_IMPORT_STATUS_FREQ,
         'CURRENT_QUARTER': curr_quarter,
         'CURRENT_YEAR': curr_year,
-        'can_manage_admin_group': True if can_manage_admin_group() else False,
-        'can_view_restclients': True if can_view_source_data() else False,
+        'can_manage_admin_group': can_manage_admin_group(request),
+        'can_view_restclients': can_view_source_data(request),
         'admin_group': settings.CANVAS_MANAGER_ADMIN_GROUP,
     }
     return render(request, template, params)
 
 
-def user_login(request):
-    return HttpResponseRedirect(request.GET.get('next', '/'))
-
-
-@login_required
+@group_required(settings.CANVAS_MANAGER_ADMIN_GROUP)
 def ImportStatus(request, template='canvas_admin/status.html'):
     return _admin(request, template)
 
 
-@login_required
+@group_required(settings.CANVAS_MANAGER_ADMIN_GROUP)
 def ManageCourses(request, template='canvas_admin/courses.html'):
     return _admin(request, template)
 
 
-@login_required
+@group_required(settings.CANVAS_MANAGER_ADMIN_GROUP)
 def ManageUsers(request, template='canvas_admin/users.html'):
     return _admin(request, template)
 
 
-@login_required
+@group_required(settings.CANVAS_MANAGER_ADMIN_GROUP)
 def ManageGroups(request, template='canvas_admin/groups.html'):
     return _admin(request, template)
 
 
-@login_required
+@group_required(settings.CANVAS_MANAGER_ADMIN_GROUP)
 def ManageAdmins(request, template='canvas_admin/admins.html'):
     return _admin(request, template)
 
 
-@login_required
+@group_required(settings.CANVAS_MANAGER_ADMIN_GROUP)
 def ManageJobs(request, template='canvas_admin/jobs.html'):
     return _admin(request, template)
 
 
-@login_required
+@group_required(settings.CANVAS_MANAGER_ADMIN_GROUP)
 def ManageExternalTools(request, template='canvas_admin/external_tools.html'):
-    if not can_view_support_app():
-        return HttpResponseRedirect('/')
-
-    params = {'read_only': False if can_manage_external_tools() else True}
+    params = {'read_only': False if (
+        can_manage_external_tools(request)) else True}
     return render(request, template, params)
 
 
-def can_view_support_app():
-    return Group().is_member_of_group(UserService().get_original_user(),
-                                      settings.CANVAS_MANAGER_ADMIN_GROUP)
+def can_view_source_data(request):
+    return is_member_of_group(request, settings.RESTCLIENTS_ADMIN_GROUP)
 
 
-def can_view_source_data():
-    return Group().is_member_of_group(UserService().get_original_user(),
-                                      settings.RESTCLIENTS_ADMIN_GROUP)
+def can_manage_admin_group(request):
+    return is_admin(settings.CANVAS_MANAGER_ADMIN_GROUP, get_user(request))
 
 
-def can_manage_admin_group():
-    user = GroupUser(name=UserService().get_original_user(),
-                     user_type=GroupUser.UWNETID_TYPE)
-    group = GWS().get_group_by_id(settings.CANVAS_MANAGER_ADMIN_GROUP)
-    return (user in group.admins or user in group.updaters)
+def can_manage_jobs(request):
+    return AdminManager().is_account_admin(get_user(request))
 
 
-def can_manage_jobs():
-    return AdminManager().is_account_admin(UserService().get_original_user())
-
-
-def can_manage_external_tools():
-    return can_manage_jobs()
+def can_manage_external_tools(request):
+    return can_manage_jobs(request)

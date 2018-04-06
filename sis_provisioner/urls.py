@@ -2,7 +2,7 @@ from django.conf.urls import url, include
 from django.views.generic.base import TemplateView
 from sis_provisioner.views.admin import (
     ImportStatus, ManageUsers, ManageCourses, ManageGroups, ManageAdmins,
-    ManageJobs, ManageExternalTools, user_login)
+    ManageJobs, ManageExternalTools)
 from sis_provisioner.views.course import CourseView, CourseListView
 from sis_provisioner.views.enrollment import EnrollmentListView
 from sis_provisioner.views.group import GroupListView
@@ -22,7 +22,6 @@ urlpatterns = [
     url(r'^$', TemplateView.as_view(template_name='index.html')),
     url(r'^robots\.txt$', TemplateView.as_view(template_name='robots.txt',
                                                content_type='text/plain')),
-    url(r'^login/?$', user_login),
     url(r'^admin/?$', ImportStatus, name='ImportStatus'),
     url(r'^admin/users$', ManageUsers, name='ManageUsers'),
     url(r'^admin/courses$', ManageCourses, name='ManageCourses'),

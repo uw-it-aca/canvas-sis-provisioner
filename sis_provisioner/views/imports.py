@@ -1,13 +1,14 @@
 import re
 import json
 import dateutil.parser
-from django.utils.timezone import utc
 from logging import getLogger
+from django.conf import settings
+from django.utils.timezone import utc
 from django.core.management import call_command
 from django.utils.decorators import method_decorator
-from django.contrib.auth.decorators import login_required
 from sis_provisioner.models import Import, User
 from sis_provisioner.views.rest_dispatch import RESTDispatch
+from sis_provisioner.views import group_required
 
 
 logger = getLogger(__name__)
@@ -17,6 +18,8 @@ class ImportInvalidException(Exception):
     pass
 
 
+@method_decorator(group_required(settings.CANVAS_MANAGER_ADMIN_GROUP),
+                  name='dispatch')
 class ImportView(RESTDispatch):
     """ Retrieves a an Import model]>.
         GET returns 200 with Import details.
@@ -32,7 +35,6 @@ class ImportView(RESTDispatch):
         except ImportInvalidException as err:
             return self.error_response(400, err)
 
-    @method_decorator(login_required)
     def post(self, request, *args, **kwargs):
         body = json.loads(request.read())
         mode = body.get('mode', None)
@@ -44,7 +46,6 @@ class ImportView(RESTDispatch):
             logger.info('imports (%s): POST: unknown command' % (request.user))
             return self.error_response(400, "Unknown import mode")
 
-    @method_decorator(login_required)
     def delete(self, request, *args, **kwargs):
         import_id = kwargs['import_id']
         try:

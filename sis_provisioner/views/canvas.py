@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.utils.decorators import method_decorator
-from django.contrib.auth.decorators import login_required
 from sis_provisioner.models import Course
+from sis_provisioner.views import group_required
 from sis_provisioner.views.rest_dispatch import RESTDispatch
 from sis_provisioner.views.admin import can_view_source_data
 from sis_provisioner.dao.canvas import (
@@ -18,11 +18,12 @@ import re
 logger = getLogger(__name__)
 
 
+@method_decorator(group_required(settings.CANVAS_MANAGER_ADMIN_GROUP),
+                  name='dispatch')
 class CanvasCourseView(RESTDispatch):
     """ Performs query for Canvas course by sis_id.
         GET returns 200 with Canvas Course model
     """
-    @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
         try:
             sis_id = kwargs.get('sis_id')
@@ -54,7 +55,8 @@ class CanvasCourseView(RESTDispatch):
             if course.sis_course_id is not None:
                 try:
                     model = Course.objects.get(course_id=course.sis_course_id)
-                    course_rep.update(model.json_data(can_view_source_data()))
+                    course_rep.update(
+                        model.json_data(can_view_source_data(request)))
                 except Course.DoesNotExist:
                     pass
 
@@ -64,11 +66,12 @@ class CanvasCourseView(RESTDispatch):
                 400, "Unable to retrieve course data: %s" % e)
 
 
+@method_decorator(group_required(settings.CANVAS_MANAGER_ADMIN_GROUP),
+                  name='dispatch')
 class CanvasAccountView(RESTDispatch):
     """ Performs query for Canvas account by account_id
         GET returns 200 with Canvas Course model
     """
-    @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
         try:
             account = get_account_by_id(kwargs.get('account_id'))
