@@ -41,7 +41,7 @@ setup(
         'UW-RestClients-KWS>=0.1,<1.0',
         'UW-RestClients-Canvas>=0.7.1,<1.0',
         'UW-RestClients-Django-Utils>=0.7.2,<1.0',
-        'Django-SupportTools>=1.2',
+        'Django-SupportTools>=1.3.1',
         'UW-Django-SAML2>=0.4.2',
     ],
     license='Apache License, Version 2.0',
