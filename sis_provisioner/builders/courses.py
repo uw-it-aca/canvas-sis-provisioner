@@ -4,7 +4,8 @@ from sis_provisioner.dao.course import (
     is_active_section, get_section_by_url, canvas_xlist_id, section_short_name,
     section_id_from_url, get_registrations_by_section)
 from sis_provisioner.dao.canvas import (
-    get_sis_sections_for_course, get_unused_course_report_data)
+    get_section_by_sis_id, get_sis_sections_for_course,
+    get_unused_course_report_data)
 from sis_provisioner.models import Course, PRIORITY_NONE
 from sis_provisioner.exceptions import CoursePolicyException
 from restclients_core.exceptions import DataFailureException
@@ -67,21 +68,21 @@ class CourseBuilder(Builder):
 
         course_id = section.canvas_course_sis_id()
         primary_instructors = section.get_instructors()
-        canvas_sections = get_sis_sections_for_course(course_id)
 
         if len(section.linked_section_urls):
             dummy_section_id = '%s--' % course_id
-            for s in canvas_sections:
-                if s.sis_section_id == dummy_section_id:
-                    # Section has linked sections, but was originally
-                    # provisioned with a dummy section, which will be
-                    # removed
-                    self.logger.info('Remove dummy section for %s' % course_id)
-                    self.data.add(SectionCSV(
-                        section_id=dummy_section_id,
-                        course_id=course_id,
-                        name=section_short_name(section),
-                        status='deleted'))
+            try:
+                canvas_section = get_section_by_sis_id(dummy_section_id)
+                # Section has linked sections, but was originally
+                # provisioned with a dummy section, which will be removed
+                self.logger.info('Remove dummy section for %s' % course_id)
+                self.data.add(SectionCSV(
+                    section_id=dummy_section_id,
+                    course_id=course_id,
+                    name=section_short_name(section),
+                    status='deleted'))
+            except DataFailureException as ex:
+                pass
 
             for url in section.linked_section_urls:
                 try:
@@ -141,7 +142,7 @@ class CourseBuilder(Builder):
 
         # Find any sections that are manually cross-listed to this course,
         # so we can update enrollments for those
-        for s in canvas_sections:
+        for s in get_sis_sections_for_course(course_id):
             try:
                 course_model_id = re.sub(r'--$', '', s.sis_section_id)
                 course = Course.objects.get(course_id=course_model_id,
