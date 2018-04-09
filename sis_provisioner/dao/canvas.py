@@ -91,6 +91,10 @@ def update_term_overrides(term_sis_id, override_dates):
     return Terms().update_term_overrides(term_sis_id, overrides=overrides)
 
 
+def get_section_by_sis_id(section_sis_id):
+    return Sections().get_section_by_sis_id(section_sis_id)
+
+
 def get_sis_sections_for_course(course_sis_id):
     @retry(DataFailureException, status_codes=[408, 500, 502, 503, 504],
            tries=5, delay=3, logger=logger)
