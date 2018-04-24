@@ -1,6 +1,6 @@
 from sis_provisioner.dao.course import is_time_schedule_construction
 from sis_provisioner.dao.term import (
-    get_term_by_year_and_quarter, get_all_active_terms)
+    get_term_by_year_and_quarter, is_active_term)
 from sis_provisioner.events import EventBase
 from sis_provisioner.models.events import InstructorLog
 from sis_provisioner.exceptions import EventException
@@ -8,7 +8,6 @@ from restclients_core.exceptions import DataFailureException
 from uw_sws.models import Section
 from uw_canvas.models import CanvasEnrollment
 from dateutil.parser import parse as date_parse
-from datetime import datetime
 
 
 log_prefix = 'INSTRUCTOR:'
@@ -31,14 +30,13 @@ class InstructorEventBase(EventBase):
         try:
             term = get_term_by_year_and_quarter(
                 section_data['Term']['Year'], section_data['Term']['Quarter'])
-            active_terms = get_all_active_terms(datetime.now())
         except DataFailureException as err:
             self._log.info('%s ERROR get term: %s' % (log_prefix, err))
             return
 
-        if term not in active_terms:
+        if not is_active_term(term):
             self._log.info(
-                '%s IGNORE inactive section %s-%s-%s-%s' % (
+                '%s IGNORE Inactive section %s-%s-%s-%s' % (
                     log_prefix,
                     term.canvas_sis_id(),
                     course_data['CurriculumAbbreviation'],
