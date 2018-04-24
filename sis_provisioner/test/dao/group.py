@@ -58,16 +58,6 @@ class SISImportMembersTest(TestCase):
 
 @fdao_gws_override
 @fdao_pws_override
-class IsMemberTest(TestCase):
-    def test_is_member(self):
-        self.assertEquals(is_member('u_acadev_unittest', 'javerage'), True)
-        self.assertEquals(is_member('u_acadev_unittest', 'eight'), True)
-        self.assertEquals(is_member('u_acadev_unittest', 'baverage'), False)
-        self.assertEquals(is_member('u_acadev_unittest', 'joe@gmail.com'), False)
-
-
-@fdao_gws_override
-@fdao_pws_override
 class EffectiveMemberTest(TestCase):
     def test_effective_members(self):
         with self.settings(UW_GROUP_BLACKLIST=['uw_student', 'uw_staff']):

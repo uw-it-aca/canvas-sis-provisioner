@@ -1,6 +1,7 @@
 from django.conf import settings
 from uw_pws import PWS
 from uw_gws import GWS
+#from uw_gws.models import GroupEntity
 from uw_gws.exceptions import InvalidGroupID
 from uw_canvas.models import CanvasUser
 from restclients_core.exceptions import DataFailureException
@@ -17,8 +18,14 @@ RE_TEMPORARY_NETID = re.compile(r"^(?:css|wire|lib|event)[0-9]{4,}$", re.I)
 RE_CANVAS_ID = re.compile(r"^\d+$")
 
 
-def is_group_member(group_id, login_id):
-    return GWS().is_effective_member(group_id, login_id)
+def is_group_member(group_id, login_id, act_as=None):
+    return GWS({'actas': act_as}).is_effective_member(group_id, login_id)
+
+
+def is_group_admin(group_id, login_id):
+    user = GroupEntity(name=login_id, type=GroupEntity.UWNETID_TYPE)
+    group = GWS().get_group_by_id(group_id)
+    return (user in group.admins or user in group.updaters)
 
 
 def valid_net_id(login_id):
