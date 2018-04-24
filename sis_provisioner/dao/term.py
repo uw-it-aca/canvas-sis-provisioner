@@ -4,7 +4,7 @@ from uw_sws.term import (
     get_term_by_date)
 from uw_canvas.models import CanvasEnrollment
 from restclients_core.exceptions import DataFailureException
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 
 TERM_DATE_FORMAT = '%Y-%m-%dT00:00:00-0800'
@@ -21,6 +21,12 @@ def get_all_active_terms(dt):
     curr_term = get_current_active_term(dt)
     next_term = get_term_after(curr_term)
     return [curr_term, next_term, get_term_after(next_term)]
+
+
+def is_active_term(term, dt=None):
+    if dt is None:
+        dt = datetime.now()
+    return (term in get_all_active_terms(dt))
 
 
 def term_sis_id(section):

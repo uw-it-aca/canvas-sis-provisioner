@@ -7,7 +7,7 @@ from sis_provisioner.dao.user import get_person_by_netid
 from sis_provisioner.dao.course import (
     valid_canvas_section, get_new_sections_by_term)
 from sis_provisioner.dao.term import (
-    get_term_by_year_and_quarter, term_date_overrides)
+    get_term_by_year_and_quarter, term_date_overrides, is_active_term)
 from sis_provisioner.dao.canvas import (
     get_active_courses_for_term, sis_import_by_path, get_sis_import_status,
     update_term_overrides, ENROLLMENT_ACTIVE, INSTRUCTOR_ENROLLMENT)
@@ -24,7 +24,7 @@ import re
 
 
 logger = getLogger(__name__)
-
+enrollment_log_prefix = 'ENROLLMENT:'
 
 PRIORITY_NONE = 0
 PRIORITY_DEFAULT = 1
@@ -436,20 +436,21 @@ class EnrollmentManager(models.Manager):
                         enrollment.priority = PRIORITY_DEFAULT
                     else:
                         enrollment.priority = PRIORITY_HIGH
-                        logger.info('Enrollment: IN QUEUE %s, %s, %s, %s' % (
-                            full_course_id, reg_id, role, enrollment.queue_id))
+                        logger.info('%s IN QUEUE %s, %s, %s, %s' % (
+                            enrollment_log_prefix, full_course_id, reg_id,
+                            role, enrollment.queue_id))
 
                     enrollment.save()
-                    logger.info('Enrollment: UPDATE %s, %s, %s, %s, %s' % (
-                        full_course_id, reg_id, role, status, last_modified))
+                    logger.info('%s UPDATE %s, %s, %s, %s, %s' % (
+                        enrollment_log_prefix, full_course_id, reg_id, role,
+                        status, last_modified))
                 else:
-                    logger.info('Enrollment: IGNORE %s, %s, %s before %s' % (
-                        full_course_id, reg_id, last_modified,
-                        enrollment.last_modified))
+                    logger.info('%s IGNORE %s, %s, %s before %s' % (
+                        enrollment_log_prefix, full_course_id, reg_id,
+                        last_modified, enrollment.last_modified))
             else:
-                logger.info(
-                    'Enrollment: IGNORE Unprovisioned course %s, %s, %s' % (
-                        full_course_id, reg_id, role))
+                logger.info('%s IGNORE Unprovisioned course %s, %s, %s' % (
+                    enrollment_log_prefix, full_course_id, reg_id, role))
                 course.priority = PRIORITY_HIGH
                 course.save()
 
@@ -461,24 +462,28 @@ class EnrollmentManager(models.Manager):
                                     instructor_reg_id=instructor_reg_id)
             try:
                 enrollment.save()
-                logger.info('Enrollment: ADD %s, %s, %s, %s, %s' % (
-                    full_course_id, reg_id, role, status, last_modified))
+                logger.info('%s ADD %s, %s, %s, %s, %s' % (
+                    enrollment_log_prefix, full_course_id, reg_id, role,
+                    status, last_modified))
             except IntegrityError:
                 self.add_enrollment(enrollment_data)  # Try again
         except Course.DoesNotExist:
-            # Initial course provisioning effectively picks up event
-            course = Course(course_id=full_course_id,
-                            course_type=Course.SDB_TYPE,
-                            term_id=section.term.canvas_sis_id(),
-                            primary_id=primary_course_id,
-                            priority=PRIORITY_HIGH)
-            try:
-                course.save()
-                logger.info(
-                    'Enrollment: IGNORE Unprovisioned course %s, %s, %s' % (
-                        full_course_id, reg_id, role))
-            except IntegrityError:
-                self.add_enrollment(enrollment_data)  # Try again
+            if is_active_term(section.term):
+                # Initial course provisioning effectively picks up event
+                course = Course(course_id=full_course_id,
+                                course_type=Course.SDB_TYPE,
+                                term_id=section.term.canvas_sis_id(),
+                                primary_id=primary_course_id,
+                                priority=PRIORITY_HIGH)
+                try:
+                    course.save()
+                    logger.info('%s IGNORE Unprovisioned course %s, %s, %s' % (
+                        enrollment_log_prefix, full_course_id, reg_id, role))
+                except IntegrityError:
+                    self.add_enrollment(enrollment_data)  # Try again
+            else:
+                logger.info('%s IGNORE Inactive section %s, %s, %s' % (
+                    enrollment_log_prefix, full_course_id, reg_id, role))
 
 
 class Enrollment(models.Model):
