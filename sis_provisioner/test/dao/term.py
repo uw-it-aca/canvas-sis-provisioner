@@ -28,8 +28,15 @@ class ActiveTermTest(TestCase):
         self.assertEquals(terms[1].term_label(), '2014,winter')
         self.assertEquals(terms[2].term_label(), '2014,spring')
 
+    def test_is_active_term(self):
+        term = get_current_active_term(datetime(2013, 7, 15))
+        self.assertEquals(is_active_term(term, dt=datetime(2013, 7, 15)),
+                          True)
+        self.assertEquals(is_active_term(term, dt=datetime(2013, 8, 28)),
+                          False)
 
-@fdao_sws_override                                                              
+
+@fdao_sws_override
 @fdao_pws_override
 class TermPolicyTest(TestCase):
     def test_term_sis_id(self):
