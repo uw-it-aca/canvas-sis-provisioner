@@ -14,14 +14,12 @@ class ExtractUpdate(Extract):
             root = ET.fromstring(rx.sub(r'\g<1>', body))
             event = GroupEvent(group_id=root.findall('./name')[0].text,
                                reg_id=root.findall('./regid')[0].text)
-            event.add_members = [
-                GroupMember(name=m.text, type=m.attrib['type']) for (
-                    m in root.findall('./add-members/add-member'))
-            ]
-            event.delete_members = [
-                GroupMember(name=m.text, type=m.attrib['type']) for (
-                    m in root.findall('./delete-members/delete-member'))
-            ]
+            event.add_members = [GroupMember(
+                name=m.text, type=m.attrib['type']) for (
+                    m in root.findall('./add-members/add-member'))]
+            event.delete_members = [GroupMember(
+                name=m.text, type=m.attrib['type']) for (
+                    m in root.findall('./delete-members/delete-member'))]
             return event
         elif content_type == 'json':
             rx = re.compile(r'[^{]*({.*})[^}]*')
