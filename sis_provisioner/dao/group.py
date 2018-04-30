@@ -1,5 +1,6 @@
 from django.conf import settings
 from uw_gws import GWS
+from uw_gws.exceptions import InvalidGroupID
 from restclients_core.exceptions import DataFailureException
 from sis_provisioner.dao.user import valid_net_id, valid_gmail_id
 from sis_provisioner.exceptions import (
@@ -10,18 +11,15 @@ import re
 
 def valid_group_id(group_id):
     try:
-        is_valid = GWS()._is_valid_group_id(group_id)
-    except TypeError:
+        GWS()._valid_group_id(group_id)
+    except InvalidGroupID:
         raise GroupPolicyException("Invalid Group ID: %s" % group_id)
 
-    if is_valid:
-        RE_GROUP_BLACKLIST = re.compile(r'^(%s).*$' % ('|'.join(
-            getattr(settings, 'UW_GROUP_BLACKLIST', []))))
-        if RE_GROUP_BLACKLIST.match(group_id):
-            raise GroupPolicyException(
-                "This group cannot be used in Canvas: %s" % group_id)
-    else:
-        raise GroupPolicyException("Invalid Group ID: %s" % group_id)
+    RE_GROUP_BLACKLIST = re.compile(r'^(%s).*$' % ('|'.join(
+        getattr(settings, 'UW_GROUP_BLACKLIST', []))))
+    if RE_GROUP_BLACKLIST.match(group_id):
+        raise GroupPolicyException(
+            "This group cannot be used in Canvas: %s" % group_id)
 
 
 def is_modified_group(group_id, mtime):
