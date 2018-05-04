@@ -342,7 +342,7 @@ class CourseGroupDispatch(Dispatch):
                 course.group(1),
                 {'win': 'winter', 'spr': 'spring', 'sum': 'summer',
                     'aut': 'autumn'}[course.group(2)],
-                re.sub('\-', ' ', course.group(3).upper()),
+                re.sub(r'\-', ' ', course.group(3).upper()),
                 course.group(4), course.group(5).upper()
             ])
             return True
