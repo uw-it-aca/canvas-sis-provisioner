@@ -875,7 +875,7 @@ class CourseMember(models.Model):
 
     course_id = models.CharField(max_length=80)
     name = models.CharField(max_length=256)
-    member_type = models.SlugField(max_length=16, choices=TYPE_CHOICES)
+    type = models.SlugField(max_length=16, choices=TYPE_CHOICES)
     role = models.CharField(max_length=80)
     is_deleted = models.NullBooleanField()
     deleted_date = models.DateTimeField(null=True, blank=True)
@@ -885,10 +885,10 @@ class CourseMember(models.Model):
     objects = CourseMemberManager()
 
     def is_uwnetid(self):
-        return self.member_type.lower() == self.UWNETID_TYPE
+        return self.type.lower() == self.UWNETID_TYPE
 
     def is_eppn(self):
-        return self.member_type.lower() == self.EPPN_TYPE
+        return self.type.lower() == self.EPPN_TYPE
 
     def deactivate(self):
         self.is_deleted = True
@@ -903,7 +903,7 @@ class CourseMember(models.Model):
     def __eq__(self, other):
         return (self.course_id == other.course_id and
                 self.name.lower() == other.name.lower() and
-                self.member_type.lower() == other.member_type.lower() and
+                self.type.lower() == other.type.lower() and
                 self.role.lower() == other.role.lower())
 
 

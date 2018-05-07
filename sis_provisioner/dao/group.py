@@ -1,6 +1,6 @@
 from django.conf import settings
 from uw_gws import GWS
-from uw_gws.models import GroupUser
+from uw_gws.exceptions import InvalidGroupID
 from restclients_core.exceptions import DataFailureException
 from sis_provisioner.dao.user import valid_net_id, valid_gmail_id
 from sis_provisioner.exceptions import (
@@ -11,18 +11,15 @@ import re
 
 def valid_group_id(group_id):
     try:
-        is_valid = GWS()._is_valid_group_id(group_id)
-    except TypeError:
+        GWS()._valid_group_id(group_id)
+    except InvalidGroupID:
         raise GroupPolicyException("Invalid Group ID: %s" % group_id)
 
-    if is_valid:
-        RE_GROUP_BLACKLIST = re.compile(r'^(%s).*$' % ('|'.join(
-            getattr(settings, 'UW_GROUP_BLACKLIST', []))))
-        if RE_GROUP_BLACKLIST.match(group_id):
-            raise GroupPolicyException(
-                "This group cannot be used in Canvas: %s" % group_id)
-    else:
-        raise GroupPolicyException("Invalid Group ID: %s" % group_id)
+    RE_GROUP_BLACKLIST = re.compile(r'^(%s).*$' % ('|'.join(
+        getattr(settings, 'UW_GROUP_BLACKLIST', []))))
+    if RE_GROUP_BLACKLIST.match(group_id):
+        raise GroupPolicyException(
+            "This group cannot be used in Canvas: %s" % group_id)
 
 
 def is_modified_group(group_id, mtime):
@@ -50,16 +47,6 @@ def get_sis_import_members():
                 pass
 
     return valid_members.values()
-
-
-def is_member(group_id, member_name, act_as=None):
-    return GWS({'actas': act_as}).is_effective_member(group_id, member_name)
-
-
-def is_admin(group_id, member_name):
-    user = GroupUser(name=member_name, user_type=GroupUser.UWNETID_TYPE)
-    group = GWS().get_group_by_id(group_id)
-    return (user in group.admins or user in group.updaters)
 
 
 def get_effective_members(group_id, act_as=None):

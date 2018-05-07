@@ -150,7 +150,7 @@ class EnrollmentCSVTest(TestCase):
 class UserCSVTest(TestCase):
     def test_user_csv(self):
         user = PWS().get_person_by_netid('javerage')
-        self.assertEquals(str(UserCSV(user, 'active')), '9136CCB8F66711D5BE060004AC494FFE,javerage,,,,James Student,,,javerage@uw.edu,active\n')
+        self.assertEquals(str(UserCSV(user, 'active')), '9136CCB8F66711D5BE060004AC494FFE,javerage,,,,Jamesy McJamesy,,,javerage@uw.edu,active\n')
 
 
 class XlistCSVTest(TestCase):

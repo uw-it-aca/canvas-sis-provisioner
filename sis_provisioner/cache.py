@@ -21,9 +21,9 @@ class RestClientsCache(TimedCache):
     )
     url_policies["kws"] = (
         (re.compile(r"^%s" % (
-            kws_url_key % '[\-\da-fA-F]{36}\\')), 60 * 60 * 24 * 30),
+            kws_url_key % r'[\-\da-fA-F]{36}')), 60 * 60 * 24 * 30),
         (re.compile(r"^%s" % (
-            kws_url_current_key % "[\-\da-zA-Z]+")), 60 * 60 * 24 * 7),
+            kws_url_current_key % r"[\-\da-zA-Z]+")), 60 * 60 * 24 * 7),
     )
     url_policies["gws"] = (
         (re.compile(r"^/group_sws/v\d/group/%s/effective_member/" % (

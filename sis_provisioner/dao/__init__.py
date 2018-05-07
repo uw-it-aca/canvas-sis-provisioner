@@ -3,7 +3,7 @@ from django.utils.timezone import (
 import re
 
 
-RE_WORD_BOUNDS = re.compile('(\s|-|\(|\)|\.|,|\/|:|&)')
+RE_WORD_BOUNDS = re.compile(r'(\s|-|\(|\)|\.|,|\/|:|&)')
 RE_TITLE_ABBR = re.compile(
     r'\b('
     r'3d|3d4m|Aids|Asp|Basw|Cep|Cisb|Cophp|Csr|Css|Css3|'

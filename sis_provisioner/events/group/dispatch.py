@@ -1,7 +1,8 @@
 from django.conf import settings
 from django.utils.timezone import utc
-from sis_provisioner.dao.user import valid_net_id, valid_gmail_id
-from sis_provisioner.dao.group import get_effective_members, is_member
+from sis_provisioner.dao.user import (
+    valid_net_id, valid_gmail_id, is_group_member)
+from sis_provisioner.dao.group import get_effective_members
 from sis_provisioner.dao.course import (
     group_section_sis_id, valid_academic_course_sis_id)
 from sis_provisioner.dao.canvas import get_sis_enrollments_for_user_in_course
@@ -190,7 +191,7 @@ class UWGroupDispatch(Dispatch):
                     log_prefix, member.name))
         else:
             self._log.info('%s IGNORE member type %s (%s)' % (
-                log_prefix, member.member_type, member.name))
+                log_prefix, member.type, member.name))
 
     def _update_group_member_group(self, group, member_group, is_deleted):
         try:
@@ -229,11 +230,11 @@ class UWGroupDispatch(Dispatch):
 
         try:
             (cm, created) = CourseMemberModel.objects.get_or_create(
-                name=user_id, member_type=member.member_type,
+                name=user_id, type=member.type,
                 course_id=group.course_id, role=group.role)
         except CourseMemberModel.MultipleObjectsReturned:
             models = CourseMemberModel.objects.filter(
-                name=user_id, member_type=member.member_type,
+                name=user_id, type=member.type,
                 course_id=group.course_id, role=group.role)
             self._log.debug('%s MULTIPLE (%s): %s in %s as %s' % (
                 log_prefix, len(models), user_id, group.course_id,
@@ -266,7 +267,7 @@ class UWGroupDispatch(Dispatch):
             key = '%s:%s:%s' % (group.group_id, member.name, group.added_by)
 
             if key not in UWGroupDispatch._MEMBER_CACHE:
-                UWGroupDispatch._MEMBER_CACHE[key] = is_member(
+                UWGroupDispatch._MEMBER_CACHE[key] = is_group_member(
                     group.group_id, member.name, act_as=group.added_by)
 
             return UWGroupDispatch._MEMBER_CACHE[key]
@@ -341,7 +342,7 @@ class CourseGroupDispatch(Dispatch):
                 course.group(1),
                 {'win': 'winter', 'spr': 'spring', 'sum': 'summer',
                     'aut': 'autumn'}[course.group(2)],
-                re.sub('\-', ' ', course.group(3).upper()),
+                re.sub(r'\-', ' ', course.group(3).upper()),
                 course.group(4), course.group(5).upper()
             ])
             return True
