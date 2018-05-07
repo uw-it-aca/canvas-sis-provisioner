@@ -21,7 +21,6 @@ class GroupPolicyTest(TestCase):
             # Invalid
             self.assertRaises(GroupPolicyException, valid_group_id, None)
             self.assertRaises(GroupPolicyException, valid_group_id, '')
-            self.assertRaises(GroupPolicyException, valid_group_id, 12345)
             self.assertRaises(GroupPolicyException, valid_group_id, '1')
             self.assertRaises(GroupPolicyException, valid_group_id, 'uw_student')
             self.assertRaises(GroupPolicyException, valid_group_id, 'uw_staff')
@@ -54,16 +53,6 @@ class SISImportMembersTest(TestCase):
 
         with self.settings(SIS_IMPORT_GROUPS=['u_does_not_exist']):
             self.assertRaises(DataFailureException, get_sis_import_members)
-
-
-@fdao_gws_override
-@fdao_pws_override
-class IsMemberTest(TestCase):
-    def test_is_member(self):
-        self.assertEquals(is_member('u_acadev_unittest', 'javerage'), True)
-        self.assertEquals(is_member('u_acadev_unittest', 'eight'), True)
-        self.assertEquals(is_member('u_acadev_unittest', 'baverage'), False)
-        self.assertEquals(is_member('u_acadev_unittest', 'joe@gmail.com'), False)
 
 
 @fdao_gws_override

@@ -143,7 +143,7 @@ class GroupBuilder(Builder):
 
             course_member = CourseMember(course_id=group.course_id,
                                          name=user_id,
-                                         member_type=member.member_type,
+                                         type=member.type,
                                          role=group.role)
             course_member.login = login_id
             current_members.append(course_member)

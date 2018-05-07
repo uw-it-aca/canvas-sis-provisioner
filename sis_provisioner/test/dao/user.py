@@ -15,6 +15,26 @@ class InvalidPerson(object):
 
 @fdao_pws_override
 @fdao_gws_override
+class IsGroupMemberTest(TestCase):
+    def test_is_group_member(self):
+        self.assertEquals(is_group_member('u_acadev_unittest', 'javerage'), True)
+        self.assertEquals(is_group_member('u_acadev_unittest', 'eight'), True)
+        self.assertEquals(is_group_member('u_acadev_unittest', 'baverage'), False)
+        self.assertEquals(is_group_member('u_acadev_unittest', 'joe@gmail.com'), False)
+
+
+@fdao_pws_override
+@fdao_gws_override
+class IsGroupAdminTest(TestCase):
+    def test_is_group_admin(self):
+        self.assertEquals(is_group_admin('u_acadev_unittest', 'javerage'), True)
+        self.assertEquals(is_group_admin('u_acadev_unittest', 'eight'), False)
+        self.assertEquals(is_group_admin('u_acadev_unittest', 'baverage'), False)
+        self.assertEquals(is_group_admin('u_acadev_unittest', 'joe@gmail.com'), False)
+
+
+@fdao_pws_override
+@fdao_gws_override
 class UserPolicyTest(TestCase):
     def test_valid_canvas_user_id(self):
         self.assertEquals(valid_canvas_user_id(12345), None)

@@ -7,9 +7,10 @@ from sis_provisioner.test.dao.course import (
     TimeScheduleConstructionTest, SectionPolicyTest, SectionByIDTest,
     XlistSectionTest, NewSectionQueryTest, RegistrationsBySectionTest)
 from sis_provisioner.test.dao.user import (
-    UserPolicyTest, NetidPolicyTest, RegidPolicyTest, GmailPolicyTest)
+    UserPolicyTest, NetidPolicyTest, RegidPolicyTest, GmailPolicyTest,
+    IsGroupMemberTest, IsGroupAdminTest)
 from sis_provisioner.test.dao.group import (
-    GroupPolicyTest, GroupModifiedTest, IsMemberTest, EffectiveMemberTest,
+    GroupPolicyTest, GroupModifiedTest, EffectiveMemberTest,
     SISImportMembersTest)
 from sis_provisioner.test.dao.term import ActiveTermTest, TermPolicyTest
 from sis_provisioner.test.dao.account import AccountPolicyTest

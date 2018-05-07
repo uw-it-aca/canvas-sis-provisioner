@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect
-from sis_provisioner.dao.group import is_admin
+from sis_provisioner.dao.user import is_group_admin
 from sis_provisioner.dao.term import get_term_by_date
 from sis_provisioner.models.astra import AdminManager
 from sis_provisioner.views import group_required, get_user, is_member_of_group
@@ -75,7 +75,8 @@ def can_view_source_data(request):
 
 
 def can_manage_admin_group(request):
-    return is_admin(settings.CANVAS_MANAGER_ADMIN_GROUP, get_user(request))
+    return is_group_admin(
+        settings.CANVAS_MANAGER_ADMIN_GROUP, get_user(request))
 
 
 def can_manage_jobs(request):
