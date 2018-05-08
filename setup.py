@@ -29,7 +29,7 @@ setup(
         'django-blti==1.2.5',
         'django-aws-message>=0.1,<1.0',
         'UW-Canvas-Users-LTI>=0.4,<1.0',
-        'UW-Groups-LTI>=0.4,<1.0',
+        'UW-Groups-LTI>=0.5.1,<1.0',
         'UW-Course-Roster-LTI>=0.5,<1.0',
         'UW-Grading-Standard-LTI>=0.5,<1.0',
         'UW-Library-Guides-LTI>=0.4,<1.0',
