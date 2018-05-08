@@ -8,7 +8,6 @@ from restclients_core.exceptions import DataFailureException
 from sis_provisioner.exceptions import (
     UserPolicyException, MissingLoginIdException, TemporaryNetidException,
     InvalidLoginIdException)
-from nameparser import HumanName
 import re
 
 
