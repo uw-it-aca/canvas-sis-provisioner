@@ -8,7 +8,6 @@ from restclients_core.exceptions import DataFailureException
 from sis_provisioner.exceptions import (
     UserPolicyException, MissingLoginIdException, TemporaryNetidException,
     InvalidLoginIdException)
-from nameparser import HumanName
 import re
 
 
@@ -103,19 +102,15 @@ def user_email(user):
 
 
 def user_fullname(user):
-    if hasattr(user, 'display_name'):
-        if ((user.display_name is None or not len(user.display_name) or
-                user.display_name.isupper()) and hasattr(user, 'first_name')):
-            fullname = HumanName('%s %s' % (user.first_name, user.surname))
-            fullname.capitalize()
-            fullname.string_format = '{first} {last}'
-            return str(fullname)
+    try:
+        return user.get_formatted_name(string_format='{first} {last}')
+    except AttributeError:
+        if hasattr(user, 'display_name'):
+            return user.display_name  # UW Entity
+        elif hasattr(user, 'sis_user_id'):
+            return user.email.split('@')[0]  # CanvasUser
         else:
-            return user.display_name
-    elif hasattr(user, 'email'):
-        return user.email.split('@')[0]  # CanvasUser
-    else:
-        raise UserPolicyException('Invalid user')
+            raise UserPolicyException('Invalid user')
 
 
 def get_person_by_netid(netid):
