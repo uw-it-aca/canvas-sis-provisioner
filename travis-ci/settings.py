@@ -37,7 +37,6 @@ INSTALLED_APPS = (
     'templatetag_handlebars',
     'sis_provisioner.apps.SISProvisionerConfig',
     'userservice',
-    'authz_group',
     'blti',
     'groups',
     'libguide',
