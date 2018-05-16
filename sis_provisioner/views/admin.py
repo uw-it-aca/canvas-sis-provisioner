@@ -70,7 +70,7 @@ def ManageExternalTools(request, template='canvas_admin/external_tools.html'):
     return render(request, template, params)
 
 
-def can_view_source_data(request):
+def can_view_source_data(request, service=None, url=None):
     return is_member_of_group(request, settings.RESTCLIENTS_ADMIN_GROUP)
 
 
