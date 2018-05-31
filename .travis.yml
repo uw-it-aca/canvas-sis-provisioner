@@ -8,7 +8,7 @@ before_script:
 - pip install -r requirements.txt
 - pip install coverage
 - pip install python-coveralls
-- pip install pycodestyle==2.3.1
+- pip install pycodestyle
 - npm install -g jshint
 - cp travis-ci/manage.py manage.py
 script:
