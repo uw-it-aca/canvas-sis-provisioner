@@ -74,8 +74,7 @@ class Command(SISProvisionerCommand):
             imp.import_csv()
         except MissingImportPathException as ex:
             if not imp.csv_errors:
-                Group.objects.dequeue(imp.pk,
-                    provisioned_date=datetime.utcnow().replace(tzinfo=utc))
+                Group.objects.dequeue(imp)
                 imp.delete()
 
         self.update_job()
