@@ -51,32 +51,27 @@ $(document).ready(function () {
 
     function initializeSearchForm() {
         var quarters = ['winter', 'spring', 'summer', 'autumn'],
-            term_list = [],
-            year = window.canvas_manager.current_term.year,
-            i,
-            j,
-            s;
-
-        for (i = 0; i < 4; i += 1) {
-            if (quarters[i] === window.canvas_manager.current_term.quarter.toLowerCase()) {
-                for (j = 0; j < 4; j += 1) {
-                    s = quarters[i];
-                    term_list.push([s + '-' + year,
-                                    s.charAt(0).toUpperCase() + s.slice(1) + ' ' + year]);
-                    if (++i > 3) {
-                        i = 0;
-                        year += 1;
-                    }
-                }
-
-                break;
-            }
-        }
+            current_year = window.canvas_manager.current_term.year,
+            current_term = window.canvas_manager.current_term.quarter.toLowerCase(),
+            term_index = quarters.indexOf(current_term),
+            year = current_year - 4;
 
         $('#courseTerm,#instructorTerm').each(function () {
-            var me = $(this);
-            $.each(term_list, function (i) {
-                me.append(new Option(this[1], this[0], (i === 0), (i === 0)));
+            var $me = $(this);
+
+            $.each([...Array(20).keys()], function (i) {
+                var quarter_index = (term_index + i) % 4;
+                var quarter = quarters[quarter_index];
+                var selected = (year === current_year && quarter === current_term);
+                var label = quarter + '-' + year;
+                var title = quarter.charAt(0).toUpperCase() + quarter.slice(1) + ' ' + year;
+
+                console.log('label: ' + label);
+                $me.append(new Option(title, label, selected, selected));
+
+                if (quarter_index == 3) {
+                    year += 1;
+                }
             });
         });
     }
@@ -191,13 +186,24 @@ $(document).ready(function () {
     });
 
     function courseDataFromJSON(course) {
-        var is_provisioned = (course.provisioned_date &&
+        var quarters = ['winter', 'spring', 'summer', 'autumn'],
+            is_provisioned = (course.provisioned_date &&
                 course.provisioned_date.length && !(course.provisioned_status &&
                 course.provisioned_status.length)),
-            in_process = false;
+            in_process = false,
+            is_provisionable = true,
+            current_year = parseInt(window.canvas_manager.current_term.year),
+            current_term = window.canvas_manager.current_term.quarter.toLowerCase(),
+            course_year = parseInt(course.term_id.split('-')[0]),
+            course_term = course.term_id.split('-')[1].toLowerCase();
 
         if (course.queue_id && course.queue_id.length) {
             in_process = true;
+        }
+
+        if (course_year < current_year ||
+            (course_year == current_year && (quarters.indexOf(course_term) < quarters.indexOf(current_term)))) {
+            is_provisionable = false;
         }
 
         if (!$.isArray(course.groups)) {
@@ -210,6 +216,7 @@ $(document).ready(function () {
             xlist_id: course.xlist_id,
             is_sdb_type: course.is_sdb_type,
             is_provisioned: is_provisioned,
+            is_provisionable: is_provisionable,
             group_count: course.groups.length,
             group_plural: (course.groups.length > 1) ? 's' : '',
             in_process: in_process,

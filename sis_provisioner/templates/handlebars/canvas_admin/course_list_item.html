@@ -25,6 +25,7 @@
         <span class="groups-icon" data-toggle="popover" data-placement="right" data-content="Has {{this.group_count}} UW Group{{this.group_plural}}"><i class="fa fa-users"></i></span>
 {{/if}}
 
+{{#if is_provisionable}}
 {{#if this.in_process}}
         <button class="btn btn-xs btn-warning pull-right provision-course" data-course-id="{{this.course_id}}" disabled="disabled" href="javascript:void(0);"><i class="fa fa-refresh fa-spin"></i><span>Updating</span></button>
 {{else}}
@@ -46,6 +47,7 @@
       {{/if}}
     {{/if}}
   {{/if}}
+{{/if}}
 {{/if}}
       </h5>
     </div>
