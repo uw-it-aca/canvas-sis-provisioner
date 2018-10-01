@@ -16,10 +16,7 @@ from sis_provisioner.dao.user import (
 from sis_provisioner.dao.canvas import (
     get_user_by_sis_id, create_user, get_account_by_sis_id)
 from sis_provisioner.exceptions import ASTRAException
-try:
-    from urllib2 import build_opener, HTTPSHandler  # python2.7
-except ImportError:
-    from urllib.request import build_opener, HTTPSHandler
+from urllib.request import build_opener, HTTPSHandler
 import socket
 import ssl
 import httplib

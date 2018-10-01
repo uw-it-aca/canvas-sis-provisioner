@@ -10,10 +10,7 @@ from sis_provisioner.exceptions import CoursePolicyException
 from sis_provisioner.dao.user import user_fullname
 from sis_provisioner.dao import titleize
 from logging import getLogger
-try:
-    from urllib.parse import unquote
-except ImportError:
-    from urllib import unquote
+from urllib.parse import unquote
 import re
 
 logger = getLogger(__name__)

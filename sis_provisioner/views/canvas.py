@@ -8,10 +8,7 @@ from sis_provisioner.dao.canvas import (
     get_account_by_id, get_course_by_id, get_course_by_sis_id)
 from logging import getLogger
 from bs4 import BeautifulSoup
-try:
-    from urllib2 import urlopen  # python2.7
-except ImportError:
-    from urllib.request import urlopen
+from urllib.request import urlopen
 import re
 
 
