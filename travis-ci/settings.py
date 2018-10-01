@@ -17,13 +17,13 @@ INSTALLED_APPS = (
     'sis_provisioner.apps.SISProvisionerConfig',
     'userservice',
     'blti',
+    'rc_django',
     #'groups',
     #'libguide',
     #'course_roster',
     #'canvas_users',
-    'analytics',
+    #'analytics',
     #'grading_standard',
-    'rc_django',
 )
 
 MIDDLEWARE = (
