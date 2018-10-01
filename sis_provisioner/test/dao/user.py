@@ -125,8 +125,6 @@ class NetidPolicyTest(TestCase):
         self.assertRaises(TemporaryNetidException, valid_net_id, 'lib1234')
         self.assertRaises(TemporaryNetidException, valid_net_id, 'css1234')
         self.assertRaises(InvalidLoginIdException, valid_net_id, '1abcdef')
-        self.assertRaises(InvalidLoginIdException, valid_net_id, 'j123456789012345')
-        self.assertRaises(UserPolicyException, valid_net_id, 'j123456789012345')
 
     def test_valid_admin_netid(self):
         # Valid
