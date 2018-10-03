@@ -18,12 +18,12 @@ INSTALLED_APPS = (
     'userservice',
     'blti',
     'rc_django',
-    #'groups',
-    #'libguide',
-    #'course_roster',
-    #'canvas_users',
+    'groups',
+    'libguide',
+    'course_roster',
+    'canvas_users',
+    'grading_standard',
     #'analytics',
-    #'grading_standard',
 )
 
 MIDDLEWARE = (
