@@ -1,5 +1,5 @@
-{% load templatetag_handlebars %}
-{% tplhandlebars "provision-error-list-item" %}
+{% verbatim %}
+<script id="provision-error-list-item" type="text/x-handlebars-template">
  {{# each errors}}
   <li>
 <!--    <a href="javascript:void(0);" class="action action-requeue" title="Requeue course"></a> -->
@@ -8,4 +8,5 @@
     <p>Error: {{provisioned_status}}</p>
   </li>
  {{/each}}
-{% endtplhandlebars %}
+</script>
+{% endverbatim %}

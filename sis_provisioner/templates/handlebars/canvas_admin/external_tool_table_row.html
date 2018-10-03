@@ -1,5 +1,5 @@
-{% load templatetag_handlebars %}
-{% tplhandlebars "tool-table-row" %}
+{% verbatim %}
+<script id="tool-table-row" type="text/x-handlebars-template">
 {{# each external_tools}}
 <tr>
     <td>{{ name }}</td>
@@ -18,4 +18,5 @@
     </td>
 </tr>
 {{/each}}
-{% endtplhandlebars %}
+</script>
+{% endverbatim %}

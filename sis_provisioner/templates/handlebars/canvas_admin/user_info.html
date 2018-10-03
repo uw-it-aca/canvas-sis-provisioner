@@ -1,5 +1,5 @@
-{% load templatetag_handlebars %}
-{% tplhandlebars "user-info" %}
+{% verbatim %}
+<script id="user-info" type="text/x-handlebars-template">
 {{ #if is_valid }}
   {{ #if net_id }}
     {{ display_name }} (<span id="user_net_id">{{ net_id }}</span>)
@@ -31,4 +31,5 @@ has NOT been provisioned to Canvas. <button class="btn" type="button" id="user_a
 {{ else }}
 {{ net_id }} is not a valid user
 {{ /if }}
-{% endtplhandlebars %}
+</script>
+{% endverbatim %}
