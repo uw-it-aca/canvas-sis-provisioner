@@ -14,7 +14,7 @@ setup(
     packages=['sis_provisioner'],
     include_package_data=True,
     install_requires = [
-        'Django>=2.0,<2.1',
+        'Django==2.1',
         'django-compressor',
         'django_mobileesp',
         'lxml',
