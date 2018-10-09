@@ -19,7 +19,7 @@ from sis_provisioner.exceptions import ASTRAException
 from urllib.request import build_opener, HTTPSHandler
 import socket
 import ssl
-import httplib
+import http
 import sys
 import re
 import os
@@ -50,9 +50,9 @@ class HTTPSClientAuthHandler(HTTPSHandler):
         return HTTPSConnectionClientCertV3(host)
 
 
-class HTTPSConnectionClientCertV3(httplib.HTTPSConnection):
+class HTTPSConnectionClientCertV3(http.client.HTTPSConnection):
     def __init__(self, *args, **kwargs):
-        httplib.HTTPSConnection.__init__(self, *args, **kwargs)
+        http.client.HTTPSConnection.__init__(self, *args, **kwargs)
         self.key_file = settings.ASTRA_KEY
         self.cert_file = settings.ASTRA_CERT
 
