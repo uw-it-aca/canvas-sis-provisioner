@@ -97,11 +97,9 @@ class CanvasStatus(RESTDispatch):
             components = []
             for x in soup.body.find_all(
                     'div', class_='component-inner-container'):
-                name = x.find(
-                    'span', class_='name').get_text(strip=True).encode('utf-8')
-                status = x.find(
-                    'span', class_='component-status').get_text(
-                        strip=True).encode('utf-8')
+                name = x.find('span', class_='name').get_text(strip=True)
+                status = x.find('span', class_='component-status').get_text(
+                    strip=True)
                 state = 'status-unknown'
 
                 for c in x['class']:
