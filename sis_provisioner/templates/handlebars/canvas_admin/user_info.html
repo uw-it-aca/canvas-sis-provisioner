@@ -1,35 +1,35 @@
 {% verbatim %}
 <script id="user-info" type="text/x-handlebars-template">
-{{ #if is_valid }}
-  {{ #if net_id }}
+{{#if is_valid}}
+  {{#if net_id}}
     {{ display_name }} (<span id="user_net_id">{{ net_id }}</span>)
-  {{ else }}
+  {{else}}
     &quot;{{ gmail_id }}&quot;
-  {{ /if }}
-  {{ #if provisioned_date }}
-    {{ #if net_id }}
+  {{/if}}
+  {{#if provisioned_date}}
+    {{#if net_id}}
       was provisioned on {{ provisioned_date }}
-    {{ else }}
+    {{else}}
       has been provisioned to Canvas.
-    {{ /if }}
-  {{ else }}
-    {{ #if added_date }}
+    {{/if}}
+  {{else}}
+    {{#if added_date}}
 added for provisioning on {{ added_date }}
-    {{ else }}
+    {{else}}
 has NOT been provisioned to Canvas. <button class="btn" type="button" id="user_add_button">Provision <b>{{ net_id }}</b></button>
-    {{ /if }}
-  {{ /if }}
-  {{ #if net_id }}
-  {{ #if person_url }}
+    {{/if}}
+  {{/if}}
+  {{#if net_id}}
+  {{#if person_url}}
   <br /><a class="js-sws-person" href="{{person_url}}"><i class="fa fa-database"></i> View user details in the Person Web Service</a>
-  {{ /if }}
-  {{ #if enrollment_url }}
+  {{/if}}
+  {{#if enrollment_url}}
   <br /><a class="js-sws-enrollment" href="{{enrollment_url}}"><i class="fa fa-database"></i> View user enrollments in the Student Web Service</a>
-  {{ /if }}
-  {{ /if }}
+  {{/if}}
+  {{/if}}
 
-{{ else }}
+{{else}}
 {{ net_id }} is not a valid user
-{{ /if }}
+{{/if}}
 </script>
 {% endverbatim %}

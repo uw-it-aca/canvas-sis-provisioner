@@ -1,10 +1,10 @@
 {% verbatim %}
 <script id="import-list-item" type="text/x-handlebars-template">
-{{# if import_count}}
- {{# each imports}}
+{{#if import_count}}
+ {{#each imports}}
   <li class="clearfix" id="canvas_import_{{queue_id}}">
     <span>
-    {{# if is_pending}}
+    {{#if is_pending}}
       <i class="fa fa-cloud-upload staged" title="Preparing to post the import to Canvas"></i>
     {{else}}
       {{#if canvas_finished}}
@@ -56,7 +56,7 @@
         {{/if}}
       {{/if}}
     {{/if}}
-    {{# if is_pending}}
+    {{#if is_pending}}
     &ndash; Pending
     {{else}}
       {{#if canvas_finished}}

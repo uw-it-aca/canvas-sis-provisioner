@@ -1,11 +1,11 @@
 {% verbatim %}
 <script id="job-table-row" type="text/x-handlebars-template">
-{{# each jobs}}
+{{#each jobs}}
 <tr>
     <td>{{ title }}</td>
-    <td><span class="last-run-date">{{# if last_run_date}}{{ last_run_date }}{{else}}Never{{/if}}</span></td>
-    <td><span class="last-change-date">{{ changed_date }}</span>{{# if changed_by}} (<span class="last-change-by">{{ changed_by }}</span>){{/if}}</td>
-    <td>{{# if read_only}}<h4>{{# if is_active}}<span class="label label-success">Enabled</span>{{else}}<span class="label label-default">Disabled</span>{{/if}}</h4>{{else}}<input type="checkbox" class="toggle-job" data-job-id="{{ job_id }}" {{# if is_active}}checked="checked" {{/if}}data-toggle="toggle" data-onstyle="success" data-on="Enabled" data-off="Disabled"/> <button type="button" class="btn btn-danger delete-job" data-job-id="{{ job_id }}" title="Delete this job"><span class="glyphicon glyphicon-remove-circle" aria-hidden="true"></span> Delete</button>{{/if}}</td>
+    <td><span class="last-run-date">{{#if last_run_date}}{{ last_run_date }}{{else}}Never{{/if}}</span></td>
+    <td><span class="last-change-date">{{ changed_date }}</span>{{#if changed_by}} (<span class="last-change-by">{{ changed_by }}</span>){{/if}}</td>
+    <td>{{#if read_only}}<h4>{{#if is_active}}<span class="label label-success">Enabled</span>{{else}}<span class="label label-default">Disabled</span>{{/if}}</h4>{{else}}<input type="checkbox" class="toggle-job" data-job-id="{{ job_id }}" {{#if is_active}}checked="checked" {{/if}}data-toggle="toggle" data-onstyle="success" data-on="Enabled" data-off="Disabled"/> <button type="button" class="btn btn-danger delete-job" data-job-id="{{ job_id }}" title="Delete this job"><span class="glyphicon glyphicon-remove-circle" aria-hidden="true"></span> Delete</button>{{/if}}</td>
 </tr>
 {{/each}}
 </script>
