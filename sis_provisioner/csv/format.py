@@ -17,6 +17,12 @@ class CSVFormat(object):
         self.key = None
         self.data = []
 
+    def __lt__(self, other):
+        return self.key < other.key
+
+    def __eq__(self, other):
+        return self.key == other.key
+
     def __str__(self):
         """
         Creates a line of csv data from the obj data attribute
