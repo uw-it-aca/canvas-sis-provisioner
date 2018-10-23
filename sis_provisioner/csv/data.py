@@ -122,7 +122,7 @@ class Collector(object):
             filepath = self.create_filepath(root)
             for csv_type in self.headers:
                 try:
-                    data = getattr(self, csv_type).values()
+                    data = list(getattr(self, csv_type).values())
                     data.sort()
                 except AttributeError:
                     data = getattr(self, csv_type)

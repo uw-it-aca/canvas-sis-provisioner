@@ -97,7 +97,7 @@ class Command(BaseCommand):
         outpath = dirname(__file__) + "/" + filename + ".txt"
 
         f = open(outpath, "w")
-        data = active_instructors.values()
+        data = list(active_instructors.values())
         data.sort()
         f.write("\n".join(data))
         f.close()

@@ -210,7 +210,7 @@ def get_registrations_by_section(section):
     for registration in registrations:
         uniques[registration.person.uwregid] = registration
 
-    return sorted(uniques.values(), key=lambda r: r.person.uwregid)
+    return sorted(list(uniques.values()), key=lambda r: r.person.uwregid)
 
 
 def canvas_xlist_id(section_list):

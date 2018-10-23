@@ -46,7 +46,7 @@ def get_sis_import_members():
             except UserPolicyException as err:
                 pass
 
-    return valid_members.values()
+    return list(valid_members.values())
 
 
 def get_effective_members(group_id, act_as=None):
@@ -96,4 +96,6 @@ def get_effective_members(group_id, act_as=None):
         return (valid_members, invalid_members, member_group_ids)
 
     (valid_members, invalid_members, member_group_ids) = _get_members(group_id)
-    return (valid_members.values(), invalid_members.values(), member_group_ids)
+    return (list(valid_members.values()),
+            list(invalid_members.values()),
+            member_group_ids)
