@@ -633,7 +633,7 @@ class UserManager(models.Manager):
 class User(models.Model):
     """ Represents the provisioned state of a user.
     """
-    net_id = models.CharField(max_length=20, unique=True)
+    net_id = models.CharField(max_length=80, unique=True)
     reg_id = models.CharField(max_length=32, unique=True)
     added_date = models.DateTimeField(auto_now_add=True)
     provisioned_date = models.DateTimeField(null=True)
