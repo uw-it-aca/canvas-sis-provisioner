@@ -31,10 +31,6 @@ class GroupUnauthorizedException(GroupPolicyException):
     pass
 
 
-class GroupEventException(Exception):
-    pass
-
-
 class CoursePolicyException(Exception):
     pass
 

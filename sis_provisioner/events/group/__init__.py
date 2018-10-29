@@ -1,77 +1,97 @@
+from sis_provisioner.events import SISProvisionerProcessor, ProcessorException
 from sis_provisioner.models.events import GroupLog
 from sis_provisioner.events.group.dispatch import (
-    ImportGroupDispatch, CourseGroupDispatch, UWGroupDispatch, Dispatch)
-from sis_provisioner.exceptions import GroupEventException
-from aws_message.extract import ExtractException
-from logging import getLogger
+    ImportGroupDispatch, CourseGroupDispatch, UWGroupDispatch)
+from aws_message.crypto import aes128cbc, CryptoException
 from base64 import b64decode
-from time import time
-from math import floor
-import dateutil.parser
 import json
 
+QUEUE_SETTINGS_NAME = 'GROUP'
 
-class Group(object):
+
+class GroupProcessor(SISProvisionerProcessor):
     """
     UW GWS Group Event Processor
     """
+    _logModel = GroupLog
 
     # What we expect in a UW Group event message
-    _groupMessageType = 'gws'
-    _groupMessageVersion = 'UWIT-1'
+    _eventMessageType = 'gws'
+    _eventMessageVersion = 'UWIT-1'
 
-    def __init__(self, config, message):
-        """
-        UW Group Event object
+    def __init__(self):
+        super(GroupProcessor, self).__init__(
+            queue_settings_name=QUEUE_SETTINGS_NAME)
 
-        Takes an object representing a UW Group Event Message
-
-        Raises GroupEventException
-        """
-        self._log = getLogger(__name__)
-        self._settings = config
-
+    def validate_inner_message(self, message):
         header = message['header']
+        if header['messageType'] != self._eventMessageType:
+            raise ProcessorException(
+                'Unknown Message Type: {}'.format(header['messageType']))
 
-        if header['messageType'] != self._groupMessageType:
-            raise GroupEventException(
-                'Unknown Group Message Type: %s' % header['messageType'])
-
-        if header['version'] != self._groupMessageVersion:
-            raise GroupEventException(
-                'Unknown Group Message Version: %s' % header['version'])
+        if header['version'] != self._eventMessageVersion:
+            raise ProcessorException(
+                'Unknown Message Version: {}'.format(header['version']))
 
         context = json.loads(b64decode(header['messageContext']))
         self._action = context['action']
         self._groupname = context['group']
+        self._dispatch = None
 
-        for dispatch in [ImportGroupDispatch,
-                         CourseGroupDispatch,
-                         UWGroupDispatch,
-                         Dispatch]:
-            self._dispatch = dispatch(config, message)
-            if self._dispatch.mine(self._groupname):
+        for dispatch_class in [
+                ImportGroupDispatch, CourseGroupDispatch, UWGroupDispatch]:
+            dispatch = dispatch_class(self.settings)
+            if dispatch.mine(self._groupname):
+                self._dispatch = dispatch
                 break
 
-    def process(self):
+        return (self._dispatch is not None)
+
+    def _parse_signature(self, message):
+        header = message['header']
+        signature = header['signature']
+        to_sign = '{}\n'.format(header[u'contentType'])
+        if 'keyId' in header:
+            to_sign += '{}\n{}\n'.format(header[u'iv'], header[u'keyId'])
+        to_sign += (
+            '{context}\n{msgid}\n{msgtype}\n{sender}\n{cert}\n'
+            '{timestamp}\n{version}\n{body}\n').format(
+            context=header[u'messageContext'], msgid=header[u'messageId'],
+            msgtype=header[u'messageType'], sender=header[u'sender'],
+            cert=header[u'signingCertUrl'], timestamp=header[u'timestamp'],
+            version=header[u'version'], body=message['body'])
+
+        sig_conf = {
+            'cert': {
+                'type': 'url',
+                'reference': header[u'signingCertUrl']
+            }
+        }
+
+        return (sig_conf, to_sign, signature)
+
+    def decrypt_inner_message(self, message):
+        header = message['header']
+        body = message['body']
         try:
-            n = self._dispatch.run(self._action, self._groupname)
-            if n:
-                self._recordSuccess(n)
-        except ExtractException as err:
-            raise GroupEventException('Cannot process: %s' % (err))
+            if set(['keyId', 'iv']).issubset(header):
+                key = header['keyId']
+                keys = self.get_payload_settings().get('KEYS', {})
 
-    def _recordSuccess(self, count):
-        minute = int(floor(time() / 60))
-        try:
-            e = GroupLog.objects.get(minute=minute)
-            e.event_count += count
-        except GroupLog.DoesNotExist:
-            e = GroupLog(minute=minute, event_count=count)
+                cipher = aes128cbc(
+                    b64decode(keys[key]), b64decode(header['iv']))
+                body = cipher.decrypt(b64decode(body))
+                return body
+                # return json.loads(self._re_json_cruft.sub(r'\g<1>', body))
 
-        e.save()
+        except KeyError as ex:
+            raise ProcessorException('Invalid keyId: {}'.format(key))
+        except CryptoException as ex:
+            raise ProcessorException('Cannot decrypt: {}'.format(ex))
+        except Exception as ex:
+            raise ProcessorException('Cannot read: {}'.format(ex))
 
-        if e.event_count <= 5:
-            prune = minute - (self._settings.get(
-                'EVENT_COUNT_PRUNE_AFTER_DAY', 7) * 24 * 60)
-            GroupLog.objects.filter(minute__lt=prune).delete()
+    def process_inner_message(self, json_data):
+        n = self._dispatch.run(self._action, self._groupname, json_data)
+        if n:
+            self.record_success_to_log(n)

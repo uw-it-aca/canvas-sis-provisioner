@@ -1,37 +1,32 @@
-from sis_provisioner.events import EventBase
+from sis_provisioner.events import SISProvisionerProcessor
 from sis_provisioner.models import User, PRIORITY_HIGH
 from sis_provisioner.models.events import PersonLog
-from sis_provisioner.exceptions import EventException
 from uw_sws.models import Person as PersonModel
 
-
 log_prefix = 'PERSON:'
+QUEUE_SETTINGS_NAME = 'PERSON_V1'
 
 
-class Person(EventBase):
+class PersonProcessor(SISProvisionerProcessor):
     """
     Collects Person Change Event described by
-
     """
+    _logModel = PersonLog
 
-    # Enrollment Version 2 settings
-    SETTINGS_NAME = 'PERSON_V1'
-    EXCEPTION_CLASS = EventException
-
-    #  What we expect in a v1 enrollment message
-    #  _eventMessageType = 'uw-student-registration'
-    #   eventMessageVersion = '1'
-
-    # What we expect in a v2 enrollment message
+    # What we expect in a v2 person message
     _eventMessageType = 'uw-person-change-v1'
     _eventMessageVersion = '1'
 
-    def process_events(self, event):
-        current = event['Current']
-        previous = event['Previous']
+    def __init__(self):
+        super(PersonProcessor, self).__init__(
+            queue_settings_name=QUEUE_SETTINGS_NAME)
+
+    def process_inner_message(self, json_data):
+        current = json_data['Current']
+        previous = json_data['Previous']
         net_id = current['UWNetID'] if current else previous['UWNetID']
         if not net_id:
-            self._log.info('%s IGNORE missing uwnetid for %s' % (
+            self.logger.info('{} IGNORE missing uwnetid for {}'.format(
                 log_prefix,
                 current['RegID'] if current else previous['RegID']))
             return
@@ -49,7 +44,4 @@ class Person(EventBase):
                 PRIORITY_HIGH)
 
             if user is not None:
-                self.record_success(1)
-
-    def record_success(self, event_count):
-        self.record_success_to_log(PersonLog, event_count)
+                self.record_success_to_log(event_count=1)
