@@ -17,9 +17,8 @@ class PersonProcessor(SISProvisionerProcessor):
     _eventMessageType = 'uw-person-change-v1'
     _eventMessageVersion = '1'
 
-    def __init__(self):
-        super(PersonProcessor, self).__init__(
-            queue_settings_name=QUEUE_SETTINGS_NAME)
+    def __init__(self, queue_settings_name=QUEUE_SETTINGS_NAME):
+        super(PersonProcessor, self).__init__(queue_settings_name)
 
     def process_inner_message(self, json_data):
         current = json_data['Current']

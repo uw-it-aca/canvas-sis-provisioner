@@ -12,7 +12,7 @@ class Command(SISProvisionerCommand):
         try:
             EnrollmentProcessor().check_interval()
         except EventException as ex:
-            self.squawk(ex)
+            self.squawk('Warning: {}'.format(ex))
 
     def handle(self, *args, **options):
         try:

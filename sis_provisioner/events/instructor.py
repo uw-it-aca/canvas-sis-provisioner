@@ -9,6 +9,8 @@ from uw_canvas.models import CanvasEnrollment
 from dateutil.parser import parse as date_parse
 
 log_prefix = 'INSTRUCTOR:'
+QUEUE_SETTINGS_NAME_ADD = 'INSTRUCTOR_ADD'
+QUEUE_SETTINGS_NAME_DROP = 'INSTRUCTOR_DROP'
 
 
 class InstructorProcessor(SISProvisionerProcessor):
@@ -144,15 +146,13 @@ class InstructorAddProcessor(InstructorProcessor):
     """
     UW Course Instructor Add Event Handler
     """
-    QUEUE_SETTINGS_NAME = 'INSTRUCTOR_ADD'
 
     # What we expect in an instructor add message
     _eventMessageType = 'uw-instructor-add'
     _eventMessageVersion = '1'
 
-    def __init__(self):
-        super(InstructorAddProcessor, self).__init__(
-            queue_settings_name=self.QUEUE_SETTINGS_NAME)
+    def __init__(self, queue_settings_name=QUEUE_SETTINGS_NAME_ADD):
+        super(InstructorAddProcessor, self).__init__(queue_settings_name)
 
     def load_instructors(self, section):
         add = [reg_id for reg_id in self._current_instructors
@@ -170,15 +170,13 @@ class InstructorDropProcessor(InstructorProcessor):
     """
     UW Course Instructor Drop Event Handler
     """
-    QUEUE_SETTINGS_NAME = 'INSTRUCTOR_DROP'
 
     # What we expect in an instructor drop message
     _eventMessageType = 'uw-instructor-drop'
     _eventMessageVersion = '1'
 
-    def __init__(self):
-        super(InstructorDropProcessor, self).__init__(
-            queue_settings_name=self.QUEUE_SETTINGS_NAME)
+    def __init__(self, queue_settings_name=QUEUE_SETTINGS_NAME_DROP):
+        super(InstructorDropProcessor, self).__init__(queue_settings_name)
 
     def load_instructors(self, section):
         drop = [reg_id for reg_id in self._previous_instructors

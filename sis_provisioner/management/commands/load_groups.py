@@ -13,7 +13,7 @@ class Command(SISProvisionerCommand):
         try:
             GroupProcessor().check_interval(acceptable_silence=24*60)
         except EventException as ex:
-            self.squawk(ex)
+            self.squawk('Warning: {}'.format(ex))
 
     def handle(self, *args, **options):
         try:

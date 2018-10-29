@@ -18,10 +18,9 @@ logger = getLogger(__name__)
 class SISProvisionerProcessor(InnerMessageProcessor):
     _re_json_cruft = re.compile(r'[^{]*({.*})[^}]*')
 
-    def __init__(self, is_encrypted=True):
+    def __init__(self, queue_settings_name, is_encrypted=True):
         super(SISProvisionerProcessor, self).__init__(
-                logger, queue_settings_name=self.QUEUE_SETTINGS_NAME,
-                is_encrypted=is_encrypted)
+                logger, queue_settings_name, is_encrypted=is_encrypted)
 
     def validate_inner_message(self, message):
         header = message['Header']

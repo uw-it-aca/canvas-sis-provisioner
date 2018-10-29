@@ -19,9 +19,8 @@ class GroupProcessor(SISProvisionerProcessor):
     _eventMessageType = 'gws'
     _eventMessageVersion = 'UWIT-1'
 
-    def __init__(self):
-        super(GroupProcessor, self).__init__(
-            queue_settings_name=QUEUE_SETTINGS_NAME)
+    def __init__(self, queue_settings_name=QUEUE_SETTINGS_NAME):
+        super(GroupProcessor, self).__init__(queue_settings_name)
 
     def validate_inner_message(self, message):
         header = message['header']

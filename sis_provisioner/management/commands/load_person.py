@@ -12,7 +12,7 @@ class Command(SISProvisionerCommand):
         try:
             PersonProcessor().check_interval()
         except EventException as ex:
-            self.squawk(ex)
+            self.squawk('Warning: {}'.format(ex))
 
     def handle(self, *args, **options):
         try:
@@ -21,4 +21,4 @@ class Command(SISProvisionerCommand):
         except GatherException as err:
             raise CommandError(err)
         except Exception as err:
-            raise CommandError('FAIL: %s' % (err))
+            raise CommandError('FAIL: {}'.format(err))
