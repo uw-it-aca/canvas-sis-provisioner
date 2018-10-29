@@ -13,15 +13,15 @@ from sis_provisioner.models import (
     Group as GroupModel, CourseMember as CourseMemberModel, User as UserModel,
     GroupMemberGroup as GroupMemberGroupModel, Enrollment as EnrollmentModel,
     PRIORITY_NONE, PRIORITY_DEFAULT, PRIORITY_HIGH, PRIORITY_IMMEDIATE)
-from sis_provisioner.events.group.extract import (
-    ExtractUpdate, ExtractDelete, ExtractChange)
 from restclients_core.exceptions import DataFailureException
+from uw_gws.models import GroupMember
+import xml.etree.ElementTree as ET
 from logging import getLogger
 import datetime
 import re
 
-
 log_prefix = 'GROUP:'
+re_parser = re.compile(r'^(<.*>)[^>]*$')
 
 
 class Dispatch(object):
@@ -37,7 +37,6 @@ class Dispatch(object):
         return False
 
     def run(self, action, group, message):
-        self._message = message
         try:
             return {
                 'update-members': self.update_members,
@@ -46,37 +45,37 @@ class Dispatch(object):
                 'put-members': self.put_members,
                 'change-subject-name': self.change_subject_name,
                 'no-action': self.no_action
-            }[action](group)
+            }[action](group, self._parse(message))
         except KeyError:
             self._log.info('{} UNKNOWN {} for {}'.format(
                 log_prefix, action, group))
             return 0
 
-    def update_members(self, group_id):
+    def update_members(self, group_id, message):
         self._log.info('{} IGNORE update-members for {}'.format(
             log_prefix, group_id))
         return 0
 
-    def put_group(self, group_id):
+    def put_group(self, group_id, message):
         self._log.info('{} IGNORE put-group {}'.format(log_prefix, group_id))
         return 0
 
-    def delete_group(self, group_id):
+    def delete_group(self, group_id, message):
         self._log.info('{} IGNORE delete-group {}'.format(
             log_prefix, group_id))
         return 0
 
-    def put_members(self, group_id):
+    def put_members(self, group_id, message):
         self._log.info('{} IGNORE put-members for {}'.format(
             log_prefix, group_id))
         return 0
 
-    def change_subject_name(self, group_id):
+    def change_subject_name(self, group_id, message):
         self._log.info('{} IGNORE change-subject-name for {}'.format(
             log_prefix, group_id))
         return 0
 
-    def no_action(self, group_id):
+    def no_action(self, group_id, message):
         return 0
 
 
@@ -99,48 +98,41 @@ class UWGroupDispatch(Dispatch):
             group_id=group)
         return len(self._groups) > 0 or len(self._membergroups) > 0
 
-    def update_members(self, group_id):
+    def update_members(self, group_id, message):
         # body contains list of members to be added or removed
-        event = ExtractUpdate(self._settings, self._message).extract()
+        group_id = message.findall('./name')[0].text
+        reg_id = message.findall('./regid')[0].text
+        member_count = 0
 
-        updates = [{
-            'members': event['add_members'],
-            'is_deleted': None
-        }, {
-            'members': event['delete_members'],
-            'is_deleted': True
-        }]
+        for el in message.findall('./add-members/add-member'):
+            member = GroupMember(name=el.text, type=el.attrib['type'])
+            self._process_group_member(group_id, member, is_deleted=None)
+            member_count += 1
 
-        for update in updates:
-            for member in update['members']:
-                for group in self._groups:
-                    self._update_group(group, member, update['is_deleted'])
-
-                for member_group in self._membergroups:
-                    if not member_group.is_deleted:
-                        for group in self._find_group_models(
-                                member_group.root_group_id):
-                            self._update_group(group, member,
-                                               update['is_deleted'])
+        for el in message.findall('./delete-members/delete-member'):
+            member = GroupMember(name=el.text, type=el.attrib['type'])
+            self._process_group_member(group_id, member, is_deleted=True)
+            member_count += 1
 
         self._log.info('{} UPDATE membership for {}'.format(
-            log_prefix, event.group_id))
+            log_prefix, group_id))
 
-        return len(event['add_members']) + len(event['delete_members'])
+        return member_count
 
-    def delete_group(self, group_id):
-        event = ExtractDelete(self._settings, self._message).extract()
+    def delete_group(self, group_id, message):
+        group_id = message.findall('./name')[0].text
+        reg_id = message.findall('./regid')[0].text
 
         now = datetime.datetime.utcnow().replace(tzinfo=utc)
         # mark group as delete and ready for import
         GroupModel.objects.filter(
-            group_id=event['group_id'], is_deleted__isnull=True).update(
+            group_id=group_id, is_deleted__isnull=True).update(
                 is_deleted=True, deleted_date=now, deleted_by='gws-event',
                 priority=PRIORITY_IMMEDIATE)
 
         # mark member groups
         membergroups = GroupMemberGroupModel.objects.filter(
-            group_id=event['group_id'], is_deleted__isnull=True)
+            group_id=group_id, is_deleted__isnull=True)
         membergroups.update(is_deleted=True)
 
         # mark associated root groups for import
@@ -149,14 +141,15 @@ class UWGroupDispatch(Dispatch):
                 group_id=membergroup.root_group_id,
                 is_deleted__isnull=True).update(priority=PRIORITY_IMMEDIATE)
 
-        self._log.info('{} DELETE {}'.format(log_prefix, event['group_id']))
+        self._log.info('{} DELETE {}'.format(log_prefix, group_id))
 
         return 1
 
-    def change_subject_name(self, group_id):
-        event = ExtractChange(self._settings, self._message).extract()
-        old_name = event['old_name']
-        new_name = event['new_name']
+    def change_subject_name(self, group_id, message):
+        # body contains old and new subject names (id)
+        # normalize 'change-subject-name' event
+        old_name = message.findall('./subject/old-name')[0].text
+        new_name = message.findall('./subject/new-name')[0].text
 
         GroupModel.objects.filter(
             group_id=old_name).update(group_id=new_name)
@@ -169,6 +162,16 @@ class UWGroupDispatch(Dispatch):
             log_prefix, old_name, new_name))
 
         return 1
+
+    def _process_group_member(self, group_id, member, is_deleted):
+        for group in self._groups:
+            self._update_group(group, member, is_deleted)
+
+        for member_group in self._membergroups:
+            if not member_group.is_deleted:
+                for group in self._find_group_models(
+                        member_group.root_group_id):
+                    self._update_group(group, member, is_deleted)
 
     def _update_group(self, group, member, is_deleted):
         if member.is_group():
@@ -310,6 +313,9 @@ class UWGroupDispatch(Dispatch):
             root_group_id=group.group_id,
             is_deleted__isnull=True).count() > 0
 
+    def _parse(self, message):
+        return ET.fromstring(re_parser.sub(r'\g<1>', message))
+
 
 class ImportGroupDispatch(Dispatch):
     """
@@ -318,8 +324,7 @@ class ImportGroupDispatch(Dispatch):
     def mine(self, group):
         return True if group in settings.SIS_IMPORT_GROUPS else False
 
-    def update_members(self, group):
-        # body contains list of members to be added or removed
+    def update_members(self, group, message):
         self._log.info('{} IGNORE canvas user update: {}'.format(
             log_prefix, group))
         return 0
@@ -345,13 +350,13 @@ class CourseGroupDispatch(Dispatch):
             return True
         return False
 
-    def update_members(self, group):
+    def update_members(self, group, message):
         # body contains list of members to be added or removed
         self._log.info('{} IGNORE course group update: {}'.format(
             log_prefix, self._course_sis_id))
         return 0
 
-    def put_group(self, group_id):
+    def put_group(self, group_id, message):
         self._log.info('{} IGNORE course group put-group: {}'.format(
             log_prefix, group_id))
         return 0
