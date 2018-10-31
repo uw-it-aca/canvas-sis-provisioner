@@ -25,7 +25,7 @@ class EnrollmentProcessor(SISProvisionerProcessor):
     def __init__(self, queue_settings_name=QUEUE_SETTINGS_NAME):
         super(EnrollmentProcessor, self).__init__(queue_settings_name)
 
-    def process_inner_message(self, json_data):
+    def process_message_body(self, json_data):
         enrollments = []
         for event in json_data.get('Events', []):
             section_data = event['Section']

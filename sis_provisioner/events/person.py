@@ -20,7 +20,7 @@ class PersonProcessor(SISProvisionerProcessor):
     def __init__(self, queue_settings_name=QUEUE_SETTINGS_NAME):
         super(PersonProcessor, self).__init__(queue_settings_name)
 
-    def process_inner_message(self, json_data):
+    def process_message_body(self, json_data):
         current = json_data['Current']
         previous = json_data['Previous']
         net_id = current['UWNetID'] if current else previous['UWNetID']

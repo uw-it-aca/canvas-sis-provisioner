@@ -22,7 +22,7 @@ class SISProvisionerProcessor(InnerMessageProcessor):
         super(SISProvisionerProcessor, self).__init__(
                 logger, queue_settings_name, is_encrypted=is_encrypted)
 
-    def validate_inner_message(self, message):
+    def validate_message_body(self, message):
         header = message['Header']
         if ('MessageType' in header and
                 header['MessageType'] != self._eventMessageType):
@@ -50,7 +50,7 @@ class SISProvisionerProcessor(InnerMessageProcessor):
 
         return (sig_conf, to_sign, header['Signature'])
 
-    def validate_inner_message_signature(self, message):
+    def validate_message_body_signature(self, message):
         try:
             (sig_conf, to_sign, signature) = self._parse_signature(message)
             Signature(sig_conf).validate(
@@ -66,7 +66,7 @@ class SISProvisionerProcessor(InnerMessageProcessor):
             raise ProcessorException(
                 'Invalid signature {}: {}'.format(signature, ex))
 
-    def decrypt_inner_message(self, message):
+    def decrypt_message_body(self, message):
         header = message['Header']
         body = message['Body']
 

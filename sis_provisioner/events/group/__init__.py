@@ -22,7 +22,7 @@ class GroupProcessor(SISProvisionerProcessor):
     def __init__(self, queue_settings_name=QUEUE_SETTINGS_NAME):
         super(GroupProcessor, self).__init__(queue_settings_name)
 
-    def validate_inner_message(self, message):
+    def validate_message_body(self, message):
         header = message['header']
         if header['messageType'] != self._eventMessageType:
             raise ProcessorException(
@@ -69,7 +69,7 @@ class GroupProcessor(SISProvisionerProcessor):
 
         return (sig_conf, to_sign, signature)
 
-    def decrypt_inner_message(self, message):
+    def decrypt_message_body(self, message):
         header = message['header']
         body = message['body']
         try:
@@ -90,7 +90,7 @@ class GroupProcessor(SISProvisionerProcessor):
         except Exception as ex:
             raise ProcessorException('Cannot read: {}'.format(ex))
 
-    def process_inner_message(self, json_data):
+    def process_message_body(self, json_data):
         n = self._dispatch.run(self._action, self._groupname, json_data)
         if n:
             self.record_success_to_log(n)

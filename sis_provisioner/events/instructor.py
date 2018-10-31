@@ -16,7 +16,7 @@ QUEUE_SETTINGS_NAME_DROP = 'INSTRUCTOR_DROP'
 class InstructorProcessor(SISProvisionerProcessor):
     _logModel = InstructorLog
 
-    def process_inner_message(self, json_data):
+    def process_message_body(self, json_data):
         self._previous_instructors = self._instructors_from_section_json(
             json_data['Previous'])
         self._current_instructors = self._instructors_from_section_json(
