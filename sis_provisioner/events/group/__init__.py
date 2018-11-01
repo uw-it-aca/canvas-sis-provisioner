@@ -75,7 +75,7 @@ class GroupProcessor(SISProvisionerProcessor):
         try:
             if set(['keyId', 'iv']).issubset(header):
                 key = header['keyId']
-                keys = self.get_payload_settings().get('KEYS', {})
+                keys = self.get_settings().get('BODY_DECRYPT_KEYS', {})
 
                 cipher = aes128cbc(
                     b64decode(keys[key]), b64decode(header['iv']))

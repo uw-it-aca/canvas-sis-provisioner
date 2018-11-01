@@ -1,7 +1,7 @@
 from django.core.management.base import CommandError
 from sis_provisioner.management.commands import SISProvisionerCommand
 from sis_provisioner.events.instructor import (
-    InstructorProcessor, InstructorAddProcessor, InstructorDropProcessor)
+    InstructorAddProcessor, InstructorDropProcessor)
 from sis_provisioner.exceptions import EventException
 from aws_message.gather import Gather, GatherException
 
@@ -11,7 +11,7 @@ class Command(SISProvisionerCommand):
 
     def health_check(self):
         try:
-            InstructorProcessor().check_interval(acceptable_silence=24*60)
+            InstructorAddProcessor().check_interval(acceptable_silence=24*60)
         except EventException as ex:
             self.squawk('Warning: {}'.format(ex))
 
