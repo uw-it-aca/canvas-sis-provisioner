@@ -13,7 +13,8 @@ class CourseBuilderTest(TestCase):
         self.assertEquals(builder.build(include_enrollment=False), None)
         self.assertEquals(builder.include_enrollment, False)
 
-    @mock.patch('sis_provisioner.builders.courses.get_unused_course_report_data')
+    @mock.patch(
+        'sis_provisioner.builders.courses.get_unused_course_report_data')
     def test_unused_course_builder(self, mock_report):
         builder = UnusedCourseBuilder()
 

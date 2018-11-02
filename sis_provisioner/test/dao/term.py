@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from sis_provisioner.dao.term import *
 from sis_provisioner.dao.course import get_section_by_label
 from uw_sws.util import fdao_sws_override
@@ -10,12 +10,17 @@ from datetime import datetime
 @fdao_pws_override
 class ActiveTermTest(TestCase):
     def test_current_active_term(self):
-       self.assertEquals(get_current_active_term(datetime(2013, 7, 15)).term_label(),
-                         '2013,summer')
-       self.assertEquals(get_current_active_term(datetime(2013, 8, 27, hour=15)).term_label(),
-                         '2013,summer')
-       self.assertEquals(get_current_active_term(datetime(2013, 8, 27, hour=19)).term_label(),
-                         '2013,autumn')
+        self.assertEquals(
+            get_current_active_term(datetime(2013, 7, 15)).term_label(),
+            '2013,summer')
+        self.assertEquals(
+            get_current_active_term(
+                datetime(2013, 8, 27, hour=15)).term_label(),
+            '2013,summer')
+        self.assertEquals(
+            get_current_active_term(
+                datetime(2013, 8, 27, hour=19)).term_label(),
+            '2013,autumn')
 
     def test_all_active_terms(self):
         terms = get_all_active_terms(datetime(2013, 7, 15))
@@ -39,24 +44,23 @@ class ActiveTermTest(TestCase):
 @fdao_sws_override
 @fdao_pws_override
 class TermPolicyTest(TestCase):
+    @override_settings(UWEO_INDIVIDUAL_START_TERM_SIS_ID='test-id')
     def test_term_sis_id(self):
-        with self.settings(UWEO_INDIVIDUAL_START_TERM_SIS_ID='test-id'):
-            section = get_section_by_label('2013,spring,TRAIN,101/A')
+        section = get_section_by_label('2013,spring,TRAIN,101/A')
 
-            self.assertEquals(term_sis_id(section), '2013-spring')
+        self.assertEquals(term_sis_id(section), '2013-spring')
 
-            section.is_independent_start = True
-            self.assertEquals(term_sis_id(section), 'test-id')
+        section.is_independent_start = True
+        self.assertEquals(term_sis_id(section), 'test-id')
 
+    @override_settings(UWEO_INDIVIDUAL_START_TERM_NAME='Individual Start')
     def test_term_name(self):
-        with self.settings(UWEO_INDIVIDUAL_START_TERM_NAME='Individual Start'):
+        section = get_section_by_label('2013,spring,TRAIN,101/A')
 
-            section = get_section_by_label('2013,spring,TRAIN,101/A')
+        self.assertEquals(term_name(section), 'Spring 2013')
 
-            self.assertEquals(term_name(section), 'Spring 2013')
-
-            section.is_independent_start = True
-            self.assertEquals(term_name(section), 'Individual Start')
+        section.is_independent_start = True
+        self.assertEquals(term_name(section), 'Individual Start')
 
     def test_term_start_date(self):
         section = get_section_by_label('2013,summer,TRAIN,101/A')
@@ -84,5 +88,12 @@ class TermPolicyTest(TestCase):
 
     def test_term_overrides(self):
         term = get_term_by_year_and_quarter(2013, 'summer')
-        self.assertEquals(term_date_overrides(term),
-            {'StudentEnrollment': ('2012-06-24T00:00:00-0800', '2014-08-28T00:00:00-0800'), 'TaEnrollment': ('2012-06-24T00:00:00-0800', '2014-08-28T00:00:00-0800'), 'TeacherEnrollment': ('2012-06-24T00:00:00-0800', '2015-08-28T00:00:00-0800'), 'DesignerEnrollment': ('2012-06-24T00:00:00-0800', '2014-08-28T00:00:00-0800')})
+        self.assertEquals(term_date_overrides(term), {
+            'StudentEnrollment': (
+                '2012-06-24T00:00:00-0800', '2014-08-28T00:00:00-0800'),
+            'TaEnrollment': (
+                '2012-06-24T00:00:00-0800', '2014-08-28T00:00:00-0800'),
+            'TeacherEnrollment': (
+                '2012-06-24T00:00:00-0800', '2015-08-28T00:00:00-0800'),
+            'DesignerEnrollment': (
+                '2012-06-24T00:00:00-0800', '2014-08-28T00:00:00-0800')})

@@ -20,10 +20,13 @@ class ImportModelTest(TestCase):
         imp = Import(post_status=200, canvas_progress=100)
         self.assertEquals(imp.is_cleanly_imported(), False)
 
-        imp = Import(post_status=200, canvas_progress=100, canvas_state='imported_with_errors')
+        imp = Import(
+            post_status=200, canvas_progress=100,
+            canvas_state='imported_with_errors')
         self.assertEquals(imp.is_cleanly_imported(), False)
 
-        imp = Import(post_status=200, canvas_progress=100, canvas_state='imported')
+        imp = Import(
+            post_status=200, canvas_progress=100, canvas_state='imported')
         self.assertEquals(imp.is_cleanly_imported(), True)
 
     def test_is_imported(self):
@@ -33,10 +36,13 @@ class ImportModelTest(TestCase):
         imp = Import(post_status=200, canvas_progress=100)
         self.assertEquals(imp.is_imported(), False)
 
-        imp = Import(post_status=200, canvas_progress=100, canvas_state='imported_with_errors')
+        imp = Import(
+            post_status=200, canvas_progress=100,
+            canvas_state='imported_with_errors')
         self.assertEquals(imp.is_imported(), True)
 
-        imp = Import(post_status=200, canvas_progress=100, canvas_state='imported')
+        imp = Import(
+            post_status=200, canvas_progress=100, canvas_state='imported')
         self.assertEquals(imp.is_imported(), True)
 
     def test_dependent_model(self):
@@ -48,4 +54,3 @@ class ImportModelTest(TestCase):
 
         imp = Import(csv_type='user')
         self.assertEquals(imp.dependent_model(), User)
-
