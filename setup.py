@@ -24,7 +24,7 @@ setup(
         'beautifulsoup4',
         'suds-jurko==0.6',
         'django-blti>=2.1.2',
-        'django-aws-message>=1.3.1',
+        'django-aws-message>=1.4',
         #'UW-Canvas-Users-LTI>=1.0,<2.0',
         #'UW-Groups-LTI>=1.0,<2.0',
         #'UW-Course-Roster-LTI>=1.0,<2.0',
