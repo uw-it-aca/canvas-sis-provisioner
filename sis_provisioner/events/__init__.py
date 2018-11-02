@@ -1,4 +1,4 @@
-from aws_message.processor import InnerMessageProcessor, ProcessorException
+from aws_message.processor import MessageBodyProcessor, ProcessorException
 from sis_provisioner.models import Enrollment
 from sis_provisioner.cache import RestClientsCache
 from sis_provisioner.exceptions import EventException
@@ -15,7 +15,7 @@ import re
 logger = getLogger(__name__)
 
 
-class SISProvisionerProcessor(InnerMessageProcessor):
+class SISProvisionerProcessor(MessageBodyProcessor):
     _re_json_cruft = re.compile(r'[^{]*({.*})[^}]*')
 
     def __init__(self, queue_settings_name, is_encrypted=True):
