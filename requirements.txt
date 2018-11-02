@@ -1,8 +1,2 @@
 -e .
 #-e git+https://github.com/uw-it-aca/canvas-analytics#egg=canvas-analytics
--e git+https://github.com/uw-it-aca/django-canvas-users.git@feature/django2.1#egg=uw-canvas-users-lti
--e git+https://github.com/uw-it-aca/uw-groups-lti.git@feature/django2.1#egg=uw-groups-lti
--e git+https://github.com/uw-it-aca/course-roster-lti.git@feature/django2.1#egg=uw-course-roster-lti
--e git+https://github.com/uw-it-aca/grading-standard-lti.git@feature/django2.1#egg=uw-grading-standard-lti
--e git+https://github.com/uw-it-aca/library-guides-lti.git@feature/django2.1#egg=uw-library-guides-lti
--e git+https://github.com/uw-it-aca/anonymous-feedback-lti.git@feature/django2.1#egg=anonymous-feedback-lti
