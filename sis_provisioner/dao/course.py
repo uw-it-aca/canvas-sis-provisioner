@@ -21,39 +21,39 @@ RE_ADHOC_COURSE_SIS_ID = re.compile(r"^course_\d+$")
 
 def valid_canvas_course_id(canvas_id):
     if (canvas_id is None or RE_CANVAS_ID.match(canvas_id) is None):
-        raise CoursePolicyException("Invalid Canvas ID: %s" % canvas_id)
+        raise CoursePolicyException("Invalid Canvas ID: {}".format(canvas_id))
 
 
 def valid_course_sis_id(sis_id):
     if (sis_id is None or not len(sis_id)):
-        raise CoursePolicyException("Invalid course SIS ID: %s" % sis_id)
+        raise CoursePolicyException("Invalid course SIS ID: {}".format(sis_id))
 
 
 def valid_adhoc_course_sis_id(sis_id):
     if (sis_id is None or RE_ADHOC_COURSE_SIS_ID.match(sis_id) is None):
-        raise CoursePolicyException("Invalid course SIS ID: %s" % sis_id)
+        raise CoursePolicyException("Invalid course SIS ID: {}".format(sis_id))
 
 
 def valid_academic_course_sis_id(sis_id):
     if not CanvasCourse(sis_course_id=sis_id).is_academic_sis_id():
         raise CoursePolicyException(
-            "Invalid academic course SIS ID: %s" % sis_id)
+            "Invalid academic course SIS ID: {}".format(sis_id))
 
 
 def valid_academic_section_sis_id(sis_id):
     if not CanvasSection(sis_section_id=sis_id).is_academic_sis_id():
         raise CoursePolicyException(
-            "Invalid academic section SIS ID: %s" % sis_id)
+            "Invalid academic section SIS ID: {}".format(sis_id))
 
 
 def adhoc_course_sis_id(canvas_id):
     valid_canvas_course_id(canvas_id)
-    return "course_%s" % canvas_id
+    return "course_{}".format(canvas_id)
 
 
 def group_section_sis_id(course_sis_id):
     valid_course_sis_id(course_sis_id)
-    return "%s-groups" % course_sis_id
+    return "{}-groups".format(course_sis_id)
 
 
 def group_section_name():
@@ -70,8 +70,9 @@ def section_id_from_url(url):
     except ValueError:
         return None
 
-    return '%s-%s-%s-%s-%s' % (year, quarter.lower(), curr_abbr.upper(),
-                               course_num, section_id)
+    return '{year}-{quarter}-{curr_abbr}-{course_num}-{section_id}'.format(
+        year=year, quarter=quarter.lower(), curr_abbr=curr_abbr.upper(),
+        course_num=course_num, section_id=section_id)
 
 
 def section_label_from_section_id(section_id):
@@ -97,7 +98,7 @@ def valid_canvas_section(section):
     course_id = section.canvas_course_sis_id()
     if (hasattr(section, "primary_lms") and section.primary_lms and
             section.primary_lms != Section.LMS_CANVAS):
-        raise CoursePolicyException("Non-Canvas LMS '%s' for %s" % (
+        raise CoursePolicyException("Non-Canvas LMS '{}' for {}".format(
             section.primary_lms, course_id))
 
 
@@ -115,23 +116,30 @@ def is_time_schedule_construction(section):
 
 
 def section_short_name(section):
-    return '%s %s %s' % (section.curriculum_abbr, section.course_number,
-                         section.section_id)
+    return '{curr_abbr} {course_num} {section_id}'.format(
+        curr_abbr=section.curriculum_abbr,
+        course_num=section.course_number,
+        section_id=section.section_id)
 
 
 def section_long_name(section):
-    name = '%s %s %s %s %s' % (
-        section.curriculum_abbr, section.course_number, section.section_id,
-        section.term.quarter[:2].capitalize(), str(section.term.year)[-2:])
+    name = '{curr_abbr} {course_num} {section_id} {quarter} {year}'.format(
+        curr_abbr=section.curriculum_abbr,
+        course_num=section.course_number,
+        section_id=section.section_id,
+        quarter=section.term.quarter[:2].capitalize(),
+        year=str(section.term.year)[-2:])
 
     if (section.course_title_long is not None and
             len(section.course_title_long)):
-        name = '%s: %s' % (name, titleize(section.course_title_long))
+        name = '{name}: {title}'.format(
+            name=name, title=titleize(section.course_title_long))
 
     if section.is_independent_study:
         for person in section.get_instructors():
             if person.uwregid == section.independent_study_instructor_regid:
-                name = '%s (%s)' % (name, user_fullname(person))
+                name = '{name} ({user_fullname})'.format(
+                    name=name, user_fullname=user_fullname(person))
                 break
 
     return name
@@ -162,28 +170,30 @@ def get_new_sections_by_term(changed_since_date, term, existing={}):
             changed_since_date, term, **kwargs):
 
         primary_id = None
-        course_id = '%s-%s-%s-%s' % (section_ref.term.canvas_sis_id(),
-                                     section_ref.curriculum_abbr.upper(),
-                                     section_ref.course_number,
-                                     section_ref.section_id.upper())
+        course_id = '{term_id}-{curr_abbr}-{course_num}-{section_id}'.format(
+            term_id=section_ref.term.canvas_sis_id(),
+            curr_abbr=section_ref.curriculum_abbr.upper(),
+            course_num=section_ref.course_number,
+            section_id=section_ref.section_id.upper())
 
         if course_id not in existing:
             try:
                 label = section_ref.section_label()
                 section = get_section_by_label(label)
                 if is_time_schedule_construction(section):
-                    logger.info('Course: SKIP %s, TSC on' % label)
+                    logger.info('Course: SKIP {}, TSC on'.format(label))
                     continue
             except DataFailureException as err:
-                logger.info('Course: SKIP %s, %s' % (label, err))
+                logger.info('Course: SKIP {}, {}'.format(label, err))
                 continue
             except ValueError as err:
-                logger.info('Course: SKIP, %s' % err)
+                logger.info('Course: SKIP, {}'.format(err))
                 continue
 
             if section.is_independent_study:
                 for instructor in section.get_instructors():
-                    ind_course_id = '%s-%s' % (course_id, instructor.uwregid)
+                    ind_course_id = '{}-{}'.format(
+                        course_id, instructor.uwregid)
                     if ind_course_id not in existing:
                         sections.append({'course_id': ind_course_id,
                                          'primary_id': primary_id})

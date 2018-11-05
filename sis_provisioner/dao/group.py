@@ -13,13 +13,13 @@ def valid_group_id(group_id):
     try:
         GWS()._valid_group_id(group_id)
     except InvalidGroupID:
-        raise GroupPolicyException("Invalid Group ID: %s" % group_id)
+        raise GroupPolicyException("Invalid Group ID: {}".format(group_id))
 
-    RE_GROUP_BLACKLIST = re.compile(r'^(%s).*$' % ('|'.join(
+    RE_GROUP_BLACKLIST = re.compile(r'^({}).*$'.format('|'.join(
         getattr(settings, 'UW_GROUP_BLACKLIST', []))))
     if RE_GROUP_BLACKLIST.match(group_id):
         raise GroupPolicyException(
-            "This group cannot be used in Canvas: %s" % group_id)
+            "This group cannot be used in Canvas: {}".format(group_id))
 
 
 def is_modified_group(group_id, mtime):
@@ -83,10 +83,12 @@ def get_effective_members(group_id, act_as=None):
         except DataFailureException as err:
             # Group not found or access denied is ok
             if err.status == 404:
-                raise GroupNotFoundException("Group not found: %s" % group_id)
+                raise GroupNotFoundException(
+                    "Group not found: {}".format(group_id))
             elif err.status == 401:
                 raise GroupUnauthorizedException(
-                    "Group not permitted for %s: %s" % (gws.actas, group_id))
+                    "Group not permitted for {}: {}".format(
+                        gws.actas, group_id))
             else:
                 raise
 

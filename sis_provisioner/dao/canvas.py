@@ -132,7 +132,7 @@ def enrollment_status_from_registration(registration):
         return ENROLLMENT_ACTIVE
 
     if registration.request_date is None:
-        logger.info('Missing request_date: %s %s' % (
+        logger.info('Missing request_date: {} {}'.format(
             registration.section.section_label(), registration.person.uwregid))
         return ENROLLMENT_DELETED
 

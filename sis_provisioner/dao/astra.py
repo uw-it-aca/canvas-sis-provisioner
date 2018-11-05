@@ -105,9 +105,8 @@ class Admins():
     def _add_admin(self, **kwargs):
         netid = kwargs['net_id']
         regid = kwargs['reg_id']
-        self._log.info('ADD: %s is %s in %s' % (netid,
-                                                kwargs['role'],
-                                                kwargs['account_id']))
+        self._log.info('ADD: {} is {} in {}'.format(
+            netid, kwargs['role'], kwargs['account_id']))
 
         try:
             User.objects.get(reg_id=regid)
@@ -115,7 +114,7 @@ class Admins():
             try:
                 person = get_person_by_netid(netid)
 
-                self._log.info('Provisioning admin: %s (%s)' % (
+                self._log.info('Provisioning admin: {} ({})'.format(
                     person.uwnetid, person.uwregid))
 
                 try:
@@ -131,7 +130,7 @@ class Admins():
                 User.objects.add_user(person)
 
             except Exception as err:
-                self._log.info('Skipped admin: %s (%s)' % (netid, err))
+                self._log.info('Skipped admin: {} ({})'.format(netid, err))
                 return
 
         try:
@@ -157,7 +156,7 @@ class Admins():
             if campus.label.lower() == code.lower():
                 return campus
 
-        raise ASTRAException('Unknown Campus Code: %s' % code)
+        raise ASTRAException('Unknown Campus Code: {}'.format(code))
 
     def _get_college_from_code(self, campus, code):
         for college in self._colleges:
@@ -165,7 +164,7 @@ class Admins():
                     code.lower() == college.label.lower()):
                 return college
 
-        raise ASTRAException('Unknown College Code: %s' % code)
+        raise ASTRAException('Unknown College Code: {}'.format(code))
 
     def _get_department_from_code(self, college, code):
         depts = get_departments_by_college(college)
@@ -173,7 +172,7 @@ class Admins():
             if dept.label.lower() == code.lower():
                 return dept
 
-        raise ASTRAException('Unknown Department Code: %s' % code)
+        raise ASTRAException('Unknown Department Code: {}'.format(code))
 
     def _generate_sis_account_id(self, soc):
         if not isinstance(soc, list):
@@ -191,15 +190,16 @@ class Admins():
                         self._re_non_academic_code.match(soc[0]._code).group(1)
                     )
                 except Exception as err:
-                    raise ASTRAException('Unknown non-academic code: %s %s' % (
-                        soc[0]._code, err))
+                    raise ASTRAException(
+                        'Unknown non-academic code: {} {}'.format(
+                            soc[0]._code, err))
             elif soc[0]._type == 'SWSCampus':
                 campus = self._get_campus_from_code(soc[0]._code)
                 id_parts.append(settings.SIS_IMPORT_ROOT_ACCOUNT_ID)
                 id_parts.append(campus.label)
             else:
-                raise ASTRAException('Unknown SOC type: %s %s' % (
-                    soc[0]._type, soc[0]))
+                raise ASTRAException(
+                    'Unknown SoC type: {} {}'.format(soc[0]._type, soc[0]))
 
         if len(soc) > 1:
             if soc[1]._type == 'swscollege':
@@ -207,11 +207,11 @@ class Admins():
                     college = self._get_college_from_code(campus, soc[1]._code)
                     id_parts.append(college.name)
                 else:
-                    raise ASTRAException('College without campus: %s' % (
-                        soc[1]._code))
+                    raise ASTRAException(
+                        'College without campus: {}'.format(soc[1]._code))
             else:
-                raise ASTRAException('Unknown second level SOC: %s' % (
-                    soc[1]._type))
+                raise ASTRAException(
+                    'Unknown second level SoC: {}'.format(soc[1]._type))
 
             if len(soc) > 2:
                 if soc[2]._type == 'swsdepartment':
@@ -220,8 +220,8 @@ class Admins():
                                                               soc[2]._code)
                         id_parts.append(dept.label)
                     else:
-                        raise ASTRAException('Unknown third level SOC: %s' % (
-                            soc[0]))
+                        raise ASTRAException(
+                            'Unknown third level SoC: {}'.format(soc[0]))
 
         sis_id = account_sis_id(id_parts)
 
@@ -238,7 +238,7 @@ class Admins():
             # look for pid matching queue_id, adjust gripe accordingly
             try:
                 os.kill(queued[0].queue_id, 0)
-                raise ASTRAException('loader already running %s' % (
+                raise ASTRAException('Loader already running {}'.format(
                     queued[0].queue_id))
             except Exception:
                 override = options.get('override', 0)
@@ -246,9 +246,9 @@ class Admins():
                     Admin.objects.dequeue(queue_id=override)
                     if len(Admin.objects.queued()):
                         raise ASTRAException(
-                            'Unable to override process %s' % override)
+                            'Unable to override process {}'.format(override))
                 else:
-                    raise ASTRAException('loader blocked by process %s' % (
+                    raise ASTRAException('Loader blocked by process {}'.format(
                         queued[0].queue_id))
 
         # query ASTRA
@@ -271,10 +271,10 @@ class Admins():
             for auth in authz.authCollection.auth:
                 try:
                     if auth.role._code not in settings.ASTRA_ROLE_MAPPING:
-                        raise ASTRAException("Unknown Role Code: %s" % (
+                        raise ASTRAException("Unknown Role Code: {}".format(
                             auth.role._code))
                     elif '_regid' not in auth.party:
-                        raise ASTRAException("No regid in party: %s" % (
+                        raise ASTRAException("No regid in party: {}".format(
                             auth.party))
 
                     if 'spanOfControlCollection' in auth:
@@ -286,7 +286,7 @@ class Admins():
                                 canvas_id) = self._generate_sis_account_id(soc)
                         else:
                             canvas_id = settings.RESTCLIENTS_CANVAS_ACCOUNT_ID
-                            account_id = "canvas_%s" % canvas_id
+                            account_id = "canvas_{}".format(canvas_id)
 
                         self._add_admin(net_id=auth.party._uwNetid,
                                         reg_id=auth.party._regid,
@@ -296,14 +296,15 @@ class Admins():
                                         is_deleted=None)
                     else:
                         raise ASTRAException(
-                            "Missing required SpanOfControl: %s" % auth.party)
+                            "Missing required SpanOfControl: {}".format(
+                                auth.party))
 
                 except ASTRAException as err:
-                    self._log.error('%s\n AUTH: %s' % (err, auth))
+                    self._log.error('{}\n AUTH: {}'.format(err, auth))
 
         # log who fell from ASTRA
         for d in Admin.objects.get_deleted():
-            self._log.info('REMOVE: %s as %s in %s' % (
+            self._log.info('REMOVE: {} as {} in {}'.format(
                 d.net_id, d.role, d.account_id))
 
         # tidy up
