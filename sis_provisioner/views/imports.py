@@ -2,13 +2,10 @@ import re
 import json
 import dateutil.parser
 from logging import getLogger
-from django.conf import settings
 from django.utils.timezone import utc
 from django.core.management import call_command
-from django.utils.decorators import method_decorator
 from sis_provisioner.models import Import, User
 from sis_provisioner.views.rest_dispatch import RESTDispatch
-from sis_provisioner.views import group_required
 
 
 logger = getLogger(__name__)
@@ -18,8 +15,6 @@ class ImportInvalidException(Exception):
     pass
 
 
-@method_decorator(group_required(settings.CANVAS_MANAGER_ADMIN_GROUP),
-                  name='dispatch')
 class ImportView(RESTDispatch):
     """ Retrieves a an Import model]>.
         GET returns 200 with Import details.

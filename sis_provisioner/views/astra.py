@@ -1,8 +1,5 @@
-from django.conf import settings
-from django.utils.decorators import method_decorator
 from sis_provisioner.models.astra import Admin, Account
 from sis_provisioner.views.rest_dispatch import RESTDispatch
-from sis_provisioner.views import group_required
 from logging import getLogger
 import re
 
@@ -10,8 +7,6 @@ import re
 logger = getLogger(__name__)
 
 
-@method_decorator(group_required(settings.CANVAS_MANAGER_ADMIN_GROUP),
-                  name='dispatch')
 class AdminSearch(RESTDispatch):
     """ Performs query of Admin models at /api/v1/admins/?.
         GET returns 200 with Admin models
@@ -24,8 +19,6 @@ class AdminSearch(RESTDispatch):
         return self.json_response({'admins': admins})
 
 
-@method_decorator(group_required(settings.CANVAS_MANAGER_ADMIN_GROUP),
-                  name='dispatch')
 class AccountSearch(RESTDispatch):
     """ Performs query of Account models at /api/v1/accounts/?.
         GET returns 200 with Account models

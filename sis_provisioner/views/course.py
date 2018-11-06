@@ -1,5 +1,3 @@
-from django.conf import settings
-from django.utils.decorators import method_decorator
 from sis_provisioner.dao.course import (
     get_sections_by_instructor_and_term, valid_academic_course_sis_id,
     valid_adhoc_course_sis_id)
@@ -8,8 +6,7 @@ from sis_provisioner.dao.user import get_person_by_netid, get_person_by_regid
 from sis_provisioner.models import (
     Course, Group, PRIORITY_NONE, PRIORITY_CHOICES)
 from sis_provisioner.views.rest_dispatch import RESTDispatch
-from sis_provisioner.views import (
-    group_required, regid_from_request, netid_from_request)
+from sis_provisioner.views import regid_from_request, netid_from_request
 from sis_provisioner.views.admin import can_view_source_data
 from sis_provisioner.exceptions import CoursePolicyException
 from logging import getLogger
@@ -24,8 +21,6 @@ class CourseInvalidException(Exception):
     pass
 
 
-@method_decorator(group_required(settings.CANVAS_MANAGER_ADMIN_GROUP),
-                  name='dispatch')
 class CourseView(RESTDispatch):
     """ Performs actions on a Course at /api/v1/course/<course id>.
         GET returns 200 with Course details.
