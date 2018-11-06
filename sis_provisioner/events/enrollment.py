@@ -22,8 +22,9 @@ class EnrollmentProcessor(SISProvisionerProcessor):
     _eventMessageType = 'uw-student-registration-v2'
     _eventMessageVersion = '2'
 
-    def __init__(self, queue_settings_name=QUEUE_SETTINGS_NAME):
-        super(EnrollmentProcessor, self).__init__(queue_settings_name)
+    def __init__(self):
+        super(EnrollmentProcessor, self).__init__(
+            queue_settings_name=QUEUE_SETTINGS_NAME, is_encrypted=True)
 
     def process_message_body(self, json_data):
         enrollments = []

@@ -1,3 +1,4 @@
+from django.conf import settings
 from aws_message.processor import MessageBodyProcessor, ProcessorException
 from sis_provisioner.models import Enrollment
 from sis_provisioner.cache import RestClientsCache
@@ -18,18 +19,19 @@ logger = getLogger(__name__)
 class SISProvisionerProcessor(MessageBodyProcessor):
     _re_json_cruft = re.compile(r'[^{]*({.*})[^}]*')
 
-    def __init__(self, queue_settings_name, is_encrypted=True):
+    def __init__(self, queue_settings_name, is_encrypted):
         super(SISProvisionerProcessor, self).__init__(
                 logger, queue_settings_name, is_encrypted=is_encrypted)
 
     def validate_message_body(self, message):
-        header = message['Header']
+        header = message.get('Header', {})
         if ('MessageType' in header and
                 header['MessageType'] != self._eventMessageType):
             raise ProcessorException(
                 'Unknown Message Type: {}'.format(header['MessageType']))
 
-        if header['Version'] != self._eventMessageVersion:
+        if ('Version' in header and
+                header['Version'] != self._eventMessageVersion):
             raise ProcessorException(
                 'Unknown Version: {}'.format(header['Version']))
 
@@ -45,7 +47,9 @@ class SISProvisionerProcessor(MessageBodyProcessor):
             'cert': {
                 'type': 'url',
                 'reference': header['SigningCertURL']
-            }
+            },
+            'cert_file': getattr(settings, 'RESTCLIENTS_KWS_CERT_FILE'),
+            'key_file': getattr(settings, 'RESTCLIENTS_KWS_KEY_FILE'),
         }
 
         return (sig_conf, to_sign, header['Signature'])
@@ -108,7 +112,8 @@ class SISProvisionerProcessor(MessageBodyProcessor):
             cipher = aes128cbc(b64decode(key.key), b64decode(header['IV']))
             body = cipher.decrypt(b64decode(body))
 
-            return json.loads(self._re_json_cruft.sub(r'\g<1>', body))
+            return json.loads(
+                self._re_json_cruft.sub(r'\g<1>', body.decode('utf-8')))
 
         except KeyError as ex:
             logger.error('Key Error: {}\nHEADER: {}'.format(ex, header))

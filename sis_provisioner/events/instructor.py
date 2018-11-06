@@ -151,8 +151,9 @@ class InstructorAddProcessor(InstructorProcessor):
     _eventMessageType = 'uw-instructor-add'
     _eventMessageVersion = '1'
 
-    def __init__(self, queue_settings_name=QUEUE_SETTINGS_NAME_ADD):
-        super(InstructorAddProcessor, self).__init__(queue_settings_name)
+    def __init__(self):
+        super(InstructorAddProcessor, self).__init__(
+            queue_settings_name=QUEUE_SETTINGS_NAME_ADD, is_encrypted=False)
 
     def load_instructors(self, section):
         add = [reg_id for reg_id in self._current_instructors
@@ -175,8 +176,9 @@ class InstructorDropProcessor(InstructorProcessor):
     _eventMessageType = 'uw-instructor-drop'
     _eventMessageVersion = '1'
 
-    def __init__(self, queue_settings_name=QUEUE_SETTINGS_NAME_DROP):
-        super(InstructorDropProcessor, self).__init__(queue_settings_name)
+    def __init__(self):
+        super(InstructorDropProcessor, self).__init__(
+            queue_settings_name=QUEUE_SETTINGS_NAME_DROP, is_encrypted=False)
 
     def load_instructors(self, section):
         drop = [reg_id for reg_id in self._previous_instructors
