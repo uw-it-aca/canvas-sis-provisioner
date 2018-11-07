@@ -108,14 +108,14 @@ class EnrollmentBuilder(Builder):
         enrollment.queue_id = None
         enrollment.priority = PRIORITY_DEFAULT
         enrollment.save()
-        self.logger.info("Requeue enrollment %s in %s: %s" % (
+        self.logger.info("Requeue enrollment {} in {}: {}".format(
             enrollment.reg_id, enrollment.course_id, err))
 
     def _skip_enrollment_event(self, enrollment, err):
         enrollment.queue_id = None
         enrollment.priority = PRIORITY_NONE
         enrollment.save()
-        self.logger.info("Skip enrollment %s in %s: %s" % (
+        self.logger.info("Skip enrollment {} in {}: {}".format(
             enrollment.reg_id, enrollment.course_id, err))
 
     def _init_build(self, **kwargs):

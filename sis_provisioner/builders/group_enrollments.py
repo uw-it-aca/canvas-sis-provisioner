@@ -18,4 +18,5 @@ class GroupEnrollmentBuilder(Builder):
                                            status)
 
         except Exception as err:
-            self.logger.info("Skip group member %s (%s)" % (member.name, err))
+            self.logger.info(
+                "Skip group member {} ({})".format(member.name, err))

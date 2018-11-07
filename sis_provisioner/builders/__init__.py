@@ -48,7 +48,7 @@ class Builder(object):
             valid_net_id(person.uwnetid)
         except UserPolicyException as err:
             self.invalid_users[person.uwregid] = True
-            self.logger.info("Skip user %s: %s" % (person.uwregid, err))
+            self.logger.info("Skip user {}: {}".format(person.uwregid, err))
             return False
 
         if force is True:
@@ -109,13 +109,13 @@ class Builder(object):
 
         except DataFailureException as err:
             data = json.loads(err.msg)
-            Course.objects.remove_from_queue(section_id, "%s: %s %s" % (
+            Course.objects.remove_from_queue(section_id, "{}: {} {}".format(
                 err.url, err.status, data["StatusDescription"]))
-            self.logger.info("Skip section %s: %s %s" % (
+            self.logger.info("Skip section {}: {} {}".format(
                 section_id, err.status, data["StatusDescription"]))
             raise
 
         except (ValueError, CoursePolicyException) as err:
             Course.objects.remove_from_queue(section_id, err)
-            self.logger.info("Skip section %s: %s" % (section_id, err))
+            self.logger.info("Skip section {}: {}".format(section_id, err))
             raise CoursePolicyException(err)

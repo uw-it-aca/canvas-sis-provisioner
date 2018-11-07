@@ -17,7 +17,7 @@ class Command(SISProvisionerCommand):
         parser.add_argument('-t', '--term-sis-id', help='Term SIS ID')
 
     def handle(self, *args, **options):
-	term_sis_id = options.get('term-sis-id')
+        term_sis_id = options.get('term-sis-id')
         if term_sis_id:
             (year, quarter) = term_sis_id.split('-')
             target_term = get_term_by_year_and_quarter(year, quarter)

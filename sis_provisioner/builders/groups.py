@@ -26,8 +26,8 @@ class GroupBuilder(Builder):
         except DataFailureException as err:
             if err.status == 404:
                 Group.objects.deprioritize_course(course_id)
-                self.logger.info("Drop group sync for deleted course %s" % (
-                    course_id))
+                self.logger.info(
+                    "Drop group sync for deleted course {}".format(course_id))
             else:
                 self._requeue_course(course_id, err)
             return
@@ -62,7 +62,8 @@ class GroupBuilder(Builder):
 
             # skip on any group policy exception
             except GroupPolicyException as err:
-                self.logger.info("Skip group %s (%s)" % (group.group_id, err))
+                self.logger.info(
+                    "Skip group {} ({})".format(group.group_id, err))
 
         cached_members = CourseMember.objects.get_by_course(course_id)
         for member in cached_members:
@@ -75,7 +76,7 @@ class GroupBuilder(Builder):
                             member, group_section_id, member.role,
                             status=ENROLLMENT_DELETED)
                     except Exception as err:
-                        self.logger.info("Skip group member %s (%s)" % (
+                        self.logger.info("Skip group member {} ({})".format(
                             member.name, err))
 
                 member.deactivate()
@@ -90,7 +91,7 @@ class GroupBuilder(Builder):
                         member, group_section_id, member.role,
                         status=ENROLLMENT_ACTIVE)
                 except Exception as err:
-                    self.logger.info("Skip group member %s (%s)" % (
+                    self.logger.info("Skip group member {} ({})".format(
                         member.name, err))
 
                 if match is None:
@@ -116,7 +117,7 @@ class GroupBuilder(Builder):
         self._reconcile_member_groups(group, member_groups)
 
         for member in invalid_members:
-            self.logger.info("Skip group member %s (%s)" % (
+            self.logger.info("Skip group member {} ({})".format(
                 member.name, member.error))
 
         current_members = []
@@ -137,7 +138,7 @@ class GroupBuilder(Builder):
                 m.login_id.lower() == login_id.lower())), None)
 
             if match:
-                self.logger.info("Skip group member %s (present in %s)" % (
+                self.logger.info("Skip group member {} (present in {})".format(
                     member.name, match.sis_section_id))
                 continue
 
@@ -163,5 +164,5 @@ class GroupBuilder(Builder):
 
     def _requeue_course(self, course_id, err):
         Group.objects.dequeue_course(course_id)
-        self.logger.info("Requeue group sync for course %s: %s" % (
+        self.logger.info("Requeue group sync for course {}: {}".format(
             course_id, err))

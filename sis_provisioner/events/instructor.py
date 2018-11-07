@@ -38,12 +38,10 @@ class InstructorProcessor(SISProvisionerProcessor):
 
         if not is_active_term(term):
             self.logger.info(
-                '{} IGNORE Inactive section {}-{}-{}-{}' % (
-                    log_prefix,
-                    term.canvas_sis_id(),
+                '{} IGNORE Inactive section {}-{}-{}-{}'.format(
+                    log_prefix, term.canvas_sis_id(),
                     course_data['CurriculumAbbreviation'],
-                    course_data['CourseNumber'],
-                    section_data['SectionID']))
+                    course_data['CourseNumber'], section_data['SectionID']))
             return
 
         section = Section(

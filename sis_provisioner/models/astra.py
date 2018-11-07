@@ -72,8 +72,9 @@ class Admin(models.Model):
             'role': self.role,
             'account_id': self.account_id,
             'canvas_id': self.canvas_id,
-            'account_link': '%s/accounts/%s' % (
-                settings.RESTCLIENTS_CANVAS_HOST, self.canvas_id),
+            'account_link': '{host}/accounts/{account_id}'.format(
+                host=settings.RESTCLIENTS_CANVAS_HOST,
+                account_id=self.canvas_id),
             'added_date': localtime(self.added_date).strftime(date_fmt) if (
                 self.added_date is not None) else '',
             'provisioned_date': localtime(self.provisioned_date).strftime(
@@ -151,7 +152,8 @@ class AccountManager(models.Manager):
         try:
             a.save()
         except IntegrityError as err:
-            logger.error('ACCOUNT LOAD FAIL: canvas_id: %s, sis_id: %s, %s' % (
+            logger.error(
+                'ACCOUNT LOAD FAIL: canvas_id: {}, sis_id: {}, {}'.format(
                     account.account_id, account.sis_account_id, err))
 
         return a
@@ -225,7 +227,7 @@ class Account(models.Model):
             type_name = 'Test-Account'
 
         return {
-            'id': 'canvas_%s' % self.canvas_id,
+            'id': 'canvas_{}'.format(self.canvas_id),
             'type': type_name,
             'description': self.account_name,
             'short_description': self.account_short_name

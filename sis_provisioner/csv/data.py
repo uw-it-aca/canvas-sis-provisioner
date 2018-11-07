@@ -58,7 +58,8 @@ class Collector(object):
         elif isinstance(formatter, XlistCSV):
             return self._add_xlist(formatter)
         else:
-            raise TypeError('Unknown CSV format class %s' % type(formatter))
+            raise TypeError(
+                'Unknown CSVFormat class: {}'.format(type(formatter)))
 
     def _add_account(self, formatter):
         if formatter.key not in self.account_ids:
@@ -143,7 +144,7 @@ class Collector(object):
             self._init_data()
 
         if getattr(settings, 'SIS_IMPORT_CSV_DEBUG', False):
-            print('CSV PATH: %s' % filepath)
+            print('CSV PATH: {}'.format(filepath))
             return None
         else:
             return filepath
@@ -160,7 +161,7 @@ class Collector(object):
         for collision in range(max_collisions):
             try:
                 filepath = base if (
-                    collision < 1) else '%s-%03d' % (base, collision)
+                    collision < 1) else '{}-{:3d}'.format(base, collision)
                 os.makedirs(filepath)
                 os.chmod(filepath, self.dirmode)  # ugo+x
                 return filepath
@@ -168,4 +169,5 @@ class Collector(object):
                 if err.errno != errno.EEXIST:
                     raise
 
-        raise EnvironmentError('Too many attempts (%d)' % max_collisions)
+        raise EnvironmentError(
+            'Too many attempts ({:d})'.format(max_collisions))
