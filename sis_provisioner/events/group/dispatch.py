@@ -78,6 +78,8 @@ class Dispatch(object):
     def no_action(self, group_id, message):
         return 0
 
+    def _parse(self, message):
+        return ET.fromstring(re_parser.sub(r'\g<1>', message))
 
 class UWGroupDispatch(Dispatch):
     """
@@ -312,9 +314,6 @@ class UWGroupDispatch(Dispatch):
         return GroupMemberGroupModel.objects.filter(
             root_group_id=group.group_id,
             is_deleted__isnull=True).count() > 0
-
-    def _parse(self, message):
-        return ET.fromstring(re_parser.sub(r'\g<1>', message))
 
 
 class ImportGroupDispatch(Dispatch):

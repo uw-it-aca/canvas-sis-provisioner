@@ -1,4 +1,3 @@
-from django.conf import settings
 from aws_message.processor import MessageBodyProcessor, ProcessorException
 from sis_provisioner.models import Enrollment
 from sis_provisioner.cache import RestClientsCache
@@ -47,9 +46,7 @@ class SISProvisionerProcessor(MessageBodyProcessor):
             'cert': {
                 'type': 'url',
                 'reference': header['SigningCertURL']
-            },
-            'cert_file': getattr(settings, 'RESTCLIENTS_KWS_CERT_FILE'),
-            'key_file': getattr(settings, 'RESTCLIENTS_KWS_KEY_FILE'),
+            }
         }
 
         return (sig_conf, to_sign, header['Signature'])

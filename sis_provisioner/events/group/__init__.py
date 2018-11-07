@@ -19,8 +19,9 @@ class GroupProcessor(SISProvisionerProcessor):
     _eventMessageType = 'gws'
     _eventMessageVersion = 'UWIT-1'
 
-    def __init__(self, queue_settings_name=QUEUE_SETTINGS_NAME):
-        super(GroupProcessor, self).__init__(queue_settings_name)
+    def __init__(self):
+        super(GroupProcessor, self).__init__(
+            queue_settings_name=QUEUE_SETTINGS_NAME, is_encrypted=True)
 
     def validate_message_body(self, message):
         header = message['header']
@@ -48,7 +49,7 @@ class GroupProcessor(SISProvisionerProcessor):
 
     def _parse_signature(self, message):
         header = message['header']
-        signature = header['signature']
+
         to_sign = '{}\n'.format(header[u'contentType'])
         if 'keyId' in header:
             to_sign += '{}\n{}\n'.format(header[u'iv'], header[u'keyId'])
@@ -67,7 +68,7 @@ class GroupProcessor(SISProvisionerProcessor):
             }
         }
 
-        return (sig_conf, to_sign, signature)
+        return (sig_conf, to_sign, header['signature'])
 
     def decrypt_message_body(self, message):
         header = message['header']
@@ -75,13 +76,12 @@ class GroupProcessor(SISProvisionerProcessor):
         try:
             if set(['keyId', 'iv']).issubset(header):
                 key = header['keyId']
-                keys = self.get_settings().get('BODY_DECRYPT_KEYS', {})
+                keys = self.settings.get('BODY_DECRYPT_KEYS', {})
 
                 cipher = aes128cbc(
                     b64decode(keys[key]), b64decode(header['iv']))
                 body = cipher.decrypt(b64decode(body))
                 return body
-                # return json.loads(self._re_json_cruft.sub(r'\g<1>', body))
 
         except KeyError as ex:
             raise ProcessorException('Invalid keyId: {}'.format(key))
