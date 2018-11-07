@@ -41,7 +41,7 @@ class Command(SISProvisionerCommand):
 
         try:
             imp.csv_path = UnusedCourseBuilder().build(term_sis_id=term_sis_id)
-        except:
+        except Exception:
             imp.csv_errors = traceback.format_exc()
 
         imp.save()

@@ -26,7 +26,7 @@ class Command(SISProvisionerCommand):
 
         try:
             imp.csv_path = UserBuilder(imp.queued_objects()).build()
-        except:
+        except Exception:
             imp.csv_errors = traceback.format_exc()
 
         imp.save()

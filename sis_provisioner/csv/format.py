@@ -193,7 +193,7 @@ class EnrollmentCSV(CSVFormat):
                     user_id, status))
 
         self.key = '{}:{}:{}:{}:{}'.format(
-            course_id, section_id, user_id, role,status)
+            course_id, section_id, user_id, role, status)
         self.data = [course_id, None, user_id, role, None, section_id, status,
                      None]
 

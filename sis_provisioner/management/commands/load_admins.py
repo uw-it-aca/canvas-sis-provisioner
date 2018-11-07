@@ -8,4 +8,3 @@ class Command(SISProvisionerCommand):
     def handle(self, *args, **options):
         Admins().load_all_admins()
         self.update_job()
-

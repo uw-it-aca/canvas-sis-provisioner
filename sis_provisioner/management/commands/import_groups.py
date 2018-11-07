@@ -22,11 +22,13 @@ class Command(SISProvisionerCommand):
             help='Import groups with priority <priority>')
         parser.add_argument(
             '-m', '--mtime', dest='mtime', default=None,
-            help='Membership modified since, e.g., 2015-12-31T14:30+8 or -30m or -1d or ')
+            help=('Membership modified since, e.g., 2015-12-31T14:30+8 '
+                  'or -30m or -1d or '))
         parser.add_argument(
             '-a', '--all-enrollments', action='store_true',
             dest='all_enrollments', default=False,
-            help='Generate complete CSV (default is only changes since last import)')
+            help=('Generate complete CSV (default is only changes since '
+                  'last import)'))
 
     def handle(self, *args, **options):
         priority = options.get('priority')
@@ -65,7 +67,7 @@ class Command(SISProvisionerCommand):
         try:
             imp.csv_path = GroupBuilder(imp.queued_objects().values_list(
                     'course_id', flat=True)).build(delta=delta)
-        except:
+        except Exception:
             imp.csv_errors = traceback.format_exc()
 
         imp.save()
