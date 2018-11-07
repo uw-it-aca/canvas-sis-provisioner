@@ -81,6 +81,7 @@ class Dispatch(object):
     def _parse(self, message):
         return ET.fromstring(re_parser.sub(r'\g<1>', message))
 
+
 class UWGroupDispatch(Dispatch):
     """
     Canvas Enrollment Group Event Dispatcher
