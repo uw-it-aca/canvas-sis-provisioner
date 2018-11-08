@@ -16,7 +16,7 @@ setup(
     install_requires = [
         'Django==2.1',
         'django-compressor',
-        'django_mobileesp',
+        'django-user-agents',
         'lxml',
         'python-dateutil',
         'mock==2.0.0',
