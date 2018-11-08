@@ -31,7 +31,7 @@ setup(
         'UW-Groups-LTI==0.5.1',
         'UW-Course-Roster-LTI==0.5',
         'UW-Grading-Standard-LTI==0.5',
-        'UW-Library-Guides-LTI=0.4',
+        'UW-Library-Guides-LTI==0.4',
         'Anonymous-Feedback-LTI==0.2.2',
         'UW-RestClients-Core==0.9.6',
         'UW-RestClients-SWS>=1.5.1,<2.0',
