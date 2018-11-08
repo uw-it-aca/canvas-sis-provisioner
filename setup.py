@@ -35,7 +35,7 @@ setup(
         'Anonymous-Feedback-LTI==0.2.2',
         'UW-RestClients-Core==0.9.6',
         'UW-RestClients-SWS>=1.5.1,<2.0',
-        'UW-RestClients-PWS>=1.0.1,<2.0',
+        'UW-RestClients-PWS==1.0.1',
         'UW-RestClients-GWS>=1.0,<2.0',
         'UW-RestClients-KWS>=0.1,<1.0',
         'UW-RestClients-Canvas>=0.7.1,<1.0',
