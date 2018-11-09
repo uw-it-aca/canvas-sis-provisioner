@@ -21,8 +21,8 @@ class Command(BaseCommand):
         parser.add_argument(
             '-a', '--account', action='store', dest='account_id',
             default=default_account,
-            help='show external tools in account by id or sis_id (default: %s)' % (
-                default_account))
+            help=('show external tools in account by id or '
+                  'sis_id (default: {})').format(default_account))
         parser.add_argument(
             '-r', '--recurse', action='store_true', dest='recurse',
             default=False, help='recurse through subaccounts')
@@ -46,7 +46,8 @@ class Command(BaseCommand):
         csv.register_dialect("unix_newline", lineterminator="\n")
         self._writer = csv.writer(sys.stdout, dialect="unix_newline")
 
-        self._headers = ['tool_name', 'tool_id', 'tool_type', 'account_name', 'account_id']
+        self._headers = [
+            'tool_name', 'tool_id', 'tool_type', 'account_name', 'account_id']
 
         if self._options['courses']:
             self._headers.append('course_name')
@@ -56,8 +57,9 @@ class Command(BaseCommand):
         if options['sessionless']:
             self._headers.append('sessionless url')
 
-        accounter = self._accounts.get_account if re.match(r'^\d+$', options['account_id']) \
-                        else self._accounts.get_account_by_sis_id
+        accounter = self._accounts.get_account if (
+            re.match(r'^\d+$', options['account_id']))
+        else self._accounts.get_account_by_sis_id
         try:
             self.report_external_tools(accounter(options['account_id']))
 
@@ -72,17 +74,19 @@ class Command(BaseCommand):
 
         if self._options['courses']:
             params = {
-                "by_subaccounts":[account.account_id],
+                "by_subaccounts": [account.account_id],
                 "include": ["term"]
             }
 
             if self._options['term']:
-                params['enrollment_term_id'] = self._canvas.get_term_by_sis_id(self._options['term']).term_id
+                params['enrollment_term_id'] = self._canvas.get_term_by_sis_id(
+                    self._options['term']).term_id
 
-            courses = self._courses.get_published_courses_in_account(account.account_id,
-                                                                     params=params)
+            courses = self._courses.get_published_courses_in_account(
+                account.account_id, params=params)
             for course in courses:
-                tools = self._tools.get_external_tools_in_course(course.course_id)
+                tools = self._tools.get_external_tools_in_course(
+                    course.course_id)
                 self._print_tools(tools, account, course)
 
         if self._options['recurse']:
@@ -99,22 +103,27 @@ class Command(BaseCommand):
             for tool in tools:
                 tool_types = []
                 for tt in ['account', 'course', 'user']:
-                    if tool.get("%s_navigation" % tt):
+                    if tool.get("{}_navigation".format(tt)):
                         tool_types.append(tt)
 
                 tool_type = ' & '.join(tool_types)
-                line = [tool['name'], tool['id'], tool_type, account.name, account.account_id]
+                line = [tool['name'], tool['id'], tool_type, account.name,
+                        account.account_id]
 
                 if self._options['courses']:
                     if course:
-                        line.extend([course.name, course.course_id, course.term.name if course.term else ''])
+                        line.extend([
+                            course.name, course.course_id,
+                            course.term.name if course.term else ''])
                     else:
-                        line.extend(['','',''])
+                        line.extend(['', '', ''])
 
                 if self._options['sessionless']:
                     try:
-                        sessionless = self._tools.get_sessionless_launch_url_from_account(tool['id'], account.account_id)
-                        line.append(sessionless['url'])
+                        tools = self._tools
+                        url = tools.get_sessionless_launch_url_from_account(
+                            tool['id'], account.account_id)
+                        line.append(url['url'])
                     except DataFailureException as ex:
                         line.append('')
 

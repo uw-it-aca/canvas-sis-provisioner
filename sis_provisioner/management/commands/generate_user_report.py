@@ -9,9 +9,15 @@ import csv
 class Command(BaseCommand):
     help = "Creates a report of users in Canvas."
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'last_access_report', help='last_access_report_path')
+        parser.add_argument(
+            'enrollment_report', help='enrollment_report_path')
+
     def handle(self, *args, **options):
-        last_access_report = '/home/jlaney/Downloads/last_user_access_csv_29_Feb_2016_507320160229-22874-1e0l09o.csv'
-        enrollment_report = '/home/jlaney/Downloads/provisioning_csv_29_Feb_2016_507420160229-30814-ftbhlm.csv'
+        last_access_report = options.get('last_access_report')
+        enrollment_report = options.get('enrollment_report')
 
         users_all = 0
         users_uw = 0
@@ -78,24 +84,25 @@ class Command(BaseCommand):
                     if row[2] != 'Student, Test':
                         users_no_sisid += 1
 
-
         print('\n\n')
-        print('All users: %s' % users_all)
-        print('UW users: %s' % users_uw)
-        print('UW users with 0 enrollments: %s' % users_uw_no_enrollments)
-        print('UW users with 0 logins: %s' % users_uw_login_never)
-        print('UW users who have not logged in the past year: %s' % (
+        print('All users: {}'.format(users_all))
+        print('UW users: {}'.format(users_uw))
+        print('UW users with 0 enrollments: {}'.format(
+            users_uw_no_enrollments))
+        print('UW users with 0 logins: {}'.format(users_uw_login_never))
+        print('UW users who have not logged in the past year: {}'.format(
             users_uw_login_one_year))
         print('\n\n')
-        print('Google users: %s' % users_google)
-        print('Google users with 0 enrollments: %s' % (
+        print('Google users: {}'.format(users_google))
+        print('Google users with 0 enrollments: {}'.format(
             users_google_no_enrollments))
-        print('Google users with 0 logins: %s' % users_google_login_never)
-        print('Google users who have not logged in the past year: %s' % (
+        print('Google users with 0 logins: {}'.format(
+            users_google_login_never))
+        print('Google users who have not logged in the past year: {}'.format(
             users_google_login_one_year))
         print('\n\n')
-        print('No SIS ID users: %s' % users_no_sisid)
-        print('Bad SIS ID users: %s' % users_unknown)
+        print('No SIS ID users: {}'.format(users_no_sisid))
+        print('Bad SIS ID users: {}'.format(users_unknown))
         print('\n\n')
 
     def logged_in_past_year(self, last_access_str):

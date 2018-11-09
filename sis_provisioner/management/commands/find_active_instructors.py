@@ -10,9 +10,10 @@ import sys
 
 
 class Command(BaseCommand):
-    help = "Create a list of active teacher email addresses for a sub-account \
-            and term. Used for creating the recipient list for the ACA Canvas \
-            newsletter."
+    help = (
+        "Create a list of active teacher email addresses for a sub-account"
+        "and term. Used for creating the recipient list for the ACA Canvas"
+        "newsletter.")
 
     def add_arguments(self, parser):
         parser.add_argument('subaccount_id', help='Subaccount ID')
@@ -52,7 +53,7 @@ class Command(BaseCommand):
             status = row[status_idx]
 
             if (sis_user_id != "" and role.lower() == "teacher" and
-                status.lower() == "active"):
+                    status.lower() == "active"):
                 if course_id not in all_instructors:
                     all_instructors[course_id] = []
 
@@ -78,7 +79,7 @@ class Command(BaseCommand):
             status = row[status_idx]
 
             if (sis_account_id != "" and status.lower() == "active" and
-                course_id in all_instructors):
+                    course_id in all_instructors):
                 for sis_user_id in all_instructors[course_id]:
                     if sis_user_id not in active_instructors:
                         try:
