@@ -1029,7 +1029,7 @@ class Import(models.Model):
             if len(sis_import.processing_errors):
                 self.canvas_errors = json.dumps(sis_import.processing_errors)
 
-        except (DataFailureException, MaxRetryError) as ex:
+        except (DataFailureException, MaxRetryError, KeyError) as ex:
             logger.info('Monitor error: {}'.format(ex))
             return
 
