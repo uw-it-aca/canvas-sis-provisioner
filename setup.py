@@ -31,7 +31,7 @@ setup(
         'UW-Grading-Standard-LTI>=0.6,<1.0',
         'UW-Library-Guides-LTI>=0.5,<1.0',
         'Anonymous-Feedback-LTI>=0.3,<1.0',
-        'UW-RestClients-Core>=1.0.1,<2.0',
+        'UW-RestClients-Core>=1.0.2,<2.0',
         'UW-RestClients-SWS>=2.0.3,<3.0',
         'UW-RestClients-PWS>=2.0.2,<3.0',
         'UW-RestClients-GWS>=2.0.1,<3.0',

@@ -11,7 +11,7 @@ from uw_canvas.terms import Terms
 from uw_canvas.sis_import import SISImport
 from uw_canvas.models import CanvasEnrollment, SISImport as SISImportModel
 from restclients_core.exceptions import DataFailureException
-from sis_provisioner.util.retry import retry
+from restclients_core.util.retry import retry
 from sis_provisioner.dao.course import (
     valid_academic_course_sis_id, valid_academic_section_sis_id)
 from sis_provisioner.dao import localize
