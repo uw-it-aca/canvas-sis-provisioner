@@ -27,7 +27,7 @@ setup(
         'django-aws-message>=1.5.1',
         'UW-Canvas-Users-LTI>=0.5,<1.0',
         'UW-Groups-LTI>=0.6,<1.0',
-        'UW-Course-Roster-LTI>=0.6,<1.0',
+        'UW-Course-Roster-LTI>=0.7,<1.0',
         'UW-Grading-Standard-LTI>=0.6,<1.0',
         'UW-Library-Guides-LTI>=0.5,<1.0',
         'Anonymous-Feedback-LTI>=0.3,<1.0',
