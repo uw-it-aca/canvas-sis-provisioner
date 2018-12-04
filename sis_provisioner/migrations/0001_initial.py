@@ -82,7 +82,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('course_id', models.CharField(max_length=80)),
-                ('group_id', models.CharField(max_length=256)),
+                ('group_id', models.CharField(max_length=190)),
                 ('role', models.CharField(max_length=80)),
                 ('added_by', models.CharField(max_length=20)),
                 ('added_date', models.DateTimeField(auto_now_add=True, null=True)),
@@ -101,8 +101,8 @@ class Migration(migrations.Migration):
             name='GroupMemberGroup',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('group_id', models.CharField(max_length=256)),
-                ('root_group_id', models.CharField(max_length=256)),
+                ('group_id', models.CharField(max_length=190)),
+                ('root_group_id', models.CharField(max_length=190)),
                 ('is_deleted', models.NullBooleanField()),
             ],
             options={
@@ -212,7 +212,7 @@ class Migration(migrations.Migration):
             name='GroupEvent',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('group_id', models.CharField(max_length=256)),
+                ('group_id', models.CharField(max_length=190)),
                 ('reg_id', models.CharField(max_length=32, unique=True)),
             ],
             options={
