@@ -6,6 +6,7 @@ import csv
 
 class Command(BaseCommand):
     help = ''
+
     def add_arguments(self, parser):
         parser.add_argument('file_path', help='CSV file')
 
@@ -19,7 +20,8 @@ class Command(BaseCommand):
         client = Users()
 
         with open(file_path, 'rb') as csvfile:
-            writer.writerow(['login', 'email', 'full_name', 'first_name', 'last_name'])
+            writer.writerow([
+                'login', 'email', 'full_name', 'first_name', 'last_name'])
 
             course_ids = {}
             user_ids = {}

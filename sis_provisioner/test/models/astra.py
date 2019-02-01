@@ -60,7 +60,7 @@ class AdminModelTest(TestCase):
 
     def test_json_data(self):
         self._clear_admins()
-        with self.settings(RESTCLIENTS_CANVAS_HOST = 'http://canvas.edu'):
+        with self.settings(RESTCLIENTS_CANVAS_HOST='http://canvas.edu'):
             json = self._create_admin('javerage').json_data()
             self.assertEquals(json['account_id'], '1')
             self.assertEquals(json['account_link'],
@@ -73,6 +73,7 @@ class AdminModelTest(TestCase):
             self.assertEquals(json['net_id'], 'javerage')
 
         self._clear_admins()
+
 
 class AccountModelTest(TestCase):
     @mock.patch.object(QuerySet, 'filter')

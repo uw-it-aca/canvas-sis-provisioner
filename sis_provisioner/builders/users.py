@@ -13,4 +13,4 @@ class UserBuilder(Builder):
             person = get_person_by_netid(user.net_id)
             self.add_user_data_for_person(person, force=True)
         except (UserPolicyException, DataFailureException) as err:
-            self.logger.info('Skip user %s: %s' % (user.reg_id, err))
+            self.logger.info('Skip user {}: {}'.format(user.reg_id, err))

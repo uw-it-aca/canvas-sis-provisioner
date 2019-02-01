@@ -84,7 +84,7 @@ class TermManager(models.Manager):
                 term.save()
 
             except (DataFailureException, MaxRetryError) as err:
-                logger.info('Unable to set term overrides: %s' % ex)
+                logger.info('Unable to set term overrides: {}'.format(ex))
 
     def queue_unused_courses(self, term_id):
         try:
@@ -226,7 +226,7 @@ class CourseManager(models.Manager):
                 course.provisioned_status = None
 
             except CoursePolicyException as err:
-                course.provisioned_status = 'Primary LMS: %s (%s)' % (
+                course.provisioned_status = 'Primary LMS: {} ({})'.format(
                     section.primary_lms, err)
 
             if section.is_withdrawn():
@@ -322,9 +322,11 @@ class Course(models.Model):
         try:
             (year, quarter, curr_abbr, course_num,
                 section_id) = self.course_id.split('-', 4)
-            sws_url = "%s/%s,%s,%s,%s/%s.json" % (
-                "/restclients/view/sws/student/v5/course",
-                year, quarter, curr_abbr, course_num, section_id)
+            sws_url = (
+                "/restclients/view/sws/student/v5/course/{year},{quarter},"
+                "{curr_abbr},{course_num}/{section_id}.json").format(
+                    year=year, quarter=quarter, curr_abbr=curr_abbr,
+                    course_num=course_num, section_id=section_id)
         except ValueError:
             sws_url = None
 
@@ -436,20 +438,20 @@ class EnrollmentManager(models.Manager):
                         enrollment.priority = PRIORITY_DEFAULT
                     else:
                         enrollment.priority = PRIORITY_HIGH
-                        logger.info('%s IN QUEUE %s, %s, %s, %s' % (
+                        logger.info('{} IN QUEUE {}, {}, {}, {}'.format(
                             enrollment_log_prefix, full_course_id, reg_id,
                             role, enrollment.queue_id))
 
                     enrollment.save()
-                    logger.info('%s UPDATE %s, %s, %s, %s, %s' % (
+                    logger.info('{} UPDATE {}, {}, {}, {}, {}'.format(
                         enrollment_log_prefix, full_course_id, reg_id, role,
                         status, last_modified))
                 else:
-                    logger.info('%s IGNORE %s, %s, %s before %s' % (
+                    logger.info('{} IGNORE {}, {}, {} before {}'.format(
                         enrollment_log_prefix, full_course_id, reg_id,
                         last_modified, enrollment.last_modified))
             else:
-                logger.info('%s IGNORE Unprovisioned course %s, %s, %s' % (
+                logger.info('{} IGNORE Unprovisioned course {}, {}, {}'.format(
                     enrollment_log_prefix, full_course_id, reg_id, role))
                 course.priority = PRIORITY_HIGH
                 course.save()
@@ -462,7 +464,7 @@ class EnrollmentManager(models.Manager):
                                     instructor_reg_id=instructor_reg_id)
             try:
                 enrollment.save()
-                logger.info('%s ADD %s, %s, %s, %s, %s' % (
+                logger.info('{} ADD {}, {}, {}, {}, {}'.format(
                     enrollment_log_prefix, full_course_id, reg_id, role,
                     status, last_modified))
             except IntegrityError:
@@ -477,12 +479,14 @@ class EnrollmentManager(models.Manager):
                                 priority=PRIORITY_HIGH)
                 try:
                     course.save()
-                    logger.info('%s IGNORE Unprovisioned course %s, %s, %s' % (
-                        enrollment_log_prefix, full_course_id, reg_id, role))
+                    logger.info(
+                        '{} IGNORE Unprovisioned course {}, {}, {}'.format(
+                            enrollment_log_prefix, full_course_id, reg_id,
+                            role))
                 except IntegrityError:
                     self.add_enrollment(enrollment_data)  # Try again
             else:
-                logger.info('%s IGNORE Inactive section %s, %s, %s' % (
+                logger.info('{} IGNORE Inactive section {}, {}, {}'.format(
                     enrollment_log_prefix, full_course_id, reg_id, role))
 
 
@@ -578,7 +582,7 @@ class UserManager(models.Manager):
                     user = self.add_user(get_person_by_netid(member.name))
                     existing_netids[member.name] = user.priority
                 except Exception as err:
-                    logger.info('User: SKIP %s, %s' % (member.name, err))
+                    logger.info('User: SKIP {}, {}'.format(member.name, err))
 
     def _find_existing(self, net_id, reg_id):
         if net_id is None:
@@ -633,7 +637,7 @@ class UserManager(models.Manager):
 class User(models.Model):
     """ Represents the provisioned state of a user.
     """
-    net_id = models.CharField(max_length=20, unique=True)
+    net_id = models.CharField(max_length=80, unique=True)
     reg_id = models.CharField(max_length=32, unique=True)
     added_date = models.DateTimeField(auto_now_add=True)
     provisioned_date = models.DateTimeField(null=True)
@@ -1025,8 +1029,8 @@ class Import(models.Model):
             if len(sis_import.processing_errors):
                 self.canvas_errors = json.dumps(sis_import.processing_errors)
 
-        except (DataFailureException, MaxRetryError) as ex:
-            logger.info('Monitor error: %s' % ex)
+        except (DataFailureException, MaxRetryError, KeyError) as ex:
+            logger.info('Monitor error: {}'.format(ex))
             return
 
         if self.is_cleanly_imported():

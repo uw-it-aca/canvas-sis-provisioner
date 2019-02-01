@@ -17,9 +17,12 @@ class SectionPolicyTest(TestCase):
         self.assertEquals(valid_canvas_course_id('12345'), None)
         self.assertEquals(valid_canvas_course_id('0'), None)
         self.assertEquals(valid_canvas_course_id('1111111111'), None)
-        self.assertRaises(CoursePolicyException, valid_canvas_course_id, None)
-        self.assertRaises(CoursePolicyException, valid_canvas_course_id, 'abc')
-        self.assertRaises(CoursePolicyException, valid_canvas_course_id, '1234z')
+        self.assertRaises(
+            CoursePolicyException, valid_canvas_course_id, None)
+        self.assertRaises(
+            CoursePolicyException, valid_canvas_course_id, 'abc')
+        self.assertRaises(
+            CoursePolicyException, valid_canvas_course_id, '1234z')
 
     def test_valid_course_sis_id(self):
         self.assertEquals(valid_course_sis_id('12345'), None)
@@ -31,41 +34,81 @@ class SectionPolicyTest(TestCase):
     def test_valid_adhoc_course_sis_id(self):
         self.assertEquals(valid_adhoc_course_sis_id('course_12345'), None)
         self.assertEquals(valid_adhoc_course_sis_id('course_1'), None)
-        self.assertRaises(CoursePolicyException, valid_adhoc_course_sis_id, None)
-        self.assertRaises(CoursePolicyException, valid_adhoc_course_sis_id, '0')
-        self.assertRaises(CoursePolicyException, valid_adhoc_course_sis_id, '')
-        self.assertRaises(CoursePolicyException, valid_adhoc_course_sis_id, 'abc')
+        self.assertRaises(
+            CoursePolicyException, valid_adhoc_course_sis_id, None)
+        self.assertRaises(
+            CoursePolicyException, valid_adhoc_course_sis_id, '0')
+        self.assertRaises(
+            CoursePolicyException, valid_adhoc_course_sis_id, '')
+        self.assertRaises(
+            CoursePolicyException, valid_adhoc_course_sis_id, 'abc')
 
     def test_valid_academic_course_sis_id(self):
-        self.assertEquals(valid_academic_course_sis_id('2016-autumn-ABC-100-A'), None)
-        self.assertEquals(valid_academic_course_sis_id('2016-autumn-ABC-100-AA'), None)
-        self.assertEquals(valid_academic_course_sis_id('2016-autumn-ABC-100-A2'), None)
-        self.assertEquals(valid_academic_course_sis_id('2016-autumn-AB&C-100-A'), None)
-        self.assertEquals(valid_academic_course_sis_id('2016-autumn-A B-100-A'), None)
-        self.assertEquals(valid_academic_course_sis_id('2016-autumn-ABC-100-A-ABCDEF1234567890ABCDEF1234567890'), None)
-        self.assertRaises(CoursePolicyException, valid_academic_course_sis_id, None)
-        self.assertRaises(CoursePolicyException, valid_academic_course_sis_id, '0')
-        self.assertRaises(CoursePolicyException, valid_academic_course_sis_id, '')
-        self.assertRaises(CoursePolicyException, valid_academic_course_sis_id, 'abc')
-        self.assertRaises(CoursePolicyException, valid_academic_course_sis_id, '2016-autumn-abc-100-a')
+        self.assertEquals(
+            valid_academic_course_sis_id('2016-autumn-ABC-100-A'), None)
+        self.assertEquals(
+            valid_academic_course_sis_id('2016-autumn-ABC-100-AA'), None)
+        self.assertEquals(
+            valid_academic_course_sis_id('2016-autumn-ABC-100-A2'), None)
+        self.assertEquals(
+            valid_academic_course_sis_id('2016-autumn-AB&C-100-A'), None)
+        self.assertEquals(
+            valid_academic_course_sis_id('2016-autumn-A B-100-A'), None)
+        self.assertEquals(
+            valid_academic_course_sis_id(
+                '2016-autumn-ABC-100-A-ABCDEF1234567890ABCDEF1234567890'),
+            None)
+
+        self.assertRaises(
+            CoursePolicyException, valid_academic_course_sis_id, None)
+        self.assertRaises(
+            CoursePolicyException, valid_academic_course_sis_id, '0')
+        self.assertRaises(
+            CoursePolicyException, valid_academic_course_sis_id, '')
+        self.assertRaises(
+            CoursePolicyException, valid_academic_course_sis_id, 'abc')
+        self.assertRaises(
+            CoursePolicyException, valid_academic_course_sis_id,
+            '2016-autumn-abc-100-a')
 
         # invalid instructor reg_ids
-        self.assertRaises(CoursePolicyException, valid_academic_course_sis_id, '2016-autumn-ABC-100-A-ABCDEF1234567890ABCDEF123456789')
-        self.assertRaises(CoursePolicyException, valid_academic_course_sis_id, '2016-autumn-ABC-100-A-ABCDEF1234567890ABCDEF12345678901')
-        self.assertRaises(CoursePolicyException, valid_academic_course_sis_id, '2016-autumn-ABC-100-A-ABCDEF1234567890ABCDEF123456789Z')
+        self.assertRaises(
+            CoursePolicyException, valid_academic_course_sis_id,
+            '2016-autumn-ABC-100-A-ABCDEF1234567890ABCDEF123456789')
+        self.assertRaises(
+            CoursePolicyException, valid_academic_course_sis_id,
+            '2016-autumn-ABC-100-A-ABCDEF1234567890ABCDEF12345678901')
+        self.assertRaises(
+            CoursePolicyException, valid_academic_course_sis_id,
+            '2016-autumn-ABC-100-A-ABCDEF1234567890ABCDEF123456789Z')
 
     def test_valid_academic_section_sis_id(self):
-        self.assertEquals(valid_academic_section_sis_id('2016-autumn-ABC-100-AA'), None)
-        self.assertEquals(valid_academic_section_sis_id('2016-autumn-ABC-100-A--'), None)
-        self.assertEquals(valid_academic_section_sis_id('2016-autumn-ABC-100-A2'), None)
-        self.assertEquals(valid_academic_section_sis_id('2016-autumn-AB&C-100-AA'), None)
-        self.assertEquals(valid_academic_section_sis_id('2016-autumn-A B-100-AA'), None)
-        self.assertEquals(valid_academic_section_sis_id('2016-autumn-ABC-100-A-ABCDEF1234567890ABCDEF1234567890--'), None)
-        self.assertRaises(CoursePolicyException, valid_academic_section_sis_id, None)
-        self.assertRaises(CoursePolicyException, valid_academic_section_sis_id, '0')
-        self.assertRaises(CoursePolicyException, valid_academic_section_sis_id, '')
-        self.assertRaises(CoursePolicyException, valid_academic_section_sis_id, 'abc')
-        self.assertRaises(CoursePolicyException, valid_academic_section_sis_id, '2016-autumn-ABC-100-ABC')
+        self.assertEquals(
+            valid_academic_section_sis_id('2016-autumn-ABC-100-AA'), None)
+        self.assertEquals(
+            valid_academic_section_sis_id('2016-autumn-ABC-100-A--'), None)
+        self.assertEquals(
+            valid_academic_section_sis_id('2016-autumn-ABC-100-A2'), None)
+        self.assertEquals(
+            valid_academic_section_sis_id('2016-autumn-AB&C-100-AA'), None)
+        self.assertEquals(
+            valid_academic_section_sis_id('2016-autumn-A B-100-AA'), None)
+        self.assertEquals(
+            valid_academic_section_sis_id(
+                '2016-autumn-ABC-100-A-ABCDEF1234567890ABCDEF1234567890--'),
+            None)
+
+        self.assertRaises(
+            CoursePolicyException, valid_academic_section_sis_id, None)
+        self.assertRaises(
+            CoursePolicyException, valid_academic_section_sis_id, '0')
+        self.assertRaises(
+            CoursePolicyException, valid_academic_section_sis_id, '')
+        self.assertRaises(
+            CoursePolicyException, valid_academic_section_sis_id, 'abc')
+        self.assertRaises(
+            CoursePolicyException, valid_academic_section_sis_id,
+            '2016-autumn-ABC-100-ABC')
 
     def test_adhoc_course_sis_id(self):
         self.assertEquals(adhoc_course_sis_id('12345'), 'course_12345')
@@ -75,38 +118,80 @@ class SectionPolicyTest(TestCase):
         self.assertRaises(CoursePolicyException, adhoc_course_sis_id, '')
 
     def test_group_section_sis_id(self):
-        self.assertEquals(group_section_sis_id('2016-autumn-ABC-100-A'), '2016-autumn-ABC-100-A-groups')
-        self.assertEquals(group_section_sis_id('2016-autumn-ABC-100-A-ABCDEF1234567890ABCDEF1234567890'), '2016-autumn-ABC-100-A-ABCDEF1234567890ABCDEF1234567890-groups')
+        self.assertEquals(
+            group_section_sis_id('2016-autumn-ABC-100-A'),
+            '2016-autumn-ABC-100-A-groups')
+        self.assertEquals(
+            group_section_sis_id(
+                '2016-autumn-ABC-100-A-ABCDEF1234567890ABCDEF1234567890'),
+            '2016-autumn-ABC-100-A-ABCDEF1234567890ABCDEF1234567890-groups')
 
     def test_group_section_name(self):
         with self.settings(DEFAULT_GROUP_SECTION_NAME='GROUP_NAME'):
             self.assertEquals(group_section_name(), 'GROUP_NAME')
 
     def test_section_id_from_url(self):
-        self.assertEquals(section_id_from_url('/student/v5/course/2016,autumn,ABC,100/A.json'), '2016-autumn-ABC-100-A')
-        self.assertEquals(section_id_from_url('/student/v5/course/2016,autumn,ABC,100/AB.json'), '2016-autumn-ABC-100-AB')
-        self.assertEquals(section_id_from_url('/student/v5/course/2016,autumn,A%20B%20C,100/AB.json'), '2016-autumn-A B C-100-AB')
-        self.assertEquals(section_id_from_url('/student/v5/course/2016,autumn,AB%26C,100/AB.json'), '2016-autumn-AB&C-100-AB')
+        self.assertEquals(
+            section_id_from_url(
+                '/student/v5/course/2016,autumn,ABC,100/A.json'),
+            '2016-autumn-ABC-100-A')
+        self.assertEquals(
+            section_id_from_url(
+                '/student/v5/course/2016,autumn,ABC,100/AB.json'),
+            '2016-autumn-ABC-100-AB')
+        self.assertEquals(
+            section_id_from_url(
+                '/student/v5/course/2016,autumn,A%20B%20C,100/AB.json'),
+            '2016-autumn-A B C-100-AB')
+        self.assertEquals(
+            section_id_from_url(
+                '/student/v5/course/2016,autumn,AB%26C,100/AB.json'),
+            '2016-autumn-AB&C-100-AB')
         self.assertEquals(section_id_from_url(''), None)
         self.assertEquals(section_id_from_url(None), None)
 
     def test_section_label_from_section_id(self):
-        self.assertEquals(section_label_from_section_id('2016-autumn-ABC-100-A'), '2016,autumn,ABC,100/A')
-        self.assertEquals(section_label_from_section_id('2016-autumn-ABC-100-A-ABCDEF1234567890ABCDEF1234567890'), '2016,autumn,ABC,100/A')
-        self.assertEquals(section_label_from_section_id('2016-autumn-ABC-100-AB'), '2016,autumn,ABC,100/AB')
-        self.assertEquals(section_label_from_section_id('2016-autumn-ABC-100-A--'), '2016,autumn,ABC,100/A')
-        self.assertEquals(section_label_from_section_id('2016-autumn-ABC-100-A-ABCDEF1234567890ABCDEF1234567890--'), '2016,autumn,ABC,100/A')
+        self.assertEquals(
+            section_label_from_section_id('2016-autumn-ABC-100-A'),
+            '2016,autumn,ABC,100/A')
+        self.assertEquals(
+            section_label_from_section_id(
+                '2016-autumn-ABC-100-A-ABCDEF1234567890ABCDEF1234567890'),
+            '2016,autumn,ABC,100/A')
+        self.assertEquals(
+            section_label_from_section_id('2016-autumn-ABC-100-AB'),
+            '2016,autumn,ABC,100/AB')
+        self.assertEquals(
+            section_label_from_section_id('2016-autumn-ABC-100-A--'),
+            '2016,autumn,ABC,100/A')
+        self.assertEquals(
+            section_label_from_section_id(
+                '2016-autumn-ABC-100-A-ABCDEF1234567890ABCDEF1234567890--'),
+            '2016,autumn,ABC,100/A')
 
-        self.assertRaises(CoursePolicyException, section_label_from_section_id, '2016-autumn-ABC-100')
-        self.assertRaises(CoursePolicyException, section_label_from_section_id, '')
-        self.assertRaises(CoursePolicyException, section_label_from_section_id, None)
+        self.assertRaises(
+            CoursePolicyException, section_label_from_section_id,
+            '2016-autumn-ABC-100')
+        self.assertRaises(
+            CoursePolicyException, section_label_from_section_id, '')
+        self.assertRaises(
+            CoursePolicyException, section_label_from_section_id, None)
 
     def test_instructor_regid_from_section_id(self):
-        self.assertEquals(instructor_regid_from_section_id('2016-autumn-ABC-100-A'), None)
-        self.assertEquals(instructor_regid_from_section_id('2016-autumn-ABC-100-A-ABCDEF1234567890ABCDEF1234567890'), 'ABCDEF1234567890ABCDEF1234567890')
-        self.assertEquals(instructor_regid_from_section_id('2016-autumn-ABC-100-A--'), None)
-        self.assertEquals(instructor_regid_from_section_id('2016-autumn-ABC-100-A-ABCDEF1234567890ABCDEF1234567890--'), 'ABCDEF1234567890ABCDEF1234567890')
-        self.assertEquals(instructor_regid_from_section_id('2016-autumn-ABC-100'), None)
+        self.assertEquals(
+            instructor_regid_from_section_id('2016-autumn-ABC-100-A'), None)
+        self.assertEquals(
+            instructor_regid_from_section_id(
+                '2016-autumn-ABC-100-A-ABCDEF1234567890ABCDEF1234567890'),
+            'ABCDEF1234567890ABCDEF1234567890')
+        self.assertEquals(
+            instructor_regid_from_section_id('2016-autumn-ABC-100-A--'), None)
+        self.assertEquals(
+            instructor_regid_from_section_id(
+                '2016-autumn-ABC-100-A-ABCDEF1234567890ABCDEF1234567890--'),
+            'ABCDEF1234567890ABCDEF1234567890')
+        self.assertEquals(
+            instructor_regid_from_section_id('2016-autumn-ABC-100'), None)
         self.assertEquals(instructor_regid_from_section_id(''), None)
         self.assertEquals(instructor_regid_from_section_id(None), None)
 
@@ -146,28 +231,34 @@ class SectionPolicyTest(TestCase):
 
     def test_section_long_name(self):
         section = get_section_by_id('2013-spring-TRAIN-101-A')
-        self.assertEquals(section_long_name(section), 'TRAIN 101 A Sp 13: Intro Train')
+        self.assertEquals(
+            section_long_name(section), 'TRAIN 101 A Sp 13: Intro Train')
 
         section.course_title_long = ''
         self.assertEquals(section_long_name(section), 'TRAIN 101 A Sp 13')
 
         section.course_title_long = 'Intro Train'
         section.is_independent_start = True
-        self.assertEquals(section_long_name(section), 'TRAIN 101 A Sp 13: Intro Train')
+        self.assertEquals(
+            section_long_name(section), 'TRAIN 101 A Sp 13: Intro Train')
 
         section.course_title_long = ''
         self.assertEquals(section_long_name(section), 'TRAIN 101 A Sp 13')
 
-
     def test_independent_study_section_long_name(self):
-        section = get_section_by_id('2013-autumn-REHAB-591-C-8BD26A286A7D11D5A4AE0004AC494FFE')
-        self.assertEquals(section_long_name(section), 'REHAB 591 C Au 13: Graduate Project (Bill Teacher)')
+        section = get_section_by_id(
+            '2013-autumn-REHAB-591-C-8BD26A286A7D11D5A4AE0004AC494FFE')
+        self.assertEquals(
+            section_long_name(section),
+            'REHAB 591 C Au 13: Graduate Project (Bill Teacher)')
 
         section.course_title_long = None
-        self.assertEquals(section_long_name(section), 'REHAB 591 C Au 13 (Bill Teacher)')
+        self.assertEquals(
+            section_long_name(section), 'REHAB 591 C Au 13 (Bill Teacher)')
 
         section.course_title_long = ''
-        self.assertEquals(section_long_name(section), 'REHAB 591 C Au 13 (Bill Teacher)')
+        self.assertEquals(
+            section_long_name(section), 'REHAB 591 C Au 13 (Bill Teacher)')
 
 
 @fdao_sws_override
@@ -178,9 +269,12 @@ class SectionByIDTest(TestCase):
         self.assertEquals(section.section_label(), '2013,summer,TRAIN,101/A')
 
     def test_independent_study_section_by_id(self):
-        section = get_section_by_id('2013-autumn-REHAB-591-C-8BD26A286A7D11D5A4AE0004AC494FFE')
+        section = get_section_by_id(
+            '2013-autumn-REHAB-591-C-8BD26A286A7D11D5A4AE0004AC494FFE')
         self.assertEquals(section.section_label(), '2013,autumn,REHAB,591/C')
-        self.assertEquals(section.independent_study_instructor_regid, '8BD26A286A7D11D5A4AE0004AC494FFE')
+        self.assertEquals(
+            section.independent_study_instructor_regid,
+            '8BD26A286A7D11D5A4AE0004AC494FFE')
 
 
 @fdao_sws_override
@@ -188,7 +282,8 @@ class SectionByIDTest(TestCase):
 class XlistSectionTest(TestCase):
     def test_canvas_xlist_id(self):
         section = get_section_by_id('2013-summer-TRAIN-101-A')
-        self.assertEquals(canvas_xlist_id([section]), '2013-summer-TRAIN-101-A')
+        self.assertEquals(
+            canvas_xlist_id([section]), '2013-summer-TRAIN-101-A')
 
         section.delete_flag = Section.DELETE_FLAG_WITHDRAWN
         self.assertEquals(canvas_xlist_id([section]), None)
@@ -196,10 +291,12 @@ class XlistSectionTest(TestCase):
         section1 = get_section_by_id('2013-spring-TRAIN-101-A')
         section2 = get_section_by_id('2013-summer-TRAIN-101-A')
 
-        self.assertEquals(canvas_xlist_id([section1, section2]), '2013-spring-TRAIN-101-A')
+        self.assertEquals(
+            canvas_xlist_id([section1, section2]), '2013-spring-TRAIN-101-A')
 
         section2.lms_ownership = Section.LMS_OWNER_OL
-        self.assertEquals(canvas_xlist_id([section1, section2]), '2013-summer-TRAIN-101-A')
+        self.assertEquals(
+            canvas_xlist_id([section1, section2]), '2013-summer-TRAIN-101-A')
 
 
 @fdao_sws_override
@@ -210,7 +307,8 @@ class NewSectionQueryTest(TestCase):
         r = get_new_sections_by_term('2013-12-12', 'abc')
         mock_fn.assert_called_with(
             '2013-12-12', 'abc',
-            delete_flag=[Section.DELETE_FLAG_ACTIVE, Section.DELETE_FLAG_SUSPENDED],
+            delete_flag=[Section.DELETE_FLAG_ACTIVE,
+                         Section.DELETE_FLAG_SUSPENDED],
             future_terms=0, include_secondaries='on',
             transcriptable_course='all')
 
@@ -220,7 +318,8 @@ class NewSectionQueryTest(TestCase):
         existing = {}
 
         # 404, no resource
-        self.assertRaises(DataFailureException, get_new_sections_by_term, changed_date, term)
+        self.assertRaises(
+            DataFailureException, get_new_sections_by_term, changed_date, term)
 
 
 @fdao_sws_override
@@ -246,6 +345,7 @@ class TimeScheduleConstructionTest(TestCase):
 
         for campus in ['Seattle', 'Tacoma', 'Bothell', 'PCE', '']:
             section.course_campus = campus
-            self.assertEquals(is_time_schedule_construction(section),
-                    True if campus == 'Bothell' else False,
-                        'Campus: %s' % section.course_campus)
+            self.assertEquals(
+                is_time_schedule_construction(section),
+                True if campus == 'Bothell' else False,
+                'Campus: {}'.format(section.course_campus))

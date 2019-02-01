@@ -73,19 +73,20 @@ def valid_gmail_id(login_id):
         (username, domain) = login_id.lower().split("@")
         username = username.split("+", 1)[0].replace(".", "")
         if not len(username):
-            raise InvalidLoginIdException("Invalid username: %s" % login_id)
+            raise InvalidLoginIdException(
+                "Invalid username: {}".format(login_id))
     except Exception:
-        raise InvalidLoginIdException("Invalid username: %s" % login_id)
+        raise InvalidLoginIdException("Invalid username: {}".format(login_id))
 
     if domain not in getattr(settings, 'LOGIN_DOMAIN_WHITELIST', []):
-        raise InvalidLoginIdException("Invalid domain: %s" % login_id)
+        raise InvalidLoginIdException("Invalid domain: {}".format(login_id))
 
-    return "%s@%s" % (username, domain)
+    return "{}@{}".format(username, domain)
 
 
 def valid_canvas_user_id(canvas_id):
     if (RE_CANVAS_ID.match(str(canvas_id)) is None):
-        raise UserPolicyException("Invalid Canvas ID: %s" % canvas_id)
+        raise UserPolicyException("Invalid Canvas ID: {}".format(canvas_id))
 
 
 def user_sis_id(user):
@@ -94,7 +95,7 @@ def user_sis_id(user):
 
 def user_email(user):
     if hasattr(user, 'uwnetid') and user.uwnetid is not None:
-        return '%s@uw.edu' % user.uwnetid
+        return '{}@uw.edu'.format(user.uwnetid)
     elif hasattr(user, 'email'):
         return user.email  # CanvasUser
     else:

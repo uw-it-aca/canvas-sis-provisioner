@@ -2,13 +2,10 @@ import re
 import json
 import dateutil.parser
 from logging import getLogger
-from django.conf import settings
 from django.utils.timezone import utc
 from django.core.management import call_command
-from django.utils.decorators import method_decorator
 from sis_provisioner.models import Import, User
 from sis_provisioner.views.rest_dispatch import RESTDispatch
-from sis_provisioner.views import group_required
 
 
 logger = getLogger(__name__)
@@ -18,8 +15,6 @@ class ImportInvalidException(Exception):
     pass
 
 
-@method_decorator(group_required(settings.CANVAS_MANAGER_ADMIN_GROUP),
-                  name='dispatch')
 class ImportView(RESTDispatch):
     """ Retrieves a an Import model]>.
         GET returns 200 with Import details.
@@ -31,7 +26,8 @@ class ImportView(RESTDispatch):
             imp = Import.objects.get(id=import_id)
             return self.json_response(imp.json_data())
         except Import.DoesNotExist:
-            return self.error_response(404, "Import %s not found" % import_id)
+            return self.error_response(
+                404, "Import {} not found".format(import_id))
         except ImportInvalidException as err:
             return self.error_response(400, err)
 
@@ -39,11 +35,13 @@ class ImportView(RESTDispatch):
         body = json.loads(request.read())
         mode = body.get('mode', None)
         if mode == 'group':
-            logger.info('imports (%s): POST: import_group' % (request.user))
+            logger.info(
+                'imports ({}): POST: import_group'.format(request.user))
             call_command('import_groups')
             return self.json_response({"import": "started"})
         else:
-            logger.info('imports (%s): POST: unknown command' % (request.user))
+            logger.info(
+                'imports ({}): POST: unknown command'.format(request.user))
             return self.error_response(400, "Unknown import mode")
 
     def delete(self, request, *args, **kwargs):
@@ -52,8 +50,8 @@ class ImportView(RESTDispatch):
             imp = Import.objects.get(id=import_id)
 
             logger.info(
-                'imports (%s): DELETE: type: %s, queue_id: %s, '
-                'post_status: %s, canvas_state: %s' % (
+                'imports ({}): DELETE: type: {}, queue_id: {}, '
+                'post_status: {}, canvas_state: {}'.format(
                     request.user, imp.csv_type, imp.pk, imp.post_status,
                     imp.canvas_state))
 
@@ -62,7 +60,8 @@ class ImportView(RESTDispatch):
             return self.json_response()
 
         except Import.DoesNotExist:
-            return self.error_response(404, "Import %s not found" % import_id)
+            return self.error_response(
+                404, "Import {} not found".format(import_id))
         except ImportInvalidException as err:
             return self.error_response(400, err)
 

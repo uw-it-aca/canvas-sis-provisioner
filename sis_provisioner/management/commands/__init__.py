@@ -50,8 +50,9 @@ class SISProvisionerCommand(BaseCommand):
                             message, fail_silently=True)
                 job.last_status_date = now
             except Exception as err:
-                self.log.error('Cannot email admins "%s", Error Message: "%s"' % (
-                    err, message))
+                self.log.error(
+                    'Cannot email admins "{}", Error Message: "{}"'.format(
+                        err, message))
 
         job.save()
 

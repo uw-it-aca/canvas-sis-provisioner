@@ -86,7 +86,8 @@ class CanvasTermsTest(TestCase):
     def test_update_term_overrides(self, mock_method):
         r = update_term_overrides('abc', {'xyz': ('somedate', 'anotherdate')})
         mock_method.assert_called_with(
-            'abc', overrides={'xyz': {'start_at': 'somedate', 'end_at': 'anotherdate'}})
+            'abc', overrides={
+                'xyz': {'start_at': 'somedate', 'end_at': 'anotherdate'}})
 
 
 @fdao_sws_override
@@ -129,16 +130,16 @@ class CanvasEnrollmentsTest(TestCase):
         self.assertEquals(enrollment_status_from_registration(reg), 'deleted')
 
         # request_date equals term.census_day bod
-        reg = Registration(section=section,
-                           is_active=False,
-                           request_date = datetime(section.term.census_day.year,
-                                                   section.term.census_day.month,
-                                                   section.term.census_day.day))
+        reg = Registration(
+            section=section, is_active=False, request_date=datetime(
+                section.term.census_day.year, section.term.census_day.month,
+                section.term.census_day.day))
         self.assertEquals(enrollment_status_from_registration(reg), 'deleted')
 
     @mock.patch.object(Enrollments, 'get_enrollments_for_section')
     @mock.patch.object(Sections, 'get_sections_in_course_by_sis_id')
-    def test_get_sis_enrollments_for_course(self, mock_sections, mock_enrollments):
+    def test_get_sis_enrollments_for_course(
+            self, mock_sections, mock_enrollments):
         r = get_sis_enrollments_for_course('abc')
         mock_sections.assert_called_with('abc')
         self.assertEquals(len(r), 0)
@@ -162,7 +163,8 @@ class CanvasSISImportsTest(TestCase):
         mock_method.assert_called_with('/abc', params={})
 
         r = sis_import_by_path('/abc', override_sis_stickiness=True)
-        mock_method.assert_called_with('/abc', params={'override_sis_stickiness': '1'})
+        mock_method.assert_called_with(
+            '/abc', params={'override_sis_stickiness': '1'})
 
     @mock.patch('sis_provisioner.dao.canvas.SISImportModel')
     @mock.patch.object(SISImport, 'get_import_status')

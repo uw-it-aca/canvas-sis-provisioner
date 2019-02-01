@@ -1,6 +1,7 @@
-{% load templatetag_handlebars %}
-{% tplhandlebars "group-table-row" %}
-{{# each groups}}
-<tr><td><a href="https://groups.uw.edu/group/{{ group_id }}" target="_blank">{{ group_id }}</a></td><td>{{ role }}</td><td><a class="canvas-course-link" data-course-id="{{ course_id }}" href="#" target="_blank">{{ course_id }}</a></td><td>{{ added_by }}</td><td>{{ added_date }}</td><td>{{ updated }}</td><td>{{ #if is_deleted }}DEL{{ /if }}</td></tr>
+{% verbatim %}
+<script id="group-table-row" type="text/x-handlebars-template">
+{{#each groups}}
+<tr><td><a href="https://groups.uw.edu/group/{{ group_id }}" target="_blank">{{ group_id }}</a></td><td>{{ role }}</td><td><a class="canvas-course-link" data-course-id="{{ course_id }}" href="#" target="_blank">{{ course_id }}</a></td><td>{{ added_by }}</td><td>{{ added_date }}</td><td>{{ updated }}</td><td>{{#if is_deleted}}DEL{{/if}}</td></tr>
 {{/each}}
-{% endtplhandlebars %}
+</script>
+{% endverbatim %}

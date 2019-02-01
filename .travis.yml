@@ -1,6 +1,5 @@
 language: python
 python:
-- '2.7'
 - '3.6'
 install:
 - sudo apt-get install -qq python-dev libxml2-dev libxmlsec1-dev
@@ -12,7 +11,7 @@ before_script:
 - npm install -g jshint
 - cp travis-ci/manage.py manage.py
 script:
-- pycodestyle sis_provisioner/ --exclude=migrations,management,test
+- pycodestyle sis_provisioner/ --exclude=migrations,management
 - jshint sis_provisioner/static/ --verbose
 - coverage run --source=sis_provisioner/ manage.py test sis_provisioner
 after_success:

@@ -1,25 +1,18 @@
 from django.conf import settings
-from django.utils.decorators import method_decorator
 from sis_provisioner.models import Course
-from sis_provisioner.views import group_required
 from sis_provisioner.views.rest_dispatch import RESTDispatch
 from sis_provisioner.views.admin import can_view_source_data
 from sis_provisioner.dao.canvas import (
     get_account_by_id, get_course_by_id, get_course_by_sis_id)
 from logging import getLogger
 from bs4 import BeautifulSoup
-try:
-    from urllib2 import urlopen  # python2.7
-except ImportError:
-    from urllib.request import urlopen
+from urllib.request import urlopen
 import re
 
 
 logger = getLogger(__name__)
 
 
-@method_decorator(group_required(settings.CANVAS_MANAGER_ADMIN_GROUP),
-                  name='dispatch')
 class CanvasCourseView(RESTDispatch):
     """ Performs query for Canvas course by sis_id.
         GET returns 200 with Canvas Course model
@@ -44,9 +37,9 @@ class CanvasCourseView(RESTDispatch):
                     'name': course.term.name
                 },
                 'course_name': course.name,
-                'course_url': "%s/courses/%s" % (
-                    getattr(settings, 'RESTCLIENTS_CANVAS_HOST', ''),
-                    course.course_id),
+                'course_url': "{host}/courses/{course_id}".format(
+                    host=getattr(settings, 'RESTCLIENTS_CANVAS_HOST', ''),
+                    course_id=course.course_id),
                 'workflow_state': course.workflow_state,
                 'public_syllabus': course.public_syllabus,
                 'syllabus_body': course.syllabus_body
@@ -63,11 +56,9 @@ class CanvasCourseView(RESTDispatch):
             return self.json_response(course_rep)
         except Exception as e:
             return self.error_response(
-                400, "Unable to retrieve course data: %s" % e)
+                400, "Unable to retrieve course data: {}".format(e))
 
 
-@method_decorator(group_required(settings.CANVAS_MANAGER_ADMIN_GROUP),
-                  name='dispatch')
 class CanvasAccountView(RESTDispatch):
     """ Performs query for Canvas account by account_id
         GET returns 200 with Canvas Course model
@@ -81,14 +72,14 @@ class CanvasAccountView(RESTDispatch):
                 'name': account.name,
                 'parent_account_id': account.parent_account_id,
                 'root_account_id': account.root_account_id,
-                'account_url': "%s/accounts/%s" % (
-                    getattr(settings, 'RESTCLIENTS_CANVAS_HOST', ''),
-                    account.account_id)
+                'account_url': "{host}/accounts/{account_id}".format(
+                    host=getattr(settings, 'RESTCLIENTS_CANVAS_HOST', ''),
+                    account_id=account.account_id)
             })
 
         except Exception as e:
             return self.error_response(
-                400, "Unable to retrieve account: %s" % e)
+                400, "Unable to retrieve account: {}".format(e))
 
 
 class CanvasStatus(RESTDispatch):
@@ -100,11 +91,9 @@ class CanvasStatus(RESTDispatch):
             components = []
             for x in soup.body.find_all(
                     'div', class_='component-inner-container'):
-                name = x.find(
-                    'span', class_='name').get_text(strip=True).encode('utf-8')
-                status = x.find(
-                    'span', class_='component-status').get_text(
-                        strip=True).encode('utf-8')
+                name = x.find('span', class_='name').get_text(strip=True)
+                status = x.find('span', class_='component-status').get_text(
+                    strip=True)
                 state = 'status-unknown'
 
                 for c in x['class']:

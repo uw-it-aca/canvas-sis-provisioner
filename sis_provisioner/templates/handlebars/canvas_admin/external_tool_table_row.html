@@ -1,13 +1,13 @@
-{% load templatetag_handlebars %}
-{% tplhandlebars "tool-table-row" %}
-{{# each external_tools}}
+{% verbatim %}
+<script id="tool-table-row" type="text/x-handlebars-template">
+{{#each external_tools}}
 <tr>
     <td>{{ name }}</td>
     <td>{{ canvas_id }}</td>
     <td><a href="{{ account_url }}" target="_blank">{{ account_name }}</a> ({{ account_id }})</td>
     <td>{{ consumer_key }}</td>
-    <td>{{ format_date changed_date }}{{# if changed_by}} ({{ changed_by }}){{/if}}</td>
-    <td>{{# unless read_only}}<div class="btn-group">
+    <td>{{ format_date changed_date }}{{#if changed_by}} ({{ changed_by }}){{/if}}</td>
+    <td>{{#unless read_only}}<div class="btn-group">
             <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" title="External tool actions" aria-haspopup="true" aria-expanded="false">Actions <span class="caret"></span></button>
             <ul class="dropdown-menu">
                 <li><a href="#" class="et-edit" data-tool-id="{{ canvas_id }}">Edit</a></li>
@@ -18,4 +18,5 @@
     </td>
 </tr>
 {{/each}}
-{% endtplhandlebars %}
+</script>
+{% endverbatim %}

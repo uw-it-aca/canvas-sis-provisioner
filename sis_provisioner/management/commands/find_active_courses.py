@@ -12,7 +12,8 @@ import re
 
 
 class Command(BaseCommand):
-    help = "Create a report of active (published) courses, for the specified term."
+    help = ("Create a report of active (published) courses, for the "
+            "specified term.")
 
     def add_arguments(self, parser):
         parser.add_argument('term_sis_id', help='Term SIS ID')

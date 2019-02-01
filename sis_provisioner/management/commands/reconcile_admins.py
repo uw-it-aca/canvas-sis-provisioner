@@ -5,9 +5,9 @@ from django.utils.timezone import utc
 from uw_canvas.admins import Admins as CanvasAdmins
 from uw_canvas.accounts import Accounts as CanvasAccounts
 from restclients_core.exceptions import DataFailureException
+from restclients_core.util.retry import retry
 from sis_provisioner.dao.astra import Admins
 from sis_provisioner.models.astra import Admin, Account
-from sis_provisioner.util.retry import retry
 from sis_provisioner.management.commands import SISProvisionerCommand
 from sis_provisioner.exceptions import ASTRAException
 from optparse import make_option

@@ -1,3 +1,4 @@
+from aws_message.processor import MessageBodyProcessor, ProcessorException
 from sis_provisioner.models import Enrollment
 from sis_provisioner.cache import RestClientsCache
 from sis_provisioner.exceptions import EventException
@@ -11,142 +12,124 @@ from math import floor
 import json
 import re
 
+logger = getLogger(__name__)
 
-class EventBase(object):
-    """
-    UW Course Event Handler
-    """
 
-    _header = None
-    _body = None
+class SISProvisionerProcessor(MessageBodyProcessor):
+    _re_json_cruft = re.compile(r'[^{]*({.*})[^}]*')
 
-    def __init__(self, settings, message):
-        """
-        UW Course Event object
+    def __init__(self, queue_settings_name, is_encrypted):
+        super(SISProvisionerProcessor, self).__init__(
+                logger, queue_settings_name, is_encrypted=is_encrypted)
 
-        Takes a dict representing a UW Course Event Message
+    def validate_message_body(self, message):
+        header = message.get('Header', {})
+        if ('MessageType' in header and
+                header['MessageType'] != self._eventMessageType):
+            raise ProcessorException(
+                'Unknown Message Type: {}'.format(header['MessageType']))
 
-        Raises EventException
-        """
-        self._kws = KWS()
-        self._settings = settings
-        self._re_guid = re.compile(
-            r'^[\da-f]{8}(-[\da-f]{4}){3}-[\da-f]{12}$', re.I)
-        self._re_json_cruft = re.compile(r'[^{]*({.*})[^}]*')
+        if ('Version' in header and
+                header['Version'] != self._eventMessageVersion):
+            raise ProcessorException(
+                'Unknown Version: {}'.format(header['Version']))
 
-        try:
-            self._header = message['Header']
-            self._body = message['Body']
-        except KeyError:
-            self._header = {}
-            self._body = message
+        return True
 
-        if ('MessageType' in self._header and
-                self._header['MessageType'] != self._eventMessageType):
-            raise EventException(
-                'Unknown Message Type: %s' % (self._header['MessageType']))
+    def _parse_signature(self, message):
+        header = message['Header']
+        to_sign = '{msgtype}\n{msgid}\n{timestamp}\n{body}\n'.format(
+            msgtype=header['MessageType'], msgid=header['MessageId'],
+            timestamp=header['TimeStamp'], body=message['Body'])
 
-        self._log = getLogger(__name__)
-
-    def validate(self):
-        try:
-            t = self._header['Version']
-            if t != self._eventMessageVersion:
-                raise EventException('Unknown Version: ' + t)
-
-            to_sign = self._header['MessageType'] + '\n' \
-                + self._header['MessageId'] + '\n' \
-                + self._header['TimeStamp'] + '\n' \
-                + self._body + '\n'
-
-            sig_conf = {
-                'cert': {
-                    'type': 'url',
-                    'reference': self._header['SigningCertURL']
-                }
+        sig_conf = {
+            'cert': {
+                'type': 'url',
+                'reference': header['SigningCertURL']
             }
+        }
 
-            Signature(sig_conf).validate(to_sign.encode('ascii'),
-                                         b64decode(self._header['Signature']))
-        except KeyError as err:
-            if len(self._header):
-                raise EventException('Invalid Signature Header: %s' % (err))
-        except CryptoException as err:
-            raise EventException('Crypto: %s' % (err))
-        except Exception as err:
-            raise EventException('Invalid signature: %s' % (err))
+        return (sig_conf, to_sign, header['Signature'])
 
-    def extract(self):
+    def validate_message_body_signature(self, message):
         try:
-            if 'Encoding' not in self._header:
-                if isinstance(self._body, str):
-                    return(json.loads(
-                        self._re_json_cruft.sub(r'\g<1>', self._body)))
-                elif isinstance(self._body, dict):
-                    return self._body
+            (sig_conf, to_sign, signature) = self._parse_signature(message)
+            Signature(sig_conf).validate(
+                to_sign.encode('ascii'), b64decode(signature))
+
+        except KeyError as ex:
+            if len(header):
+                raise ProcessorException(
+                    'Invalid Signature Header: {}'.format(ex))
+        except CryptoException as ex:
+            raise ProcessorException('Cannot decode message: {}'.format(ex))
+        except Exception as ex:
+            raise ProcessorException(
+                'Invalid signature {}: {}'.format(signature, ex))
+
+    def decrypt_message_body(self, message):
+        header = message['Header']
+        body = message['Body']
+
+        try:
+            if 'Encoding' not in header:
+                if isinstance(body, str):
+                    return json.loads(self._re_json_cruft.sub(r'\g<1>', body))
+                elif isinstance(body, dict):
+                    return body
                 else:
-                    raise EventException('No body encoding')
+                    raise ProcessorException('No body encoding')
 
-            t = self._header['Encoding']
-            if str(t).lower() != 'base64':
-                raise EventException('Unkown encoding: ' + t)
+            encoding = header['Encoding']
+            if str(encoding).lower() != 'base64':
+                raise ProcessorException(
+                    'Unkown encoding: {}'.format(encoding))
 
-            t = self._header.get('Algorithm', 'aes128cbc')
-            if str(t).lower() != 'aes128cbc':
-                raise EventException('Unsupported algorithm: ' + t)
+            algorithm = header.get('Algorithm', 'aes128cbc')
+            if str(algorithm).lower() != 'aes128cbc':
+                raise ProcessorException(
+                    'Unsupported algorithm: {}'.format(algorithm))
 
+            kws = KWS()
             key = None
-            if 'KeyURL' in self._header:
-                key = self._kws._key_from_json(
-                    self._kws._get_resource(self._header['KeyURL']))
+            if 'KeyURL' in header:
+                key = kws._key_from_json(kws._get_resource(header['KeyURL']))
             elif 'KeyId' in self._header:
-                key = self._kws.get_key(self._header['KeyId'])
+                key = kws.get_key(header['KeyId'])
             else:
                 try:
-                    key = self._kws.get_current_key(
-                        self._header['MessageType'])
-                    if not re.match(r'^\s*{.+}\s*$', self._body):
+                    key = kws.get_current_key(header['MessageType'])
+                    if not re.match(r'^\s*{.+}\s*$', body):
                         raise CryptoException()
-                except (ValueError, CryptoException) as err:
+                except (ValueError, CryptoException):
                     RestClientsCache().delete_cached_kws_current_key(
-                        self._header['MessageType'])
-                    key = self._kws.get_current_key(
-                        self._header['MessageType'])
+                        header['MessageType'])
+                    key = kws.get_current_key(header['MessageType'])
 
-            cipher = aes128cbc(b64decode(key.key),
-                               b64decode(self._header['IV']))
-            body = cipher.decrypt(b64decode(self._body))
-            return(json.loads(self._re_json_cruft.sub(r'\g<1>', body)))
-        except KeyError as err:
-            self._log.error(
-                "Key Error: %s\nHEADER: %s" % (err, self._header))
+            cipher = aes128cbc(b64decode(key.key), b64decode(header['IV']))
+            body = cipher.decrypt(b64decode(body))
+
+            return json.loads(
+                self._re_json_cruft.sub(r'\g<1>', body.decode('utf-8')))
+
+        except KeyError as ex:
+            logger.error('Key Error: {}\nHEADER: {}'.format(ex, header))
             raise
-        except ValueError as err:
-            self._log.error(
-                "Error: %s\nHEADER: %s\nBODY: %s" % (
-                    err, self._header, self._body))
+        except ValueError as ex:
+            logger.error(
+                'Error: {}\nHEADER: {}\nBODY: {}'.format(ex, header, body))
             return {}
-        except CryptoException as err:
-            self._log.error(
-                "Error: %s\nHEADER: %s\nBODY: %s" % (
-                    err, self._header, self._body))
-            raise EventException('Cannot decrypt: %s' % (err))
-        except DataFailureException as err:
-            msg = "Request failure for %s: %s (%s)" % (
-                err.url, err.msg, err.status)
-            self._log.error(msg)
-            raise EventException(msg)
-        except Exception as err:
-            raise EventException('Cannot read: %s' % (err))
-
-    def process(self):
-        if self._settings.get('VALIDATE_MSG_SIGNATURE', True):
-            self.validate()
-
-        self.process_events(self.extract())
-
-    def process_events(self, events):
-        raise EventException('No event processor defined')
+        except CryptoException as ex:
+            logger.error(
+                'Error: {}\nHEADER: {}\nBODY: {}'.format(ex, header, body))
+            raise ProcessorException('Cannot decrypt: {}'.format(ex))
+        except DataFailureException as ex:
+            msg = 'Request failure for {}: {} ({})'.format(
+                ex.url, ex.msg, ex.status)
+            logger.error(msg)
+            raise ProcessorException(msg)
+        except Exception as ex:
+            raise ProcessorException('Cannot read: {}'.format(ex))
 
     def load_enrollments(self, enrollments):
         enrollment_count = len(enrollments)
@@ -154,15 +137,17 @@ class EventBase(object):
             for enrollment in enrollments:
                 try:
                     Enrollment.objects.add_enrollment(enrollment)
-                except Exception as err:
-                    raise EventException('Load enrollment failed: %s' % (err))
+                except Exception as ex:
+                    raise ProcessorException(
+                        'Load enrollment failed: {}'.format(ex))
 
             try:
-                self.record_success(enrollment_count)
+                self.record_success_to_log(event_count=enrollment_count)
             except Exception:
                 pass
 
-    def record_success_to_log(self, log_model, event_count):
+    def record_success_to_log(self, event_count=0):
+        log_model = self._logModel
         minute = int(floor(time() / 60))
         try:
             e = log_model.objects.get(minute=minute)
@@ -173,7 +158,16 @@ class EventBase(object):
         e.save()
 
         if e.event_count <= 5:
-            limit = self._settings.get(
+            limit = self.settings.get(
                 'EVENT_COUNT_PRUNE_AFTER_DAY', 7) * 24 * 60
             prune = minute - limit
             log_model.objects.filter(minute__lt=prune).delete()
+
+    def check_interval(self, acceptable_silence=6*60):
+        recent = self._logModel.objects.all().order_by('-minute')[:1]
+        if len(recent):
+            delta = int(floor(time() / 60)) - recent[0].minute
+            if (delta > acceptable_silence):
+                raise EventException(
+                    'No events in the last {} hours and {} minutes'.format(
+                        int(floor(delta / 60)), (delta % 60)))

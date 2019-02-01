@@ -52,37 +52,52 @@ class EnrollmentModelTest(TestCase):
     @mock.patch('sis_provisioner.models.logger')
     def test_add_enrollment(self, mock_logger, mock_is_active_term):
         now_dt = datetime(2013, 1, 1).replace(tzinfo=utc)
-        student_data = {'Section': get_section_by_id('2013-summer-TRAIN-101-A'),
-                        'UWRegID': 'BCDEF1234567890ABCDEF1234567890',
-                        'Role': 'Student',
-                        'Status': 'Active',
-                        'LastModified': now_dt,
-                        'InstructorUWRegID': None}
+        student_data = {
+            'Section': get_section_by_id('2013-summer-TRAIN-101-A'),
+            'UWRegID': 'BCDEF1234567890ABCDEF1234567890',
+            'Role': 'Student',
+            'Status': 'Active',
+            'LastModified': now_dt,
+            'InstructorUWRegID': None}
 
         # Section not in course table
         Enrollment.objects.add_enrollment(student_data)
-        mock_logger.info.assert_called_with('ENROLLMENT: IGNORE Inactive section 2013-summer-TRAIN-101-A, BCDEF1234567890ABCDEF1234567890, Student')
+        mock_logger.info.assert_called_with(
+            'ENROLLMENT: IGNORE Inactive section 2013-summer-TRAIN-101-A, '
+            'BCDEF1234567890ABCDEF1234567890, Student')
 
-        course, created = Course.objects.get_or_create(course_id='2013-summer-TRAIN-101-A')
+        course, created = Course.objects.get_or_create(
+            course_id='2013-summer-TRAIN-101-A')
 
         # Course model without a provisioned_date
         Enrollment.objects.add_enrollment(student_data)
-        mock_logger.info.assert_called_with('ENROLLMENT: IGNORE Unprovisioned course 2013-summer-TRAIN-101-A, BCDEF1234567890ABCDEF1234567890, Student')
+        mock_logger.info.assert_called_with(
+            'ENROLLMENT: IGNORE Unprovisioned course 2013-summer-TRAIN-101-A, '
+            'BCDEF1234567890ABCDEF1234567890, Student')
 
         # Course model with a provisioned_date
         course.provisioned_date = now_dt
         course.save()
         Enrollment.objects.add_enrollment(student_data)
-        mock_logger.info.assert_called_with('ENROLLMENT: ADD 2013-summer-TRAIN-101-A, BCDEF1234567890ABCDEF1234567890, Student, active, 2013-01-01 00:00:00+00:00')
+        mock_logger.info.assert_called_with(
+            'ENROLLMENT: ADD 2013-summer-TRAIN-101-A, '
+            'BCDEF1234567890ABCDEF1234567890, Student, active, '
+            '2013-01-01 00:00:00+00:00')
 
         # Enrollment added again
         Enrollment.objects.add_enrollment(student_data)
-        mock_logger.info.assert_called_with('ENROLLMENT: UPDATE 2013-summer-TRAIN-101-A, BCDEF1234567890ABCDEF1234567890, Student, active, 2013-01-01 00:00:00+00:00')
+        mock_logger.info.assert_called_with(
+            'ENROLLMENT: UPDATE 2013-summer-TRAIN-101-A, '
+            'BCDEF1234567890ABCDEF1234567890, Student, active, '
+            '2013-01-01 00:00:00+00:00')
 
         # Enrollment added again with deleted status
         student_data['Status'] = 'Deleted'
         Enrollment.objects.add_enrollment(student_data)
-        mock_logger.info.assert_called_with('ENROLLMENT: IGNORE 2013-summer-TRAIN-101-A, BCDEF1234567890ABCDEF1234567890, 2013-01-01 00:00:00+00:00 before 2013-01-01 00:00:00+00:00')
+        mock_logger.info.assert_called_with(
+            'ENROLLMENT: IGNORE 2013-summer-TRAIN-101-A, '
+            'BCDEF1234567890ABCDEF1234567890, '
+            '2013-01-01 00:00:00+00:00 before 2013-01-01 00:00:00+00:00')
 
         Course.objects.all().delete()
         Enrollment.objects.all().delete()

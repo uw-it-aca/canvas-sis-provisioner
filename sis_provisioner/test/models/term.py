@@ -11,10 +11,10 @@ class TermModelTest(TestCase):
     def test_dequeue(self, mock_update):
         dt = datetime.now()
         r = Term.objects.dequeue(Import(pk=1,
-                                         priority=PRIORITY_HIGH,
-                                         canvas_state='imported',
-                                         post_status=200,
-                                         canvas_progress=100,
-                                         monitor_date=dt))
+                                        priority=PRIORITY_HIGH,
+                                        canvas_state='imported',
+                                        post_status=200,
+                                        canvas_progress=100,
+                                        monitor_date=dt))
         mock_update.assert_called_with(
             queue_id=None, deleted_unused_courses_date=dt)

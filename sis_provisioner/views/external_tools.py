@@ -1,9 +1,8 @@
 from django.conf import settings
-from django.utils.decorators import method_decorator
 from logging import getLogger
 from sis_provisioner.models.external_tools import (
     ExternalTool, ExternalToolAccount)
-from sis_provisioner.views import group_required, get_user
+from sis_provisioner.views import get_user
 from sis_provisioner.views.admin import can_manage_external_tools
 from sis_provisioner.views.rest_dispatch import RESTDispatch
 from sis_provisioner.dao.canvas import get_account_by_id
@@ -19,8 +18,6 @@ import re
 logger = getLogger(__name__)
 
 
-@method_decorator(group_required(settings.CANVAS_MANAGER_ADMIN_GROUP),
-                  name='dispatch')
 class ExternalToolView(RESTDispatch):
     """ Retrieves an ExternalTool model.
         GET returns 200 with ExternalTool details.
@@ -253,8 +250,6 @@ class ExternalToolView(RESTDispatch):
             raise Exception('consumer_key is required')
 
 
-@method_decorator(group_required(settings.CANVAS_MANAGER_ADMIN_GROUP),
-                  name='dispatch')
 class ExternalToolListView(RESTDispatch):
     """ Retrieves a list of ExternalTools.
     """

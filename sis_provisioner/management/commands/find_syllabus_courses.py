@@ -13,14 +13,15 @@ import re
 
 class Command(BaseCommand):
     args = "<term_sis_id>"
-    help = "Create a report of courses containing non-empty syllabus \
-            descriptions, for the specified term."
+    help = (
+        "Create a report of courses containing non-empty syllabus"
+        "descriptions, for the specified term.")
 
     def add_arguments(self, parser):
         parser.add_argument('term_sis_id', help='Term to search')
 
     def handle(self, *args, **options):
-	sis_term_id = options.get('term_sis_id')
+        sis_term_id = options.get('term_sis_id')
 
         report_client = Reports()
 
@@ -35,7 +36,7 @@ class Command(BaseCommand):
 
         ind_study_regexp = re.compile("-[A-F0-9]{32}$")
         course_client = Courses()
-        print(["course_id","name","published","public_syllabus"])
+        print(["course_id", "name", "published", "public_syllabus"])
 
         row_count = sum(1 for row in csv.reader(sis_data))
         curr_row = 0
@@ -56,8 +57,8 @@ class Command(BaseCommand):
                 continue
 
             try:
-                course = course_client.get_course_by_sis_id(sis_course_id,
-                    params={"include": "syllabus_body"})
+                course = course_client.get_course_by_sis_id(
+                    sis_course_id, params={"include": "syllabus_body"})
             except DataFailureException as ex:
                 print(ex)
                 continue
@@ -73,6 +74,6 @@ class Command(BaseCommand):
             ]
 
             print(csv_line)
-            print("Remaining: %s" % (row_count - curr_row))
+            print("Remaining: {}".format(row_count - curr_row))
             print(csv_line)
             sleep(1)

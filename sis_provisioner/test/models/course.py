@@ -24,11 +24,14 @@ class CourseModelTest(TestCase):
 
     def test_sws_url(self):
         sdb_course = Course(course_type=Course.SDB_TYPE,
-                            course_id = '2013-summer-TRAIN-101-A')
-        self.assertEquals(sdb_course.sws_url(), '/restclients/view/sws/student/v5/course/2013,summer,TRAIN,101/A.json')
+                            course_id='2013-summer-TRAIN-101-A')
+        self.assertEquals(
+            sdb_course.sws_url(), (
+                '/restclients/view/sws/student/v5/course/'
+                '2013,summer,TRAIN,101/A.json'))
 
         adhoc_course = Course(course_type=Course.ADHOC_TYPE,
-                              course_id = 'course_12345')
+                              course_id='course_12345')
         self.assertEquals(adhoc_course.sws_url(), None)
 
     def test_add_to_queue(self):

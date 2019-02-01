@@ -12,12 +12,14 @@ class GroupModelTest(TestCase):
         r = Group.objects.find_by_search(
             group_id='123', role='role', queue_id='345')
         mock_filter.assert_called_with(
-            group_id='123', is_deleted__isnull=True, queue_id='345', role='role')
+            group_id='123', is_deleted__isnull=True, queue_id='345',
+            role='role')
 
     @mock.patch.object(QuerySet, 'filter')
     def test_get_active_by_course(self, mock_filter):
         r = Group.objects.get_active_by_course('123')
-        mock_filter.assert_called_with(course_id='123', is_deleted__isnull=True)
+        mock_filter.assert_called_with(
+            course_id='123', is_deleted__isnull=True)
 
     @mock.patch.object(QuerySet, 'filter')
     def test_queued(self, mock_filter):

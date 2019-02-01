@@ -1,10 +1,8 @@
 from logging import getLogger
-from django.conf import settings
-from django.utils.decorators import method_decorator
 from sis_provisioner.models import Job
 from sis_provisioner.views.rest_dispatch import RESTDispatch
 from sis_provisioner.views.admin import can_manage_jobs
-from sis_provisioner.views import group_required, get_user
+from sis_provisioner.views import get_user
 from django.utils.timezone import utc
 from datetime import datetime
 import json
@@ -13,8 +11,6 @@ import json
 logger = getLogger(__name__)
 
 
-@method_decorator(group_required(settings.CANVAS_MANAGER_ADMIN_GROUP),
-                  name='dispatch')
 class JobView(RESTDispatch):
     """ Retrieves a Job model.
         GET returns 200 with Job details.

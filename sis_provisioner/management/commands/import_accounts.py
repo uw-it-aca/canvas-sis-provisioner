@@ -11,7 +11,7 @@ class Command(SISProvisionerCommand):
         imp = Import(csv_type="account")
         try:
             imp.csv_path = AccountBuilder().build()
-        except:
+        except Exception:
             imp.csv_errors = traceback.format_exc()
 
         imp.save()

@@ -40,7 +40,7 @@ class EventListView(RESTDispatch):
                                       gmtime(start_sample * 60)),
                     'end': strftime("%Y-%m-%dT%H:%M:%SZ",
                                     gmtime(end_sample * 60)),
-                    'points': [0 for i in xrange(
+                    'points': [0 for i in range(
                         (end_sample - start_sample + 1))]
                 }
 
@@ -57,7 +57,7 @@ class EventListView(RESTDispatch):
                     event_log = PersonLog.objects.filter(
                         minute__gte=start_sample)
                 else:
-                    raise Exception('unknown event type %s' % event_type)
+                    raise Exception('unknown event type {}'.format(event_type))
 
                 for o in event_log:
                     try:
@@ -68,7 +68,8 @@ class EventListView(RESTDispatch):
 
             return self.json_response(events)
         except Exception as err:
-            return self.error_response(400, "Invalid event search: %s" % err)
+            return self.error_response(
+                400, "Invalid event search: {}".format(err))
 
     def _start_minutes(self, utc_str):
         utc = dateutil.parser.parse(utc_str)
