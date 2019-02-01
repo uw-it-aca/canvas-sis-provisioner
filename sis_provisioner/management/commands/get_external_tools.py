@@ -57,11 +57,14 @@ class Command(BaseCommand):
         if options['sessionless']:
             self._headers.append('sessionless url')
 
-        accounter = self._accounts.get_account if (
-            re.match(r'^\d+$', options['account_id']))
-        else self._accounts.get_account_by_sis_id
+        if re.match(r'^\d+$', options['account_id']):
+            account = self._accounts.get_account(options['account_id'])
+        else:
+            account = self._accounts.get_account_by_sis_id(
+                options['account_id'])
+
         try:
-            self.report_external_tools(accounter(options['account_id']))
+            self.report_external_tools(account)
 
         except DataFailureException as err:
             if err.status == 404:
