@@ -6,8 +6,8 @@ from restclients_core.exceptions import DataFailureException
 from suds.client import Client
 from suds.transport.http import HttpTransport
 from suds import WebFault
-from sis_provisioner.models import User
-from sis_provisioner.models.astra import Admin, Account
+from sis_provisioner.models import User, Admin
+from sis_provisioner.models.astra import Account
 from sis_provisioner.dao.account import (
     get_all_campuses, get_all_colleges, get_departments_by_college,
     account_sis_id)
@@ -23,6 +23,8 @@ import http
 import sys
 import re
 import os
+
+logger = getLogger(__name__)
 
 
 class HTTPSTransportV3(HttpTransport):
@@ -78,11 +80,8 @@ class Admins():
         # prepare to map spans of control to campus and college resource values
         self._campuses = get_all_campuses()
         self._colleges = get_all_colleges()
-        self._pid = os.getpid()
-        self._log = getLogger(__name__)
         self._re_non_academic_code = re.compile(r'^canvas_([0-9]+)$')
         self._canvas_ids = {}
-        self._verbosity = int(options.get('verbosity', 0))
 
     def _request(self, methodName, params={}):
         port = 'AuthzProvider'
@@ -90,9 +89,9 @@ class Admins():
             result = self._astra.service[port][methodName](params)
             return result
         except WebFault as err:
-            self._log.error(err)
+            logger.error(err)
         except Exception:
-            self._log.error('Other error: ' + str(sys.exc_info()[1]))
+            logger.error('Error: {}'.format(sys.exc_info()[1]))
 
         return None
 
@@ -105,7 +104,7 @@ class Admins():
     def _add_admin(self, **kwargs):
         netid = kwargs['net_id']
         regid = kwargs['reg_id']
-        self._log.info('ADD: {} is {} in {}'.format(
+        logger.info('ADD: {} is {} in {}'.format(
             netid, kwargs['role'], kwargs['account_id']))
 
         try:
@@ -114,7 +113,7 @@ class Admins():
             try:
                 person = get_person_by_netid(netid)
 
-                self._log.info('Provisioning admin: {} ({})'.format(
+                logger.info('Provisioning admin: {} ({})'.format(
                     person.uwnetid, person.uwregid))
 
                 try:
@@ -130,7 +129,7 @@ class Admins():
                 User.objects.add_user(person)
 
             except Exception as err:
-                self._log.info('Skipped admin: {} ({})'.format(netid, err))
+                logger.info('Skipped admin: {} ({})'.format(netid, err))
                 return
 
         try:
@@ -145,7 +144,7 @@ class Admins():
                           account_id=kwargs['account_id'],
                           canvas_id=kwargs['canvas_id'],
                           role=kwargs['role'],
-                          queue_id=self._pid)
+                          queue_id=kwargs['queue_id'])
 
         admin.is_deleted = None
         admin.deleted_date = None
@@ -231,26 +230,7 @@ class Admins():
 
         return (sis_id, self._canvas_ids[sis_id])
 
-    def load_all_admins(self, options={}):
-        # loader running?
-        queued = Admin.objects.queued()
-        if len(queued):
-            # look for pid matching queue_id, adjust gripe accordingly
-            try:
-                os.kill(queued[0].queue_id, 0)
-                raise ASTRAException('Loader already running {}'.format(
-                    queued[0].queue_id))
-            except Exception:
-                override = options.get('override', 0)
-                if override > 0 and override == queued[0].queue_id:
-                    Admin.objects.dequeue(queue_id=override)
-                    if len(Admin.objects.queued()):
-                        raise ASTRAException(
-                            'Unable to override process {}'.format(override))
-                else:
-                    raise ASTRAException('Loader blocked by process {}'.format(
-                        queued[0].queue_id))
-
+    def load_all_admins(self, queue_id, options={}):
         # query ASTRA
         authFilter = self._astra.factory.create('authFilter')
         authFilter.privilege._code = settings.ASTRA_APPLICATION
@@ -259,12 +239,11 @@ class Admins():
 
         authz = self._getAuthz(authFilter)
         if not authz:
-            self._log.error(
-                'ASTRA GetAuthz failed. Aborting Canvas admin update.')
+            logger.error('ASTRA GetAuthz failed. Aborting Canvas admin update')
             return
 
         # flag and mark all records deleted to catch ASTRA fallen
-        Admin.objects.queue_all(queue_id=self._pid)
+        Admin.objects.set_deleted(queue_id)
 
         # restore records with latest auths
         if 'authCollection' in authz and 'auth' in authz.authCollection:
@@ -293,6 +272,7 @@ class Admins():
                                         account_id=account_id,
                                         canvas_id=canvas_id,
                                         role=auth.role._code,
+                                        queue_id=queue_id,
                                         is_deleted=None)
                     else:
                         raise ASTRAException(
@@ -300,12 +280,9 @@ class Admins():
                                 auth.party))
 
                 except ASTRAException as err:
-                    self._log.error('{}\n AUTH: {}'.format(err, auth))
+                    logger.error('{}\n AUTH: {}'.format(err, auth))
 
         # log who fell from ASTRA
-        for d in Admin.objects.get_deleted():
-            self._log.info('REMOVE: {} as {} in {}'.format(
+        for d in Admin.objects.get_deleted(queue_id):
+            logger.info('REMOVE: {} as {} in {}'.format(
                 d.net_id, d.role, d.account_id))
-
-        # tidy up
-        Admin.objects.dequeue()

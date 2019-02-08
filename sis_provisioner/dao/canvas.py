@@ -1,6 +1,7 @@
 from django.conf import settings
 from uw_canvas import Canvas
 from uw_canvas.accounts import Accounts
+from uw_canvas.admins import Admins
 from uw_canvas.courses import Courses
 from uw_canvas.sections import Sections
 from uw_canvas.enrollments import Enrollments
@@ -30,6 +31,10 @@ ENROLLMENT_ACTIVE = CanvasEnrollment.STATUS_ACTIVE
 ENROLLMENT_INACTIVE = CanvasEnrollment.STATUS_INACTIVE
 ENROLLMENT_DELETED = CanvasEnrollment.STATUS_DELETED
 
+RETRY_STATUS_CODES = [408, 500, 502, 503, 504]
+RETRY_MAX = 5
+RETRY_DELAY = 3
+
 
 def valid_canvas_id(canvas_id):
     return Canvas().valid_canvas_id(canvas_id)
@@ -47,8 +52,16 @@ def get_sub_accounts(account_id):
     return Accounts().get_sub_accounts(account_id)
 
 
+@retry(DataFailureException, status_codes=RETRY_STATUS_CODES,
+       tries=RETRY_MAX, delay=RETRY_DELAY, logger=logger)
 def get_all_sub_accounts(account_id):
     return Accounts().get_all_sub_accounts(account_id)
+
+
+@retry(DataFailureException, status_codes=RETRY_STATUS_CODES,
+       tries=RETRY_MAX, delay=RETRY_DELAY, logger=logger)
+def get_admins(account_id):
+    return Admins().get_admins(account_id)
 
 
 @retry(SSLError, tries=3, delay=1, logger=logger)
@@ -91,15 +104,15 @@ def update_term_overrides(term_sis_id, override_dates):
     return Terms().update_term_overrides(term_sis_id, overrides=overrides)
 
 
-@retry(DataFailureException, status_codes=[408, 500, 502, 503, 504],
-       tries=5, delay=3, logger=logger)
+@retry(DataFailureException, status_codes=RETRY_STATUS_CODES,
+       tries=RETRY_MAX, delay=RETRY_DELAY, logger=logger)
 def get_section_by_sis_id(section_sis_id):
     return Sections().get_section_by_sis_id(section_sis_id)
 
 
 def get_sis_sections_for_course(course_sis_id):
-    @retry(DataFailureException, status_codes=[408, 500, 502, 503, 504],
-           tries=5, delay=3, logger=logger)
+    @retry(DataFailureException, status_codes=RETRY_STATUS_CODES,
+           tries=RETRY_MAX, delay=RETRY_DELAY, logger=logger)
     def _get_sections(course_sis_id):
         try:
             return Sections().get_sections_in_course_by_sis_id(course_sis_id)

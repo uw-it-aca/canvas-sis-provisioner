@@ -1,89 +1,12 @@
 from django.db import models, IntegrityError
 from django.db.models import Q
 from django.conf import settings
-from django.utils.timezone import localtime
 from logging import getLogger
 from sis_provisioner.dao.account import valid_academic_account_sis_id
 from sis_provisioner.dao.canvas import get_account_by_id, get_all_sub_accounts
 from sis_provisioner.exceptions import AccountPolicyException
 
-
 logger = getLogger(__name__)
-
-
-class AdminManager(models.Manager):
-    def queue_all(self, queue_id):
-        return super(AdminManager, self).get_queryset().update(
-            queue_id=queue_id, is_deleted=True)
-
-    def queued(self, queue_id=None):
-        if queue_id is not None:
-            return super(AdminManager, self).get_queryset().filter(
-                queue_id=queue_id)
-        else:
-            return super(AdminManager, self).get_queryset().filter(
-                queue_id__isnull=False)
-
-    def dequeue(self, queue_id=None):
-        if queue_id is not None:
-            super(AdminManager, self).get_queryset().filter(
-                queue_id=queue_id).update(queue_id=None)
-        else:
-            super(AdminManager, self).get_queryset().filter(
-                queue_id__isnull=False).update(queue_id=None)
-
-    def get_deleted(self):
-        return super(AdminManager, self).get_queryset().filter(
-            is_deleted__isnull=False)
-
-    def is_account_admin(self, net_id):
-        try:
-            admin = Admin.objects.get(
-                net_id=net_id, role='accountadmin', deleted_date__isnull=True)
-            return True
-        except Admin.DoesNotExist:
-            return False
-
-
-class Admin(models.Model):
-    """ Represents the provisioned state of an administrative user.
-    """
-    net_id = models.CharField(max_length=20)
-    reg_id = models.CharField(max_length=32)
-    role = models.CharField(max_length=32)
-    account_id = models.CharField(max_length=128)
-    canvas_id = models.IntegerField()
-    added_date = models.DateTimeField(auto_now_add=True)
-    provisioned_date = models.DateTimeField(null=True)
-    deleted_date = models.DateTimeField(null=True)
-    is_deleted = models.NullBooleanField()
-    queue_id = models.CharField(max_length=30, null=True)
-
-    objects = AdminManager()
-
-    class Meta:
-        db_table = 'astra_admin'
-
-    def json_data(self):
-        date_fmt = '%m/%d/%Y %l:%M %p'
-        return {
-            'net_id': self.net_id,
-            'reg_id': self.reg_id,
-            'role': self.role,
-            'account_id': self.account_id,
-            'canvas_id': self.canvas_id,
-            'account_link': '{host}/accounts/{account_id}'.format(
-                host=settings.RESTCLIENTS_CANVAS_HOST,
-                account_id=self.canvas_id),
-            'added_date': localtime(self.added_date).strftime(date_fmt) if (
-                self.added_date is not None) else '',
-            'provisioned_date': localtime(self.provisioned_date).strftime(
-                date_fmt) if (self.provisioned_date is not None) else '',
-            'is_deleted': True if self.is_deleted else False,
-            'deleted_date': localtime(self.deleted_date).strftime(
-                date_fmt) if (self.deleted_date is not None) else '',
-            'queue_id': self.queue_id
-        }
 
 
 class AccountManager(models.Manager):

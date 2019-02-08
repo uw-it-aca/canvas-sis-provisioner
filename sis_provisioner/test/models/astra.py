@@ -1,25 +1,26 @@
 from django.test import TestCase
 from django.db.models.query import QuerySet
 from django.utils.timezone import utc
-from sis_provisioner.models.astra import Account, Admin
+from sis_provisioner.models import Admin
+from sis_provisioner.models.astra import Account
 from datetime import datetime
+import os
+import binascii
 import mock
 
 
 class AdminModelTest(TestCase):
+    def setUp(self):
+        Admin.objects.all().delete()
+
     def _create_admin(self, net_id):
         admin = Admin(
-            net_id=net_id, reg_id='AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+            net_id=net_id, reg_id=binascii.b2a_hex(os.urandom(16)).upper(),
             role='accountadmin', account_id='1', canvas_id='2')
         admin.save()
         return admin
 
-    def _clear_admins(self):
-        Admin.objects.all().delete()
-
     def test_is_account_admin(self):
-        self._clear_admins()
-
         self.assertEquals(Admin.objects.is_account_admin('javerage'), False)
 
         admin = self._create_admin('javerage')
@@ -32,34 +33,34 @@ class AdminModelTest(TestCase):
 
         self.assertEquals(Admin.objects.is_account_admin('javerage'), False)
 
-        self._clear_admins()
+    def test_set_deleted(self):
+        self._create_admin('javerage')
+        self._create_admin('jsmith')
 
-    @mock.patch.object(QuerySet, 'update')
-    def test_dequeue(self, mock_update):
-        r = Admin.objects.dequeue(queue_id=1)
-        mock_update.assert_called_with(queue_id=None)
+        imp = Admin.objects.queue_all()
 
-        r = Admin.objects.dequeue()
-        mock_update.assert_called_with(queue_id=None)
+        Admin.objects.set_deleted(queue_id=imp.pk)
+
+        deleted = Admin.objects.filter(is_deleted=True, queue_id=imp.pk)
+        self.assertEquals(len(deleted), 2)
 
     def test_get_deleted(self):
-        self._clear_admins()
         admin = self._create_admin('javerage')
 
-        deleted = Admin.objects.get_deleted()
+        imp = Admin.objects.queue_all()
+
+        deleted = Admin.objects.get_deleted(queue_id=imp.pk)
         self.assertEquals(len(deleted), 0)
 
+        admin = Admin.objects.get(net_id='javerage')
         admin.is_deleted = True
         admin.deleted_date = datetime.utcnow().replace(tzinfo=utc)
         admin.save()
 
-        deleted = Admin.objects.get_deleted()
+        deleted = Admin.objects.get_deleted(queue_id=imp.pk)
         self.assertEquals(len(deleted), 1)
 
-        self._clear_admins()
-
     def test_json_data(self):
-        self._clear_admins()
         with self.settings(RESTCLIENTS_CANVAS_HOST='http://canvas.edu'):
             json = self._create_admin('javerage').json_data()
             self.assertEquals(json['account_id'], '1')
@@ -71,8 +72,6 @@ class AdminModelTest(TestCase):
             self.assertEquals(json['provisioned_date'], '')
             self.assertEquals(json['role'], 'accountadmin')
             self.assertEquals(json['net_id'], 'javerage')
-
-        self._clear_admins()
 
 
 class AccountModelTest(TestCase):

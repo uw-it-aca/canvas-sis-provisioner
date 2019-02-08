@@ -934,6 +934,93 @@ class Curriculum(models.Model):
     objects = CurriculumManager()
 
 
+class AdminManager(models.Manager):
+    def queue_all(self):
+        pks = super(AdminManager, self).get_queryset().filter(
+            queue_id__isnull=True).values_list('pk', flat=True)
+
+        if not len(pks):
+            raise EmptyQueueException()
+
+        imp = Import(priority=PRIORITY_DEFAULT, csv_type='admin')
+        imp.save()
+
+        super(AdminManager, self).get_queryset().update(queue_id=imp.pk)
+
+        return imp
+
+    def queued(self, queue_id):
+        return super(AdminManager, self).get_queryset().filter(
+            queue_id=queue_id)
+
+    def dequeue(self, sis_import):
+        kwargs = {'queue_id': None}
+        if sis_import.is_imported():
+            kwargs['provisioned_date'] = sis_import.monitor_date
+
+        self.queued(sis_import.pk).update(**kwargs)
+
+    def set_deleted(self, queue_id):
+        super(AdminManager, self).get_queryset().filter(
+            queue_id=queue_id).update(is_deleted=True)
+
+    def get_deleted(self, queue_id):
+        return super(AdminManager, self).get_queryset().filter(
+            queue_id=queue_id, is_deleted__isnull=False)
+
+    def is_account_admin(self, net_id):
+        return self.user_has_role(net_id, 'accountadmin')
+
+    def user_has_role(self, net_id, role):
+        try:
+            admin = Admin.objects.get(
+                net_id=net_id, role=role, deleted_date__isnull=True)
+            return True
+        except Admin.DoesNotExist:
+            return False
+
+
+class Admin(models.Model):
+    """ Represents the provisioned state of an administrative user.
+    """
+    net_id = models.CharField(max_length=20)
+    reg_id = models.CharField(max_length=32)
+    role = models.CharField(max_length=32)
+    account_id = models.CharField(max_length=128)
+    canvas_id = models.IntegerField()
+    added_date = models.DateTimeField(auto_now_add=True)
+    provisioned_date = models.DateTimeField(null=True)
+    deleted_date = models.DateTimeField(null=True)
+    is_deleted = models.NullBooleanField()
+    queue_id = models.CharField(max_length=30, null=True)
+
+    objects = AdminManager()
+
+    class Meta:
+        db_table = 'astra_admin'
+
+    def json_data(self):
+        date_fmt = '%m/%d/%Y %l:%M %p'
+        return {
+            'net_id': self.net_id,
+            'reg_id': self.reg_id,
+            'role': self.role,
+            'account_id': self.account_id,
+            'canvas_id': self.canvas_id,
+            'account_link': '{host}/accounts/{account_id}'.format(
+                host=settings.RESTCLIENTS_CANVAS_HOST,
+                account_id=self.canvas_id),
+            'added_date': localtime(self.added_date).strftime(date_fmt) if (
+                self.added_date is not None) else '',
+            'provisioned_date': localtime(self.provisioned_date).strftime(
+                date_fmt) if (self.provisioned_date is not None) else '',
+            'is_deleted': True if self.is_deleted else False,
+            'deleted_date': localtime(self.deleted_date).strftime(
+                date_fmt) if (self.deleted_date is not None) else '',
+            'queue_id': self.queue_id
+        }
+
+
 class ImportManager(models.Manager):
     def find_by_requires_update(self):
         return super(ImportManager, self).get_queryset().filter(
@@ -948,6 +1035,7 @@ class Import(models.Model):
     """
     CSV_TYPE_CHOICES = (
         ('account', 'Curriculum'),
+        ('admin', 'Admin'),
         ('user', 'User'),
         ('course', 'Course'),
         ('unused_course', 'Term'),
