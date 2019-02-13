@@ -1,4 +1,5 @@
 from django.test import TestCase
+from django.conf import settings
 from django.db.models.query import QuerySet
 from django.utils.timezone import utc
 from sis_provisioner.models import Admin
@@ -16,7 +17,8 @@ class AdminModelTest(TestCase):
     def _create_admin(self, net_id):
         admin = Admin(
             net_id=net_id, reg_id=binascii.b2a_hex(os.urandom(16)).upper(),
-            role='accountadmin', account_id='1', canvas_id='2')
+            role='accountadmin', account_id='test',
+            canvas_id=settings.RESTCLIENTS_CANVAS_ACCOUNT_ID)
         admin.save()
         return admin
 
@@ -61,9 +63,10 @@ class AdminModelTest(TestCase):
         self.assertEquals(len(deleted), 1)
 
     def test_json_data(self):
-        with self.settings(RESTCLIENTS_CANVAS_HOST='http://canvas.edu'):
+        with self.settings(RESTCLIENTS_CANVAS_HOST='http://canvas.edu',
+                           RESTCLIENTS_CANVAS_ACCOUNT_ID='2'):
             json = self._create_admin('javerage').json_data()
-            self.assertEquals(json['account_id'], '1')
+            self.assertEquals(json['account_id'], 'test')
             self.assertEquals(json['account_link'],
                               'http://canvas.edu/accounts/2')
             self.assertEquals(json['canvas_id'], '2')

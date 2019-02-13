@@ -969,12 +969,24 @@ class AdminManager(models.Manager):
             queue_id=queue_id, is_deleted__isnull=False)
 
     def is_account_admin(self, net_id):
-        return self.user_has_role(net_id, 'accountadmin')
+        return self.has_role_in_account(
+            net_id, settings.RESTCLIENTS_CANVAS_ACCOUNT_ID, 'accountadmin')
 
-    def user_has_role(self, net_id, role):
+    def has_role_in_account(self, net_id, canvas_id, role):
+        try:
+            admin = Admin.objects.get(
+                net_id=net_id, canvas_id=canvas_id, role=role,
+                deleted_date__isnull=True)
+            return True
+        except Admin.DoesNotExist:
+            return False
+
+    def has_role(self, net_id, role):
         try:
             admin = Admin.objects.get(
                 net_id=net_id, role=role, deleted_date__isnull=True)
+            return True
+        except MultipleObjectsReturned:
             return True
         except Admin.DoesNotExist:
             return False
