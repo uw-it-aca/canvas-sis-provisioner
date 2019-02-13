@@ -951,7 +951,7 @@ class AdminManager(models.Manager):
 
     def queued(self, queue_id):
         return super(AdminManager, self).get_queryset().filter(
-            queue_id=queue_id)
+            queue_id=queue_id).order_by('-is_deleted')
 
     def dequeue(self, sis_import):
         kwargs = {'queue_id': None}
