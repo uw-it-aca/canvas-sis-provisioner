@@ -4,7 +4,7 @@ from sis_provisioner.builders import Builder
 from sis_provisioner.csv.format import AdminCSV
 from sis_provisioner.dao.canvas import (
     valid_canvas_id, get_account, get_account_by_sis_id, get_all_sub_accounts,
-    get_admins)
+    get_admins, delete_admin)
 from sis_provisioner.models import Admin
 from sis_provisioner.models.astra import Account
 from datetime import datetime
@@ -88,13 +88,17 @@ class AdminBuilder(Builder):
                         account_id = ''
                     self.add_admin(user_id, account_id, ancillary_role)
 
-        if self.remove_non_astra:
-            for canvas_admin in canvas_admins:
-                user_id = canvas_admin.user.sis_user_id
-                role = canvas_admin.role
-                if not hasattr(canvas_admin, 'in_astra'):
-                    logger.info('REMOVE UNK {} from {} with role {}'.format(
-                        user_id, account_id, role))
+        for canvas_admin in canvas_admins:
+            user_id = canvas_admin.user.sis_user_id
+            role = canvas_admin.role
+            if not hasattr(canvas_admin, 'in_astra'):
+                logger.info('REMOVE UNK {} from {} with role {}'.format(
+                    user_id, account_id, role))
+                if self.remove_non_astra:
+                    # https://canvas.instructure.com/doc/api/file.sis_csv.html
+                    # An admin cannot be deleted by running an sis import
+                    # unless the admin is already managed by sis.
+                    delete_admin(account_id, user_id, role)
 
     def add_admin(self, user_id, account_id, role):
         self.data.add(AdminCSV(user_id, account_id, role, status='active'))

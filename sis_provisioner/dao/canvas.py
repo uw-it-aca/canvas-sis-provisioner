@@ -64,6 +64,16 @@ def get_admins(account_id):
     return Admins().get_admins(account_id)
 
 
+def delete_admin(account_id, user_id, role):
+    try:
+        ret = Admins().delete_admin(account_id, user_id, role)
+    except DataFailureException as err:
+        if err.status == 404:  # Non-personal regid?
+            return False
+        raise
+    return ret
+
+
 @retry(SSLError, tries=3, delay=1, logger=logger)
 def get_course_roles_in_account(account_id):
     return Roles().get_effective_course_roles_in_account(account_id)

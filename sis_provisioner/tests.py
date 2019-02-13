@@ -2,7 +2,7 @@ from sis_provisioner.test.dao import DaoTest
 from sis_provisioner.test.dao.canvas import (
     CanvasIDTest, CanvasAccountsTest, CanvasRolesTest, CanvasUsersTest,
     CanvasCoursesTest, CanvasSectionsTest, CanvasEnrollmentsTest,
-    CanvasReportsTest, CanvasSISImportsTest, CanvasTermsTest)
+    CanvasReportsTest, CanvasSISImportsTest, CanvasTermsTest, CanvasAdminsTest)
 from sis_provisioner.test.dao.course import (
     TimeScheduleConstructionTest, SectionPolicyTest, SectionByIDTest,
     XlistSectionTest, NewSectionQueryTest, RegistrationsBySectionTest)
