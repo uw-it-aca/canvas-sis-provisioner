@@ -50,7 +50,7 @@ class Command(SISProvisionerCommand):
     def verify_admin(self, admin, account_id):
         astra_role = self.canvas_role_mapping[admin.role]
 
-        # Verify whether this admin is ASTRA-defined
+        # Verify whether this role is ASTRA-defined
         if Admin.objects.has_role_in_account(
                 admin.user.login_id, account_id, astra_role):
             return True

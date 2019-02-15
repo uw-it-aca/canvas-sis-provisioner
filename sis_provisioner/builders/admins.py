@@ -16,7 +16,7 @@ class AdminBuilder(Builder):
         status = 'deleted' if admin.is_deleted else 'active'
         action = 'REMOVE' if admin.is_deleted else 'ADD'
 
-        if admin.canvas_id == settings.RESTCLIENTS_CANVAS_ACCOUNT_ID:
+        if str(admin.canvas_id) == settings.RESTCLIENTS_CANVAS_ACCOUNT_ID:
             account_id = ''
 
         self.data.add(AdminCSV(admin.reg_id, account_id, role, status=status))

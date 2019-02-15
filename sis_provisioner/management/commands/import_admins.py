@@ -39,5 +39,8 @@ class Command(SISProvisionerCommand):
             except MissingImportPathException as ex:
                 if not imp.csv_errors:
                     imp.delete()
+        else:
+            print(imp.csv_path)
+            imp.delete()
 
         self.update_job()
