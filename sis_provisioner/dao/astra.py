@@ -1,5 +1,4 @@
 from django.conf import settings
-from django.utils.timezone import utc
 from logging import getLogger
 from django.db.utils import IntegrityError
 from uw_canvas.models import CanvasUser
@@ -18,7 +17,6 @@ from sis_provisioner.dao.canvas import (
     get_user_by_sis_id, create_user, get_account_by_sis_id)
 from sis_provisioner.exceptions import ASTRAException
 from urllib.request import build_opener, HTTPSHandler
-from datetime import datetime
 import socket
 import ssl
 import http
@@ -244,8 +242,7 @@ class Admins():
             logger.error('ASTRA GetAuthz failed. Aborting Canvas admin update')
             return
 
-        # flag and mark all records deleted to catch ASTRA fallen
-        Admin.objects.set_deleted(queue_id)
+        Admin.objects.start_reconcile(queue_id)
 
         # restore records with latest auths
         if 'authCollection' in authz and 'auth' in authz.authCollection:
@@ -283,11 +280,4 @@ class Admins():
                 except ASTRAException as err:
                     logger.error('{}\n AUTH: {}'.format(err, auth))
 
-        # log who fell from ASTRA
-        for admin in Admin.objects.get_deleted(queue_id):
-            if admin.deleted_date is None:
-                admin.deleted_date = datetime.utcnow().replace(tzinfo=utc)
-                admin.save()
-
-            logger.info('REMOVE: {} as {} in {}'.format(
-                admin.net_id, admin.role, admin.account_id))
+        Admin.objects.finish_reconcile(queue_id)

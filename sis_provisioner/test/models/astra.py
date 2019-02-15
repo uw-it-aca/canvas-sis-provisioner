@@ -4,7 +4,7 @@ from django.db.models.query import QuerySet
 from django.utils.timezone import utc
 from sis_provisioner.models import Admin
 from sis_provisioner.models.astra import Account
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 import binascii
 import mock
@@ -35,32 +35,40 @@ class AdminModelTest(TestCase):
 
         self.assertEquals(Admin.objects.is_account_admin('javerage'), False)
 
-    def test_set_deleted(self):
+    def test_start_reconcile(self):
         self._create_admin('javerage')
         self._create_admin('jsmith')
 
         imp = Admin.objects.queue_all()
 
-        Admin.objects.set_deleted(queue_id=imp.pk)
+        Admin.objects.start_reconcile(queue_id=imp.pk)
 
-        deleted = Admin.objects.filter(is_deleted=True, queue_id=imp.pk)
+        deleted = Admin.objects.filter(
+            is_deleted=True, deleted_date=None, queue_id=imp.pk)
         self.assertEquals(len(deleted), 2)
 
-    def test_get_deleted(self):
-        admin = self._create_admin('javerage')
+    def test_finish_reconcile(self):
+        self._create_admin('javerage')
+        self._create_admin('jsmith')
 
         imp = Admin.objects.queue_all()
 
-        deleted = Admin.objects.get_deleted(queue_id=imp.pk)
-        self.assertEquals(len(deleted), 0)
+        Admin.objects.start_reconcile(queue_id=imp.pk)
+        Admin.objects.finish_reconcile(queue_id=imp.pk)
 
-        admin = Admin.objects.get(net_id='javerage')
-        admin.is_deleted = True
-        admin.deleted_date = datetime.utcnow().replace(tzinfo=utc)
-        admin.save()
+        deleted = Admin.objects.filter(
+            is_deleted=True, is_deleted__isnull=False, queue_id=imp.pk)
+        self.assertEquals(len(deleted), 2)
 
-        deleted = Admin.objects.get_deleted(queue_id=imp.pk)
-        self.assertEquals(len(deleted), 1)
+        Admin.objects.start_reconcile(queue_id=imp.pk)
+
+        Admin.objects.queued(imp.pk).update(
+            deleted_date=(datetime.utcnow() - timedelta(days=100)))
+
+        Admin.objects.finish_reconcile(queue_id=imp.pk)
+
+        admins = Admin.objects.filter(queue_id=imp.pk)
+        self.assertEquals(len(admins), 0)
 
     def test_json_data(self):
         with self.settings(RESTCLIENTS_CANVAS_HOST='http://canvas.edu',

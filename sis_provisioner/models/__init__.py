@@ -960,13 +960,26 @@ class AdminManager(models.Manager):
 
         self.queued(sis_import.pk).update(**kwargs)
 
-    def set_deleted(self, queue_id):
+    def start_reconcile(self, queue_id):
+        """
+        Mark all records deleted to catch ASTRA fallen
+        """
         super(AdminManager, self).get_queryset().filter(
             queue_id=queue_id).update(is_deleted=True)
 
-    def get_deleted(self, queue_id):
-        return super(AdminManager, self).get_queryset().filter(
-            queue_id=queue_id, is_deleted__isnull=False)
+    def finish_reconcile(self, queue_id):
+        now_dt = datetime.utcnow().replace(tzinfo=utc)
+        retention_dt = now_dt - timedelta(days=90)
+
+        # Set deleted date for admins who were just deleted
+        super(AdminManager, self).get_queryset().filter(
+            queue_id=queue_id, is_deleted__isnull=False,
+            deleted_date=None).update(deleted_date=now_dt)
+
+        # Delete removed admins older than N days
+        super(AdminManager, self).get_queryset().filter(
+            queue_id=queue_id, is_deleted__isnull=False,
+            deleted_date__lt=retention_dt).delete()
 
     def is_account_admin(self, net_id):
         return self.has_role_in_account(
