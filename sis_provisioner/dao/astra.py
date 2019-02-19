@@ -283,17 +283,13 @@ class Admins():
         Admin.objects.finish_reconcile(queue_id)
 
 
-def verify_canvas_admin(self, admin, account_id):
-    # Find the ASTRA role, based on the admin role in Canvas
-    astra_role = ''
-    for key, val in settings.ASTRA_ROLE_MAPPING.items():
-        if val == admin.role:
-            astra_role = key
-            break
+def verify_canvas_admin(admin, canvas_account_id):
+    # Create a reverse lookup for ASTRA role, based on the admin role in Canvas
+    roles = {v: k for k, v in settings.ASTRA_ROLE_MAPPING.items()}
 
     # Verify whether this role is ASTRA-defined
     if Admin.objects.has_role_in_account(
-            admin.user.login_id, account_id, astra_role):
+            admin.user.login_id, canvas_account_id, roles.get(admin.role)):
         return True
 
     # Otherwise, verify whether this is a valid ancillary role
@@ -301,11 +297,12 @@ def verify_canvas_admin(self, admin, account_id):
         if 'root' == data['account']:
             ancillary_account_id = settings.RESTCLIENTS_CANVAS_ACCOUNT_ID
         else:
-            ancillary_account_id = account_id
+            ancillary_account_id = canvas_account_id
 
-        if (ancillary_account_id == account_id and
+        if (ancillary_account_id == canvas_account_id and
                 data['canvas_role'] == admin.role):
-            if Admin.objects.has_role(admin.user.login_id, parent_role):
+            if Admin.objects.has_role(
+                    admin.user.login_id, roles.get(parent_role)):
                 return True
 
     return False

@@ -999,7 +999,7 @@ class AdminManager(models.Manager):
             admin = Admin.objects.get(
                 net_id=net_id, role=role, deleted_date__isnull=True)
             return True
-        except MultipleObjectsReturned:
+        except Admin.MultipleObjectsReturned:
             return True
         except Admin.DoesNotExist:
             return False

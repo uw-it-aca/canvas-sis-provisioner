@@ -1,31 +1,20 @@
-from django.test import TestCase
-from django.conf import settings
+from django.test import TestCase, override_settings
 from django.db.models.query import QuerySet
 from django.utils.timezone import utc
+from sis_provisioner.test import create_admin
 from sis_provisioner.models import Admin
 from sis_provisioner.models.astra import Account
 from datetime import datetime, timedelta
-import os
-import binascii
 import mock
 
 
+@override_settings(RESTCLIENTS_CANVAS_ACCOUNT_ID='123',
+                   RESTCLIENTS_CANVAS_HOST='http://canvas.edu')
 class AdminModelTest(TestCase):
-    def setUp(self):
-        Admin.objects.all().delete()
-
-    def _create_admin(self, net_id):
-        admin = Admin(
-            net_id=net_id, reg_id=binascii.b2a_hex(os.urandom(16)).upper(),
-            role='accountadmin', account_id='test',
-            canvas_id=settings.RESTCLIENTS_CANVAS_ACCOUNT_ID)
-        admin.save()
-        return admin
-
     def test_is_account_admin(self):
         self.assertEquals(Admin.objects.is_account_admin('javerage'), False)
 
-        admin = self._create_admin('javerage')
+        admin = create_admin('javerage')
 
         self.assertEquals(Admin.objects.is_account_admin('javerage'), True)
 
@@ -36,8 +25,8 @@ class AdminModelTest(TestCase):
         self.assertEquals(Admin.objects.is_account_admin('javerage'), False)
 
     def test_start_reconcile(self):
-        self._create_admin('javerage')
-        self._create_admin('jsmith')
+        create_admin('javerage')
+        create_admin('jsmith')
 
         imp = Admin.objects.queue_all()
 
@@ -48,8 +37,8 @@ class AdminModelTest(TestCase):
         self.assertEquals(len(deleted), 2)
 
     def test_finish_reconcile(self):
-        self._create_admin('javerage')
-        self._create_admin('jsmith')
+        create_admin('javerage')
+        create_admin('jsmith')
 
         imp = Admin.objects.queue_all()
 
@@ -71,18 +60,16 @@ class AdminModelTest(TestCase):
         self.assertEquals(len(admins), 0)
 
     def test_json_data(self):
-        with self.settings(RESTCLIENTS_CANVAS_HOST='http://canvas.edu',
-                           RESTCLIENTS_CANVAS_ACCOUNT_ID='2'):
-            json = self._create_admin('javerage').json_data()
-            self.assertEquals(json['account_id'], 'test')
-            self.assertEquals(json['account_link'],
-                              'http://canvas.edu/accounts/2')
-            self.assertEquals(json['canvas_id'], '2')
-            self.assertEquals(json['is_deleted'], False)
-            self.assertEquals(json['queue_id'], None)
-            self.assertEquals(json['provisioned_date'], '')
-            self.assertEquals(json['role'], 'accountadmin')
-            self.assertEquals(json['net_id'], 'javerage')
+        json = create_admin('javerage').json_data()
+        self.assertEquals(json['account_id'], 'test')
+        self.assertEquals(json['account_link'],
+                          'http://canvas.edu/accounts/123')
+        self.assertEquals(json['canvas_id'], '123')
+        self.assertEquals(json['is_deleted'], False)
+        self.assertEquals(json['queue_id'], None)
+        self.assertEquals(json['provisioned_date'], '')
+        self.assertEquals(json['role'], 'accountadmin')
+        self.assertEquals(json['net_id'], 'javerage')
 
 
 class AccountModelTest(TestCase):
