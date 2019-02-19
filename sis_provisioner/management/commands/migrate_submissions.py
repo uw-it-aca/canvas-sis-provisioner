@@ -9,6 +9,7 @@ import sys
 
 class Command(BaseCommand):
     help = ''
+
     def add_arguments(self, parser):
         parser.add_argument('file_path', help='CSV file')
 
@@ -46,7 +47,7 @@ class Command(BaseCommand):
                         print('Skipping: %s' % course.name)
                         continue
 
-                    submissions = sub_client.get_submissions_by_course_and_assignment(
+                    subs = sub_client.get_submissions_by_course_and_assignment(
                         course_id, assignment_id)
 
                 except DataFailureException as ex:
@@ -55,15 +56,16 @@ class Command(BaseCommand):
                     else:
                         raise
 
-                for submission in submissions:
+                for submission in subs:
                     for attachment in submission.attachments:
-                        writer.writerow([course_id,
-                                         assignment_id,
-                                         course.term.sis_term_id,
-                                         attachment.display_name.encode('utf-8'),
-                                         attachment.content_type,
-                                         attachment.size,
-                                         attachment.url])
+                        writer.writerow([
+                            course_id,
+                            assignment_id,
+                            course.term.sis_term_id,
+                            attachment.display_name.encode('utf-8'),
+                            attachment.content_type,
+                            attachment.size,
+                            attachment.url])
                         assignment_total += 1
 
                 file_total += assignment_total

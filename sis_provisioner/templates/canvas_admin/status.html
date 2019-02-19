@@ -1,5 +1,4 @@
 {% extends 'canvas_admin/base.html' %}
-{% load templatetag_handlebars %}
 
 {% block admin_content %}
 
@@ -11,7 +10,7 @@
   <a href="#" class="status-fetching"><i class="fa fa-spinner fa-spin"></i></a>
 </div>
 
-    
+
 <div class="event-freq clearfix">
 
     <div id="event-tab-1" class="pull-left" style="width:65%;">
@@ -34,13 +33,13 @@
         </ul>
 
         <div class="tab-content">
-            
+
             <div id="course-tab-1" class="tab-pane active">
                 <p class="import-update" style="text-align: right;">As of <span></span>, <a href="javascript:void(0);">refresh</a> in <span></span></p>
                 <div class="waiting import-status">
                     <ul class="import-list"></ul>
                 </div>
-               
+
                 <div class="status-result-list">
                     <h3 class="list-header">Import details <span class="badge">0</span></h3>
                     <div class="clearfix">
@@ -57,20 +56,21 @@
                     <ul class="provision-error-list"></ul>
                 </div>
             </div>
-            
+
         </div>
-        
+
     </div>
 </div>
 
-{% tplhandlebars "canvas-system-status" %}
+{% verbatim %}
+<script id="canvas-system-status" type="text/x-handlebars-template">
 <a href="{{url}}" title="Status: {{overall_status}}" class="{{overall_state}}" target="_blank">Overall Performance</a>
 {{# each components}}
 <a href="{{url}}" title="Status: {{this.status}}" class="{{this.state}}" target="_blank">{{this.component}}</a>
 {{/each}}
 </a>
-{% endtplhandlebars %}
-
+</script>
+{% endverbatim %}
 
 {% include "handlebars/canvas_admin/error_list_item.html" %}
 {% include "handlebars/canvas_admin/import_list_item.html" %}

@@ -17,6 +17,12 @@ class CSVFormat(object):
         self.key = None
         self.data = []
 
+    def __lt__(self, other):
+        return self.key < other.key
+
+    def __eq__(self, other):
+        return self.key == other.key
+
     def __str__(self):
         """
         Creates a line of csv data from the obj data attribute
@@ -179,14 +185,15 @@ class EnrollmentCSV(CSVFormat):
         user_id = user_sis_id(person)
         if not valid_enrollment_status(status):
             raise EnrollmentPolicyException(
-                'Invalid enrollment status for %s: %s' % (user_id, status))
+                'Invalid enrollment status for {}: {}'.format(user_id, status))
 
         if course_id is None and section_id is None:
             raise EnrollmentPolicyException(
-                'Missing course and section for %s: %s' % (user_id, status))
+                'Missing course and section for {}: {}'.format(
+                    user_id, status))
 
-        self.key = '%s:%s:%s:%s:%s' % (course_id, section_id, user_id, role,
-                                       status)
+        self.key = '{}:{}:{}:{}:{}'.format(
+            course_id, section_id, user_id, role, status)
         self.data = [course_id, None, user_id, role, None, section_id, status,
                      None]
 

@@ -28,7 +28,7 @@ class Command(SISProvisionerCommand):
         try:
             builder = CourseBuilder(imp.queued_objects())
             imp.csv_path = builder.build(include_enrollment=include_enrollment)
-        except:
+        except Exception:
             imp.csv_errors = traceback.format_exc()
 
         imp.save()

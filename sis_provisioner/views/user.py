@@ -2,8 +2,6 @@ import re
 import json
 import datetime
 from logging import getLogger
-from django.conf import settings
-from django.utils.decorators import method_decorator
 from restclients_core.exceptions import (
     InvalidNetID, InvalidRegID, DataFailureException)
 from uw_sws.models import Person
@@ -12,16 +10,13 @@ from sis_provisioner.dao.user import (
     get_person_by_netid, get_person_by_regid, get_person_by_gmail_id)
 from sis_provisioner.models import User, PRIORITY_IMMEDIATE
 from sis_provisioner.views.rest_dispatch import RESTDispatch
-from sis_provisioner.views import (
-    group_required, regid_from_request, netid_from_request)
+from sis_provisioner.views import regid_from_request, netid_from_request
 from sis_provisioner.views.admin import can_view_source_data
 
 
 logger = getLogger(__name__)
 
 
-@method_decorator(group_required(settings.CANVAS_MANAGER_ADMIN_GROUP),
-                  name='dispatch')
 class UserView(RESTDispatch):
     """ Performs actions on a Course at /api/v1/user/<reg id>.
         GET returns 200 with User model (augmented with person)
@@ -47,7 +42,7 @@ class UserView(RESTDispatch):
         except DataFailureException as err:
             data = json.loads(err.msg)
             return self.error_response(
-                400, "%s %s" % (err.status, data["StatusDescription"]))
+                400, "{} {}".format(err.status, data["StatusDescription"]))
         except Exception as err:
             return self.error_response(400, err)
 
@@ -93,10 +88,13 @@ class UserView(RESTDispatch):
         }
 
         if can_view_source_data(self.request):
-            response['person_url'] = '%s/person/%s.json' % (
-                '/restclients/view/pws/identity/v1', person.uwregid)
-            response['enrollment_url'] = '%s/enrollment.json?reg_id=%s' % (
-                '/restclients/view/sws/student/v5', person.uwregid)
+            response['person_url'] = '{path}/person/{uwregid}.json'.format(
+                path='/restclients/view/pws/identity/v1',
+                uwregid=person.uwregid)
+            response['enrollment_url'] = (
+                '{path}/enrollment.json?reg_id={uwregid}').format(
+                    path='/restclients/view/sws/student/v5',
+                    uwregid=person.uwregid)
 
         try:
             user = User.objects.get(reg_id=person.uwregid)

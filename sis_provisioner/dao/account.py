@@ -17,16 +17,18 @@ CACHED_OVERRIDES = {}
 
 def valid_account_id(account_id):
     if (account_id is None or RE_ACCOUNT_ID.match(str(account_id)) is None):
-        raise AccountPolicyException("Invalid account ID: %s" % account_id)
+        raise AccountPolicyException(
+            "Invalid account ID: {}".format(account_id))
 
 
 def valid_account_sis_id(account_id):
     if account_id is not None:
         sis_root = getattr(settings, "SIS_IMPORT_ROOT_ACCOUNT_ID")
         if (account_id == sis_root or
-                re.match(r"^%s\:\w+" % re.escape(sis_root), account_id)):
+                re.match(r"^{}\:\w+".format(re.escape(sis_root)), account_id)):
             return
-    raise AccountPolicyException("Invalid account SIS ID: %s" % account_id)
+    raise AccountPolicyException(
+        "Invalid account SIS ID: {}".format(account_id))
 
 
 def valid_academic_account_sis_id(account_id):
@@ -39,7 +41,7 @@ def valid_academic_account_sis_id(account_id):
         pass
 
     raise AccountPolicyException(
-        "Invalid academic account SIS ID: %s" % account_id)
+        "Invalid academic account SIS ID: {}".format(account_id))
 
 
 def account_sis_id(accounts):
@@ -68,7 +70,7 @@ def account_name(context):
         name = re.sub(r"(\(?(UW )?Bothell( Campus)?\)?|Bth)$", "", name)
         name = re.sub(r"(\(?(UW )?Tacoma( Campus)?\)?|T)$", "", name)
         name = re.sub(r"[\s-]+$", "", name)
-        name += " [%s]" % context.label
+        name += " [{}]".format(context.label)
 
     return name
 
@@ -97,6 +99,6 @@ def account_id_for_section(section):
         account_id = CACHED_OVERRIDES[course_id]
 
     if account_id is None:
-        raise AccountPolicyException("No account_id for %s" % course_id)
+        raise AccountPolicyException("No account_id for {}".format(course_id))
 
     return account_id

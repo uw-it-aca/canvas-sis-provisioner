@@ -7,8 +7,8 @@ import re
 class RestClientsCache(TimedCache):
     """ A custom cache implementation for Canvas """
 
-    kws_url_current_key = '/key/v1/type/%s/encryption/current'
-    kws_url_key = '/key/v1/encryption/%s.json'
+    kws_url_current_key = '/key/v1/type/{}/encryption/current'
+    kws_url_key = '/key/v1/encryption/{}.json'
 
     url_policies = {}
     url_policies["sws"] = (
@@ -20,13 +20,13 @@ class RestClientsCache(TimedCache):
         (re.compile(r"^/identity/v\d/entity/"), 60 * 60),
     )
     url_policies["kws"] = (
-        (re.compile(r"^%s" % (
-            kws_url_key % r'[\-\da-fA-F]{36}')), 60 * 60 * 24 * 30),
-        (re.compile(r"^%s" % (
-            kws_url_current_key % r"[\-\da-zA-Z]+")), 60 * 60 * 24 * 7),
+        (re.compile(r"^{}".format(
+            kws_url_key.format(r'[\-\da-fA-F]{36}'))), 60 * 60 * 24 * 30),
+        (re.compile(r"^{}".format(
+            kws_url_current_key.format(r"[\-\da-zA-Z]+"))), 60 * 60 * 24 * 7),
     )
     url_policies["gws"] = (
-        (re.compile(r"^/group_sws/v\d/group/%s/effective_member/" % (
+        (re.compile(r"^/group_sws/v\d/group/{}/effective_member/".format(
             getattr(settings, 'NONPERSONAL_NETID_EXCEPTION_GROUP', 'none'))),
             60 * 60),
     )
@@ -45,10 +45,10 @@ class RestClientsCache(TimedCache):
             return
 
     def delete_cached_kws_current_key(self, resource_type):
-        self.deleteCache('kws', self.kws_url_current_key % resource_type)
+        self.deleteCache('kws', self.kws_url_current_key.format(resource_type))
 
     def delete_cached_kws_key(self, key_id):
-        self.deleteCache('kws', self.kws_url_key % key_id)
+        self.deleteCache('kws', self.kws_url_key.format(key_id))
 
     def _get_cache_policy(self, service, url):
         for policy in RestClientsCache.url_policies.get(service, []):

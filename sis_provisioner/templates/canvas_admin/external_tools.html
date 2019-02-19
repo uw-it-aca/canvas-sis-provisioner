@@ -13,7 +13,7 @@
 <link rel="stylesheet" type="text/less" href="{% static 'canvas_admin/css/mobile.less' media='screen, handheld' %}" />
 {% endcompress %}
 
-{% if not request.is_mobile and not request.is_tablet %}
+{% if not request.user_agent.is_mobile and not request.user_agent.is_tablet %}
 <!-- add admin desktop styles -->
 {% compress css %}
 <link rel="stylesheet" type="text/less" href="{% static 'canvas_admin/css/desktop.less' media='screen and (min-width: 480px)' %}" />

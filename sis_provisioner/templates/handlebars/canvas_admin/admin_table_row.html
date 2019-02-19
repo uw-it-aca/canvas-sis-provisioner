@@ -1,6 +1,7 @@
-{% load templatetag_handlebars %}
-{% tplhandlebars "admin-table-row" %}
-{{# each admins}}
-<tr><td>{{ net_id }}</td><td>{{ role }}</td><td><a href="{{ account_link }}" target="_blank">{{ account_id }}</a></td><td>{{ added_date }}</td><td>{{ #if is_deleted }}DEL{{ /if }}</td></tr>
+{% verbatim %}
+<script id="admin-table-row" type="text/x-handlebars-template">
+{{#each admins}}
+<tr><td>{{ net_id }}</td><td>{{ role }}</td><td><a href="{{ account_link }}" target="_blank">{{ account_id }}</a></td><td>{{ added_date }}</td><td>{{#if is_deleted}}DEL{{/if}}</td></tr>
 {{/each}}
-{% endtplhandlebars %}
+</script>
+{% endverbatim %}

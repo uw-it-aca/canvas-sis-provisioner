@@ -1,11 +1,8 @@
 import re
 from logging import getLogger
-from django.conf import settings
-from django.utils.decorators import method_decorator
 from sis_provisioner.models import Enrollment, PRIORITY_NONE
 from sis_provisioner.views.rest_dispatch import RESTDispatch
-from sis_provisioner.views import (
-    group_required, regid_from_request, netid_from_request)
+from sis_provisioner.views import regid_from_request, netid_from_request
 from sis_provisioner.dao.user import get_person_by_netid
 
 
@@ -16,8 +13,6 @@ class EnrollmentInvalidException(Exception):
     pass
 
 
-@method_decorator(group_required(settings.CANVAS_MANAGER_ADMIN_GROUP),
-                  name='dispatch')
 class EnrollmentListView(RESTDispatch):
     """ Retrieves a list of Enrollments at
         /api/v1/enrollments/?<criteria[&criteria]>.

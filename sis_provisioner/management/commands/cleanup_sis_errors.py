@@ -20,9 +20,9 @@ class Command(SISProvisionerCommand):
 
         for course in courses:
             if (course.provisioned_status is None or
-                    retry_now_pattern.match(course.provisioned_status) or
-                    (course.provisioned_date is not None and
-                        localtime(course.provisioned_date) < last_check_time) or
+                retry_now_pattern.match(course.provisioned_status) or (
+                    course.provisioned_date is not None and
+                    localtime(course.provisioned_date) < last_check_time) or
                     localtime(course.added_date) < last_check_time):
 
                 course.provisioned_error = None

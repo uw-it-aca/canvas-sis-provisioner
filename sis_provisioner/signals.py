@@ -23,7 +23,7 @@ def priority_course_import(sender, **kwargs):
                                              queue_id__isnull=True)
             grouplist.update(priority=PRIORITY_IMMEDIATE)
         except Exception as err:
-            log.error('Immediate course provision fail: %s' % (err))
+            log.error('Immediate course provision fail: {}'.format(err))
 
         post_save.connect(priority_course_import, sender=Course)
 
@@ -56,7 +56,7 @@ def priority_user_import(sender, **kwargs):
                 imp.delete()
 
         except Exception as err:
-            log.error('Immediate user provision failed: %s' % (err))
+            log.error('Immediate user provision failed: {}'.format(err))
             user.priority = PRIORITY_HIGH
             user.save()
 
