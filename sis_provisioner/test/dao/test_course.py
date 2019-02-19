@@ -1,5 +1,4 @@
-from django.test import TestCase
-from django.conf import settings
+from django.test import TestCase, override_settings
 from uw_sws.models import Term, Section
 from uw_sws.util import fdao_sws_override
 from uw_pws.util import fdao_pws_override
@@ -126,9 +125,9 @@ class SectionPolicyTest(TestCase):
                 '2016-autumn-ABC-100-A-ABCDEF1234567890ABCDEF1234567890'),
             '2016-autumn-ABC-100-A-ABCDEF1234567890ABCDEF1234567890-groups')
 
+    @override_settings(DEFAULT_GROUP_SECTION_NAME='GROUP_NAME')
     def test_group_section_name(self):
-        with self.settings(DEFAULT_GROUP_SECTION_NAME='GROUP_NAME'):
-            self.assertEquals(group_section_name(), 'GROUP_NAME')
+        self.assertEquals(group_section_name(), 'GROUP_NAME')
 
     def test_section_id_from_url(self):
         self.assertEquals(
