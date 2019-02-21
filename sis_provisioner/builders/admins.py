@@ -35,7 +35,6 @@ class AdminBuilder(Builder):
         if str(admin.canvas_id) == settings.RESTCLIENTS_CANVAS_ACCOUNT_ID:
             account_id = ''
 
-        self.add_user_data_for_person(person)
         self.data.add(AdminCSV(admin.reg_id, account_id, role, status=status))
 
         logger.info('{} ADMIN "{}", account: "{}", role: "{}"'.format(
