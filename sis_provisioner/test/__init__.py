@@ -1,5 +1,5 @@
 from django.conf import settings
-from sis_provisioner.models import Admin
+from sis_provisioner.models import Admin, Account
 import binascii
 import os
 
@@ -14,3 +14,13 @@ def create_admin(net_id, account_id='test', role='accountadmin',
                   canvas_id=canvas_id, role=role)
     admin.save()
     return admin
+
+
+def create_account(canvas_id, sis_id, account_name='Test',
+                   account_short_name='', account_type=Account.ADHOC_TYPE):
+    account = Account(canvas_id=canvas_id, sis_id=sis_id,
+                      account_name=account_name,
+                      account_short_name=account_short_name,
+                      account_type=account_type)
+    account.save()
+    return account

@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.test import TestCase, override_settings
 from sis_provisioner.test import create_admin
-from sis_provisioner.dao.astra import verify_canvas_admin
+from sis_provisioner.dao.admin import verify_canvas_admin
 from uw_canvas.utilities import fdao_canvas_override
 from uw_canvas.admins import Admins
 import copy

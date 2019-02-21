@@ -3,9 +3,7 @@ from django.db.models.query import QuerySet
 from django.utils.timezone import utc
 from sis_provisioner.test import create_admin
 from sis_provisioner.models import Admin
-from sis_provisioner.models.astra import Account
 from datetime import datetime, timedelta
-import mock
 
 
 @override_settings(RESTCLIENTS_CANVAS_ACCOUNT_ID='123',
@@ -70,16 +68,3 @@ class AdminModelTest(TestCase):
         self.assertEquals(json['provisioned_date'], '')
         self.assertEquals(json['role'], 'accountadmin')
         self.assertEquals(json['net_id'], 'javerage')
-
-
-class AccountModelTest(TestCase):
-    @mock.patch.object(QuerySet, 'filter')
-    def test_find_by_type(self, mock_filter):
-        r = Account.objects.find_by_type()
-        mock_filter.assert_called_with()
-
-        r = Account.objects.find_by_type(account_type='admin')
-        mock_filter.assert_called_with(account_type='admin')
-
-        r = Account.objects.find_by_type(account_type='admin', deleted=True)
-        mock_filter.assert_called_with(account_type='admin', is_deleted=1)

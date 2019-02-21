@@ -1,55 +1,12 @@
 from django.conf import settings
-from logging import getLogger
-from django.db.utils import IntegrityError
-from uw_canvas.models import CanvasUser
-from restclients_core.exceptions import DataFailureException
 from suds.client import Client
 from suds.transport.http import HttpTransport
 from suds import WebFault
-from sis_provisioner.models import User, Admin
-from sis_provisioner.models.astra import Account
-from sis_provisioner.dao.account import (
-    get_all_campuses, get_all_colleges, get_departments_by_college,
-    account_sis_id)
-from sis_provisioner.dao.user import (
-    get_person_by_netid, user_fullname, user_email)
-from sis_provisioner.dao.canvas import (
-    get_user_by_sis_id, create_user, get_account_by_sis_id)
-from sis_provisioner.exceptions import ASTRAException
 from urllib.request import build_opener, HTTPSHandler
+from sis_provisioner.exceptions import ASTRAException
 import socket
-import ssl
 import http
-import sys
-import re
-import os
-
-logger = getLogger(__name__)
-
-
-class HTTPSTransportV3(HttpTransport):
-    def __init__(self, *args, **kwargs):
-        HttpTransport.__init__(self, *args, **kwargs)
-
-    def u2open(self, u2request):
-        tm = self.options.timeout
-        url = build_opener(HTTPSClientAuthHandler())
-        if self.u2ver() < 2.6:
-            socket.setdefaulttimeout(tm)
-            return url.open(u2request)
-        else:
-            return url.open(u2request, timeout=tm)
-
-
-class HTTPSClientAuthHandler(HTTPSHandler):
-    def __init__(self):
-        HTTPSHandler.__init__(self)
-
-    def https_open(self, req):
-        return self.do_open(HTTPSConnectionClientCertV3, req)
-
-    def getConnection(self, host, timeout=300):
-        return HTTPSConnectionClientCertV3(host)
+import ssl
 
 
 class HTTPSConnectionClientCertV3(http.client.HTTPSConnection):
@@ -71,238 +28,54 @@ class HTTPSConnectionClientCertV3(http.client.HTTPSConnection):
                                         ssl_version=ssl.PROTOCOL_SSLv3)
 
 
-class Admins():
-    """Load admin table with ASTRA-defined administrators
-    """
-    def __init__(self, options={}):
-        self._astra = Client(settings.ASTRA_WSDL,
-                             transport=HTTPSTransportV3())
-        # prepare to map spans of control to campus and college resource values
-        self._campuses = get_all_campuses()
-        self._colleges = get_all_colleges()
-        self._re_non_academic_code = re.compile(r'^canvas_([0-9]+)$')
-        self._canvas_ids = {}
+class HTTPSClientAuthHandler(HTTPSHandler):
+    def __init__(self):
+        HTTPSHandler.__init__(self)
 
-    def _request(self, methodName, params={}):
-        port = 'AuthzProvider'
+    def https_open(self, req):
+        return self.do_open(HTTPSConnectionClientCertV3, req)
+
+    def getConnection(self, host, timeout=300):
+        return HTTPSConnectionClientCertV3(host)
+
+
+class HTTPSTransportV3(HttpTransport):
+    def __init__(self, *args, **kwargs):
+        HttpTransport.__init__(self, *args, **kwargs)
+
+    def u2open(self, u2request):
+        tm = self.options.timeout
+        url = build_opener(HTTPSClientAuthHandler())
+        if self.u2ver() < 2.6:
+            socket.setdefaulttimeout(tm)
+            return url.open(u2request)
+        else:
+            return url.open(u2request, timeout=tm)
+
+
+class ASTRA():
+    def __init__(self, *args, **kwargs):
+        self._client = Client(settings.ASTRA_WSDL,
+                              transport=HTTPSTransportV3())
+
+    def _request(self, method_name, params={}):
         try:
-            result = self._astra.service[port][methodName](params)
-            return result
-        except WebFault as err:
-            logger.error(err)
-        except Exception:
-            logger.error('Error: {}'.format(sys.exc_info()[1]))
-
-        return None
-
-    def _getAuthz(self, authFilter):
-        return self._request('GetAuthz', authFilter)
+            return self._client.service['AuthzProvider'][method_name](params)
+        except WebFault as ex:
+            raise ASTRAException('ASTRA: Request failed, {}'.format(ex))
 
     def get_version(self):
-        return self._request('GetVersion', {})
+        return self._request('GetVersion')
 
-    def _add_admin(self, **kwargs):
-        netid = kwargs['net_id']
-        regid = kwargs['reg_id']
-        logger.info('ADD: {} is {} in {}'.format(
-            netid, kwargs['role'], kwargs['account_id']))
+    def get_authz(self):
+        auth_filter = self._client.factory.create('authFilter')
+        auth_filter.privilege._code = settings.ASTRA_APPLICATION
+        auth_filter.environment._code = settings.ASTRA_ENVIRONMENT
+        auth_filter.astraRole._code = 'User'
 
-        try:
-            User.objects.get(reg_id=regid)
-        except User.DoesNotExist:
-            try:
-                person = get_person_by_netid(netid)
+        authz = self._request('GetAuthz', auth_filter)
 
-                logger.info('Provisioning admin: {} ({})'.format(
-                    person.uwnetid, person.uwregid))
+        if authz.get('authCollection', {}).get('auth') is None:
+            raise ASTRAException('ASTRA: Missing authCollection.auth')
 
-                try:
-                    user = get_user_by_sis_id(person.uwregid)
-                except DataFailureException as err:
-                    if err.status == 404:
-                        user = create_user(CanvasUser(
-                            name=user_fullname(person),
-                            login_id=person.uwnetid,
-                            sis_user_id=person.uwregid,
-                            email=user_email(person)))
-
-                User.objects.add_user(person)
-
-            except Exception as err:
-                logger.info('Skipped admin: {} ({})'.format(netid, err))
-                return
-
-        try:
-            admin = Admin.objects.get(net_id=netid,
-                                      reg_id=regid,
-                                      account_id=kwargs['account_id'],
-                                      canvas_id=kwargs['canvas_id'],
-                                      role=kwargs['role'])
-        except Admin.DoesNotExist:
-            admin = Admin(net_id=netid,
-                          reg_id=regid,
-                          account_id=kwargs['account_id'],
-                          canvas_id=kwargs['canvas_id'],
-                          role=kwargs['role'],
-                          queue_id=kwargs['queue_id'])
-
-        admin.is_deleted = None
-        admin.deleted_date = None
-        admin.save()
-
-    def _get_campus_from_code(self, code):
-        for campus in self._campuses:
-            if campus.label.lower() == code.lower():
-                return campus
-
-        raise ASTRAException('Unknown Campus Code: {}'.format(code))
-
-    def _get_college_from_code(self, campus, code):
-        for college in self._colleges:
-            if (campus.label.lower() == college.campus_label.lower() and
-                    code.lower() == college.label.lower()):
-                return college
-
-        raise ASTRAException('Unknown College Code: {}'.format(code))
-
-    def _get_department_from_code(self, college, code):
-        depts = get_departments_by_college(college)
-        for dept in depts:
-            if dept.label.lower() == code.lower():
-                return dept
-
-        raise ASTRAException('Unknown Department Code: {}'.format(code))
-
-    def _generate_sis_account_id(self, soc):
-        if not isinstance(soc, list):
-            raise ASTRAException('NO Span of Control')
-
-        id_parts = []
-        campus = None
-        college = None
-        if soc[0]:
-            if (soc[0]._type == 'CanvasNonAcademic' or
-                    soc[0]._type == 'CanvasTestAccount'):
-                try:
-                    return (
-                        soc[0]._code,
-                        self._re_non_academic_code.match(soc[0]._code).group(1)
-                    )
-                except Exception as err:
-                    raise ASTRAException(
-                        'Unknown non-academic code: {} {}'.format(
-                            soc[0]._code, err))
-            elif soc[0]._type == 'SWSCampus':
-                campus = self._get_campus_from_code(soc[0]._code)
-                id_parts.append(settings.SIS_IMPORT_ROOT_ACCOUNT_ID)
-                id_parts.append(campus.label)
-            else:
-                raise ASTRAException(
-                    'Unknown SoC type: {} {}'.format(soc[0]._type, soc[0]))
-
-        if len(soc) > 1:
-            if soc[1]._type == 'swscollege':
-                if campus:
-                    college = self._get_college_from_code(campus, soc[1]._code)
-                    id_parts.append(college.name)
-                else:
-                    raise ASTRAException(
-                        'College without campus: {}'.format(soc[1]._code))
-            else:
-                raise ASTRAException(
-                    'Unknown second level SoC: {}'.format(soc[1]._type))
-
-            if len(soc) > 2:
-                if soc[2]._type == 'swsdepartment':
-                    if campus and college:
-                        dept = self._get_department_from_code(college,
-                                                              soc[2]._code)
-                        id_parts.append(dept.label)
-                    else:
-                        raise ASTRAException(
-                            'Unknown third level SoC: {}'.format(soc[0]))
-
-        sis_id = account_sis_id(id_parts)
-
-        if sis_id not in self._canvas_ids:
-            canvas_account = get_account_by_sis_id(sis_id)
-            self._canvas_ids[sis_id] = canvas_account.account_id
-
-        return (sis_id, self._canvas_ids[sis_id])
-
-    def load_all_admins(self, queue_id, options={}):
-        # query ASTRA
-        authFilter = self._astra.factory.create('authFilter')
-        authFilter.privilege._code = settings.ASTRA_APPLICATION
-        authFilter.environment._code = settings.ASTRA_ENVIRONMENT
-        authFilter.astraRole._code = 'User'
-
-        authz = self._getAuthz(authFilter)
-        if not authz:
-            logger.error('ASTRA GetAuthz failed. Aborting Canvas admin update')
-            return
-
-        Admin.objects.start_reconcile(queue_id)
-
-        # restore records with latest auths
-        if 'authCollection' in authz and 'auth' in authz.authCollection:
-            for auth in authz.authCollection.auth:
-                try:
-                    if auth.role._code not in settings.ASTRA_ROLE_MAPPING:
-                        raise ASTRAException("Unknown Role Code: {}".format(
-                            auth.role._code))
-                    elif '_regid' not in auth.party:
-                        raise ASTRAException("No regid in party: {}".format(
-                            auth.party))
-
-                    if 'spanOfControlCollection' in auth:
-                        socc = auth.spanOfControlCollection
-                        if ('spanOfControl' in socc and isinstance(
-                                socc.spanOfControl, list)):
-                            soc = socc.spanOfControl
-                            (account_id,
-                                canvas_id) = self._generate_sis_account_id(soc)
-                        else:
-                            canvas_id = settings.RESTCLIENTS_CANVAS_ACCOUNT_ID
-                            account_id = "canvas_{}".format(canvas_id)
-
-                        self._add_admin(net_id=auth.party._uwNetid,
-                                        reg_id=auth.party._regid,
-                                        account_id=account_id,
-                                        canvas_id=canvas_id,
-                                        role=auth.role._code,
-                                        queue_id=queue_id)
-                    else:
-                        raise ASTRAException(
-                            "Missing required SpanOfControl: {}".format(
-                                auth.party))
-
-                except ASTRAException as err:
-                    logger.error('{}\n AUTH: {}'.format(err, auth))
-
-        Admin.objects.finish_reconcile(queue_id)
-
-
-def verify_canvas_admin(admin, canvas_account_id):
-    # Create a reverse lookup for ASTRA role, based on the admin role in Canvas
-    roles = {v: k for k, v in settings.ASTRA_ROLE_MAPPING.items()}
-
-    # Verify whether this role is ASTRA-defined
-    if Admin.objects.has_role_in_account(
-            admin.user.login_id, canvas_account_id, roles.get(admin.role)):
-        return True
-
-    # Otherwise, verify whether this is a valid ancillary role
-    for parent_role, data in settings.ANCILLARY_CANVAS_ROLES.items():
-        if 'root' == data['account']:
-            ancillary_account_id = settings.RESTCLIENTS_CANVAS_ACCOUNT_ID
-        else:
-            ancillary_account_id = canvas_account_id
-
-        if (ancillary_account_id == canvas_account_id and
-                data['canvas_role'] == admin.role):
-            if Admin.objects.has_role(
-                    admin.user.login_id, roles.get(parent_role)):
-                return True
-
-    return False
+        return authz.authCollection.auth

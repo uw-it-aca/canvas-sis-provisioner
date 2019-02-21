@@ -1,5 +1,5 @@
 from sis_provisioner.management.commands import SISProvisionerCommand
-from sis_provisioner.dao.astra import Admins
+from sis_provisioner.dao.admin import Admins
 
 
 class Command(SISProvisionerCommand):
