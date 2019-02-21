@@ -7,15 +7,15 @@ from uw_canvas.models import CanvasAccount
 
 class AccountModelTest(TestCase):
     def setUp(self):
-        create_account('1', 'test_root', account_name='Root',
+        create_account(1, 'test_root', account_name='Root',
                        account_type=Account.ROOT_TYPE)
-        create_account('2', 'test_sdb', account_name='SDB',
+        create_account(2, 'test_sdb', account_name='SDB',
                        account_type=Account.SDB_TYPE)
-        create_account('3', 'test_adhoc_1', account_name='Adhoc1',
+        create_account(3, 'test_adhoc_1', account_name='Adhoc1',
                        account_type=Account.ADHOC_TYPE)
-        create_account('4', 'test_test', account_name='Test',
+        create_account(4, 'test_test', account_name='Test',
                        account_type=Account.TEST_TYPE)
-        create_account('5', 'test_adhoc_2', account_name='Adhoc2',
+        create_account(5, 'test_adhoc_2', account_name='Adhoc2',
                        account_type=Account.ADHOC_TYPE)
 
     def test_find_by_type(self):
@@ -69,7 +69,7 @@ class AccountModelTest(TestCase):
         self.assertEqual(account.account_type, Account.ROOT_TYPE)
 
         canvas_account = CanvasAccount(
-                account_id=456, sis_account_id='sis_root:aww', name='Test_456')
+            account_id=456, sis_account_id='sis_root:tacoma', name='Test_456')
 
         account = Account.objects.add_account(canvas_account)
         self.assertEqual(account.account_type, Account.SDB_TYPE)
@@ -81,10 +81,30 @@ class AccountModelTest(TestCase):
         self.assertEqual(account.account_type, Account.ADHOC_TYPE)
 
     def test_account_types(self):
-        pass
+        account = Account.objects.get(canvas_id=1)
+        self.assertTrue(account.is_root())
+
+        account = Account.objects.get(canvas_id=2)
+        self.assertTrue(account.is_sdb())
+
+        account = Account.objects.get(canvas_id=3)
+        self.assertTrue(account.is_adhoc())
+
+        account = Account.objects.get(canvas_id=4)
+        self.assertTrue(account.is_test())
 
     def test_json_data(self):
-        pass
+        account = Account.objects.get(canvas_id=2)
+        json_data = account.json_data()
+        self.assertEqual(json_data['canvas_id'], 2)
+        self.assertEqual(json_data['sis_id'], 'test_sdb')
+        self.assertEqual(json_data['account_name'], 'SDB')
+        self.assertEqual(json_data['account_short_name'], '')
+        self.assertEqual(json_data['account_type'], 'sdb')
+        self.assertEqual(json_data['is_deleted'], False)
 
     def test_soc_json_data(self):
-        pass
+        account = Account.objects.get(canvas_id=2)
+        self.assertEqual(account.soc_json_data(), {
+            'description': 'SDB', 'id': 'canvas_2',
+            'short_description': '', 'type': 'SDB'})

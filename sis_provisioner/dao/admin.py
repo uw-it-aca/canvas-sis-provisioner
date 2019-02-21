@@ -1,20 +1,12 @@
 from django.conf import settings
-from uw_canvas.models import CanvasUser
-from restclients_core.exceptions import DataFailureException
-from sis_provisioner.models import User, Admin, Account
+from sis_provisioner.models import Admin
 from sis_provisioner.dao.astra import ASTRA
 from sis_provisioner.dao.account import (
     get_all_campuses, get_all_colleges, get_departments_by_college,
     account_sis_id)
-from sis_provisioner.dao.user import (
-    get_person_by_netid, user_fullname, user_email)
-from sis_provisioner.dao.canvas import (
-    get_user_by_sis_id, create_user, get_account_by_sis_id)
+from sis_provisioner.dao.canvas import get_account_by_sis_id
 from sis_provisioner.exceptions import ASTRAException
-from logging import getLogger
 import re
-
-logger = getLogger(__name__)
 
 RE_NONACADEMIC_CODE = re.compile(r'^canvas_([0-9]+)$')
 
@@ -25,57 +17,6 @@ class Admins():
     def __init__(self, options={}):
         self._departments = {}
         self._canvas_ids = {}
-
-    def _add_admin(self, **kwargs):
-        netid = kwargs['net_id']
-        regid = kwargs['reg_id']
-        logger.info('ADD: {} is {} in {}'.format(
-            netid, kwargs['role'], kwargs['account_id']))
-
-        try:
-            User.objects.get(reg_id=regid)
-        except User.DoesNotExist:
-            try:
-                person = get_person_by_netid(netid)
-
-                logger.info('Provisioning admin: {} ({})'.format(
-                    person.uwnetid, person.uwregid))
-
-                try:
-                    user = get_user_by_sis_id(person.uwregid)
-                except DataFailureException as err:
-                    if err.status == 404:
-                        user = create_user(CanvasUser(
-                            name=user_fullname(person),
-                            login_id=person.uwnetid,
-                            sis_user_id=person.uwregid,
-                            email=user_email(person)))
-                    else:
-                        raise
-
-                User.objects.add_user(person)
-
-            except Exception as err:
-                logger.info('Skipped admin: {} ({})'.format(netid, err))
-                return
-
-        try:
-            admin = Admin.objects.get(net_id=netid,
-                                      reg_id=regid,
-                                      account_id=kwargs['account_id'],
-                                      canvas_id=kwargs['canvas_id'],
-                                      role=kwargs['role'])
-        except Admin.DoesNotExist:
-            admin = Admin(net_id=netid,
-                          reg_id=regid,
-                          account_id=kwargs['account_id'],
-                          canvas_id=kwargs['canvas_id'],
-                          role=kwargs['role'],
-                          queue_id=kwargs['queue_id'])
-
-        admin.is_deleted = None
-        admin.deleted_date = None
-        admin.save()
 
     def _campus_from_code(self, code):
         if not hasattr(self, '_campuses'):
@@ -184,12 +125,12 @@ class Admins():
             (account_id, canvas_id) = self.canvas_account_from_astra_soc(
                 auth.spanOfControlCollection)
 
-            self._add_admin(net_id=auth.party._uwNetid,
-                            reg_id=auth.party._regid,
-                            account_id=account_id,
-                            canvas_id=canvas_id,
-                            role=auth.role._code,
-                            queue_id=queue_id)
+            Admin.objects.add_admin(net_id=auth.party._uwNetid,
+                                    reg_id=auth.party._regid,
+                                    account_id=account_id,
+                                    canvas_id=canvas_id,
+                                    role=auth.role._code,
+                                    queue_id=queue_id)
 
         Admin.objects.finish_reconcile(queue_id)
 

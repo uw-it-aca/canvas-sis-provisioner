@@ -1060,9 +1060,8 @@ class Account(models.Model):
             'account_type': self.account_type,
             'added_date': self.added_date.isoformat() if (
                 self.added_date is not None) else '',
-            'is_deleted': self.is_deleted,
-            'is_blessed_for_course_request': (
-                self.is_blessed_for_course_request)}
+            'is_deleted': True if self.is_deleted else False
+        }
 
     def soc_json_data(self):
         type_name = 'Unknown'
@@ -1129,6 +1128,22 @@ class AdminManager(models.Manager):
         super(AdminManager, self).get_queryset().filter(
             queue_id=queue_id, is_deleted__isnull=False,
             deleted_date__lt=retention_dt).delete()
+
+    def add_admin(self, **kwargs):
+        admin, created = Admin.objects.get_or_create(
+            net_id=kwargs['net_id'],
+            reg_id=kwargs['reg_id'],
+            account_id=kwargs['account_id'],
+            canvas_id=kwargs['canvas_id'],
+            role=kwargs['role'])
+
+        if kwargs.get('queue_id'):
+            admin.queue_id = kwargs['queue_id']
+
+        admin.is_deleted = None
+        admin.deleted_date = None
+        admin.save()
+        return admin
 
     def is_account_admin(self, net_id):
         return self.has_role_in_account(
