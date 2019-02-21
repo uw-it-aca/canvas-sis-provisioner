@@ -1,5 +1,5 @@
 from django.conf import settings
-from sis_provisioner.dao.astra import verify_canvas_admin
+from sis_provisioner.dao.admin import verify_canvas_admin
 from sis_provisioner.dao.canvas import (
     get_account, get_all_sub_accounts, get_admins, delete_admin)
 from sis_provisioner.management.commands import SISProvisionerCommand
