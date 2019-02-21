@@ -26,7 +26,7 @@ class Admins():
             if campus.label.lower() == code.lower():
                 return campus
 
-        raise ASTRAException('ASTRA: Unknown Campus Code: {}'.format(code))
+        raise ASTRAException('Unknown Campus Code: {}'.format(code))
 
     def _college_from_code(self, campus, code):
         if not hasattr(self, '_colleges'):
@@ -37,35 +37,30 @@ class Admins():
                     code.lower() == college.label.lower()):
                 return college
 
-        raise ASTRAException('ASTRA: Unknown College Code: {}'.format(code))
+        raise ASTRAException('Unknown College Code: {}'.format(code))
 
     def _department_from_code(self, college, code):
         if college.label not in self._departments:
             self._departments[college.label] = get_departments_by_college(
                 college)
 
-        for department in self._departments:
+        for department in self._departments[college.label]:
             if department.label.lower() == code.lower():
                 return department
 
-        raise ASTRAException('ASTRA: Unknown Department Code: {}'.format(code))
+        raise ASTRAException('Unknown Department Code: {}'.format(code))
 
     @staticmethod
     def _canvas_id_from_nonacademic_code(code):
         return RE_NONACADEMIC_CODE.match(code).group(1)
 
-    def canvas_account_from_astra_soc(self, data):
-        soc = data.get('spanOfControl')
-        if not isinstance(soc, list):
-            canvas_id = settings.RESTCLIENTS_CANVAS_ACCOUNT_ID
-            return ('canvas_{}'.format(canvas_id), canvas_id)
-
+    def canvas_account_from_astra_soc(self, soc):
         id_parts = []
         campus = None
         college = None
-        for idx, item in enumerate(soc):
-            _type = item[idx]._type
-            _code = item[idx]._code
+        for item in soc:
+            _type = item._type
+            _code = item._code
 
             if (_type == 'CanvasNonAcademic' or
                     _type == 'CanvasTestAccount'):
@@ -78,24 +73,21 @@ class Admins():
 
             elif _type == 'swscollege':
                 if campus is None:
-                    raise ASTRAException('ASTRA: Missing campus, {}'.format(
-                        item))
+                    raise ASTRAException('Missing campus, {}'.format(item))
                 college = self._college_from_code(campus, _code)
                 id_parts.append(college.name)
 
             elif _type == 'swsdepartment':
                 if campus is None or college is None:
-                    raise ASTRAException('ASTRA: Missing college, {}'.format(
-                        item))
+                    raise ASTRAException('Missing college, {}'.format(item))
                 dept = self._department_from_code(college, _code)
                 id_parts.append(dept.label)
 
             else:
-                raise ASTRAException('ASTRA: Unknown SoC type, {}'.format(
-                    item))
+                raise ASTRAException('Unknown SoC type, {}'.format(item))
 
         if not len(id_parts):
-            raise ASTRAException('ASTRA: SoC empty list')
+            raise ASTRAException('SoC empty list')
 
         sis_id = account_sis_id(id_parts)
 
@@ -106,24 +98,29 @@ class Admins():
         return (sis_id, self._canvas_ids[sis_id])
 
     def load_all_admins(self, queue_id, options={}):
-        auth_data = ASTRA().get_authz()
+        authz = ASTRA().get_authz()
 
         Admin.objects.start_reconcile(queue_id)
 
-        for auth in auth_data.authCollection.auth:
+        for auth in authz.authCollection.auth:
             # Sanity checks
             if auth.role._code not in settings.ASTRA_ROLE_MAPPING:
-                raise ASTRAException('ASTRA: Unknown Role Code {}'.format(
+                raise ASTRAException('Unknown Role Code {}'.format(
                     auth.role._code))
             if '_regid' not in auth.party:
-                raise ASTRAException('ASTRA: Missing uwregid, {}'.format(
-                    auth.party))
+                raise ASTRAException('Missing uwregid, {}'.format(auth.party))
             if 'spanOfControlCollection' not in auth:
-                raise ASTRAException('ASTRA: Missing SpanOfControl, {}'.format(
+                raise ASTRAException('Missing SpanOfControl, {}'.format(
                     auth.party))
 
-            (account_id, canvas_id) = self.canvas_account_from_astra_soc(
-                auth.spanOfControlCollection)
+            socc = auth.spanOfControlCollection
+            if ('spanOfControl' in socc and
+                    isinstance(socc.spanOfControl, list)):
+                (account_id, canvas_id) = self.canvas_account_from_astra_soc(
+                    socc.spanOfControl)
+            else:
+                canvas_id = settings.RESTCLIENTS_CANVAS_ACCOUNT_ID
+                account_id = 'canvas_{}'.format(canvas_id)
 
             Admin.objects.add_admin(net_id=auth.party._uwNetid,
                                     reg_id=auth.party._regid,

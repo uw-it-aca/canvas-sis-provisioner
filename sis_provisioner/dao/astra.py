@@ -75,7 +75,7 @@ class ASTRA():
 
         authz = self._request('GetAuthz', auth_filter)
 
-        if authz.get('authCollection', {}).get('auth') is None:
+        if not ('authCollection' in authz and 'auth' in authz.authCollection):
             raise ASTRAException('ASTRA: Missing authCollection.auth')
 
-        return authz.authCollection.auth
+        return authz

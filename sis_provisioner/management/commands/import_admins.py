@@ -40,7 +40,8 @@ class Command(SISProvisionerCommand):
                 if not imp.csv_errors:
                     imp.delete()
         else:
-            print(imp.csv_path)
+            print('CSV Path: {}'.format(imp.csv_path))
+            print('Error: {}'.format(imp.csv_errors))
             imp.delete()
 
         self.update_job()
