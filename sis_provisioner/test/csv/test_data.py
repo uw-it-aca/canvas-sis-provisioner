@@ -44,6 +44,15 @@ class CSVDataTest(TestCase):
         self.assertEquals(csv.add(formatter), False)
         self.assertEquals(csv.has_data(), True)
 
+    def test_admins(self):
+        formatter = AdminCSV('user_id', 'account_id', 'admin', 'active')
+
+        csv = Collector()
+        self.assertEquals(len(csv.admins), 0)
+        self.assertEquals(csv.add(formatter), True)
+        self.assertEquals(len(csv.admins), 1)
+        self.assertEquals(csv.has_data(), True)
+
     @override_settings(
         LMS_OWNERSHIP_SUBACCOUNT={'PCE_NONE': 'pce_none_account'})
     def test_courses(self):

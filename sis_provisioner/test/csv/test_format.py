@@ -11,9 +11,16 @@ from sis_provisioner.csv.format import *
 
 
 class CSVHeaderTest(TestCase):
+    def test_init(self):
+        csv_format = CSVFormat()
+        self.assertEqual(csv_format.key, None)
+        self.assertEqual(csv_format.data, [])
+
     def test_csv_headers(self):
         self.assertEquals(
             str(AccountHeader()), 'account_id,parent_account_id,name,status\n')
+        self.assertEquals(
+            str(AdminHeader()), 'user_id,account_id,role,status\n')
         self.assertEquals(
             str(TermHeader()), 'term_id,name,status,start_date,end_date\n')
         self.assertEquals(
