@@ -14,6 +14,9 @@ class RestClientsCache(TimedCache):
     url_policies["sws"] = (
         (re.compile(r"^/student/v\d/term/"), 60 * 60 * 10),
         (re.compile(r"^/student/v\d/course/"), 60 * 5),
+        (re.compile(r"^/student/v\d/campus"), 60 * 60 * 10),
+        (re.compile(r"^/student/v\d/college"), 60 * 60 * 10),
+        (re.compile(r"^/student/v\d/department"), 60 * 60 * 10),
     )
     url_policies["pws"] = (
         (re.compile(r"^/identity/v\d/person/"), 60 * 60),
@@ -31,6 +34,7 @@ class RestClientsCache(TimedCache):
             60 * 60),
     )
     url_policies["canvas"] = (
+        (re.compile(r"^/api/v\d/accounts/sis_account_id:"), 60 * 60 * 10),
         (re.compile(r"^/api/v\d/accounts/\d+/roles"), 60 * 60 * 4),
     )
     url_policies["libcurrics"] = (

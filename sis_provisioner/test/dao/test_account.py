@@ -102,3 +102,32 @@ class AccountPolicyTest(TestCase):
         section.lms_ownership = 'PCE_OL'
         self.assertEquals(account_id_for_section(section),
                           'uwcourse:uweo:ol-managed')
+
+
+@fdao_sws_override
+class CampusCollegeDepartmentTest(TestCase):
+    def test_get_campus_by_label(self):
+        campus = get_campus_by_label('Seattle')
+        self.assertEqual(campus.label, 'SEATTLE')
+
+        campus = get_campus_by_label('NoMatch')
+        self.assertEqual(campus, None)
+
+    def test_get_college_by_label(self):
+        campus = get_campus_by_label('Seattle')
+
+        college = get_college_by_label(campus, 'Med')
+        self.assertEqual(college.label, 'MED')
+
+        college = get_college_by_label(campus, 'NoMatch')
+        self.assertEqual(college, None)
+
+    def test_get_department_by_label(self):
+        campus = get_campus_by_label('Seattle')
+        college = get_college_by_label(campus, 'Med')
+
+        department = get_department_by_label(college, 'Anest')
+        self.assertEqual(department.label, 'ANEST')
+
+        department = get_department_by_label(college, 'NoMatch')
+        self.assertEqual(department, None)

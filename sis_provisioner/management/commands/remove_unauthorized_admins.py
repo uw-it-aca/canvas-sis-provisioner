@@ -1,7 +1,7 @@
 from django.conf import settings
-from sis_provisioner.dao.admin import verify_canvas_admin
+from sis_provisioner.models import Admin
 from sis_provisioner.dao.canvas import (
-    get_account, get_all_sub_accounts, get_admins, delete_admin)
+    get_account_by_id, get_all_sub_accounts, get_admins, delete_admin)
 from sis_provisioner.management.commands import SISProvisionerCommand
 from logging import getLogger
 
@@ -22,7 +22,7 @@ class Command(SISProvisionerCommand):
             help='Delete Canvas admins not found in ASTRA')
 
     def handle(self, *args, **options):
-        root_account = get_account(options.get('root_account'))
+        root_account = get_account_by_id(options.get('root_account'))
 
         accounts = get_all_sub_accounts(root_account.account_id)
         accounts.append(root_account)
@@ -31,7 +31,7 @@ class Command(SISProvisionerCommand):
             account_id = account.account_id
 
             for admin in get_admins(account_id):
-                if not verify_canvas_admin(admin, account_id):
+                if not Admin.objects.verify_canvas_admin(admin, account_id):
                     if options.get('commit'):
                         delete_admin(
                             account_id, admin.user.user_id, admin.role)

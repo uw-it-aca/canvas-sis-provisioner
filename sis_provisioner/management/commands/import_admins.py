@@ -3,7 +3,6 @@ from sis_provisioner.models import Admin
 from sis_provisioner.exceptions import (
     EmptyQueueException, MissingImportPathException)
 from sis_provisioner.builders.admins import AdminBuilder
-from sis_provisioner.dao.admin import Admins
 import traceback
 
 
@@ -24,7 +23,7 @@ class Command(SISProvisionerCommand):
             return
 
         try:
-            Admins().load_all_admins(imp.pk)
+            Admin.objects.load_all_admins(imp.pk)
 
             builder = AdminBuilder(imp.queued_objects())
             imp.csv_path = builder.build()

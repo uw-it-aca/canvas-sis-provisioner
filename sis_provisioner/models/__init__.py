@@ -3,6 +3,7 @@ from django.db.models import F, Q
 from django.conf import settings
 from django.utils.timezone import utc, localtime
 from sis_provisioner.dao.account import valid_academic_account_sis_id
+from sis_provisioner.dao.astra import ASTRA
 from sis_provisioner.dao.group import get_sis_import_members, is_modified_group
 from sis_provisioner.dao.user import get_person_by_netid
 from sis_provisioner.dao.course import (
@@ -1129,6 +1130,16 @@ class AdminManager(models.Manager):
             queue_id=queue_id, is_deleted__isnull=False,
             deleted_date__lt=retention_dt).delete()
 
+    def load_all_admins(self, queue_id):
+        admins = ASTRA().get_canvas_admins()
+
+        self.start_reconcile(queue_id)
+
+        for admin_data in admins:
+            self.add_admin(**admin_data)
+
+        self.finish_reconcile(queue_id)
+
     def add_admin(self, **kwargs):
         admin, created = Admin.objects.get_or_create(
             net_id=kwargs['net_id'],
@@ -1167,6 +1178,29 @@ class AdminManager(models.Manager):
             return True
         except Admin.DoesNotExist:
             return False
+
+    def verify_canvas_admin(self, admin, canvas_account_id):
+        # Create a reverse lookup for ASTRA role, based on the role in Canvas
+        roles = {v: k for k, v in settings.ASTRA_ROLE_MAPPING.items()}
+
+        # Verify whether this role is ASTRA-defined
+        if self.has_role_in_account(
+                admin.user.login_id, canvas_account_id, roles.get(admin.role)):
+            return True
+
+        # Otherwise, verify whether this is a valid ancillary role
+        for parent_role, data in settings.ANCILLARY_CANVAS_ROLES.items():
+            if 'root' == data['account']:
+                ancillary_account_id = settings.RESTCLIENTS_CANVAS_ACCOUNT_ID
+            else:
+                ancillary_account_id = canvas_account_id
+
+            if (ancillary_account_id == canvas_account_id and
+                    data['canvas_role'] == admin.role):
+                if self.has_role(admin.user.login_id, roles.get(parent_role)):
+                    return True
+
+        return False
 
 
 class Admin(models.Model):

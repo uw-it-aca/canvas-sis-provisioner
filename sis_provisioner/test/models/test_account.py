@@ -1,8 +1,17 @@
 from django.test import TestCase, override_settings
 from django.db.models.query import QuerySet
 from sis_provisioner.models import Account
-from sis_provisioner.test import create_account
 from uw_canvas.models import CanvasAccount
+
+
+def create_account(canvas_id, sis_id, account_name='Test',
+                   account_short_name='', account_type=Account.ADHOC_TYPE):
+    account = Account(canvas_id=canvas_id, sis_id=sis_id,
+                      account_name=account_name,
+                      account_short_name=account_short_name,
+                      account_type=account_type)
+    account.save()
+    return account
 
 
 class AccountModelTest(TestCase):

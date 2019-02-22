@@ -3,10 +3,17 @@ from suds.client import Client
 from suds.transport.http import HttpTransport
 from suds import WebFault
 from urllib.request import build_opener, HTTPSHandler
+from sis_provisioner.dao.account import (
+    get_campus_by_label, get_college_by_label, get_department_by_label,
+    account_sis_id)
+from sis_provisioner.dao.canvas import get_account_by_sis_id
 from sis_provisioner.exceptions import ASTRAException
 import socket
 import http
 import ssl
+import re
+
+RE_NONACADEMIC_CODE = re.compile(r'^canvas_([0-9]+)$')
 
 
 class HTTPSConnectionClientCertV3(http.client.HTTPSConnection):
@@ -79,3 +86,90 @@ class ASTRA():
             raise ASTRAException('ASTRA: Missing authCollection.auth')
 
         return authz
+
+    def get_canvas_admins(self):
+        authz = self.get_authz()
+
+        admins = []
+        for auth in authz.authCollection.auth:
+            # Sanity checks
+            if auth.role._code not in settings.ASTRA_ROLE_MAPPING:
+                raise ASTRAException('Unknown Role Code {}'.format(
+                    auth.role._code))
+            if '_regid' not in auth.party:
+                raise ASTRAException('Missing uwregid, {}'.format(auth.party))
+            if 'spanOfControlCollection' not in auth:
+                raise ASTRAException('Missing SpanOfControl, {}'.format(
+                    auth.party))
+
+            socc = auth.spanOfControlCollection
+            if ('spanOfControl' in socc and
+                    isinstance(socc.spanOfControl, list)):
+                soc = collection.spanOfControl[0]
+                if soc._type == 'SWSCampus':
+                    sis_id = self._canvas_account_from_academic_soc(
+                        collection.spanOfControl)
+                    canvas_id = get_account_by_sis_id(sis_id).account_id
+                else:
+                    canvas_id = self._canvas_id_from_nonacademic_soc(soc._code)
+                    sis_id = soc._code
+            else:
+                canvas_id = settings.RESTCLIENTS_CANVAS_ACCOUNT_ID
+                sis_id = 'canvas_{}'.format(canvas_id)
+
+            admins.append({
+                'net_id': auth.party._uwNetid,
+                'reg_id': auth.party._regid,
+                'account_id': sis_id,
+                'canvas_id': canvas_id,
+                'role': auth.role._code
+            })
+
+        return admins
+
+    @staticmethod
+    def _canvas_id_from_nonacademic_soc(code):
+        m = RE_NONACADEMIC_CODE.match(code)
+        if m is not None:
+            return m.group(1)
+        raise ASTRAException('Unknown Non-Academic Code: {}'.format(code))
+
+    @staticmethod
+    def _canvas_account_from_academic_soc(soc):
+        id_parts = []
+        campus = None
+        college = None
+        for item in soc:
+            if item._type == 'SWSCampus':
+                id_parts.append(settings.SIS_IMPORT_ROOT_ACCOUNT_ID)
+                campus = get_campus_by_label(item._code)
+                try:
+                    id_parts.append(campus.label)
+                except AttributeError:
+                    raise ASTRAException('Unknown Campus: {}'.format(item))
+
+            elif item._type == 'swscollege':
+                if campus is None:
+                    raise ASTRAException('Missing Campus, {}'.format(item))
+                college = get_college_by_label(campus, item._code)
+                try:
+                    id_parts.append(college.name)
+                except AttributeError:
+                    raise ASTRAException('Unknown College: {}'.format(item))
+
+            elif item._type == 'swsdepartment':
+                if campus is None or college is None:
+                    raise ASTRAException('Missing College, {}'.format(item))
+                dept = get_department_by_label(college, item._code)
+                try:
+                    id_parts.append(dept.label)
+                except AttributeError:
+                    raise ASTRAException('Unknown Department: {}'.format(item))
+
+            else:
+                raise ASTRAException('Unknown SoC type, {}'.format(item))
+
+        if not len(id_parts):
+            raise ASTRAException('SoC empty list')
+
+        return account_sis_id(id_parts)
