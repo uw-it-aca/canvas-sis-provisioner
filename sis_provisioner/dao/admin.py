@@ -52,9 +52,12 @@ class Admins():
 
     @staticmethod
     def _canvas_id_from_nonacademic_code(code):
-        return RE_NONACADEMIC_CODE.match(code).group(1)
+        m = RE_NONACADEMIC_CODE.match(code)
+        if m is not None:
+            return m.group(1)
+        raise ASTRAException('Unknown Non-Academic Code: {}'.format(code))
 
-    def canvas_account_from_astra_soc(self, soc):
+    def _canvas_account_from_astra_soc(self, soc):
         id_parts = []
         campus = None
         college = None
@@ -116,7 +119,7 @@ class Admins():
             socc = auth.spanOfControlCollection
             if ('spanOfControl' in socc and
                     isinstance(socc.spanOfControl, list)):
-                (account_id, canvas_id) = self.canvas_account_from_astra_soc(
+                (account_id, canvas_id) = _self.canvas_account_from_astra_soc(
                     socc.spanOfControl)
             else:
                 canvas_id = settings.RESTCLIENTS_CANVAS_ACCOUNT_ID
