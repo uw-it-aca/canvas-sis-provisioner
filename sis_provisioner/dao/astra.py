@@ -79,16 +79,13 @@ class ASTRA():
         auth_filter.privilege._code = settings.ASTRA_APPLICATION
         auth_filter.environment._code = settings.ASTRA_ENVIRONMENT
         auth_filter.astraRole._code = 'User'
-
-        authz = self._request('GetAuthz', auth_filter)
-
-        if not ('authCollection' in authz and 'auth' in authz.authCollection):
-            raise ASTRAException('ASTRA: Missing authCollection.auth')
-
-        return authz
+        return self._request('GetAuthz', auth_filter)
 
     def get_canvas_admins(self):
         authz = self.get_authz()
+
+        if not ('authCollection' in authz and 'auth' in authz.authCollection):
+            raise ASTRAException('Missing authCollection.auth')
 
         admins = []
         for auth in authz.authCollection.auth:
@@ -106,7 +103,7 @@ class ASTRA():
             if ('spanOfControl' in socc and
                     isinstance(socc.spanOfControl, list)):
                 soc = collection.spanOfControl[0]
-                if soc._type == 'SWSCampus':
+                if soc._type.lower() == 'swscampus':
                     sis_id = self._canvas_account_from_academic_soc(
                         collection.spanOfControl)
                     canvas_id = get_account_by_sis_id(sis_id).account_id
@@ -140,7 +137,8 @@ class ASTRA():
         campus = None
         college = None
         for item in soc:
-            if item._type == 'SWSCampus':
+            itype = item._type.lower()
+            if itype == 'swscampus':
                 id_parts.append(settings.SIS_IMPORT_ROOT_ACCOUNT_ID)
                 campus = get_campus_by_label(item._code)
                 try:
@@ -148,7 +146,7 @@ class ASTRA():
                 except AttributeError:
                     raise ASTRAException('Unknown Campus: {}'.format(item))
 
-            elif item._type == 'swscollege':
+            elif itype == 'swscollege':
                 if campus is None:
                     raise ASTRAException('Missing Campus, {}'.format(item))
                 college = get_college_by_label(campus, item._code)
@@ -157,7 +155,7 @@ class ASTRA():
                 except AttributeError:
                     raise ASTRAException('Unknown College: {}'.format(item))
 
-            elif item._type == 'swsdepartment':
+            elif itype == 'swsdepartment':
                 if campus is None or college is None:
                     raise ASTRAException('Missing College, {}'.format(item))
                 dept = get_department_by_label(college, item._code)
