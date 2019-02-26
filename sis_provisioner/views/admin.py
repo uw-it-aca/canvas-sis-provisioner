@@ -3,7 +3,7 @@ from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect
 from sis_provisioner.dao.user import is_group_admin
 from sis_provisioner.dao.term import get_term_by_date
-from sis_provisioner.models.astra import AdminManager
+from sis_provisioner.models import Admin
 from sis_provisioner.views import group_required, get_user, is_member_of_group
 from restclients_core.exceptions import DataFailureException
 from datetime import datetime
@@ -80,7 +80,7 @@ def can_manage_admin_group(request):
 
 
 def can_manage_jobs(request):
-    return AdminManager().is_account_admin(get_user(request))
+    return Admin.objects.is_account_admin(get_user(request))
 
 
 def can_manage_external_tools(request):

@@ -39,6 +39,18 @@ class CanvasRolesTest(TestCase):
         mock_method.assert_called_with('abc')
 
 
+class CanvasAdminsTest(TestCase):
+    @mock.patch.object(Admins, 'get_admins')
+    def test_get_admins(self, mock_method):
+        r = get_admins('12345')
+        mock_method.assert_called_with('12345')
+
+    @mock.patch.object(Admins, 'delete_admin')
+    def test_delete_admin(self, mock_method):
+        r = delete_admin('12345', 'javerage', 'accountadmin')
+        mock_method.assert_called_with('12345', 'javerage', 'accountadmin')
+
+
 class CanvasUsersTest(TestCase):
     @mock.patch.object(Users, 'get_user_by_sis_id')
     def test_get_user_by_sis_id(self, mock_method):
