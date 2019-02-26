@@ -17,7 +17,7 @@ setup(
         'Django>=2.0.8,<2.1',
         'django-compressor',
         'django-user-agents',
-        'lxml',
+        'lxml>=4.2.5,<4.3',
         'python-dateutil',
         'mock==2.0.0',
         'django-pyscss',
