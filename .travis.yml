@@ -11,7 +11,7 @@ before_script:
 - npm install -g jshint
 - cp travis-ci/manage.py manage.py
 script:
-- pycodestyle sis_provisioner/ --exclude=migrations,management
+- pycodestyle sis_provisioner/ --exclude=migrations
 - jshint sis_provisioner/static/ --verbose
 - coverage run --source=sis_provisioner/ manage.py test sis_provisioner
 after_success:
