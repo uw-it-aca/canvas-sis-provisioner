@@ -99,9 +99,9 @@ class ASTRA():
                 raise ASTRAException('Missing SpanOfControl, {}'.format(
                     auth.party))
 
-            socc = auth.spanOfControlCollection
-            if ('spanOfControl' in socc and
-                    isinstance(socc.spanOfControl, list)):
+            collection = auth.spanOfControlCollection
+            if ('spanOfControl' in collection and
+                    isinstance(collection.spanOfControl, list)):
                 soc = collection.spanOfControl[0]
                 if soc._type.lower() == 'swscampus':
                     sis_id = self._canvas_account_from_academic_soc(
