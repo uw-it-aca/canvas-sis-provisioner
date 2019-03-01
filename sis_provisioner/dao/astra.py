@@ -6,7 +6,6 @@ from urllib.request import build_opener, HTTPSHandler
 from sis_provisioner.dao.account import (
     get_campus_by_label, get_college_by_label, get_department_by_label,
     account_sis_id)
-from sis_provisioner.dao.canvas import get_account_by_sis_id
 from sis_provisioner.exceptions import ASTRAException
 import socket
 import http
@@ -106,13 +105,13 @@ class ASTRA():
                 if soc._type.lower() == 'swscampus':
                     sis_id = self._canvas_account_from_academic_soc(
                         collection.spanOfControl)
-                    canvas_id = get_account_by_sis_id(sis_id).account_id
+                    canvas_id = None
                 else:
+                    sis_id = None
                     canvas_id = self._canvas_id_from_nonacademic_soc(soc._code)
-                    sis_id = soc._code
             else:
+                sis_id = None
                 canvas_id = settings.RESTCLIENTS_CANVAS_ACCOUNT_ID
-                sis_id = 'canvas_{}'.format(canvas_id)
 
             admins.append({
                 'net_id': auth.party._uwNetid,

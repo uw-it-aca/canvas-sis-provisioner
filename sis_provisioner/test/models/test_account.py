@@ -35,7 +35,7 @@ class AccountModelTest(TestCase):
         self.assertEqual(len(r), 2)
 
         r = Account.objects.find_by_type(account_type=Account.ROOT_TYPE,
-                                         deleted=True)
+                                         is_deleted=True)
         self.assertEqual(len(r), 0)
 
         account = Account.objects.get(canvas_id=1)
@@ -43,7 +43,7 @@ class AccountModelTest(TestCase):
         account.save()
 
         r = Account.objects.find_by_type(account_type=Account.ROOT_TYPE,
-                                         deleted=True)
+                                         is_deleted=True)
         self.assertEqual(len(r), 1)
 
     def test_find_by_soc(self):

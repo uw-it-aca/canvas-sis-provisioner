@@ -33,7 +33,7 @@ class AccountSearch(RESTDispatch):
 
         accounts = []
         for account in list(Account.objects.find_by_type(
-                account_type=account_type, deleted=is_deleted)):
+                account_type=account_type, is_deleted=is_deleted)):
             accounts.append(account.json_data())
 
         return self.json_response({'accounts': accounts})

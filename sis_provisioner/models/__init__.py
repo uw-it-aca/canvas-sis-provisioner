@@ -938,14 +938,12 @@ class Curriculum(models.Model):
 
 
 class AccountManager(models.Manager):
-    def find_by_type(self, account_type=None, deleted=False):
-        filter = {}
+    def find_by_type(self, account_type=None, is_deleted=False):
+        kwargs = {'is_deleted__isnull': not is_deleted}
         if account_type:
-            filter['account_type'] = account_type
-        if deleted:
-            filter['is_deleted'] = 1
+            kwargs['account_type'] = account_type
 
-        return super(AccountManager, self).get_queryset().filter(**filter)
+        return super(AccountManager, self).get_queryset().filter(**kwargs)
 
     def find_by_soc(self, account_type=''):
         t = account_type.lower()
@@ -1136,16 +1134,30 @@ class AdminManager(models.Manager):
         self.start_reconcile(queue_id)
 
         for admin_data in admins:
+            admin_data['queue_id'] = queue_id
             self.add_admin(**admin_data)
 
         self.finish_reconcile(queue_id)
 
     def add_admin(self, **kwargs):
+        canvas_id = kwargs['canvas_id']
+        account_id = kwargs['account_id']
+        try:
+            if canvas_id is None and account_id is not None:
+                canvas_id = Account.objects.values_list(
+                    'canvas_id', flat=True).get(sis_id=account_id)
+            elif canvas_id is not None and account_id is None:
+                account_id = Account.objects.values_list(
+                    'sis_id', flat=True).get(canvas_id=canvas_id)
+        except Account.DoesNotExist:
+            raise AccountPolicyException('Unknown account: "{}" ({})'.format(
+                account_id, canvas_id))
+
         admin, created = Admin.objects.get_or_create(
             net_id=kwargs['net_id'],
             reg_id=kwargs['reg_id'],
-            account_id=kwargs['account_id'],
-            canvas_id=kwargs['canvas_id'],
+            account_id=account_id,
+            canvas_id=canvas_id,
             role=kwargs['role'])
 
         if kwargs.get('queue_id'):

@@ -3,6 +3,8 @@ from django.test import TestCase, override_settings
 from django.db.models.query import QuerySet
 from django.utils.timezone import utc
 from sis_provisioner.models import Admin
+from sis_provisioner.exceptions import AccountPolicyException
+from sis_provisioner.test.models.test_account import create_account
 from uw_canvas.utilities import fdao_canvas_override
 from uw_canvas.admins import Admins as CanvasAdmins
 from datetime import datetime, timedelta
@@ -29,10 +31,14 @@ def create_admin(net_id, account_id='test', role='accountadmin',
 @override_settings(RESTCLIENTS_CANVAS_ACCOUNT_ID='123',
                    RESTCLIENTS_CANVAS_HOST='http://canvas.edu')
 class AdminModelTest(TestCase):
+    def setUp(self):
+        create_account(1, 'test1')
+        create_account(2, 'test2')
+
     def test_add_admin(self):
         kwargs = {'net_id': 'javerage',
                   'reg_id': 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA1',
-                  'account_id': 'test',
+                  'account_id': 'test1',
                   'canvas_id': 1,
                   'role': 'accountadmin'}
 
@@ -40,7 +46,7 @@ class AdminModelTest(TestCase):
         original_pk = admin.pk
         self.assertEqual(admin.net_id, 'javerage')
         self.assertEqual(admin.reg_id, 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA1')
-        self.assertEqual(admin.account_id, 'test')
+        self.assertEqual(admin.account_id, 'test1')
         self.assertEqual(admin.canvas_id, 1)
         self.assertEqual(admin.role, 'accountadmin')
         self.assertEqual(admin.is_deleted, None)
@@ -57,6 +63,46 @@ class AdminModelTest(TestCase):
         self.assertEqual(admin.is_deleted, None)
         self.assertEqual(admin.deleted_date, None)
         self.assertEqual(admin.queue_id, 123)
+
+    def test_add_admin_missing_account_id(self):
+        kwargs = {'net_id': 'javerage',
+                  'reg_id': 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA1',
+                  'account_id': None,
+                  'canvas_id': 1,
+                  'role': 'accountadmin'}
+
+        admin = Admin.objects.add_admin(**kwargs)
+        self.assertEqual(admin.canvas_id, 1)
+        self.assertEqual(admin.account_id, 'test1')
+
+        kwargs = {'net_id': 'javerage',
+                  'reg_id': 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA1',
+                  'account_id': None,
+                  'canvas_id': 33,
+                  'role': 'accountadmin'}
+
+        self.assertRaises(
+            AccountPolicyException, Admin.objects.add_admin, **kwargs)
+
+    def test_add_admin_missing_canvas_id(self):
+        kwargs = {'net_id': 'javerage',
+                  'reg_id': 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA1',
+                  'account_id': 'test2',
+                  'canvas_id': None,
+                  'role': 'accountadmin'}
+
+        admin = Admin.objects.add_admin(**kwargs)
+        self.assertEqual(admin.canvas_id, 2)
+        self.assertEqual(admin.account_id, 'test2')
+
+        kwargs = {'net_id': 'javerage',
+                  'reg_id': 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA1',
+                  'account_id': 'test33',
+                  'canvas_id': None,
+                  'role': 'accountadmin'}
+
+        self.assertRaises(
+            AccountPolicyException, Admin.objects.add_admin, **kwargs)
 
     def test_is_account_admin(self):
         self.assertEqual(Admin.objects.is_account_admin('javerage'), False)
