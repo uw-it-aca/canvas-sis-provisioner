@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from uw_pws import PWS
 from uw_pws.util import fdao_pws_override
 from uw_sws.util import fdao_sws_override
@@ -11,9 +11,16 @@ from sis_provisioner.csv.format import *
 
 
 class CSVHeaderTest(TestCase):
+    def test_init(self):
+        csv_format = CSVFormat()
+        self.assertEqual(csv_format.key, None)
+        self.assertEqual(csv_format.data, [])
+
     def test_csv_headers(self):
         self.assertEquals(
             str(AccountHeader()), 'account_id,parent_account_id,name,status\n')
+        self.assertEquals(
+            str(AdminHeader()), 'user_id,account_id,role,status\n')
         self.assertEquals(
             str(TermHeader()), 'term_id,name,status,start_date,end_date\n')
         self.assertEquals(
@@ -66,19 +73,18 @@ class TermCSVTest(TestCase):
 @fdao_sws_override
 @fdao_pws_override
 class CourseCSVTest(TestCase):
+    @override_settings(
+        LMS_OWNERSHIP_SUBACCOUNT={'PCE_NONE': 'pce_none_account'})
     def test_with_section(self):
-        with self.settings(
-                LMS_OWNERSHIP_SUBACCOUNT={'PCE_NONE': 'pce_none_account'}):
+        section = get_section_by_label('2013,spring,TRAIN,101/A')
+        self.assertRaises(
+            AccountPolicyException, CourseCSV, section=section)
 
-            section = get_section_by_label('2013,spring,TRAIN,101/A')
-            self.assertRaises(
-                AccountPolicyException, CourseCSV, section=section)
-
-            section.course_campus = 'PCE'
-            self.assertEquals(
-                str(CourseCSV(section=section)), (
-                    '2013-spring-TRAIN-101-A,TRAIN 101 A,TRAIN 101 A Sp 13: '
-                    'Intro Train,pce_none_account,2013-spring,active,,\n'))
+        section.course_campus = 'PCE'
+        self.assertEquals(
+            str(CourseCSV(section=section)), (
+                '2013-spring-TRAIN-101-A,TRAIN 101 A,TRAIN 101 A Sp 13: '
+                'Intro Train,pce_none_account,2013-spring,active,,\n'))
 
     def test_with_kwargs(self):
         data = {'course_id': '2013-spring-TRAIN-101-A',

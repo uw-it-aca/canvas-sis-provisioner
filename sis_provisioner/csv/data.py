@@ -1,8 +1,8 @@
 from django.conf import settings
 from sis_provisioner.csv.format import (
-    UserHeader, AccountHeader, TermHeader, CourseHeader, SectionHeader,
-    EnrollmentHeader, XlistHeader, UserCSV, AccountCSV, TermCSV, CourseCSV,
-    SectionCSV, EnrollmentCSV, XlistCSV)
+    UserHeader, AccountHeader, AdminHeader, TermHeader, CourseHeader,
+    SectionHeader, EnrollmentHeader, XlistHeader, UserCSV, AccountCSV,
+    AdminCSV, TermCSV, CourseCSV, SectionCSV, EnrollmentCSV, XlistCSV)
 from datetime import datetime
 import os
 import errno
@@ -16,6 +16,7 @@ class Collector(object):
     def _init_data(self):
         self.accounts = []
         self.account_ids = {}
+        self.admins = []
         self.terms = {}
         self.courses = {}
         self.sections = {}
@@ -26,6 +27,7 @@ class Collector(object):
         self.headers = {
             'users': UserHeader(),
             'accounts': AccountHeader(),
+            'admins': AdminHeader(),
             'terms': TermHeader(),
             'courses': CourseHeader(),
             'sections': SectionHeader(),
@@ -49,6 +51,8 @@ class Collector(object):
             return self._add_enrollment(formatter)
         elif isinstance(formatter, AccountCSV):
             return self._add_account(formatter)
+        elif isinstance(formatter, AdminCSV):
+            return self._add_admin(formatter)
         elif isinstance(formatter, TermCSV):
             return self._add_term(formatter)
         elif isinstance(formatter, CourseCSV):
@@ -67,6 +71,10 @@ class Collector(object):
             self.accounts.append(formatter)
             return True
         return False
+
+    def _add_admin(self, formatter):
+        self.admins.append(formatter)
+        return True
 
     def _add_user(self, formatter):
         if formatter.key not in self.users:

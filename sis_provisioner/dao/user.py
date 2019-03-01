@@ -139,7 +139,7 @@ def get_person_by_regid(regid):
     except DataFailureException as err:
         if err.status == 404:  # Non-personal regid?
             person = pws.get_entity_by_regid(regid)
-            valid_nonpersonal_net_id(person.netid)
+            valid_nonpersonal_net_id(person.uwnetid)
         else:
             raise
 

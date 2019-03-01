@@ -102,3 +102,22 @@ def account_id_for_section(section):
         raise AccountPolicyException("No account_id for {}".format(course_id))
 
     return account_id
+
+
+def get_campus_by_label(label):
+    for campus in get_all_campuses():
+        if label.lower() == campus.label.lower():
+            return campus
+
+
+def get_college_by_label(campus, label):
+    for college in get_all_colleges():
+        if (campus.label.lower() == college.campus_label.lower() and
+                label.lower() == college.label.lower()):
+            return college
+
+
+def get_department_by_label(college, label):
+    for department in get_departments_by_college(college):
+        if label.lower() == department.label.lower():
+            return department

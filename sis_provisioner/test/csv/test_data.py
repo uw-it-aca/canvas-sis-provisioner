@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from uw_pws import PWS
 from uw_pws.util import fdao_pws_override
 from uw_sws.util import fdao_sws_override
@@ -44,20 +44,28 @@ class CSVDataTest(TestCase):
         self.assertEquals(csv.add(formatter), False)
         self.assertEquals(csv.has_data(), True)
 
+    def test_admins(self):
+        formatter = AdminCSV('user_id', 'account_id', 'admin', 'active')
+
+        csv = Collector()
+        self.assertEquals(len(csv.admins), 0)
+        self.assertEquals(csv.add(formatter), True)
+        self.assertEquals(len(csv.admins), 1)
+        self.assertEquals(csv.has_data(), True)
+
+    @override_settings(
+        LMS_OWNERSHIP_SUBACCOUNT={'PCE_NONE': 'pce_none_account'})
     def test_courses(self):
-        with self.settings(
-                LMS_OWNERSHIP_SUBACCOUNT={'PCE_NONE': 'pce_none_account'}):
+        section = get_section_by_label('2013,spring,TRAIN,101/A')
+        section.course_campus = 'PCE'
+        formatter = CourseCSV(section=section)
 
-            section = get_section_by_label('2013,spring,TRAIN,101/A')
-            section.course_campus = 'PCE'
-            formatter = CourseCSV(section=section)
-
-            csv = Collector()
-            self.assertEquals(len(csv.courses), 0)
-            self.assertEquals(csv.add(formatter), True)
-            self.assertEquals(len(csv.courses), 1)
-            self.assertEquals(csv.add(formatter), False)
-            self.assertEquals(csv.has_data(), True)
+        csv = Collector()
+        self.assertEquals(len(csv.courses), 0)
+        self.assertEquals(csv.add(formatter), True)
+        self.assertEquals(len(csv.courses), 1)
+        self.assertEquals(csv.add(formatter), False)
+        self.assertEquals(csv.has_data(), True)
 
     def test_sections(self):
         section = get_section_by_label('2013,spring,TRAIN,101/A')

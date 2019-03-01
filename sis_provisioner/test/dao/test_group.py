@@ -1,5 +1,4 @@
 from django.test import TestCase, override_settings
-from django.conf import settings
 from restclients_core.exceptions import DataFailureException
 from sis_provisioner.dao.group import *
 from sis_provisioner.exceptions import (

@@ -47,6 +47,11 @@ class AccountHeader(CSVFormat):
         self.data = ['account_id', 'parent_account_id', 'name', 'status']
 
 
+class AdminHeader(CSVFormat):
+    def __init__(self):
+        self.data = ['user_id', 'account_id', 'role', 'status']
+
+
 class TermHeader(CSVFormat):
     def __init__(self):
         self.data = ['term_id', 'name', 'status', 'start_date', 'end_date']
@@ -93,6 +98,14 @@ class AccountCSV(CSVFormat):
                      parent_id,
                      account_name(context),
                      status]
+
+
+class AdminCSV(CSVFormat):
+    """
+    user_id, account_id, role, status (active|deleted)
+    """
+    def __init__(self, user_id, account_id, role, status='active'):
+        self.data = [user_id, account_id, role, status]
 
 
 class TermCSV(CSVFormat):

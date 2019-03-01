@@ -2,6 +2,8 @@ from django.db import models, IntegrityError
 from django.db.models import F, Q
 from django.conf import settings
 from django.utils.timezone import utc, localtime
+from sis_provisioner.dao.account import valid_academic_account_sis_id
+from sis_provisioner.dao.astra import ASTRA
 from sis_provisioner.dao.group import get_sis_import_members, is_modified_group
 from sis_provisioner.dao.user import get_person_by_netid
 from sis_provisioner.dao.course import (
@@ -10,10 +12,11 @@ from sis_provisioner.dao.term import (
     get_term_by_year_and_quarter, term_date_overrides, is_active_term)
 from sis_provisioner.dao.canvas import (
     get_active_courses_for_term, sis_import_by_path, get_sis_import_status,
-    update_term_overrides, ENROLLMENT_ACTIVE, INSTRUCTOR_ENROLLMENT)
+    get_account_by_id, get_all_sub_accounts, update_term_overrides,
+    ENROLLMENT_ACTIVE, INSTRUCTOR_ENROLLMENT)
 from sis_provisioner.exceptions import (
-    CoursePolicyException, MissingLoginIdException, EmptyQueueException,
-    MissingImportPathException)
+    AccountPolicyException, CoursePolicyException, MissingLoginIdException,
+    EmptyQueueException, MissingImportPathException)
 from restclients_core.exceptions import DataFailureException
 from urllib3.exceptions import MaxRetryError
 from datetime import datetime, timedelta
@@ -934,6 +937,313 @@ class Curriculum(models.Model):
     objects = CurriculumManager()
 
 
+class AccountManager(models.Manager):
+    def find_by_type(self, account_type=None, deleted=False):
+        filter = {}
+        if account_type:
+            filter['account_type'] = account_type
+        if deleted:
+            filter['is_deleted'] = 1
+
+        return super(AccountManager, self).get_queryset().filter(**filter)
+
+    def find_by_soc(self, account_type=''):
+        t = account_type.lower()
+        if t == 'academic':
+            q = Q(account_type=Account.SDB_TYPE)
+        elif t == 'non-academic':
+            q = Q(account_type=Account.ADHOC_TYPE)
+        elif t == 'test-account':
+            q = Q(account_type=Account.TEST_TYPE)
+        elif t == 'all':
+            q = (Q(account_type=Account.ROOT_TYPE) |
+                 Q(account_type=Account.SDB_TYPE) |
+                 Q(account_type=Account.ADHOC_TYPE) |
+                 Q(account_type=Account.TEST_TYPE))
+        else:
+            q = (Q(account_type=Account.ADHOC_TYPE) |
+                 Q(account_type=Account.TEST_TYPE))
+
+        return super(AccountManager, self).get_queryset().filter(q)
+
+    def add_all_accounts(self):
+        account = get_account_by_id(settings.RESTCLIENTS_CANVAS_ACCOUNT_ID)
+        accounts = get_all_sub_accounts(account.account_id)
+        accounts.append(account)
+
+        super(AccountManager, self).get_queryset().update(is_deleted=True)
+
+        for account in accounts:
+            self.add_account(account)
+
+    def add_account(self, account):
+        account_type = Account.ADHOC_TYPE
+        if account.account_id == int(settings.RESTCLIENTS_CANVAS_ACCOUNT_ID):
+            account_type = Account.ROOT_TYPE
+        elif account.sis_account_id is not None:
+            try:
+                valid_academic_account_sis_id(account.sis_account_id)
+                account_type = Account.SDB_TYPE
+            except AccountPolicyException as ex:
+                pass
+
+        try:
+            a = Account.objects.get(canvas_id=account.account_id)
+            a.sis_id = account.sis_account_id
+            a.account_name = account.name
+            a.account_type = account_type
+            a.is_deleted = None
+        except Account.DoesNotExist:
+            a = Account(canvas_id=account.account_id,
+                        sis_id=account.sis_account_id,
+                        account_name=account.name,
+                        account_type=account_type)
+
+        try:
+            a.save()
+        except IntegrityError as err:
+            logger.error(
+                'ADD ACCOUNT FAIL: canvas_id: {}, sis_id: {}, {}'.format(
+                    account.account_id, account.sis_account_id, err))
+
+        return a
+
+
+class Account(models.Model):
+    """ Represents Canvas Accounts
+    """
+    ROOT_TYPE = 'root'
+    SDB_TYPE = 'sdb'
+    ADHOC_TYPE = 'adhoc'
+    TEST_TYPE = 'test'
+
+    TYPE_CHOICES = (
+        (SDB_TYPE, 'SDB'),
+        (ADHOC_TYPE, 'Ad Hoc'),
+        (ROOT_TYPE, 'Root'),
+        (TEST_TYPE, 'Test')
+    )
+
+    canvas_id = models.IntegerField(unique=True)
+    sis_id = models.CharField(max_length=128, unique=True, blank=True,
+                              null=True)
+    account_name = models.CharField(max_length=256)
+    account_short_name = models.CharField(max_length=128)
+    account_type = models.CharField(max_length=16, choices=TYPE_CHOICES)
+    added_date = models.DateTimeField(auto_now_add=True)
+    is_deleted = models.NullBooleanField()
+    is_blessed_for_course_request = models.NullBooleanField()
+    queue_id = models.CharField(max_length=30, null=True)
+
+    objects = AccountManager()
+
+    class Meta:
+        db_table = 'astra_account'
+
+    def is_root(self):
+        return self.account_type == self.ROOT_TYPE
+
+    def is_sdb(self):
+        return self.account_type == self.SDB_TYPE
+
+    def is_adhoc(self):
+        return self.account_type == self.ADHOC_TYPE
+
+    def is_test(self):
+        return self.account_type == self.TEST_TYPE
+
+    def json_data(self):
+        return {
+            'canvas_id': self.canvas_id,
+            'sis_id': self.sis_id,
+            'account_name': self.account_name,
+            'account_short_name': self.account_short_name,
+            'account_type': self.account_type,
+            'added_date': self.added_date.isoformat() if (
+                self.added_date is not None) else '',
+            'is_deleted': True if self.is_deleted else False
+        }
+
+    def soc_json_data(self):
+        type_name = 'Unknown'
+        if self.is_root():
+            type_name = 'Root'
+        elif self.is_sdb():
+            type_name = 'SDB'
+        elif self.is_adhoc():
+            type_name = 'Non-Academic'
+        elif self.is_test():
+            type_name = 'Test-Account'
+
+        return {
+            'id': 'canvas_{}'.format(self.canvas_id),
+            'type': type_name,
+            'description': self.account_name,
+            'short_description': self.account_short_name
+        }
+
+
+class AdminManager(models.Manager):
+    def queue_all(self):
+        pks = super(AdminManager, self).get_queryset().filter(
+            queue_id__isnull=True).values_list('pk', flat=True)
+
+        if not len(pks):
+            raise EmptyQueueException()
+
+        imp = Import(priority=PRIORITY_DEFAULT, csv_type='admin')
+        imp.save()
+
+        super(AdminManager, self).get_queryset().update(queue_id=imp.pk)
+
+        return imp
+
+    def queued(self, queue_id):
+        return super(AdminManager, self).get_queryset().filter(
+            queue_id=queue_id).order_by('-is_deleted')
+
+    def dequeue(self, sis_import):
+        kwargs = {'queue_id': None}
+        if sis_import.is_imported():
+            kwargs['provisioned_date'] = sis_import.monitor_date
+
+        self.queued(sis_import.pk).update(**kwargs)
+
+    def start_reconcile(self, queue_id):
+        """
+        Mark all records deleted to catch ASTRA fallen
+        """
+        super(AdminManager, self).get_queryset().filter(
+            queue_id=queue_id).update(is_deleted=True)
+
+    def finish_reconcile(self, queue_id):
+        now_dt = datetime.utcnow().replace(tzinfo=utc)
+        retention_dt = now_dt - timedelta(days=90)
+
+        # Set deleted date for admins who were just deleted
+        super(AdminManager, self).get_queryset().filter(
+            queue_id=queue_id, is_deleted__isnull=False,
+            deleted_date=None).update(deleted_date=now_dt)
+
+        # Delete removed admins older than N days
+        super(AdminManager, self).get_queryset().filter(
+            queue_id=queue_id, is_deleted__isnull=False,
+            deleted_date__lt=retention_dt).delete()
+
+    def load_all_admins(self, queue_id):
+        admins = ASTRA().get_canvas_admins()
+
+        self.start_reconcile(queue_id)
+
+        for admin_data in admins:
+            self.add_admin(**admin_data)
+
+        self.finish_reconcile(queue_id)
+
+    def add_admin(self, **kwargs):
+        admin, created = Admin.objects.get_or_create(
+            net_id=kwargs['net_id'],
+            reg_id=kwargs['reg_id'],
+            account_id=kwargs['account_id'],
+            canvas_id=kwargs['canvas_id'],
+            role=kwargs['role'])
+
+        if kwargs.get('queue_id'):
+            admin.queue_id = kwargs['queue_id']
+
+        admin.is_deleted = None
+        admin.deleted_date = None
+        admin.save()
+        return admin
+
+    def is_account_admin(self, net_id):
+        return self.has_role_in_account(
+            net_id, settings.RESTCLIENTS_CANVAS_ACCOUNT_ID, 'accountadmin')
+
+    def has_role_in_account(self, net_id, canvas_id, role):
+        try:
+            admin = Admin.objects.get(
+                net_id=net_id, canvas_id=canvas_id, role=role,
+                deleted_date__isnull=True)
+            return True
+        except Admin.DoesNotExist:
+            return False
+
+    def has_role(self, net_id, role):
+        try:
+            admin = Admin.objects.get(
+                net_id=net_id, role=role, deleted_date__isnull=True)
+            return True
+        except Admin.MultipleObjectsReturned:
+            return True
+        except Admin.DoesNotExist:
+            return False
+
+    def verify_canvas_admin(self, admin, canvas_account_id):
+        # Create a reverse lookup for ASTRA role, based on the role in Canvas
+        roles = {v: k for k, v in settings.ASTRA_ROLE_MAPPING.items()}
+
+        # Verify whether this role is ASTRA-defined
+        if self.has_role_in_account(
+                admin.user.login_id, canvas_account_id, roles.get(admin.role)):
+            return True
+
+        # Otherwise, verify whether this is a valid ancillary role
+        for parent_role, data in settings.ANCILLARY_CANVAS_ROLES.items():
+            if 'root' == data['account']:
+                ancillary_account_id = settings.RESTCLIENTS_CANVAS_ACCOUNT_ID
+            else:
+                ancillary_account_id = canvas_account_id
+
+            if (ancillary_account_id == canvas_account_id and
+                    data['canvas_role'] == admin.role):
+                if self.has_role(admin.user.login_id, roles.get(parent_role)):
+                    return True
+
+        return False
+
+
+class Admin(models.Model):
+    """ Represents the provisioned state of an administrative user.
+    """
+    net_id = models.CharField(max_length=20)
+    reg_id = models.CharField(max_length=32)
+    role = models.CharField(max_length=32)
+    account_id = models.CharField(max_length=128)
+    canvas_id = models.IntegerField()
+    added_date = models.DateTimeField(auto_now_add=True)
+    provisioned_date = models.DateTimeField(null=True)
+    deleted_date = models.DateTimeField(null=True)
+    is_deleted = models.NullBooleanField()
+    queue_id = models.CharField(max_length=30, null=True)
+
+    objects = AdminManager()
+
+    class Meta:
+        db_table = 'astra_admin'
+
+    def json_data(self):
+        date_fmt = '%m/%d/%Y %l:%M %p'
+        return {
+            'net_id': self.net_id,
+            'reg_id': self.reg_id,
+            'role': self.role,
+            'account_id': self.account_id,
+            'canvas_id': self.canvas_id,
+            'account_link': '{host}/accounts/{account_id}'.format(
+                host=settings.RESTCLIENTS_CANVAS_HOST,
+                account_id=self.canvas_id),
+            'added_date': localtime(self.added_date).strftime(date_fmt) if (
+                self.added_date is not None) else '',
+            'provisioned_date': localtime(self.provisioned_date).strftime(
+                date_fmt) if (self.provisioned_date is not None) else '',
+            'is_deleted': True if self.is_deleted else False,
+            'deleted_date': localtime(self.deleted_date).strftime(
+                date_fmt) if (self.deleted_date is not None) else '',
+            'queue_id': self.queue_id
+        }
+
+
 class ImportManager(models.Manager):
     def find_by_requires_update(self):
         return super(ImportManager, self).get_queryset().filter(
@@ -948,6 +1258,7 @@ class Import(models.Model):
     """
     CSV_TYPE_CHOICES = (
         ('account', 'Curriculum'),
+        ('admin', 'Admin'),
         ('user', 'User'),
         ('course', 'Course'),
         ('unused_course', 'Term'),

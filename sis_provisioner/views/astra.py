@@ -1,4 +1,4 @@
-from sis_provisioner.models.astra import Admin, Account
+from sis_provisioner.models import Admin, Account
 from sis_provisioner.views.rest_dispatch import RESTDispatch
 from logging import getLogger
 import re

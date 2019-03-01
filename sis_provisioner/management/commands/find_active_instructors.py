@@ -10,10 +10,9 @@ import sys
 
 
 class Command(BaseCommand):
-    help = (
-        "Create a list of active teacher email addresses for a sub-account"
-        "and term. Used for creating the recipient list for the ACA Canvas"
-        "newsletter.")
+    help = ("Create a list of active teacher email addresses for a sub-account
+            and term. Used for creating the recipient list for the ACA Canvas
+            newsletter.")
 
     def add_arguments(self, parser):
         parser.add_argument('subaccount_id', help='Subaccount ID')
@@ -26,6 +25,14 @@ class Command(BaseCommand):
         accounts = Accounts()
         reports = Reports()
         pws = PWS()
+
+        outpath = "{}/{}-{}-{}.csv".format(
+            dirname(__file__), "active-instructors", subaccount_id,
+            sis_term_id)
+        outfile = open(outpath, "wb")
+        csv.register_dialect('unix_newline', lineterminator='\n')
+        writer = csv.writer(outfile, dialect='unix_newline')
+        writer.writerow(['email', 'first_name', 'last_name'])
 
         account = accounts.get_account(subaccount_id)
         term = reports.get_term_by_sis_id(sis_term_id)
@@ -81,27 +88,26 @@ class Command(BaseCommand):
             if (sis_account_id != "" and status.lower() == "active" and
                     course_id in all_instructors):
                 for sis_user_id in all_instructors[course_id]:
-                    if sis_user_id not in active_instructors:
-                        try:
-                            person = pws.get_person_by_regid(sis_user_id)
-                            email = person.uwnetid + "@uw.edu"
-                            active_instructors[sis_user_id] = email
-                        except InvalidRegID:
+                    if sis_user_id in active_instructors:
+                        continue
+
+                    try:
+                        person = pws.get_person_by_regid(sis_user_id)
+                        active_instructors[sis_user_id] = [
+                            person.uwnetid + "@uw.edu",
+                            person.preferred_first_name or person.first_name,
+                            person.preferred_surname or person.surname]
+                    except InvalidRegID:
+                        continue
+                    except DataFailureException as err:
+                        if err.status == 404:
                             continue
-                        except DataFailureException as err:
-                            if err.status == 404:
-                                continue
-                            else:
-                                raise
+                        else:
+                            raise
 
-        filename = "-".join(["active-instructors", subaccount_id, sis_term_id])
-        outpath = dirname(__file__) + "/" + filename + ".txt"
-
-        f = open(outpath, "w")
-        data = list(active_instructors.values())
-        data.sort()
-        f.write("\n".join(data))
-        f.close()
+        for csv_data in active_instructors.values():
+            writer.writerow(csv_data)
+        outfile.close()
 
         reports.delete_report(enrollment_report)
         reports.delete_report(course_report)
