@@ -2,7 +2,8 @@ from django.db import models, IntegrityError
 from django.db.models import F, Q
 from django.conf import settings
 from django.utils.timezone import utc, localtime
-from sis_provisioner.dao.account import valid_academic_account_sis_id
+from sis_provisioner.dao.account import (
+    valid_academic_account_sis_id, adhoc_account_sis_id)
 from sis_provisioner.dao.astra import ASTRA
 from sis_provisioner.dao.group import get_sis_import_members, is_modified_group
 from sis_provisioner.dao.user import get_person_by_netid
@@ -12,8 +13,8 @@ from sis_provisioner.dao.term import (
     get_term_by_year_and_quarter, term_date_overrides, is_active_term)
 from sis_provisioner.dao.canvas import (
     get_active_courses_for_term, sis_import_by_path, get_sis_import_status,
-    get_account_by_id, get_all_sub_accounts, update_term_overrides,
-    ENROLLMENT_ACTIVE, INSTRUCTOR_ENROLLMENT)
+    get_account_by_id, get_all_sub_accounts, update_account_sis_id,
+    update_term_overrides, ENROLLMENT_ACTIVE, INSTRUCTOR_ENROLLMENT)
 from sis_provisioner.exceptions import (
     AccountPolicyException, CoursePolicyException, MissingLoginIdException,
     EmptyQueueException, MissingImportPathException)
@@ -984,6 +985,9 @@ class AccountManager(models.Manager):
                 account_type = Account.SDB_TYPE
             except AccountPolicyException as ex:
                 pass
+        else:
+            account = update_account_sis_id(
+                account.account_id, adhoc_account_sis_id(account.account_id))
 
         try:
             a = Account.objects.get(canvas_id=account.account_id)
