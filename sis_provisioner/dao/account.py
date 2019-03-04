@@ -16,7 +16,7 @@ CACHED_OVERRIDES = {}
 
 
 def valid_canvas_account_id(canvas_id):
-    if (canvas_id is None or RE_CANVAS_ID.match(canvas_id) is None):
+    if (canvas_id is None or RE_CANVAS_ID.match(str(canvas_id)) is None):
         raise AccountPolicyException("Invalid Canvas ID: {}".format(canvas_id))
 
 

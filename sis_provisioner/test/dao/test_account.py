@@ -10,7 +10,7 @@ from uw_pws.util import fdao_pws_override
 @fdao_sws_override
 class AccountPolicyTest(TestCase):
     def test_valid_canvas_account_id(self):
-        self.assertEquals(valid_canvas_account_id('12345'), None)
+        self.assertEquals(valid_canvas_account_id(12345), None)
         self.assertEquals(valid_canvas_account_id('0'), None)
         self.assertEquals(valid_canvas_account_id('1111111111'), None)
         self.assertRaises(

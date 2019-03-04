@@ -58,7 +58,7 @@ def get_all_sub_accounts(account_id):
     return Accounts().get_all_sub_accounts(account_id)
 
 
-def update_account_sis_id(account_id, account_sis_id):
+def update_account_sis_id(account_id, sis_account_id):
     return Accounts().update_sis_id(account_id, sis_account_id)
 
 
