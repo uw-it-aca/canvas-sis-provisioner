@@ -103,20 +103,23 @@ class ASTRA():
                     isinstance(collection.spanOfControl, list)):
                 soc = collection.spanOfControl[0]
                 if soc._type.lower() == 'swscampus':
+                    # Academic subaccount
                     sis_id = self._canvas_account_from_academic_soc(
                         collection.spanOfControl)
                     canvas_id = None
                 else:
+                    # Ad-hoc subaccount
                     sis_id = None
                     canvas_id = self._canvas_id_from_nonacademic_soc(soc._code)
             else:
+                # Root account
                 sis_id = None
                 canvas_id = settings.RESTCLIENTS_CANVAS_ACCOUNT_ID
 
             admins.append({
                 'net_id': auth.party._uwNetid,
                 'reg_id': auth.party._regid,
-                'account_id': sis_id,
+                'account_sis_id': sis_id,
                 'canvas_id': canvas_id,
                 'role': auth.role._code
             })

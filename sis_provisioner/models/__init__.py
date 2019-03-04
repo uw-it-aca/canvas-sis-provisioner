@@ -1058,9 +1058,12 @@ class Account(models.Model):
         return {
             'canvas_id': self.canvas_id,
             'sis_id': self.sis_id,
-            'account_name': self.account_name,
-            'account_short_name': self.account_short_name,
+            'name': self.account_name,
+            'short_name': self.account_short_name,
             'account_type': self.account_type,
+            'canvas_url': '{host}/accounts/{account_id}'.format(
+                host=settings.RESTCLIENTS_CANVAS_HOST,
+                account_id=self.canvas_id),
             'added_date': self.added_date.isoformat() if (
                 self.added_date is not None) else '',
             'is_deleted': True if self.is_deleted else False
@@ -1144,25 +1147,22 @@ class AdminManager(models.Manager):
         self.finish_reconcile(queue_id)
 
     def add_admin(self, **kwargs):
-        canvas_id = kwargs['canvas_id']
-        account_id = kwargs['account_id']
         try:
-            if canvas_id is None and account_id is not None:
-                canvas_id = Account.objects.values_list(
-                    'canvas_id', flat=True).get(sis_id=account_id)
-            elif canvas_id is not None and account_id is None:
-                account_id = Account.objects.values_list(
-                    'sis_id', flat=True).get(canvas_id=canvas_id)
+            if kwargs['canvas_id'] is not None:
+                account = Account.objects.get(canvas_id=kwargs['canvas_id'])
+            elif kwargs['account_sis_id'] is not None:
+                account = Account.objects.get(sis_id=kwargs['account_sis_id'])
+            else:
+                raise AccountPolicyException('Missing account for admin')
         except Account.DoesNotExist:
             raise AccountPolicyException('Unknown account: "{}" ({})'.format(
-                account_id, canvas_id))
+                kwargs.get('account_sis_id'), kwargs.get('canvas_id')))
 
         admin, created = Admin.objects.get_or_create(
             net_id=kwargs['net_id'],
             reg_id=kwargs['reg_id'],
-            account_id=account_id,
-            canvas_id=canvas_id,
-            role=kwargs['role'])
+            role=kwargs['role'],
+            account=account)
 
         if kwargs.get('queue_id'):
             admin.queue_id = kwargs['queue_id']
@@ -1179,7 +1179,7 @@ class AdminManager(models.Manager):
     def has_role_in_account(self, net_id, canvas_id, role):
         try:
             admin = Admin.objects.get(
-                net_id=net_id, canvas_id=canvas_id, role=role,
+                net_id=net_id, account__canvas_id=canvas_id, role=role,
                 deleted_date__isnull=True)
             return True
         except Admin.DoesNotExist:
@@ -1225,8 +1225,9 @@ class Admin(models.Model):
     net_id = models.CharField(max_length=20)
     reg_id = models.CharField(max_length=32)
     role = models.CharField(max_length=32)
-    account_id = models.CharField(max_length=128)
-    canvas_id = models.IntegerField()
+    account = models.ForeignKey(Account, null=True, on_delete=models.CASCADE)
+    account_id_str = models.CharField(max_length=128, null=True)
+    canvas_id = models.IntegerField(null=True)
     added_date = models.DateTimeField(auto_now_add=True)
     provisioned_date = models.DateTimeField(null=True)
     deleted_date = models.DateTimeField(null=True)
@@ -1244,11 +1245,7 @@ class Admin(models.Model):
             'net_id': self.net_id,
             'reg_id': self.reg_id,
             'role': self.role,
-            'account_id': self.account_id,
-            'canvas_id': self.canvas_id,
-            'account_link': '{host}/accounts/{account_id}'.format(
-                host=settings.RESTCLIENTS_CANVAS_HOST,
-                account_id=self.canvas_id),
+            'account': self.account.json_data(),
             'added_date': localtime(self.added_date).strftime(date_fmt) if (
                 self.added_date is not None) else '',
             'provisioned_date': localtime(self.provisioned_date).strftime(
