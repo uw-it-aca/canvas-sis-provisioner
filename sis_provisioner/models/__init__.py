@@ -1089,6 +1089,16 @@ class Account(models.Model):
 
 
 class AdminManager(models.Manager):
+    def find_by_account(self, account=None, is_deleted=False):
+        kwargs = {
+            'account__isnull': False,
+            'is_deleted__isnull': not is_deleted
+        }
+        if account is not None:
+            kwargs['account'] = account
+
+        return super(AdminManager, self).get_queryset().filter(**kwargs)
+
     def queue_all(self):
         pks = super(AdminManager, self).get_queryset().filter(
             queue_id__isnull=True).values_list('pk', flat=True)

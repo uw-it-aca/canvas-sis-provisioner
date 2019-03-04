@@ -115,6 +115,26 @@ class AdminModelTest(TestCase):
         admin = create_admin('javerage', self.account1)
         self.assertEqual(Admin.objects.is_account_admin('javerage'), True)
 
+    def test_find_by_account(self):
+        admin1 = create_admin('javerage', self.account1)
+        admin2 = create_admin('jsmith', self.account2)
+
+        r = Admin.objects.find_by_account()
+        self.assertEqual(len(r), 2)
+
+        r = Admin.objects.find_by_account(account=self.account1)
+        self.assertEqual(len(r), 1)
+
+        admin1.is_deleted = True
+        admin1.save()
+
+        r = Admin.objects.find_by_account(account=self.account1)
+        self.assertEqual(len(r), 0)
+
+        r = Admin.objects.find_by_account(account=self.account1,
+                                          is_deleted=True)
+        self.assertEqual(len(r), 1)
+
     def test_start_reconcile(self):
         create_admin('javerage', self.account1)
         create_admin('jsmith', self.account2)
