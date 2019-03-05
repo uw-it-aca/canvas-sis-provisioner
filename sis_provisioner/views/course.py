@@ -5,7 +5,6 @@ from sis_provisioner.dao.term import get_term_by_year_and_quarter
 from sis_provisioner.dao.user import get_person_by_netid, get_person_by_regid
 from sis_provisioner.models import (
     Course, Group, PRIORITY_NONE, PRIORITY_CHOICES)
-from sis_provisioner.views import regid_from_request, netid_from_request
 from sis_provisioner.views.admin import RESTDispatch
 from sis_provisioner.exceptions import CoursePolicyException
 from logging import getLogger
@@ -166,9 +165,9 @@ class CourseListView(RESTDispatch):
         reg_id = None
         try:
             if 'net_id' in request.GET:
-                net_id = netid_from_request(request.GET)
+                net_id = self.netid_from_request(request.GET)
             elif 'reg_id' in request.GET:
-                reg_id = regid_from_request(request.GET)
+                reg_id = self.regid_from_request(request.GET)
             else:
                 self._criteria[2]['required'] = True
 

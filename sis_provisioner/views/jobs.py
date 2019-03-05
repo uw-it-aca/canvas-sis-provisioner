@@ -1,7 +1,6 @@
 from logging import getLogger
 from sis_provisioner.models import Job
-from sis_provisioner.views.admin import RESTDispatch
-from sis_provisioner.views import get_user
+from sis_provisioner.views.admin import RESTDispatch, get_user
 from django.utils.timezone import utc
 from datetime import datetime
 import json

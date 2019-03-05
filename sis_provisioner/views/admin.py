@@ -3,11 +3,12 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator
 from django.views import View
-from sis_provisioner.dao.user import is_group_admin
+from sis_provisioner.dao.user import is_group_admin, valid_net_id, valid_reg_id
 from sis_provisioner.dao.term import get_term_by_date
 from sis_provisioner.models import Admin
-from sis_provisioner.views import group_required, get_user, is_member_of_group
 from restclients_core.exceptions import DataFailureException
+from uw_saml.decorators import group_required
+from uw_saml.utils import get_user, is_member_of_group
 from datetime import datetime
 import json
 
@@ -96,3 +97,15 @@ class RESTDispatch(AdminView):
         return HttpResponse(json.dumps(content, sort_keys=True),
                             status=status,
                             content_type='application/json')
+
+    @staticmethod
+    def regid_from_request(data):
+        regid = data.get('reg_id', '').strip().upper()
+        valid_reg_id(regid)
+        return regid
+
+    @staticmethod
+    def netid_from_request(data):
+        netid = data.get('net_id', '').strip().lower()
+        valid_net_id(netid)
+        return netid

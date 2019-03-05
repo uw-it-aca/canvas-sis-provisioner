@@ -2,8 +2,7 @@ from django.conf import settings
 from logging import getLogger
 from sis_provisioner.models.external_tools import (
     ExternalTool, ExternalToolAccount)
-from sis_provisioner.views import get_user
-from sis_provisioner.views.admin import RESTDispatch
+from sis_provisioner.views.admin import RESTDispatch, get_user
 from sis_provisioner.dao.canvas import get_account_by_id
 from uw_canvas.external_tools import ExternalTools
 from restclients_core.exceptions import DataFailureException

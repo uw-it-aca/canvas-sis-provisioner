@@ -9,9 +9,7 @@ from sis_provisioner.dao.canvas import get_user_by_sis_id, create_user
 from sis_provisioner.dao.user import (
     get_person_by_netid, get_person_by_regid, get_person_by_gmail_id)
 from sis_provisioner.models import User, PRIORITY_IMMEDIATE
-from sis_provisioner.views import regid_from_request, netid_from_request
 from sis_provisioner.views.admin import RESTDispatch
-
 
 logger = getLogger(__name__)
 
@@ -28,11 +26,11 @@ class UserView(RESTDispatch):
                 person = get_person_by_gmail_id(gmail_id)
                 return self.response_for_google_person(person)
             elif 'net_id' in request.GET:
-                net_id = netid_from_request(request.GET)
+                net_id = self.netid_from_request(request.GET)
                 person = get_person_by_netid(net_id)
                 return self.response_for_person(person)
             elif 'reg_id' in request.GET:
-                reg_id = regid_from_request(request.GET)
+                reg_id = self.regid_from_request(request.GET)
                 person = get_person_by_regid(reg_id)
                 return self.response_for_person(person)
             else:
@@ -55,7 +53,7 @@ class UserView(RESTDispatch):
                 user = create_user(person)
                 return self.json_response()
             else:
-                net_id = netid_from_request(rep)
+                net_id = self.netid_from_request(rep)
                 user = User.objects.get(net_id=net_id)
                 return self.error_response(409, "User already exists")
         except User.DoesNotExist:
