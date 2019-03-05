@@ -2,7 +2,8 @@ from django.db import models, IntegrityError
 from django.db.models import F, Q
 from django.conf import settings
 from django.utils.timezone import utc, localtime
-from sis_provisioner.dao.account import valid_academic_account_sis_id
+from sis_provisioner.dao.account import (
+    valid_academic_account_sis_id, adhoc_account_sis_id)
 from sis_provisioner.dao.astra import ASTRA
 from sis_provisioner.dao.group import get_sis_import_members, is_modified_group
 from sis_provisioner.dao.user import get_person_by_netid
@@ -12,8 +13,8 @@ from sis_provisioner.dao.term import (
     get_term_by_year_and_quarter, term_date_overrides, is_active_term)
 from sis_provisioner.dao.canvas import (
     get_active_courses_for_term, sis_import_by_path, get_sis_import_status,
-    get_account_by_id, get_all_sub_accounts, update_term_overrides,
-    ENROLLMENT_ACTIVE, INSTRUCTOR_ENROLLMENT)
+    get_account_by_id, get_all_sub_accounts, update_account_sis_id,
+    update_term_overrides, ENROLLMENT_ACTIVE, INSTRUCTOR_ENROLLMENT)
 from sis_provisioner.exceptions import (
     AccountPolicyException, CoursePolicyException, MissingLoginIdException,
     EmptyQueueException, MissingImportPathException)
@@ -938,14 +939,14 @@ class Curriculum(models.Model):
 
 
 class AccountManager(models.Manager):
-    def find_by_type(self, account_type=None, deleted=False):
-        filter = {}
+    def find_by_type(self, account_type=None, is_deleted=False):
+        kwargs = {}
         if account_type:
-            filter['account_type'] = account_type
-        if deleted:
-            filter['is_deleted'] = 1
+            kwargs['account_type'] = account_type
+        if is_deleted:
+            kwargs['is_deleted'] = True
 
-        return super(AccountManager, self).get_queryset().filter(**filter)
+        return super(AccountManager, self).get_queryset().filter(**kwargs)
 
     def find_by_soc(self, account_type=''):
         t = account_type.lower()
@@ -986,6 +987,9 @@ class AccountManager(models.Manager):
                 account_type = Account.SDB_TYPE
             except AccountPolicyException as ex:
                 pass
+        else:
+            account = update_account_sis_id(
+                account.account_id, adhoc_account_sis_id(account.account_id))
 
         try:
             a = Account.objects.get(canvas_id=account.account_id)
@@ -1056,9 +1060,12 @@ class Account(models.Model):
         return {
             'canvas_id': self.canvas_id,
             'sis_id': self.sis_id,
-            'account_name': self.account_name,
-            'account_short_name': self.account_short_name,
+            'name': self.account_name,
+            'short_name': self.account_short_name,
             'account_type': self.account_type,
+            'canvas_url': '{host}/accounts/{account_id}'.format(
+                host=settings.RESTCLIENTS_CANVAS_HOST,
+                account_id=self.canvas_id),
             'added_date': self.added_date.isoformat() if (
                 self.added_date is not None) else '',
             'is_deleted': True if self.is_deleted else False
@@ -1084,6 +1091,15 @@ class Account(models.Model):
 
 
 class AdminManager(models.Manager):
+    def find_by_account(self, account=None, is_deleted=False):
+        kwargs = {'account__isnull': False}
+        if account is not None:
+            kwargs['account'] = account
+        if is_deleted:
+            kwargs['is_deleted'] = True
+
+        return super(AdminManager, self).get_queryset().filter(**kwargs)
+
     def queue_all(self):
         pks = super(AdminManager, self).get_queryset().filter(
             queue_id__isnull=True).values_list('pk', flat=True)
@@ -1136,17 +1152,28 @@ class AdminManager(models.Manager):
         self.start_reconcile(queue_id)
 
         for admin_data in admins:
+            admin_data['queue_id'] = queue_id
             self.add_admin(**admin_data)
 
         self.finish_reconcile(queue_id)
 
     def add_admin(self, **kwargs):
+        try:
+            if kwargs['canvas_id'] is not None:
+                account = Account.objects.get(canvas_id=kwargs['canvas_id'])
+            elif kwargs['account_sis_id'] is not None:
+                account = Account.objects.get(sis_id=kwargs['account_sis_id'])
+            else:
+                raise AccountPolicyException('Missing account for admin')
+        except Account.DoesNotExist:
+            raise AccountPolicyException('Unknown account: "{}" ({})'.format(
+                kwargs.get('account_sis_id'), kwargs.get('canvas_id')))
+
         admin, created = Admin.objects.get_or_create(
             net_id=kwargs['net_id'],
             reg_id=kwargs['reg_id'],
-            account_id=kwargs['account_id'],
-            canvas_id=kwargs['canvas_id'],
-            role=kwargs['role'])
+            role=kwargs['role'],
+            account=account)
 
         if kwargs.get('queue_id'):
             admin.queue_id = kwargs['queue_id']
@@ -1163,7 +1190,7 @@ class AdminManager(models.Manager):
     def has_role_in_account(self, net_id, canvas_id, role):
         try:
             admin = Admin.objects.get(
-                net_id=net_id, canvas_id=canvas_id, role=role,
+                net_id=net_id, account__canvas_id=canvas_id, role=role,
                 deleted_date__isnull=True)
             return True
         except Admin.DoesNotExist:
@@ -1209,8 +1236,9 @@ class Admin(models.Model):
     net_id = models.CharField(max_length=20)
     reg_id = models.CharField(max_length=32)
     role = models.CharField(max_length=32)
-    account_id = models.CharField(max_length=128)
-    canvas_id = models.IntegerField()
+    account = models.ForeignKey(Account, null=True, on_delete=models.CASCADE)
+    account_id_str = models.CharField(max_length=128, null=True)
+    canvas_id = models.IntegerField(null=True)
     added_date = models.DateTimeField(auto_now_add=True)
     provisioned_date = models.DateTimeField(null=True)
     deleted_date = models.DateTimeField(null=True)
@@ -1228,11 +1256,7 @@ class Admin(models.Model):
             'net_id': self.net_id,
             'reg_id': self.reg_id,
             'role': self.role,
-            'account_id': self.account_id,
-            'canvas_id': self.canvas_id,
-            'account_link': '{host}/accounts/{account_id}'.format(
-                host=settings.RESTCLIENTS_CANVAS_HOST,
-                account_id=self.canvas_id),
+            'account': self.account.json_data(),
             'added_date': localtime(self.added_date).strftime(date_fmt) if (
                 self.added_date is not None) else '',
             'provisioned_date': localtime(self.provisioned_date).strftime(

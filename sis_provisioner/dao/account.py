@@ -9,10 +9,15 @@ from sis_provisioner.dao import titleize
 import string
 import re
 
-
+RE_CANVAS_ID = re.compile(r"^\d+$")
 RE_ACCOUNT_ID = re.compile(r"(?=.*[a-z])[\w\-:& ]", re.I)
 CACHED_ACCOUNTS = {}
 CACHED_OVERRIDES = {}
+
+
+def valid_canvas_account_id(canvas_id):
+    if (canvas_id is None or RE_CANVAS_ID.match(str(canvas_id)) is None):
+        raise AccountPolicyException("Invalid Canvas ID: {}".format(canvas_id))
 
 
 def valid_account_id(account_id):
@@ -42,6 +47,11 @@ def valid_academic_account_sis_id(account_id):
 
     raise AccountPolicyException(
         "Invalid academic account SIS ID: {}".format(account_id))
+
+
+def adhoc_account_sis_id(canvas_id):
+    valid_canvas_account_id(canvas_id)
+    return "account_{}".format(canvas_id)
 
 
 def account_sis_id(accounts):

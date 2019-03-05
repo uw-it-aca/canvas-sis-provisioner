@@ -1042,8 +1042,8 @@ $(document).ready(function () {
                         context.admins.push({
                             net_id: admin.net_id,
                             role: admin.role,
-                            account_id: admin.account_id,
-                            account_link: admin.account_link,
+                            account_id: admin.account.sis_id || admin.account.canvas_id,
+                            account_link: admin.account.canvas_url,
                             added_date: admin.added_date,
                             is_deleted: admin.is_deleted
                         });

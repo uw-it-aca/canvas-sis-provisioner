@@ -58,6 +58,10 @@ def get_all_sub_accounts(account_id):
     return Accounts().get_all_sub_accounts(account_id)
 
 
+def update_account_sis_id(account_id, sis_account_id):
+    return Accounts().update_sis_id(account_id, sis_account_id)
+
+
 @retry(DataFailureException, status_codes=RETRY_STATUS_CODES,
        tries=RETRY_MAX, delay=RETRY_DELAY, logger=logger)
 def get_admins(account_id):

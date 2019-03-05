@@ -9,6 +9,17 @@ from uw_pws.util import fdao_pws_override
 
 @fdao_sws_override
 class AccountPolicyTest(TestCase):
+    def test_valid_canvas_account_id(self):
+        self.assertEquals(valid_canvas_account_id(12345), None)
+        self.assertEquals(valid_canvas_account_id('0'), None)
+        self.assertEquals(valid_canvas_account_id('1111111111'), None)
+        self.assertRaises(
+            AccountPolicyException, valid_canvas_account_id, None)
+        self.assertRaises(
+            AccountPolicyException, valid_canvas_account_id, 'abc')
+        self.assertRaises(
+            AccountPolicyException, valid_canvas_account_id, '1234z')
+
     @override_settings(SIS_IMPORT_ROOT_ACCOUNT_ID='sis_root')
     def test_valid_account_sis_id(self):
         self.assertEquals(valid_account_sis_id('sis_root'), None)
@@ -37,6 +48,13 @@ class AccountPolicyTest(TestCase):
         self.assertRaises(
             AccountPolicyException,
             valid_academic_account_sis_id, 'sis_root:uweo')
+
+    def test_adhoc_account_sis_id(self):
+        self.assertEquals(adhoc_account_sis_id('12345'), 'account_12345')
+        self.assertEquals(adhoc_account_sis_id('0'), 'account_0')
+        self.assertRaises(AccountPolicyException, adhoc_account_sis_id, None)
+        self.assertRaises(AccountPolicyException, adhoc_account_sis_id, 'abc')
+        self.assertRaises(AccountPolicyException, adhoc_account_sis_id, '')
 
     def test_account_sis_id(self):
         self.assertEquals(account_sis_id(['abc']), 'abc')

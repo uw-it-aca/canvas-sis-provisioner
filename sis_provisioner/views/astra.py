@@ -12,8 +12,9 @@ class AdminSearch(RESTDispatch):
         GET returns 200 with Admin models
     """
     def get(self, request, *args, **kwargs):
+        account = None
         admins = []
-        for admin in list(Admin.objects.all()):
+        for admin in list(Admin.objects.find_by_account(account=None)):
             admins.append(admin.json_data())
 
         return self.json_response({'admins': admins})
@@ -33,7 +34,7 @@ class AccountSearch(RESTDispatch):
 
         accounts = []
         for account in list(Account.objects.find_by_type(
-                account_type=account_type, deleted=is_deleted)):
+                account_type=account_type, is_deleted=is_deleted)):
             accounts.append(account.json_data())
 
         return self.json_response({'accounts': accounts})

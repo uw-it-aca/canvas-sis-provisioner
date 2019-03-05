@@ -16,7 +16,11 @@ class AdminBuilder(Builder):
         if admin.queue_id is not None:
             self.queue_id = admin.queue_id
 
-        account_id = admin.account_id
+        # Queue should exclude these
+        if (admin.account is None or admin.account.is_deleted):
+            return
+
+        account_id = admin.account.sis_id
         role = settings.ASTRA_ROLE_MAPPING[admin.role]
         status = 'deleted' if admin.is_deleted else 'active'
         action = 'REMOVE' if admin.is_deleted else 'ADD'

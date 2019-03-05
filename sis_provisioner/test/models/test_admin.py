@@ -3,6 +3,8 @@ from django.test import TestCase, override_settings
 from django.db.models.query import QuerySet
 from django.utils.timezone import utc
 from sis_provisioner.models import Admin
+from sis_provisioner.exceptions import AccountPolicyException
+from sis_provisioner.test.models.test_account import create_account
 from uw_canvas.utilities import fdao_canvas_override
 from uw_canvas.admins import Admins as CanvasAdmins
 from datetime import datetime, timedelta
@@ -14,25 +16,25 @@ ACCOUNT_SIS_ID = 'uwcourse:seattle:nursing:nurs'
 ACCOUNT_ID = '789'
 
 
-def create_admin(net_id, account_id='test', role='accountadmin',
-                 reg_id=binascii.b2a_hex(os.urandom(16)).upper(),
-                 canvas_id=None):
-    if canvas_id is None:
-        canvas_id = settings.RESTCLIENTS_CANVAS_ACCOUNT_ID
-
-    admin = Admin(net_id=net_id, reg_id=reg_id, account_id=account_id,
-                  canvas_id=canvas_id, role=role)
+def create_admin(
+        net_id, account, role='accountadmin',
+        reg_id=binascii.b2a_hex(os.urandom(16)).upper()):
+    admin = Admin(net_id=net_id, reg_id=reg_id, account=account, role=role)
     admin.save()
     return admin
 
 
-@override_settings(RESTCLIENTS_CANVAS_ACCOUNT_ID='123',
+@override_settings(RESTCLIENTS_CANVAS_ACCOUNT_ID='1',
                    RESTCLIENTS_CANVAS_HOST='http://canvas.edu')
 class AdminModelTest(TestCase):
+    def setUp(self):
+        self.account1 = create_account(1, 'test1')
+        self.account2 = create_account(2, 'test2')
+
     def test_add_admin(self):
         kwargs = {'net_id': 'javerage',
                   'reg_id': 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA1',
-                  'account_id': 'test',
+                  'account_sis_id': 'test1',
                   'canvas_id': 1,
                   'role': 'accountadmin'}
 
@@ -40,8 +42,8 @@ class AdminModelTest(TestCase):
         original_pk = admin.pk
         self.assertEqual(admin.net_id, 'javerage')
         self.assertEqual(admin.reg_id, 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA1')
-        self.assertEqual(admin.account_id, 'test')
-        self.assertEqual(admin.canvas_id, 1)
+        self.assertEqual(admin.account.sis_id, 'test1')
+        self.assertEqual(admin.account.canvas_id, 1)
         self.assertEqual(admin.role, 'accountadmin')
         self.assertEqual(admin.is_deleted, None)
         self.assertEqual(admin.deleted_date, None)
@@ -58,12 +60,51 @@ class AdminModelTest(TestCase):
         self.assertEqual(admin.deleted_date, None)
         self.assertEqual(admin.queue_id, 123)
 
+    def test_add_admin_missing_account_id(self):
+        kwargs = {'net_id': 'javerage',
+                  'reg_id': 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA1',
+                  'account_sis_id': None,
+                  'canvas_id': 1,
+                  'role': 'accountadmin'}
+
+        admin = Admin.objects.add_admin(**kwargs)
+        self.assertEqual(admin.account.canvas_id, 1)
+        self.assertEqual(admin.account.sis_id, 'test1')
+
+        kwargs = {'net_id': 'javerage',
+                  'reg_id': 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA1',
+                  'account_sis_id': None,
+                  'canvas_id': 33,
+                  'role': 'accountadmin'}
+
+        self.assertRaises(
+            AccountPolicyException, Admin.objects.add_admin, **kwargs)
+
+    def test_add_admin_missing_canvas_id(self):
+        kwargs = {'net_id': 'javerage',
+                  'reg_id': 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA1',
+                  'account_sis_id': 'test2',
+                  'canvas_id': None,
+                  'role': 'accountadmin'}
+
+        admin = Admin.objects.add_admin(**kwargs)
+        self.assertEqual(admin.account.canvas_id, 2)
+        self.assertEqual(admin.account.sis_id, 'test2')
+
+        kwargs = {'net_id': 'javerage',
+                  'reg_id': 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA1',
+                  'account_sis_id': 'test33',
+                  'canvas_id': None,
+                  'role': 'accountadmin'}
+
+        self.assertRaises(
+            AccountPolicyException, Admin.objects.add_admin, **kwargs)
+
     def test_is_account_admin(self):
         self.assertEqual(Admin.objects.is_account_admin('javerage'), False)
 
-        admin = create_admin('javerage')
-
-        self.assertEqual(Admin.objects.is_account_admin('javerage'), True)
+        admin = create_admin('javerage', self.account2)
+        self.assertEqual(Admin.objects.is_account_admin('javerage'), False)
 
         admin.is_deleted = True
         admin.deleted_date = datetime.utcnow().replace(tzinfo=utc)
@@ -71,9 +112,33 @@ class AdminModelTest(TestCase):
 
         self.assertEqual(Admin.objects.is_account_admin('javerage'), False)
 
+        admin = create_admin('javerage', self.account1)
+        self.assertEqual(Admin.objects.is_account_admin('javerage'), True)
+
+    def test_find_by_account(self):
+        admin1 = create_admin('javerage', self.account1)
+        admin2 = create_admin('jsmith', self.account2)
+        admin3 = create_admin('jjones', self.account2)
+
+        r = Admin.objects.find_by_account()
+        self.assertEqual(len(r), 3)
+
+        r = Admin.objects.find_by_account(account=self.account2)
+        self.assertEqual(len(r), 2)
+
+        admin2.is_deleted = True
+        admin2.save()
+
+        r = Admin.objects.find_by_account(account=self.account2)
+        self.assertEqual(len(r), 2)
+
+        r = Admin.objects.find_by_account(account=self.account2,
+                                          is_deleted=True)
+        self.assertEqual(len(r), 1)
+
     def test_start_reconcile(self):
-        create_admin('javerage')
-        create_admin('jsmith')
+        create_admin('javerage', self.account1)
+        create_admin('jsmith', self.account2)
 
         imp = Admin.objects.queue_all()
 
@@ -84,8 +149,8 @@ class AdminModelTest(TestCase):
         self.assertEqual(len(deleted), 2)
 
     def test_finish_reconcile(self):
-        create_admin('javerage')
-        create_admin('jsmith')
+        create_admin('javerage', self.account1)
+        create_admin('jsmith', self.account2)
 
         imp = Admin.objects.queue_all()
 
@@ -107,11 +172,11 @@ class AdminModelTest(TestCase):
         self.assertEqual(len(admins), 0)
 
     def test_json_data(self):
-        json = create_admin('javerage').json_data()
-        self.assertEqual(json['account_id'], 'test')
-        self.assertEqual(json['account_link'],
-                         'http://canvas.edu/accounts/123')
-        self.assertEqual(json['canvas_id'], '123')
+        json = create_admin('javerage', self.account2).json_data()
+        self.assertEqual(json['account']['sis_id'], 'test2')
+        self.assertEqual(json['account']['canvas_url'],
+                         'http://canvas.edu/accounts/2')
+        self.assertEqual(json['account']['canvas_id'], 2)
         self.assertEqual(json['is_deleted'], False)
         self.assertEqual(json['queue_id'], None)
         self.assertEqual(json['provisioned_date'], '')
@@ -130,16 +195,12 @@ class AdminModelTest(TestCase):
                                         'canvas_role': 'Masquerader'}})
 class AdminVerificationTest(TestCase):
     def setUp(self):
-        create_admin('admin1', account_id=ACCOUNT_SIS_ID,
-                     canvas_id=ACCOUNT_ID, role='accountadmin')
-        create_admin('admin2', account_id=ACCOUNT_SIS_ID,
-                     canvas_id=ACCOUNT_ID, role='accountadmin')
-        create_admin('admin3', account_id=ACCOUNT_SIS_ID,
-                     canvas_id=ACCOUNT_ID, role='accountadmin')
-        create_admin('admin4', account_id=ACCOUNT_SIS_ID,
-                     canvas_id=ACCOUNT_ID, role='subaccountadmin')
-        create_admin('admin5', account_id=ACCOUNT_SIS_ID,
-                     canvas_id=ACCOUNT_ID, role='support')
+        account = create_account(ACCOUNT_ID, ACCOUNT_SIS_ID)
+        create_admin('admin1', account, role='accountadmin')
+        create_admin('admin2', account, role='accountadmin')
+        create_admin('admin3', account, role='accountadmin')
+        create_admin('admin4', account, role='subaccountadmin')
+        create_admin('admin5', account, role='support')
 
         self.canvas_admins = {}
         for admin in CanvasAdmins().get_admins_by_sis_id(ACCOUNT_SIS_ID):

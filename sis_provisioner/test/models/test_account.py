@@ -35,7 +35,7 @@ class AccountModelTest(TestCase):
         self.assertEqual(len(r), 2)
 
         r = Account.objects.find_by_type(account_type=Account.ROOT_TYPE,
-                                         deleted=True)
+                                         is_deleted=True)
         self.assertEqual(len(r), 0)
 
         account = Account.objects.get(canvas_id=1)
@@ -43,7 +43,7 @@ class AccountModelTest(TestCase):
         account.save()
 
         r = Account.objects.find_by_type(account_type=Account.ROOT_TYPE,
-                                         deleted=True)
+                                         is_deleted=True)
         self.assertEqual(len(r), 1)
 
     def test_find_by_soc(self):
@@ -102,14 +102,17 @@ class AccountModelTest(TestCase):
         account = Account.objects.get(canvas_id=4)
         self.assertTrue(account.is_test())
 
+    @override_settings(RESTCLIENTS_CANVAS_HOST='http://canvas.edu')
     def test_json_data(self):
         account = Account.objects.get(canvas_id=2)
         json_data = account.json_data()
         self.assertEqual(json_data['canvas_id'], 2)
         self.assertEqual(json_data['sis_id'], 'test_sdb')
-        self.assertEqual(json_data['account_name'], 'SDB')
-        self.assertEqual(json_data['account_short_name'], '')
+        self.assertEqual(json_data['name'], 'SDB')
+        self.assertEqual(json_data['short_name'], '')
         self.assertEqual(json_data['account_type'], 'sdb')
+        self.assertEqual(json_data['canvas_url'],
+                         'http://canvas.edu/accounts/2')
         self.assertEqual(json_data['is_deleted'], False)
 
     def test_soc_json_data(self):
