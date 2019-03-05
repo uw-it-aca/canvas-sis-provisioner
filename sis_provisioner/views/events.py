@@ -1,4 +1,4 @@
-from sis_provisioner.views.rest_dispatch import RESTDispatch
+from sis_provisioner.views.admin import RESTDispatch
 from sis_provisioner.models.events import (
     EnrollmentLog, GroupLog, InstructorLog, PersonLog)
 from time import time, gmtime, strftime

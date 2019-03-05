@@ -1,12 +1,10 @@
 from logging import getLogger
 from sis_provisioner.models import Job
-from sis_provisioner.views.rest_dispatch import RESTDispatch
-from sis_provisioner.views.admin import can_manage_jobs
+from sis_provisioner.views.admin import RESTDispatch
 from sis_provisioner.views import get_user
 from django.utils.timezone import utc
 from datetime import datetime
 import json
-
 
 logger = getLogger(__name__)
 
@@ -25,7 +23,7 @@ class JobView(RESTDispatch):
             return self.error_response(404, "Job %s not found" % job_id)
 
     def put(self, request, *args, **kwargs):
-        if not can_manage_jobs(request):
+        if not self.can_manage_jobs(request):
             return self.error_response(401, "Unauthorized")
 
         job_id = kwargs['job_id']
@@ -49,7 +47,7 @@ class JobView(RESTDispatch):
             return self.error_response(404, "Job %s not found" % job_id)
 
     def delete(self, request, *args, **kwargs):
-        if not can_manage_jobs(request):
+        if not self.can_manage_jobs(request):
             return self.error_response(401, "Unauthorized")
 
         job_id = kwargs['job_id']
@@ -68,7 +66,7 @@ class JobListView(RESTDispatch):
     """ Retrieves a list of Jobs.
     """
     def get(self, request, *args, **kwargs):
-        read_only = False if can_manage_jobs(request) else True
+        read_only = not self.can_manage_jobs(request)
         jobs = []
         for job in Job.objects.all().order_by('title'):
             data = job.json_data()

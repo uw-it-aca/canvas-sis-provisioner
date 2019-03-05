@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.shortcuts import render
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse
+from django.utils.decorators import method_decorator
+from django.views import View
 from sis_provisioner.dao.user import is_group_admin
 from sis_provisioner.dao.term import get_term_by_date
 from sis_provisioner.models import Admin
@@ -8,80 +10,89 @@ from sis_provisioner.views import group_required, get_user, is_member_of_group
 from restclients_core.exceptions import DataFailureException
 from datetime import datetime
 import json
-import re
 
 
-def _admin(request, template):
-    curr_date = datetime.now().date()
-    try:
-        term = get_term_by_date(curr_date)
-        curr_year = term.year
-        curr_quarter = term.quarter
-    except DataFailureException as ex:
-        curr_year = curr_date.year
-        curr_quarter = ''
+@method_decorator(group_required(settings.CANVAS_MANAGER_ADMIN_GROUP),
+                  name='dispatch')
+class AdminView(View):
+    def get(self, request, *args, **kwargs):
+        curr_date = datetime.now().date()
+        try:
+            term = get_term_by_date(curr_date)
+            curr_year = term.year
+            curr_quarter = term.quarter
+        except DataFailureException as ex:
+            curr_year = curr_date.year
+            curr_quarter = ''
 
-    params = {
-        'EVENT_UPDATE_FREQ': settings.ADMIN_EVENT_GRAPH_FREQ,
-        'IMPORT_UPDATE_FREQ': settings.ADMIN_IMPORT_STATUS_FREQ,
-        'CURRENT_QUARTER': curr_quarter,
-        'CURRENT_YEAR': curr_year,
-        'can_manage_admin_group': can_manage_admin_group(request),
-        'can_view_restclients': can_view_source_data(request),
-        'admin_group': settings.CANVAS_MANAGER_ADMIN_GROUP,
-    }
-    return render(request, template, params)
+        self.params.update({
+            'EVENT_UPDATE_FREQ': settings.ADMIN_EVENT_GRAPH_FREQ,
+            'IMPORT_UPDATE_FREQ': settings.ADMIN_IMPORT_STATUS_FREQ,
+            'CURRENT_QUARTER': curr_quarter,
+            'CURRENT_YEAR': curr_year,
+            'can_manage_admin_group': self.can_manage_admin_group(request),
+            'can_view_restclients': self.can_view_source_data(request),
+            'can_manage_jobs': self.can_manage_jobs(request),
+            'can_manage_external_tools': self.can_manage_external_tools(
+                request),
+            'admin_group': settings.CANVAS_MANAGER_ADMIN_GROUP,
+        })
+        return render(request, self.template_name, self.params)
 
+    @staticmethod
+    def can_view_source_data(request, service=None, url=None):
+        return is_member_of_group(request, settings.RESTCLIENTS_ADMIN_GROUP)
 
-@group_required(settings.CANVAS_MANAGER_ADMIN_GROUP)
-def ImportStatus(request, template='canvas_admin/status.html'):
-    return _admin(request, template)
+    @staticmethod
+    def can_manage_admin_group(request):
+        return is_group_admin(
+            settings.CANVAS_MANAGER_ADMIN_GROUP, get_user(request))
 
+    @staticmethod
+    def can_manage_jobs(request):
+        return Admin.objects.is_account_admin(get_user(request))
 
-@group_required(settings.CANVAS_MANAGER_ADMIN_GROUP)
-def ManageCourses(request, template='canvas_admin/courses.html'):
-    return _admin(request, template)
-
-
-@group_required(settings.CANVAS_MANAGER_ADMIN_GROUP)
-def ManageUsers(request, template='canvas_admin/users.html'):
-    return _admin(request, template)
-
-
-@group_required(settings.CANVAS_MANAGER_ADMIN_GROUP)
-def ManageGroups(request, template='canvas_admin/groups.html'):
-    return _admin(request, template)
-
-
-@group_required(settings.CANVAS_MANAGER_ADMIN_GROUP)
-def ManageAdmins(request, template='canvas_admin/admins.html'):
-    return _admin(request, template)
+    @staticmethod
+    def can_manage_external_tools(request):
+        return self.can_manage_jobs(request)
 
 
-@group_required(settings.CANVAS_MANAGER_ADMIN_GROUP)
-def ManageJobs(request, template='canvas_admin/jobs.html'):
-    return _admin(request, template)
+class ImportStatus(AdminView):
+    template_name = 'canvas_admin/status.html'
 
 
-@group_required(settings.CANVAS_MANAGER_ADMIN_GROUP)
-def ManageExternalTools(request, template='canvas_admin/external_tools.html'):
-    params = {'read_only': False if (
-        can_manage_external_tools(request)) else True}
-    return render(request, template, params)
+class ManageCourses(AdminView):
+    template_name = 'canvas_admin/courses.html'
 
 
-def can_view_source_data(request, service=None, url=None):
-    return is_member_of_group(request, settings.RESTCLIENTS_ADMIN_GROUP)
+class ManageUsers(AdminView):
+    template_name = 'canvas_admin/users.html'
 
 
-def can_manage_admin_group(request):
-    return is_group_admin(
-        settings.CANVAS_MANAGER_ADMIN_GROUP, get_user(request))
+class ManageGroups(AdminView):
+    template_name = 'canvas_admin/groups.html'
 
 
-def can_manage_jobs(request):
-    return Admin.objects.is_account_admin(get_user(request))
+class ManageAdmins(AdminView):
+    template_name = 'canvas_admin/admins.html'
 
 
-def can_manage_external_tools(request):
-    return can_manage_jobs(request)
+class ManageJobs(AdminView):
+    template_name = 'canvas_admin/jobs.html'
+
+
+class ManageExternalTools(AdminView):
+    template_name = 'canvas_admin/external_tools.html'
+
+
+class RESTDispatch(AdminView):
+    def error_response(self, status, message='', content={}):
+        content['error'] = '{}'.format(message)
+        return HttpResponse(json.dumps(content),
+                            status=status,
+                            content_type='application/json')
+
+    def json_response(self, content='', status=200):
+        return HttpResponse(json.dumps(content, sort_keys=True),
+                            status=status,
+                            content_type='application/json')

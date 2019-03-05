@@ -1,7 +1,7 @@
 import re
 from logging import getLogger
 from sis_provisioner.models import Enrollment, PRIORITY_NONE
-from sis_provisioner.views.rest_dispatch import RESTDispatch
+from sis_provisioner.views.admin import RESTDispatch
 from sis_provisioner.views import regid_from_request, netid_from_request
 from sis_provisioner.dao.user import get_person_by_netid
 

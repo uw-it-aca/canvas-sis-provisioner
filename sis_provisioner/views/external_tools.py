@@ -3,8 +3,7 @@ from logging import getLogger
 from sis_provisioner.models.external_tools import (
     ExternalTool, ExternalToolAccount)
 from sis_provisioner.views import get_user
-from sis_provisioner.views.admin import can_manage_external_tools
-from sis_provisioner.views.rest_dispatch import RESTDispatch
+from sis_provisioner.views.admin import RESTDispatch
 from sis_provisioner.dao.canvas import get_account_by_id
 from uw_canvas.external_tools import ExternalTools
 from restclients_core.exceptions import DataFailureException
@@ -25,7 +24,7 @@ class ExternalToolView(RESTDispatch):
     """
     def get(self, request, *args, **kwargs):
         canvas_id = kwargs['canvas_id']
-        read_only = False if can_manage_external_tools(request) else True
+        read_only = not self.can_manage_external_tools(request)
         try:
             external_tool = ExternalTool.objects.get(canvas_id=canvas_id)
             data = external_tool.json_data()
@@ -45,7 +44,7 @@ class ExternalToolView(RESTDispatch):
         return self.json_response({'external_tool': data})
 
     def put(self, request, *args, **kwargs):
-        if not can_manage_external_tools(request):
+        if not self.can_manage_external_tools(request):
             return self.error_response(401, "Unauthorized")
 
         canvas_id = kwargs['canvas_id']
@@ -104,7 +103,7 @@ class ExternalToolView(RESTDispatch):
             'external_tool': external_tool.json_data()})
 
     def post(self, request, *args, **kwargs):
-        if not can_manage_external_tools(request):
+        if not self.can_manage_external_tools(request):
             return self.error_response(401, "Unauthorized")
 
         try:
@@ -193,7 +192,7 @@ class ExternalToolView(RESTDispatch):
             'external_tool': external_tool.json_data()})
 
     def delete(self, request, *args, **kwargs):
-        if not can_manage_external_tools(request):
+        if not self.can_manage_external_tools(request):
             return self.error_response(401, "Unauthorized")
 
         canvas_id = kwargs['canvas_id']
@@ -254,7 +253,7 @@ class ExternalToolListView(RESTDispatch):
     """ Retrieves a list of ExternalTools.
     """
     def get(self, request, *args, **kwargs):
-        read_only = False if can_manage_external_tools(request) else True
+        read_only = not self.can_manage_external_tools(request)
         external_tools = []
         for external_tool in ExternalTool.objects.all():
             data = external_tool.json_data()

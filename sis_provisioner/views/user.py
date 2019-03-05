@@ -9,9 +9,8 @@ from sis_provisioner.dao.canvas import get_user_by_sis_id, create_user
 from sis_provisioner.dao.user import (
     get_person_by_netid, get_person_by_regid, get_person_by_gmail_id)
 from sis_provisioner.models import User, PRIORITY_IMMEDIATE
-from sis_provisioner.views.rest_dispatch import RESTDispatch
 from sis_provisioner.views import regid_from_request, netid_from_request
-from sis_provisioner.views.admin import can_view_source_data
+from sis_provisioner.views.admin import RESTDispatch
 
 
 logger = getLogger(__name__)
@@ -87,7 +86,7 @@ class UserView(RESTDispatch):
             'enrollment_url': None
         }
 
-        if can_view_source_data(self.request):
+        if self.can_view_source_data(self.request):
             response['person_url'] = '{path}/person/{uwregid}.json'.format(
                 path='/restclients/view/pws/identity/v1',
                 uwregid=person.uwregid)
