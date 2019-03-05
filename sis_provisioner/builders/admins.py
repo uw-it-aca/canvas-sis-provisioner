@@ -16,7 +16,8 @@ class AdminBuilder(Builder):
         if admin.queue_id is not None:
             self.queue_id = admin.queue_id
 
-        if admin.account is None:
+        # Queue should exclude these
+        if (admin.account is None or admin.account.is_deleted):
             return
 
         account_id = admin.account.sis_id
