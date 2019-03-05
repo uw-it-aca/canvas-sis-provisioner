@@ -940,9 +940,11 @@ class Curriculum(models.Model):
 
 class AccountManager(models.Manager):
     def find_by_type(self, account_type=None, is_deleted=False):
-        kwargs = {'is_deleted__isnull': not is_deleted}
+        kwargs = {}
         if account_type:
             kwargs['account_type'] = account_type
+        if is_deleted:
+            kwargs['is_deleted'] = True
 
         return super(AccountManager, self).get_queryset().filter(**kwargs)
 
@@ -1090,12 +1092,11 @@ class Account(models.Model):
 
 class AdminManager(models.Manager):
     def find_by_account(self, account=None, is_deleted=False):
-        kwargs = {
-            'account__isnull': False,
-            'is_deleted__isnull': not is_deleted
-        }
+        kwargs = {'account__isnull': False}
         if account is not None:
             kwargs['account'] = account
+        if is_deleted:
+            kwargs['is_deleted'] = True
 
         return super(AdminManager, self).get_queryset().filter(**kwargs)
 
