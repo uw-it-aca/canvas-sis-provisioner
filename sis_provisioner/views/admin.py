@@ -25,7 +25,7 @@ class AdminView(View):
             curr_year = curr_date.year
             curr_quarter = ''
 
-        self.params.update({
+        params = {
             'EVENT_UPDATE_FREQ': settings.ADMIN_EVENT_GRAPH_FREQ,
             'IMPORT_UPDATE_FREQ': settings.ADMIN_IMPORT_STATUS_FREQ,
             'CURRENT_QUARTER': curr_quarter,
@@ -36,8 +36,8 @@ class AdminView(View):
             'can_manage_external_tools': self.can_manage_external_tools(
                 request),
             'admin_group': settings.CANVAS_MANAGER_ADMIN_GROUP,
-        })
-        return render(request, self.template_name, self.params)
+        }
+        return render(request, self.template_name, params)
 
     @staticmethod
     def can_view_source_data(request, service=None, url=None):
