@@ -88,14 +88,14 @@ class ManageExternalTools(AdminView):
 
 class RESTDispatch(AdminView):
     @staticmethod
-    def error_response(self, status, message='', content={}):
+    def error_response(status, message='', content={}):
         content['error'] = '{}'.format(message)
         return HttpResponse(json.dumps(content),
                             status=status,
                             content_type='application/json')
 
     @staticmethod
-    def json_response(self, content='', status=200):
+    def json_response(content='', status=200):
         return HttpResponse(json.dumps(content, sort_keys=True),
                             status=status,
                             content_type='application/json')
