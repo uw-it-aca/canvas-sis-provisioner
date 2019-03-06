@@ -25,7 +25,7 @@ setup(
         'suds-jurko==0.6',
         'django-blti>=2.1.2,<3.0',
         'django-aws-message>=1.5.1',
-        'UW-Canvas-Users-LTI>=0.6,<1.0',
+        'UW-Canvas-Users-LTI>=0.7,<1.0',
         'UW-Groups-LTI>=0.6,<1.0',
         'UW-Course-Roster-LTI>=0.8,<1.0',
         'UW-Grading-Standard-LTI>=0.7,<1.0',
