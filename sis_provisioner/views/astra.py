@@ -1,3 +1,4 @@
+from django.views import View
 from sis_provisioner.models import Admin, Account
 from sis_provisioner.views.rest_dispatch import RESTDispatch
 from logging import getLogger
@@ -43,7 +44,7 @@ class AccountSearch(RESTDispatch):
         return self._re_true.match(val)
 
 
-class AccountSoC(RESTDispatch):
+class AccountSoC(View):
     """ Performs query of Account models returning Spans of Control
         for ASTRA consumption
         GET returns 200 with SOC list
@@ -55,4 +56,4 @@ class AccountSoC(RESTDispatch):
         for account in list(Account.objects.find_by_soc(account_type)):
             json_rep.append(account.soc_json_data())
 
-        return self.json_response(json_rep)
+        return RESTDispatch.json_response(json_rep)

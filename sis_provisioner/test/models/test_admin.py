@@ -191,7 +191,7 @@ class AdminModelTest(TestCase):
         'accountadmin': 'AccountAdmin',
         'support': 'Support',
         'subaccountadmin': 'Sub Account Admin'},
-    ANCILLARY_CANVAS_ROLES={'Support': {'account': 'root',
+    ANCILLARY_CANVAS_ROLES={'support': {'account': 'root',
                                         'canvas_role': 'Masquerader'}})
 class AdminVerificationTest(TestCase):
     def setUp(self):
