@@ -1211,8 +1211,9 @@ class AdminManager(models.Manager):
         roles = {v: k for k, v in settings.ASTRA_ROLE_MAPPING.items()}
 
         # Verify whether this role is ASTRA-defined
-        if self.has_role_in_account(
-                admin.user.login_id, canvas_account_id, roles.get(admin.role)):
+        astra_role = roles.get(admin.role)
+        if (astra_role is not None and self.has_role_in_account(
+                admin.user.login_id, canvas_account_id, astra_role)):
             return True
 
         # Otherwise, verify whether this is a valid ancillary role
@@ -1222,9 +1223,9 @@ class AdminManager(models.Manager):
             else:
                 ancillary_account_id = canvas_account_id
 
-            if (ancillary_account_id == canvas_account_id and
+            if (str(ancillary_account_id) == str(canvas_account_id) and
                     data['canvas_role'] == admin.role):
-                if self.has_role(admin.user.login_id, roles.get(parent_role)):
+                if self.has_role(admin.user.login_id, parent_role):
                     return True
 
         return False
