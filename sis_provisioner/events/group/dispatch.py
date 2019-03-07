@@ -21,7 +21,7 @@ import datetime
 import re
 
 log_prefix = 'GROUP:'
-re_parser = re.compile(r'^(<.*>)[^>]*$')
+re_parser = re.compile(b'^(<.*>)[^>]*$')
 
 
 class Dispatch(object):
