@@ -5,7 +5,7 @@ from sis_provisioner.dao.canvas import (
 from sis_provisioner.management.commands import SISProvisionerCommand
 from logging import getLogger
 
-logger = getLogger('astra')
+logger = getLogger('sis_provisioner.dao.astra')
 
 
 class Command(SISProvisionerCommand):

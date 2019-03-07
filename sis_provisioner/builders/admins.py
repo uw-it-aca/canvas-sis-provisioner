@@ -5,7 +5,7 @@ from sis_provisioner.dao.user import get_person_by_regid
 from sis_provisioner.exceptions import UserPolicyException
 from logging import getLogger
 
-logger = getLogger('astra')
+logger = getLogger('sis_provisioner.dao.astra')
 
 
 class AdminBuilder(Builder):
