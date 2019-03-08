@@ -17,6 +17,9 @@ import json
                   name='dispatch')
 class AdminView(View):
     def get(self, request, *args, **kwargs):
+        return render(request, self.template_name, self._params(request))
+
+    def _params(self, request):
         curr_date = datetime.now().date()
         try:
             term = get_term_by_date(curr_date)
@@ -26,9 +29,11 @@ class AdminView(View):
             curr_year = curr_date.year
             curr_quarter = ''
 
-        params = {
-            'EVENT_UPDATE_FREQ': settings.ADMIN_EVENT_GRAPH_FREQ,
-            'IMPORT_UPDATE_FREQ': settings.ADMIN_IMPORT_STATUS_FREQ,
+        return {
+            'EVENT_UPDATE_FREQ': getattr(
+                settings, 'ADMIN_EVENT_GRAPH_FREQ', 10),
+            'IMPORT_UPDATE_FREQ': getattr(
+                settings, 'ADMIN_IMPORT_STATUS_FREQ', 30),
             'CURRENT_QUARTER': curr_quarter,
             'CURRENT_YEAR': curr_year,
             'can_manage_admin_group': self.can_manage_admin_group(request),
@@ -38,7 +43,6 @@ class AdminView(View):
                 request),
             'admin_group': settings.CANVAS_MANAGER_ADMIN_GROUP,
         }
-        return render(request, self.template_name, params)
 
     @staticmethod
     def can_view_source_data(request, service=None, url=None):
@@ -55,7 +59,7 @@ class AdminView(View):
 
     @staticmethod
     def can_manage_external_tools(request):
-        return self.can_manage_jobs(request)
+        return Admin.objects.is_account_admin(get_user(request))
 
 
 class ImportStatus(AdminView):
@@ -88,14 +92,14 @@ class ManageExternalTools(AdminView):
 
 class RESTDispatch(AdminView):
     @staticmethod
-    def error_response(self, status, message='', content={}):
+    def error_response(status, message='', content={}):
         content['error'] = '{}'.format(message)
         return HttpResponse(json.dumps(content),
                             status=status,
                             content_type='application/json')
 
     @staticmethod
-    def json_response(self, content='', status=200):
+    def json_response(content='', status=200):
         return HttpResponse(json.dumps(content, sort_keys=True),
                             status=status,
                             content_type='application/json')
