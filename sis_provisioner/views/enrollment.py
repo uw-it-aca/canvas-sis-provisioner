@@ -1,10 +1,8 @@
 import re
 from logging import getLogger
 from sis_provisioner.models import Enrollment, PRIORITY_NONE
-from sis_provisioner.views.rest_dispatch import RESTDispatch
-from sis_provisioner.views import regid_from_request, netid_from_request
+from sis_provisioner.views.admin import RESTDispatch
 from sis_provisioner.dao.user import get_person_by_netid
-
 
 logger = getLogger(__name__)
 
@@ -86,10 +84,11 @@ class EnrollmentListView(RESTDispatch):
         reg_id = None
         try:
             if 'net_id' in request.GET:
-                person = get_person_by_netid(netid_from_request(request.GET))
+                person = get_person_by_netid(
+                    self.netid_from_request(request.GET))
                 reg_id = person.uwregid
             elif 'reg_id' in request.GET:
-                reg_id = regid_from_request(request.GET)
+                reg_id = self.regid_from_request(request.GET)
             else:
                 self._criteria[2]['required'] = True
 
