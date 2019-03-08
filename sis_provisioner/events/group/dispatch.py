@@ -79,7 +79,7 @@ class Dispatch(object):
         return 0
 
     def _parse(self, message):
-        return ET.fromstring(re_parser.sub(r'\g<1>', message))
+        return ET.fromstring(re_parser.sub(b'\g<1>', message))
 
 
 class UWGroupDispatch(Dispatch):
