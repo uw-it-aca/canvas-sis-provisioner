@@ -21,7 +21,7 @@ import datetime
 import re
 
 log_prefix = 'GROUP:'
-re_parser = re.compile(b'^(<.*>)[^>]*$')
+re_parser = re.compile(r'^(<.*>)[^>]*$')
 
 
 class Dispatch(object):
@@ -79,7 +79,7 @@ class Dispatch(object):
         return 0
 
     def _parse(self, message):
-        return ET.fromstring(re_parser.sub(b'\g<1>', message))
+        return ET.fromstring(re_parser.sub(r'\g<1>', message.decode('utf-8')))
 
 
 class UWGroupDispatch(Dispatch):
