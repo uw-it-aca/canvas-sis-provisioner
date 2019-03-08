@@ -13,6 +13,10 @@ from datetime import datetime
 import json
 
 
+def can_view_source_data(request, service=None, url=None):
+    return is_member_of_group(request, settings.RESTCLIENTS_ADMIN_GROUP)
+
+
 @method_decorator(group_required(settings.CANVAS_MANAGER_ADMIN_GROUP),
                   name='dispatch')
 class AdminView(View):
@@ -46,7 +50,7 @@ class AdminView(View):
 
     @staticmethod
     def can_view_source_data(request, service=None, url=None):
-        return is_member_of_group(request, settings.RESTCLIENTS_ADMIN_GROUP)
+        return can_view_source_data(request, service=service, url=url)
 
     @staticmethod
     def can_manage_admin_group(request):
