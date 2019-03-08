@@ -23,5 +23,3 @@ class Command(SISProvisionerCommand):
             self.update_job()
         except GatherException as err:
             raise CommandError(err)
-        except Exception as err:
-            raise CommandError('FAIL: {}'.format(err))
