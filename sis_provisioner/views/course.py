@@ -5,9 +5,7 @@ from sis_provisioner.dao.term import get_term_by_year_and_quarter
 from sis_provisioner.dao.user import get_person_by_netid, get_person_by_regid
 from sis_provisioner.models import (
     Course, Group, PRIORITY_NONE, PRIORITY_CHOICES)
-from sis_provisioner.views.rest_dispatch import RESTDispatch
-from sis_provisioner.views import regid_from_request, netid_from_request
-from sis_provisioner.views.admin import can_view_source_data
+from sis_provisioner.views.admin import RESTDispatch
 from sis_provisioner.exceptions import CoursePolicyException
 from logging import getLogger
 import json
@@ -30,7 +28,8 @@ class CourseView(RESTDispatch):
         try:
             course = Course.objects.get(
                 course_id=self._normalize(kwargs['course_id']))
-            json_data = course.json_data(can_view_source_data(request))
+            json_data = course.json_data(
+                include_sws_url=self.can_view_source_data(request))
             return self.json_response(json_data)
 
         except Exception as err:
@@ -67,7 +66,8 @@ class CourseView(RESTDispatch):
             else:
                 raise Exception("Invalid priority: '%s'" % param)
 
-            json_data = course.json_data(can_view_source_data(request))
+            json_data = course.json_data(
+                include_sws_url=self.can_view_source_data(request))
             return self.json_response(json_data)
         except Exception as err:
             return self.error_response(400, err)
@@ -151,7 +151,7 @@ class CourseListView(RESTDispatch):
                 course_list = list(Course.objects.filter(
                     **filt_kwargs).order_by('course_id'))
 
-                include_sws_url = can_view_source_data(request)
+                include_sws_url = self.can_view_source_data(request)
                 for course in course_list:
                     json_data = course.json_data(include_sws_url)
                     json_rep['courses'].append(json_data)
@@ -165,9 +165,9 @@ class CourseListView(RESTDispatch):
         reg_id = None
         try:
             if 'net_id' in request.GET:
-                net_id = netid_from_request(request.GET)
+                net_id = self.netid_from_request(request.GET)
             elif 'reg_id' in request.GET:
-                reg_id = regid_from_request(request.GET)
+                reg_id = self.regid_from_request(request.GET)
             else:
                 self._criteria[2]['required'] = True
 
@@ -205,7 +205,7 @@ class CourseListView(RESTDispatch):
                 logger.error('Section search fail: %s' % err)
                 return self.error_response(400, err)
 
-        include_sws_url = can_view_source_data(request)
+        include_sws_url = self.can_view_source_data(request)
         for course in course_list:
             if 'white_list' in locals() and course.course_id not in white_list:
                 continue

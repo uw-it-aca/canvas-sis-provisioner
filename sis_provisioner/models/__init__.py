@@ -19,7 +19,6 @@ from sis_provisioner.exceptions import (
     AccountPolicyException, CoursePolicyException, MissingLoginIdException,
     EmptyQueueException, MissingImportPathException)
 from restclients_core.exceptions import DataFailureException
-from urllib3.exceptions import MaxRetryError
 from datetime import datetime, timedelta
 from logging import getLogger
 import traceback
@@ -87,7 +86,7 @@ class TermManager(models.Manager):
                     tzinfo=utc)
                 term.save()
 
-            except (DataFailureException, MaxRetryError) as err:
+            except DataFailureException as ex:
                 logger.info('Unable to set term overrides: {}'.format(ex))
 
     def queue_unused_courses(self, term_id):
@@ -1339,8 +1338,8 @@ class Import(models.Model):
             self.post_status = 200
             self.canvas_id = sis_import.import_id
             self.canvas_state = sis_import.workflow_state
-        except (DataFailureException, MaxRetryError) as ex:
-            self.post_status = getattr(ex, 'status', None)
+        except DataFailureException as ex:
+            self.post_status = ex.status
             self.canvas_errors = ex
 
         self.save()
@@ -1365,7 +1364,7 @@ class Import(models.Model):
             if len(sis_import.processing_errors):
                 self.canvas_errors = json.dumps(sis_import.processing_errors)
 
-        except (DataFailureException, MaxRetryError, KeyError) as ex:
+        except (DataFailureException, KeyError) as ex:
             logger.info('Monitor error: {}'.format(ex))
             return
 

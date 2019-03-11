@@ -22,13 +22,13 @@ urlpatterns = [
     re_path(r'^$', TemplateView.as_view(template_name='index.html')),
     re_path(r'^robots\.txt$', TemplateView.as_view(
         template_name='robots.txt', content_type='text/plain')),
-    re_path(r'^admin/?$', ImportStatus, name='ImportStatus'),
-    re_path(r'^admin/users$', ManageUsers, name='ManageUsers'),
-    re_path(r'^admin/courses$', ManageCourses, name='ManageCourses'),
-    re_path(r'^admin/groups$', ManageGroups, name='ManageGroups'),
-    re_path(r'^admin/admins$', ManageAdmins, name='ManageAdmins'),
-    re_path(r'^admin/jobs$', ManageJobs, name='ManageJobs'),
-    re_path(r'^admin/external_tools$', ManageExternalTools,
+    re_path(r'^admin/?$', ImportStatus.as_view(), name='ImportStatus'),
+    re_path(r'^admin/users$', ManageUsers.as_view(), name='ManageUsers'),
+    re_path(r'^admin/courses$', ManageCourses.as_view(), name='ManageCourses'),
+    re_path(r'^admin/groups$', ManageGroups.as_view(), name='ManageGroups'),
+    re_path(r'^admin/admins$', ManageAdmins.as_view(), name='ManageAdmins'),
+    re_path(r'^admin/jobs$', ManageJobs.as_view(), name='ManageJobs'),
+    re_path(r'^admin/external_tools$', ManageExternalTools.as_view(),
             name='ManageExternalTools'),
 
     # API urls

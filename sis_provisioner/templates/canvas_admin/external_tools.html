@@ -34,7 +34,7 @@
     <div class="inner">
         <h2>Manage External Tools</h2>
 
-        {% if not read_only %}
+        {% if can_manage_external_tools %}
         <div class="pull-right">
             <button type="button" class="btn btn-primary et-add" title="Add an external tool"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Add external tool</button>
         </div>

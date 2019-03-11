@@ -8,7 +8,6 @@ from sis_provisioner.exceptions import (
 from uw_sws.models import Registration
 from uw_sws.exceptions import InvalidCanvasIndependentStudyCourse
 from restclients_core.exceptions import DataFailureException
-from urllib3.exceptions import MaxRetryError
 from datetime import datetime, timedelta
 from django.conf import settings
 from django.utils.timezone import utc
@@ -44,8 +43,8 @@ class EnrollmentBuilder(Builder):
                 InvalidCanvasIndependentStudyCourse) as err:
             self._skip_enrollment_event(enrollment, err)
             return
-        except (DataFailureException, MaxRetryError) as err:
-            if hasattr(err, 'status') and err.status == 404:
+        except DataFailureException as err:
+            if err.status == 404:
                 self._skip_enrollment_event(enrollment, err)
             else:
                 self._requeue_enrollment_event(enrollment, err)

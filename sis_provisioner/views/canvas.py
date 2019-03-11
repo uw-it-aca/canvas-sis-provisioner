@@ -1,7 +1,6 @@
 from django.conf import settings
 from sis_provisioner.models import Course
-from sis_provisioner.views.rest_dispatch import RESTDispatch
-from sis_provisioner.views.admin import can_view_source_data
+from sis_provisioner.views.admin import RESTDispatch
 from sis_provisioner.dao.canvas import (
     get_account_by_id, get_course_by_id, get_course_by_sis_id)
 from logging import getLogger
@@ -48,8 +47,8 @@ class CanvasCourseView(RESTDispatch):
             if course.sis_course_id is not None:
                 try:
                     model = Course.objects.get(course_id=course.sis_course_id)
-                    course_rep.update(
-                        model.json_data(can_view_source_data(request)))
+                    course_rep.update(model.json_data(
+                        include_sws_url=self.can_view_source_data(request)))
                 except Course.DoesNotExist:
                     pass
 

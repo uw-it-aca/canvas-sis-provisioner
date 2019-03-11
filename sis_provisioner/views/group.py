@@ -1,5 +1,5 @@
 from sis_provisioner.models import Group
-from sis_provisioner.views.rest_dispatch import RESTDispatch
+from sis_provisioner.views.admin import RESTDispatch
 
 
 class GroupListView(RESTDispatch):
