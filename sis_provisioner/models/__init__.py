@@ -335,6 +335,15 @@ class Course(models.Model):
 
         return sws_url
 
+    def update_priority(self, priority):
+        for key, val in PRIORITY_CHOICES:
+            if val == priority:
+                self.priority = key
+                self.save()
+                return
+
+        raise CoursePolicyException("Invalid priority: '{}'".format(priority))
+
     def json_data(self, include_sws_url=False):
         try:
             group_models = Group.objects.filter(course_id=self.course_id,

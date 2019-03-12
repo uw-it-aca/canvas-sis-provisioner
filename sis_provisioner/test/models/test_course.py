@@ -5,6 +5,7 @@ from datetime import datetime
 from sis_provisioner.dao.course import get_section_by_id
 from sis_provisioner.models import (
     Course, Import, PRIORITY_NONE, PRIORITY_DEFAULT, PRIORITY_HIGH)
+from sis_provisioner.exceptions import CoursePolicyException
 from uw_sws.util import fdao_sws_override
 from uw_pws.util import fdao_pws_override
 import mock
@@ -95,6 +96,16 @@ class CourseModelTest(TestCase):
         self.assertEquals(course.priority, PRIORITY_NONE)
 
         Course.objects.all().delete()
+
+    def test_update_priority(self):
+        course = Course(course_type=Course.SDB_TYPE,
+                        course_id='2013-summer-TRAIN-101-A')
+        self.assertEqual(course.priority, PRIORITY_DEFAULT)
+
+        course.update_priority('high')
+        self.assertEqual(course.priority, PRIORITY_HIGH)
+
+        self.assertRaises(CoursePolicyException, course.update_priority, '')
 
     @mock.patch.object(QuerySet, 'update')
     def test_dequeue(self, mock_update):
