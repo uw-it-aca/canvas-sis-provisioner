@@ -32,15 +32,15 @@ class CourseView(RESTDispatch):
                 include_sws_url=self.can_view_source_data(request))
             return self.json_response(json_data)
 
-        except Exception as err:
-            return self.error_response(404, "Course not found: %s" % err)
+        except Course.DoesNotExist:
+            return self.error_response(404, "Course not found")
 
     def put(self, request, *args, **kwargs):
         try:
             course = Course.objects.get(
                 course_id=self._normalize(kwargs['course_id']))
-        except Exception as err:
-            return self.error_response(404, "Course not found: %s" % err)
+        except Course.DoesNotExist:
+            return self.error_response(404, "Course not found")
 
         if course.queue_id is not None:
             return self.error_response(409, "Course already being provisioned")
@@ -53,23 +53,13 @@ class CourseView(RESTDispatch):
 
         try:
             # only priority PUTable right now
-            param = new_values.get('priority', '').lower()
-            new_priority = None
-            for key, val in dict(PRIORITY_CHOICES).iteritems():
-                if val == param:
-                    new_priority = key
-                    break
-
-            if new_priority is not None:
-                course.priority = new_priority
-                course.save()
-            else:
-                raise Exception("Invalid priority: '%s'" % param)
+            priority = new_values.get('priority', '').lower()
+            course.update_priority(priority)
 
             json_data = course.json_data(
                 include_sws_url=self.can_view_source_data(request))
             return self.json_response(json_data)
-        except Exception as err:
+        except CoursePolicyException as err:
             return self.error_response(400, err)
 
     def _normalize(self, course):
