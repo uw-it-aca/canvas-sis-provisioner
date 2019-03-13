@@ -108,11 +108,15 @@ class Builder(object):
             return section
 
         except DataFailureException as err:
-            data = json.loads(err.msg)
+            try:
+                data = json.loads(err.msg)
+                msg = data.get("StatusDescription", "")
+            except json.decoder.JSONDecodeError:
+                msg = err.msg
             Course.objects.remove_from_queue(section_id, "{}: {} {}".format(
-                err.url, err.status, data["StatusDescription"]))
+                err.url, err.status, msg))
             self.logger.info("Skip section {}: {} {}".format(
-                section_id, err.status, data["StatusDescription"]))
+                section_id, err.status, msg))
             raise
 
         except (ValueError, CoursePolicyException) as err:
