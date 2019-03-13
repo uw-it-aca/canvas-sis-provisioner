@@ -143,7 +143,12 @@ class CourseBuilder(Builder):
 
         # Find any sections that are manually cross-listed to this course,
         # so we can update enrollments for those
-        for s in get_sis_sections_for_course(course_id):
+        try:
+            canvas_sections = get_sis_sections_for_course(course_id)
+        except DataFailureException:
+            canvas_sections = []
+
+        for s in canvas_sections:
             try:
                 course_model_id = re.sub(r'--$', '', s.sis_section_id)
                 course = Course.objects.get(course_id=course_model_id,
