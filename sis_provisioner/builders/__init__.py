@@ -3,7 +3,8 @@ from sis_provisioner.csv.data import Collector
 from sis_provisioner.csv.format import UserCSV, EnrollmentCSV
 from sis_provisioner.dao.user import (
     valid_net_id, get_person_by_netid, get_person_by_gmail_id)
-from sis_provisioner.dao.course import get_section_by_id
+from sis_provisioner.dao.course import (
+    get_section_by_id, get_registrations_by_section)
 from sis_provisioner.dao.canvas import ENROLLMENT_ACTIVE
 from sis_provisioner.exceptions import (
     UserPolicyException, CoursePolicyException)
@@ -96,6 +97,15 @@ class Builder(object):
             self.data.add(EnrollmentCSV(
                 section_id=section_id, person=person, role=role,
                 status=status))
+
+    def add_registrations_by_section(self, section):
+        try:
+            for registration in get_registrations_by_section(section):
+                self.add_student_enrollment_data(registration)
+
+        except DataFailureException as ex:
+            self.logger.info("Skip registrations for section {}: {}".format(
+                section.section_label(), ex))
 
     def get_section_resource_by_id(self, section_id):
         """

@@ -2,7 +2,7 @@ from sis_provisioner.builders import Builder
 from sis_provisioner.csv.format import CourseCSV, SectionCSV, TermCSV, XlistCSV
 from sis_provisioner.dao.course import (
     is_active_section, get_section_by_url, canvas_xlist_id, section_short_name,
-    section_id_from_url, get_registrations_by_section)
+    section_id_from_url)
 from sis_provisioner.dao.canvas import (
     get_section_by_sis_id, get_sis_sections_for_course,
     get_unused_course_report_data)
@@ -104,8 +104,7 @@ class CourseBuilder(Builder):
                     self.add_teacher_enrollment_data(section, instructor)
 
                 if self.include_enrollment:
-                    for registration in get_registrations_by_section(section):
-                        self.add_student_enrollment_data(registration)
+                    self.add_registrations_by_section(section)
 
         # Check for linked sections already in the Course table
         for linked_course_id in Course.objects.get_linked_course_ids(
@@ -177,8 +176,7 @@ class CourseBuilder(Builder):
                     self.add_teacher_enrollment_data(section, instructor)
 
                 if self.include_enrollment:
-                    for registration in get_registrations_by_section(section):
-                        self.add_student_enrollment_data(registration)
+                    self.add_registrations_by_section(section)
 
             Course.objects.update_status(section)
 
@@ -215,8 +213,7 @@ class CourseBuilder(Builder):
                 self.add_teacher_enrollment_data(section, instructor)
 
                 if self.include_enrollment:
-                    for registration in get_registrations_by_section(section):
-                        self.add_student_enrollment_data(registration)
+                    self.add_registrations_by_section(section)
 
     def _process_xlists_for_section(self, section):
         """
