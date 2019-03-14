@@ -111,7 +111,7 @@ class Builder(object):
             try:
                 data = json.loads(err.msg)
                 msg = data.get("StatusDescription", "")
-            except json.decoder.JSONDecodeError:
+            except (TypeError, json.decoder.JSONDecodeError):
                 msg = err.msg
             Course.objects.remove_from_queue(section_id, "{}: {} {}".format(
                 err.url, err.status, msg))
