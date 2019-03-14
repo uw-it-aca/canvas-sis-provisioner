@@ -9,7 +9,6 @@ from sis_provisioner.exceptions import (
     UserPolicyException, CoursePolicyException)
 from restclients_core.exceptions import DataFailureException
 from logging import getLogger
-import json
 
 
 class Builder(object):
@@ -107,19 +106,7 @@ class Builder(object):
             Course.objects.add_to_queue(section, self.queue_id)
             return section
 
-        except DataFailureException as err:
-            try:
-                data = json.loads(err.msg)
-                msg = data.get("StatusDescription", "")
-            except (TypeError, json.decoder.JSONDecodeError):
-                msg = err.msg
-            Course.objects.remove_from_queue(section_id, "{}: {} {}".format(
-                err.url, err.status, msg))
-            self.logger.info("Skip section {}: {} {}".format(
-                section_id, err.status, msg))
+        except (ValueError, CoursePolicyException, DataFailureException) as ex:
+            Course.objects.remove_from_queue(section_id, ex)
+            self.logger.info("Skip section {}: {}".format(section_id, ex))
             raise
-
-        except (ValueError, CoursePolicyException) as err:
-            Course.objects.remove_from_queue(section_id, err)
-            self.logger.info("Skip section {}: {}".format(section_id, err))
-            raise CoursePolicyException(err)
