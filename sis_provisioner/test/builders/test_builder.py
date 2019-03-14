@@ -36,3 +36,10 @@ class BuilderTest(TestCase):
         self.assertRaises(CoursePolicyException,
                           builder.get_section_resource_by_id,
                           '2013-winter-AAA-BBB')
+
+    def test_add_registrations_by_section(self):
+        builder = Builder()
+
+        section = builder.get_section_resource_by_id(
+            '2013-winter-DROP_T-100-B')
+        self.assertEqual(builder.add_registrations_by_section(section), None)
