@@ -576,9 +576,10 @@ $(document).ready(function () {
                         var imp = this,
                             exception_failure = (imp.post_status < 0),
                             csv_failure = (imp.csv_errors && imp.csv_errors.length),
-                            post_failure = ((imp.post_status > 0 && imp.post_status !== 200) ||
-                                (imp.post_status === null && imp.canvas_errors &&
-                                    imp.canvas_errors.length)),
+                            post_failure = (imp.post_status !== null &&
+                                            imp.post_status !== 200 &&
+                                            imp.canvas_errors &&
+                                            imp.canvas_errors.length),
                             canvas_state = imp.canvas_state || '',
                             canvas_failed = (canvas_state.match(/^failed/) !== null),
                             output = [],
@@ -640,10 +641,10 @@ $(document).ready(function () {
                             'exception_failure': exception_failure,
                             'csv_failed': csv_failure,
                             'post_failed': post_failure,
-                            'import_failed': (exception_failure || post_failure || canvas_failed || csv_failure),
+                            'import_failed': (post_failure || canvas_failed || csv_failure),
                             'canvas_finished': (canvas_state.match(/^(imported|failed)/) !== null),
                             'with_messages': (canvas_state.match(/^(imported|failed)_with_messages/) !== null),
-                            'is_pending': imp.post_status === 0 && !(exception_failure || csv_failure),
+                            'is_pending': imp.post_status === null && !(csv_failure || post_failure),
                             'post_status': imp.post_status,
                             'canvas_state': canvas_state,
                             'in_progress': (imp.canvas_progress && imp.canvas_progress !== 100),

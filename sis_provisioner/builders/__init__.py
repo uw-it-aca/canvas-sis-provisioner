@@ -104,7 +104,7 @@ class Builder(object):
                 self.add_student_enrollment_data(registration)
 
         except DataFailureException as ex:
-            self.logger.info("Skip registrations for section {}: {}".format(
+            self.logger.info("Skip enrollments for section {}: {}".format(
                 section.section_label(), ex))
 
     def get_section_resource_by_id(self, section_id):
