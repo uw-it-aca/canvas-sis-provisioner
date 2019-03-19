@@ -644,7 +644,9 @@ $(document).ready(function () {
                             'import_failed': (post_failure || canvas_failed || csv_failure),
                             'canvas_finished': (canvas_state.match(/^(imported|failed)/) !== null),
                             'with_messages': (canvas_state.match(/^(imported|failed)_with_messages/) !== null),
-                            'is_pending': imp.post_status === null && !(csv_failure || post_failure),
+                            'is_pending': (imp.csv_path !== null &&
+                                           imp.post_status === null &&
+                                           !(csv_failure || post_failure)),
                             'post_status': imp.post_status,
                             'canvas_state': canvas_state,
                             'in_progress': (imp.canvas_progress && imp.canvas_progress !== 100),
