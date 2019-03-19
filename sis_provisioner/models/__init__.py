@@ -1321,6 +1321,7 @@ class Import(models.Model):
         return {
             "queue_id": self.pk,
             "type": self.csv_type,
+            "csv_path": self.csv_path,
             "type_name": self.get_csv_type_display(),
             "added_date": localtime(self.added_date).isoformat(),
             "priority": PRIORITY_CHOICES[self.priority][1],
