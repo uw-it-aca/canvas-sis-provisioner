@@ -1100,9 +1100,12 @@ class Account(models.Model):
 
 class AdminManager(models.Manager):
     def find_by_account(self, account=None, is_deleted=False):
-        kwargs = {'account__isnull': False}
-        if account is not None:
+        kwargs = {}
+        if account is None:
+            kwargs['account__is_deleted__isnull'] = True
+        else:
             kwargs['account'] = account
+
         if is_deleted:
             kwargs['is_deleted'] = True
 
@@ -1110,7 +1113,8 @@ class AdminManager(models.Manager):
 
     def queue_all(self):
         pks = super(AdminManager, self).get_queryset().filter(
-            queue_id__isnull=True).values_list('pk', flat=True)
+            queue_id__isnull=True,
+            account__is_deleted__isnull=True).values_list('pk', flat=True)
 
         if not len(pks):
             raise EmptyQueueException()
@@ -1207,7 +1211,8 @@ class AdminManager(models.Manager):
     def has_role(self, net_id, role):
         try:
             admin = Admin.objects.get(
-                net_id=net_id, role=role, deleted_date__isnull=True)
+                net_id=net_id, role=role, deleted_date__isnull=True,
+                account__is_deleted__isnull=True)
             return True
         except Admin.MultipleObjectsReturned:
             return True
@@ -1245,8 +1250,7 @@ class Admin(models.Model):
     net_id = models.CharField(max_length=20)
     reg_id = models.CharField(max_length=32)
     role = models.CharField(max_length=32)
-    account = models.ForeignKey(Account, null=True, on_delete=models.CASCADE)
-    account_id_str = models.CharField(max_length=128, null=True)
+    account = models.ForeignKey(Account, on_delete=models.CASCADE)
     canvas_id = models.IntegerField(null=True)
     added_date = models.DateTimeField(auto_now_add=True)
     provisioned_date = models.DateTimeField(null=True)
