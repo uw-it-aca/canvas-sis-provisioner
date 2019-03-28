@@ -270,8 +270,15 @@ class UWGroupDispatch(Dispatch):
                 group.group_id, member.name, group.added_by)
 
             if key not in UWGroupDispatch._MEMBER_CACHE:
-                UWGroupDispatch._MEMBER_CACHE[key] = is_group_member(
-                    group.group_id, member.name, act_as=group.added_by)
+                try:
+                    UWGroupDispatch._MEMBER_CACHE[key] = is_group_member(
+                        group.group_id, member.name, act_as=group.added_by)
+                except DataFailureException as err:
+                    if err.status == 401:
+                        # No read permission for act_as user
+                        UWGroupDispatch._MEMBER_CACHE[key] = False
+                    else:
+                        raise
 
             return UWGroupDispatch._MEMBER_CACHE[key]
 
