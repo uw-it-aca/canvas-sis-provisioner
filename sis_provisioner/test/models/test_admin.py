@@ -115,6 +115,18 @@ class AdminModelTest(TestCase):
         admin = create_admin('javerage', self.account1)
         self.assertEqual(Admin.objects.is_account_admin('javerage'), True)
 
+    def test_has_role(self):
+        self.assertEqual(Admin.objects.has_role('javerage', 'support'), False)
+
+        admin = create_admin('javerage', self.account2, role='support')
+        self.assertEqual(Admin.objects.has_role('javerage', 'support'), True)
+
+        self.account2.is_deleted = True
+        self.account2.save()
+
+        # Admin still has role, but on deleted account
+        self.assertEqual(Admin.objects.has_role('javerage', 'support'), False)
+
     def test_find_by_account(self):
         admin1 = create_admin('javerage', self.account1)
         admin2 = create_admin('jsmith', self.account2)
