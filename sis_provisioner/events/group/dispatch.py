@@ -9,6 +9,7 @@ from sis_provisioner.dao.canvas import get_sis_enrollments_for_user_in_course
 from sis_provisioner.exceptions import (
     UserPolicyException, GroupPolicyException, GroupNotFoundException,
     GroupUnauthorizedException, CoursePolicyException)
+from sis_provisioner.events import ProcessorException
 from sis_provisioner.models import (
     Group as GroupModel, CourseMember as CourseMemberModel, User as UserModel,
     GroupMemberGroup as GroupMemberGroupModel, Enrollment as EnrollmentModel,
@@ -21,7 +22,7 @@ import datetime
 import re
 
 log_prefix = 'GROUP:'
-re_parser = re.compile(r'^(<.*>)[^>]*$')
+re_parser = re.compile(r'^.*(<group.*/group>).*$')
 
 
 class Dispatch(object):
@@ -78,8 +79,13 @@ class Dispatch(object):
     def no_action(self, group_id, message):
         return 0
 
-    def _parse(self, message):
-        return ET.fromstring(re_parser.sub(r'\g<1>', message.decode('utf-8')))
+    @staticmethod
+    def _parse(message):
+        try:
+            return ET.fromstring(
+                re_parser.sub(r'\g<1>', message.decode('utf-8').strip()))
+        except Exception as err:
+            raise ProcessorException('Cannot parse: {}'.format(err))
 
 
 class UWGroupDispatch(Dispatch):
