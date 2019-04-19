@@ -20,7 +20,7 @@ from sis_provisioner.exceptions import CoursePolicyException
 from urllib3.exceptions import SSLError
 from logging import getLogger
 from csv import reader
-
+import json
 
 logger = getLogger(__name__)
 
@@ -81,6 +81,14 @@ def delete_admin(account_id, user_id, role):
 @retry(SSLError, tries=3, delay=1, logger=logger)
 def get_course_roles_in_account(account_id):
     return Roles().get_effective_course_roles_in_account(account_id)
+
+
+def get_account_role_data(account_id):
+    role_data = []
+    roles = Roles().get_roles_in_account(account_id)
+    for role in sorted(roles, key=lambda r: r.role_id):
+        role_data.append(role.json_data())
+    return json.dumps(role_data, sort_keys=True)
 
 
 def get_user_by_sis_id(sis_user_id):

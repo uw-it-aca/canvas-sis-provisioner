@@ -14,7 +14,8 @@ from sis_provisioner.dao.term import (
 from sis_provisioner.dao.canvas import (
     get_active_courses_for_term, sis_import_by_path, get_sis_import_status,
     get_account_by_id, get_all_sub_accounts, update_account_sis_id,
-    update_term_overrides, ENROLLMENT_ACTIVE, INSTRUCTOR_ENROLLMENT)
+    update_term_overrides, get_account_role_data,
+    ENROLLMENT_ACTIVE, INSTRUCTOR_ENROLLMENT)
 from sis_provisioner.exceptions import (
     AccountPolicyException, CoursePolicyException, MissingLoginIdException,
     EmptyQueueException, MissingImportPathException)
@@ -1439,3 +1440,37 @@ class TermOverride(models.Model):
     term_sis_id = models.CharField(max_length=24)
     term_name = models.CharField(max_length=24)
     reference_date = models.DateTimeField(auto_now_add=True)
+
+
+class RoleCacheManager(models.Manager):
+    def check_roles_for_account(self, account_id):
+        try:
+            account = Account.objects.get(canvas_id=account_id)
+        except Account.DoesNotExist:
+            raise AccountPolicyException(
+                'Unknown account: {}'.format(account_id))
+
+        serialized = get_account_role_data(account_id)
+        new_cache = RoleCache(account=account, role_data=serialized)
+
+        try:
+            last_cache = RoleCache.objects.filter(account=account).latest()
+        except RoleCache.DoesNotExist:
+            new_cache.save()
+            return False
+
+        if new_cache.role_data != last_cache.role_data:
+            new_cache.save()
+            return True
+        return False
+
+
+class RoleCache(models.Model):
+    account = models.ForeignKey(Account, on_delete=models.CASCADE)
+    role_data = models.TextField()
+    time_saved = models.DateTimeField(auto_now_add=True)
+
+    objects = RoleCacheManager()
+
+    class Meta:
+        get_latest_by = 'time_saved'
