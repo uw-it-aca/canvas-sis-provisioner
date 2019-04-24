@@ -38,6 +38,11 @@ class CanvasRolesTest(TestCase):
         r = get_course_roles_in_account('abc')
         mock_method.assert_called_with('abc')
 
+    @mock.patch.object(Roles, 'get_roles_in_account')
+    def test_get_account_role_data(self, mock_method):
+        r = get_account_role_data('12345')
+        mock_method.assert_called_with('12345')
+
 
 class CanvasAdminsTest(TestCase):
     @mock.patch.object(Admins, 'get_admins')
