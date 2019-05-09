@@ -10,9 +10,9 @@ import sys
 
 
 class Command(BaseCommand):
-    help = ("Create a list of active teacher email addresses for a sub-account
-            and term. Used for creating the recipient list for the ACA Canvas
-            newsletter.")
+    help = ("Create a list of active teacher email addresses for a "
+            "sub-account and term. Used for creating the recipient list for "
+            "the ACA Canvas newsletter.")
 
     def add_arguments(self, parser):
         parser.add_argument('subaccount_id', help='Subaccount ID')
@@ -29,7 +29,7 @@ class Command(BaseCommand):
         outpath = "{}/{}-{}-{}.csv".format(
             dirname(__file__), "active-instructors", subaccount_id,
             sis_term_id)
-        outfile = open(outpath, "wb")
+        outfile = open(outpath, "w")
         csv.register_dialect('unix_newline', lineterminator='\n')
         writer = csv.writer(outfile, dialect='unix_newline')
         writer.writerow(['email', 'first_name', 'last_name'])
@@ -44,7 +44,7 @@ class Command(BaseCommand):
         all_instructors = {}
 
         enrollment_csv_data = csv.reader(enrollment_data)
-        header = enrollment_csv_data.next()
+        header = next(enrollment_csv_data)
         course_id_idx = header.index("course_id")
         sis_user_id_idx = header.index("user_id")
         role_idx = header.index("role")
@@ -71,7 +71,7 @@ class Command(BaseCommand):
         course_data = reports.get_report_data(course_report)
 
         course_csv_data = csv.reader(course_data)
-        header = course_csv_data.next()
+        header = next(course_csv_data)
         course_id_idx = header.index("course_id")
         sis_account_id_idx = header.index("account_id")
         status_idx = header.index("status")
