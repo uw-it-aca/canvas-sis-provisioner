@@ -1,18 +1,10 @@
 from django.db import models
 from django.utils.timezone import utc, localtime
+from sis_provisioner.models import Account
 import datetime
 import string
 import random
 import json
-
-
-class ExternalToolAccount(models.Model):
-    account_id = models.CharField(max_length=100, unique=True)
-    sis_account_id = models.CharField(max_length=100, null=True)
-    name = models.CharField(max_length=250, null=True)
-
-    class Meta:
-        db_table = 'lti_manager_externaltoolaccount'
 
 
 class ExternalToolManager(models.Manager):
@@ -35,7 +27,7 @@ class ExternalTool(models.Model):
         ('admins', 'Admins'), ('members', 'Members')
     )
 
-    account = models.ForeignKey(ExternalToolAccount, on_delete=models.CASCADE)
+    account = models.ForeignKey(Account, on_delete=models.CASCADE)
     canvas_id = models.CharField(max_length=20, unique=True)
     config = models.TextField()
     changed_by = models.CharField(max_length=32)
@@ -59,9 +51,7 @@ class ExternalTool(models.Model):
 
         return {
             'id': self.pk,
-            'account_id': self.account.account_id,
-            'sis_account_id': self.account.sis_account_id,
-            'account_name': self.account.name,
+            'account': self.account.json_data(),
             'canvas_id': self.canvas_id,
             'name': config.get('name'),
             'consumer_key': config.get('consumer_key'),

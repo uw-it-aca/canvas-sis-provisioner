@@ -2,8 +2,8 @@ from django.conf import settings
 from django.utils.timezone import utc
 from sis_provisioner.management.commands import SISProvisionerCommand
 from sis_provisioner.dao.canvas import get_account_by_id, get_sub_accounts
-from sis_provisioner.models.external_tools import (
-    ExternalTool, ExternalToolAccount)
+from sis_provisioner.models.external_tools import ExternalTool
+from sis_provisioner.models import Account
 from uw_canvas.external_tools import ExternalTools
 from restclients_core.exceptions import DataFailureException
 from datetime import datetime
@@ -37,16 +37,9 @@ class Command(SISProvisionerCommand):
         except ExternalTool.DoesNotExist:
             external_tool = ExternalTool(canvas_id=canvas_id)
 
-        try:
-            et_account = ExternalToolAccount.objects.get(
-                account_id=account.account_id)
-        except ExternalToolAccount.DoesNotExist:
-            et_account = ExternalToolAccount(account_id=account.account_id)
-            et_account.sis_account_id = account.sis_account_id
-            et_account.name = account.name
-            et_account.save()
+        account = Account.objects.get(canvas_id=account.account_id)
 
-        external_tool.account = et_account
+        external_tool.account = account
         external_tool.config = json.dumps(config)
         external_tool.changed_by = 'auto'
         external_tool.changed_date = datetime.utcnow().replace(tzinfo=utc)
