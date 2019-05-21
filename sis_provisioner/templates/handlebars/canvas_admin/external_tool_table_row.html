@@ -4,7 +4,7 @@
 <tr>
     <td>{{ name }}</td>
     <td>{{ canvas_id }}</td>
-    <td><a href="{{ account_url }}" target="_blank">{{ account_name }}</a> ({{ account_id }})</td>
+    <td><a href="{{ account.canvas_url }}" target="_blank">{{ account.name }}</a> ({{ account.canvas_id }})</td>
     <td>{{ consumer_key }}</td>
     <td>{{ format_date changed_date }}{{#if changed_by}} ({{ changed_by }}){{/if}}</td>
     <td>{{#unless read_only}}<div class="btn-group">

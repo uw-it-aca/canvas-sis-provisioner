@@ -105,8 +105,8 @@
         var json = prepare_json(data.external_tool.config);
 
         $('#et-id-input').val(data.external_tool.canvas_id);
-        $('#et-account-input').val(data.external_tool.account_id);
-        if (data.external_tool.canvas_id && data.external_tool.account_id) {
+        $('#et-account-input').val(data.external_tool.account.canvas_id);
+        if (data.external_tool.canvas_id && data.external_tool.account.canvas_id) {
             $('#et-account-input').prop('disabled', true);
         } else {
             $('#et-account-input').prop('disabled', false);
