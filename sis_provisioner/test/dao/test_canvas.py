@@ -38,6 +38,24 @@ class CanvasExternalToolsTest(TestCase):
         r = get_external_tools('abc')
         mock_method.assert_called_with('abc')
 
+    @mock.patch.object(ExternalTools, 'create_external_tool_in_account')
+    def test_create_external_tool(self, mock_method):
+        r = create_external_tool('123', {'name': 'abc'})
+        mock_method.assert_called_with('123', {'name': 'abc'})
+
+        r = create_external_tool('123', {'id': '321', 'name': 'abc'})
+        mock_method.assert_called_with('123', {'name': 'abc'})
+
+    @mock.patch.object(ExternalTools, 'update_external_tool_in_account')
+    def test_update_external_tool(self, mock_method):
+        r = update_external_tool('123', '456', {'name': 'abc'})
+        mock_method.assert_called_with('123', '456', {'name': 'abc'})
+
+    @mock.patch.object(ExternalTools, 'delete_external_tool_in_account')
+    def test_delete_external_tool(self, mock_method):
+        r = delete_external_tool('123', '456')
+        mock_method.assert_called_with('123', '456')
+
 
 class CanvasRolesTest(TestCase):
     @mock.patch.object(Roles, 'get_effective_course_roles_in_account')
