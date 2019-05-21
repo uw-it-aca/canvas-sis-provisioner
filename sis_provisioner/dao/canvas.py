@@ -9,6 +9,7 @@ from uw_canvas.reports import Reports
 from uw_canvas.roles import Roles
 from uw_canvas.users import Users
 from uw_canvas.terms import Terms
+from uw_canvas.external_tools import ExternalTools
 from uw_canvas.sis_import import SISImport
 from uw_canvas.models import CanvasEnrollment, SISImport as SISImportModel
 from restclients_core.exceptions import DataFailureException
@@ -60,6 +61,10 @@ def get_all_sub_accounts(account_id):
 
 def update_account_sis_id(account_id, sis_account_id):
     return Accounts().update_sis_id(account_id, sis_account_id)
+
+
+def get_external_tools(account_id):
+    return ExternalTools().get_external_tools_in_account(account_id)
 
 
 @retry(DataFailureException, status_codes=RETRY_STATUS_CODES,
