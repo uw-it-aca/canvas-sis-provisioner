@@ -32,6 +32,13 @@ class CanvasAccountsTest(TestCase):
         mock_method.assert_called_with('abc')
 
 
+class CanvasExternalToolsTest(TestCase):
+    @mock.patch.object(ExternalTools, 'get_external_tools_in_account')
+    def test_get_external_tools(self, mock_method):
+        r = get_external_tools('abc')
+        mock_method.assert_called_with('abc')
+
+
 class CanvasRolesTest(TestCase):
     @mock.patch.object(Roles, 'get_effective_course_roles_in_account')
     def test_get_course_roles_in_account(self, mock_method):

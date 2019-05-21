@@ -1,7 +1,10 @@
+from django.conf import settings
 from django.db import models
 from django.utils.timezone import utc, localtime
 from sis_provisioner.models import Account
-import datetime
+from sis_provisioner.dao.canvas import (
+    get_account_by_id, get_sub_accounts, get_external_tools)
+from datetime import datetime
 import string
 import random
 import json
@@ -11,6 +14,24 @@ class ExternalToolManager(models.Manager):
     def get_by_hostname(self, hostname):
         return super(ExternalToolManager, self).get_queryset().filter(
             config__contains=hostname)
+
+    def update_all(self, changed_by='auto'):
+        account_id = getattr(settings, 'RESTCLIENTS_CANVAS_ACCOUNT_ID')
+        self.update_tools_in_account(account_id, changed_by)
+
+    def update_tools_in_account(self, account_id, changed_by):
+        for config in get_external_tools(account_id):
+            tool, created = ExternalTool.objects.get_or_create(
+                canvas_id=config.get('id'))
+
+            tool.account = Account.objects.get(canvas_id=account_id)
+            tool.config = json.dumps(config)
+            tool.changed_by = changed_by
+            tool.changed_date = datetime.utcnow().replace(tzinfo=utc)
+            tool.save()
+
+        for subaccount in get_sub_accounts(account_id):
+            self.update_tools_in_account(subaccount.account_id, changed_by)
 
 
 class ExternalTool(models.Model):
