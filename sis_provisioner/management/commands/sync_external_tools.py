@@ -6,5 +6,5 @@ class Command(SISProvisionerCommand):
     help = "Sync LTI Manager app with actual external tools in Canvas"
 
     def handle(self, *args, **options):
-        ExternalTool.objects.update_all()
+        ExternalTool.objects.import_all()
         self.update_job()

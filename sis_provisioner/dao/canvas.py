@@ -67,6 +67,22 @@ def get_external_tools(account_id):
     return ExternalTools().get_external_tools_in_account(account_id)
 
 
+def create_external_tool(account_id, config):
+    if 'id' in config:
+        del config['id']
+    return ExternalTools().create_external_tool_in_account(account_id, config)
+
+
+def update_external_tool(account_id, external_tool_id, config):
+    return ExternalTools().update_external_tool_in_account(
+        account_id, external_tool_id, config)
+
+
+def delete_external_tool(account_id, external_tool_id):
+    return ExternalTools().delete_external_tool_in_account(
+        account_id, external_tool_id)
+
+
 @retry(DataFailureException, status_codes=RETRY_STATUS_CODES,
        tries=RETRY_MAX, delay=RETRY_DELAY, logger=logger)
 def get_admins(account_id):

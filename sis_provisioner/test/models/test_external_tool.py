@@ -37,7 +37,7 @@ class ExternalToolModelTest(TestCase):
         self.assertEqual(data['name'], 'Test1')
         self.assertEqual(data['provisioned_date'], None)
 
-    @mock.patch.object(ExternalToolManager, 'update_tools_in_account')
-    def test_update_all(self, mock_method):
-        r = ExternalTool.objects.update_all()
+    @mock.patch.object(ExternalToolManager, 'import_tools_in_account')
+    def test_import_all(self, mock_method):
+        r = ExternalTool.objects.import_all()
         mock_method.assert_called_with('1', 'auto')
