@@ -61,7 +61,8 @@ class ExternalToolManager(models.Manager):
         tool.canvas_id = new_config.get('id')
         tool.config = json.dumps(new_config)
         tool.provisioned_date = datetime.utcnow().replace(tzinfo=utc)
-        return tool.save()
+        tool.save()
+        return tool
 
     def update_tool(self, canvas_id, config, updated_by):
         tool = ExternalTool.objects.get(canvas_id=canvas_id)
@@ -72,12 +73,13 @@ class ExternalToolManager(models.Manager):
         except BLTIKeyStore.DoesNotExist:
             keystore = BLTIKeyStore(consumer_key=config.get('consumer_key'))
 
-        shared_secret = config['shared_secret']
-        if shared_secret is None or not len(shared_secret):
-            del config['shared_secret']
-        else:
-            keystore.shared_secret = shared_secret
-            keystore.save()
+        if 'shared_secret' in config:
+            shared_secret = config['shared_secret']
+            if shared_secret is None or not len(shared_secret):
+                del config['shared_secret']
+            else:
+                keystore.shared_secret = shared_secret
+                keystore.save()
 
         new_config = update_external_tool(
             tool.account.canvas_id, canvas_id, config)
@@ -86,12 +88,13 @@ class ExternalToolManager(models.Manager):
         tool.changed_by = updated_by
         tool.changed_date = datetime.utcnow().replace(tzinfo=utc)
         tool.provisioned_date = datetime.utcnow().replace(tzinfo=utc)
-        return tool.save()
+        tool.save()
+        return tool
 
     def delete_tool(self, canvas_id):
         tool = ExternalTool.objects.get(canvas_id=canvas_id)
-        delete_external_tool(tool.account.canvas_id, tool.canvas_id)
-        return tool.delete()
+        tool.delete()
+        return delete_external_tool(tool.account.canvas_id, tool.canvas_id)
 
 
 class ExternalTool(models.Model):
