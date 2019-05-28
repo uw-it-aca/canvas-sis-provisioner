@@ -2,8 +2,8 @@ from django.test.utils import override_settings
 from django.conf import settings
 from sis_provisioner.management.commands import SISProvisionerCommand
 from sis_provisioner.models.external_tools import ExternalTool
+from sis_provisioner.dao.canvas import update_external_tool
 from uw_canvas.accounts import Accounts
-from uw_canvas.external_tools import ExternalTools
 from restclients_core.dao import LiveDAO
 from restclients_core.exceptions import DataFailureException
 import json
@@ -42,8 +42,8 @@ class Command(SISProvisionerCommand):
             for tool in ExternalTool.objects.get_by_hostname(prod_host):
                 new_config = tool.config.replace(prod_host, test_host)
                 try:
-                    ExternalTools().update_external_tool_in_account(
-                        tool.account.account_id, tool.canvas_id,
+                    update_external_tool(
+                        tool.account.canvas_id, tool.canvas_id,
                         json.loads(new_config))
                 except DataFailureException as err:
                     # 404s OK
@@ -53,13 +53,13 @@ class Command(SISProvisionerCommand):
     @override_settings(
         RESTCLIENTS_CANVAS_HOST="https://uw.beta.instructure.com")
     def update_canvas_beta(self):
-        self.update_discovery_url("%s/wayf-beta" % (
-            self.HOSTS['canvas']['test']))
+        self.update_discovery_url("{host}/wayf-beta".format(
+            host=self.HOSTS['canvas']['test']))
         self.update_blti_urls()
 
     @override_settings(
         RESTCLIENTS_CANVAS_HOST="https://uw.test.instructure.com")
     def update_canvas_test(self):
-        self.update_discovery_url("%s/wayf-test" % (
-            self.HOSTS['canvas']['test']))
+        self.update_discovery_url("{host}/wayf-test".format(
+            host=self.HOSTS['canvas']['test']))
         self.update_blti_urls()
