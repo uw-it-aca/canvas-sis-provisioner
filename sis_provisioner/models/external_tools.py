@@ -33,7 +33,7 @@ class ExternalToolManager(models.Manager):
             tool.save()
 
         for subaccount in get_sub_accounts(account_id):
-            self.update_tools_in_account(subaccount.account_id, changed_by)
+            self.import_tools_in_account(subaccount.account_id, changed_by)
 
     def create_tool(self, account_id, config, created_by):
         account = Account.objects.get(canvas_id=account_id)
