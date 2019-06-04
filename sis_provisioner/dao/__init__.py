@@ -6,11 +6,13 @@ import re
 RE_WORD_BOUNDS = re.compile(r'(\s|-|\(|\)|\.|,|\/|:|&)')
 RE_TITLE_ABBR = re.compile(
     r'\b('
-    r'3d|3d4m|Aids|Asp|Basw|Cep|Cisb|Cophp|Csr|Css|Css3|'
-    r'Dub|Edp|Ehr|Gis|Hcde|Hci|Hi|Hiv|Hr|Html5|'
-    r'Ias|Ibep|Ielts|Ii|Iii|Ios|It|Iv|Jsis|'
-    r'Mpa|Mph|Msw|Otc|Rotc|Sql|Toefl|'
-    r'Us|Uw|Uwb|Uweo|Uwmc|Uwt|Vba|Wsma|Wwami|Xml'
+    r'3d|3d4m|Aids|Anmc|Apca|Asp|Basw|'
+    r'Cad|Cam|Cep|Cisb|Cma|Cophp|Cse|Csr|Css|Css3|Csss|Ct|'
+    r'Dna|Dsm|Dub|Edp|Ehr|Fda|Gh|Ghc|Gis|Gix|'
+    r'Hcde|Hci|Hi|Hihim|Hiv|Hmc|Hr|Html5|'
+    r'Ias|Ibep|Icd|Ielts|Id|Ii|Iii|Ios|It|Iv|Jsis|Lgbt|Lgbtq|Llm|'
+    r'Mpa|Mph|Msis|Msw|Mt|Napm|Otc|Rcs|Rf|Rotc|Scca|Sql|Sti|Ta|Toefl|Tv|'
+    r'Uh|Us|Uw|Uwb|Uwcr|Uweo|Uwmc|Uwt|Va|Vamc|Vba|Vi|Wa|Wsma|Wwami|Wy|Xml'
     r')\b')
 
 
