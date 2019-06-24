@@ -23,10 +23,12 @@ class ExternalToolManager(models.Manager):
 
     def import_tools_in_account(self, account_id, changed_by):
         for config in get_external_tools(account_id):
-            tool, created = ExternalTool.objects.get_or_create(
-                canvas_id=config.get('id'))
+            try:
+                tool = ExternalTool.objects.get(canvas_id=config.get('id'))
+            except ExternalTool.DoesNotExist:
+                tool = ExternalTool(canvas_id=config.get('id'))
+                tool.account = Account.objects.get(canvas_id=account_id)
 
-            tool.account = Account.objects.get(canvas_id=account_id)
             tool.config = json.dumps(config)
             tool.changed_by = changed_by
             tool.changed_date = datetime.utcnow().replace(tzinfo=utc)
