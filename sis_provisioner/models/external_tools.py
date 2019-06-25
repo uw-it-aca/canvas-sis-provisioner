@@ -10,6 +10,7 @@ from datetime import datetime
 import string
 import random
 import json
+import os
 
 
 class ExternalToolManager(models.Manager):
@@ -18,8 +19,13 @@ class ExternalToolManager(models.Manager):
             config__contains=hostname)
 
     def import_all(self, changed_by='auto'):
+        queue_id = os.getpid()
+        ExternalTool.objects.all().update(queue_id=queue_id)
+
         account_id = getattr(settings, 'RESTCLIENTS_CANVAS_ACCOUNT_ID')
         self.import_tools_in_account(account_id, changed_by)
+
+        ExternalTool.objects.filter(queue_id=queue_id).delete()
 
     def import_tools_in_account(self, account_id, changed_by):
         for config in get_external_tools(account_id):
@@ -32,6 +38,7 @@ class ExternalToolManager(models.Manager):
             tool.config = json.dumps(config)
             tool.changed_by = changed_by
             tool.changed_date = datetime.utcnow().replace(tzinfo=utc)
+            tool.queue_id = None
             tool.save()
 
         for subaccount in get_sub_accounts(account_id):
@@ -119,6 +126,7 @@ class ExternalTool(models.Model):
     changed_by = models.CharField(max_length=32)
     changed_date = models.DateTimeField()
     provisioned_date = models.DateTimeField(null=True)
+    queue_id = models.CharField(max_length=30, null=True)
 
     class Meta:
         db_table = 'lti_manager_externaltool'

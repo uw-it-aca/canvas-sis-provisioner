@@ -17,7 +17,7 @@ class Pidfile():
             if not filename:
                 filename = caller.split('.')[-1]
 
-            self.pidfile = "%s/%s.pid" % (directory, filename)
+            self.pidfile = '{}/{}.pid'.format(directory, filename)
 
         self.logger = logger if logger else getLogger(caller)
 
@@ -29,13 +29,13 @@ class Pidfile():
                 pid = self._check()
                 if pid:
                     self.pidfd = None
-                    msg = 'process already running pid = %s (%s)' % (
+                    msg = 'process already running pid = {} ({})'.format(
                         pid, self.pidfile)
                     self.logger.info(msg)
                     raise ProcessRunningException(msg)
                 else:
                     os.remove(self.pidfile)
-                    self.logger.info('removed stale lockfile %s' % (
+                    self.logger.info('removed stale lockfile {}'.format(
                         self.pidfile))
                     self._create()
             else:
@@ -80,9 +80,9 @@ class Pidfile():
                 os.kill(pid, 0)
                 return pid
             except ValueError:
-                self.logger.error("bad pid: %s" % pidstr)
+                self.logger.error('bad pid: {}'.format(pidstr))
             except OSError:
-                self.logger.error("can't deliver signal to %s" % pid)
+                self.logger.error('cannot deliver signal to {}'.format(pid))
 
             return False
 
