@@ -70,7 +70,7 @@ def term_date_overrides(term):
             overrides[role] = (
                 (quarter_term_start_date(term) - timedelta(days=365)).strftime(
                     TERM_DATE_FORMAT),
-                (quarter_term_end_date(term) + timedelta(days=365*2)).strftime(
+                (quarter_term_end_date(term) + timedelta(days=365*5)).strftime(
                     TERM_DATE_FORMAT))
         else:
             overrides[role] = (
