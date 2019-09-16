@@ -1,6 +1,5 @@
 from django.core.management.base import BaseCommand
-from django.conf import settings
-from sis_provisioner.dao.user import get_person_by_netid, user_sis_id
+from sis_provisioner.dao.user import get_person_by_netid
 from sis_provisioner.dao.canvas import INSTRUCTOR_ENROLLMENT, ENROLLMENT_ACTIVE
 from sis_provisioner.exceptions import UserPolicyException
 from sis_provisioner.models import Import, PRIORITY_DEFAULT
@@ -8,7 +7,6 @@ from sis_provisioner.csv.data import Collector
 from sis_provisioner.csv.format import UserCSV, EnrollmentCSV, CourseCSV
 from datetime import date
 import re
-import sys
 
 
 class Command(BaseCommand):
@@ -36,18 +34,18 @@ class Command(BaseCommand):
             try:
                 person = get_person_by_netid(netid.strip())
             except UserPolicyException as err:
-                print("Skipped user %s: %s" % (netid, err))
+                print("Skipped user '{}': {}".format(netid, err))
                 continue
 
             if not csvdata.add(UserCSV(person)):
                 continue
 
-            course_sis_id = '%s-%s-%s' % (
+            course_sis_id = '-'.join([
                 term_sis_id,
                 re.sub(r'[^\w]', '-', workshop_name.lower()),
-                person.uwnetid)
-            short_name = '%s %s' % (workshop_name, date.today().year)
-            long_name = '%s Sandbox' % short_name
+                person.uwnetid])
+            short_name = '{} {}'.format(date.today().year, workshop_name)
+            long_name = '{} Sandbox'.format(short_name)
 
             csvdata.add(CourseCSV(
                 course_id=course_sis_id, short_name=short_name,
