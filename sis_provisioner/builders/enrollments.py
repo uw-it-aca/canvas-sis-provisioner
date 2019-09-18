@@ -99,7 +99,7 @@ class EnrollmentBuilder(Builder):
         registration = Registration(section=enrollment.section,
                                     person=enrollment.person,
                                     is_active=enrollment.is_active(),
-                                    request_date=request_date,
+                                    request_date=request_date.date(),
                                     request_status=enrollment.status)
         self.add_student_enrollment_data(registration)
         self.data.add(SectionCSV(section=enrollment.section))
