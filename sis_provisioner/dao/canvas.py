@@ -16,7 +16,6 @@ from restclients_core.exceptions import DataFailureException
 from restclients_core.util.retry import retry
 from sis_provisioner.dao.course import (
     valid_academic_course_sis_id, valid_academic_section_sis_id)
-from sis_provisioner.dao import localize
 from sis_provisioner.exceptions import CoursePolicyException
 from urllib3.exceptions import SSLError
 from logging import getLogger
@@ -192,8 +191,7 @@ def enrollment_status_from_registration(registration):
             registration.section.section_label(), registration.person.uwregid))
         return ENROLLMENT_DELETED
 
-    if (localize(registration.request_date) >
-            localize(registration.section.term.get_eod_census_day())):
+    if (registration.request_date > registration.section.term.census_day):
         return ENROLLMENT_INACTIVE
     else:
         return ENROLLMENT_DELETED
