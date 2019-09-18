@@ -152,7 +152,7 @@ class CanvasEnrollmentsTest(TestCase):
 
         reg = Registration(section=section,
                            is_active=False,
-                           request_date=section.term.grade_submission_deadline)
+                           request_date=section.term.last_day_instruction)
         self.assertEquals(enrollment_status_from_registration(reg), 'inactive')
 
         reg = Registration(section=section,
@@ -165,17 +165,16 @@ class CanvasEnrollmentsTest(TestCase):
                            request_status='PENDING ADDED TO CLASS')
         self.assertEquals(enrollment_status_from_registration(reg), 'active')
 
-        # request_date equals term.first_day bod
+        # request_date equals term.first_day_quarter
         reg = Registration(section=section,
                            is_active=False,
-                           request_date=section.term.get_bod_first_day())
+                           request_date=section.term.first_day_quarter)
         self.assertEquals(enrollment_status_from_registration(reg), 'deleted')
 
-        # request_date equals term.census_day bod
-        reg = Registration(
-            section=section, is_active=False, request_date=datetime(
-                section.term.census_day.year, section.term.census_day.month,
-                section.term.census_day.day))
+        # request_date equals term.census_day
+        reg = Registration(section=section,
+                           is_active=False,
+                           request_date=section.term.census_day)
         self.assertEquals(enrollment_status_from_registration(reg), 'deleted')
 
     @mock.patch.object(Enrollments, 'get_enrollments_for_section')
