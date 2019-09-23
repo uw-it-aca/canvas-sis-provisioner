@@ -18,7 +18,7 @@ from sis_provisioner.dao.canvas import (
     ENROLLMENT_ACTIVE, INSTRUCTOR_ENROLLMENT)
 from sis_provisioner.exceptions import (
     AccountPolicyException, CoursePolicyException, MissingLoginIdException,
-    EmptyQueueException, MissingImportPathException)
+    EmptyQueueException, MissingImportPathException, GroupNotFoundException)
 from restclients_core.exceptions import DataFailureException
 from datetime import datetime, timedelta
 from logging import getLogger
@@ -701,9 +701,9 @@ class GroupManager(models.Manager):
         filter_limit = settings.SIS_IMPORT_LIMIT['group']['default']
 
         groups = super(GroupManager, self).get_queryset().filter(
-            queue_id__isnull=True
+            priority__gt=PRIORITY_NONE, queue_id__isnull=True
         ).exclude(
-            priority=PRIORITY_NONE
+            is_deleted=True, provisioned_date__gt=F('deleted_date')
         ).order_by('-priority', 'provisioned_date')
 
         group_ids = set()
@@ -713,14 +713,26 @@ class GroupManager(models.Manager):
                 group_ids.add(group.group_id)
 
                 mod_group_ids = []
-                if is_modified_group(group.group_id, modified_since):
+                try:
+                    is_mod = is_modified_group(group.group_id, modified_since)
+                except GroupNotFoundException:
+                    is_mod = True
+                    self.delete_group_not_found(group.group_id)
+
+                if is_mod:
                     mod_group_ids.append(group.group_id)
                 else:
                     for membergroup in GroupMemberGroup.objects.filter(
                             root_group_id=group.group_id,
                             is_deleted__isnull=True):
-                        if is_modified_group(membergroup.group_id,
-                                             modified_since):
+                        try:
+                            is_mod = is_modified_group(membergroup.group_id,
+                                                       modified_since)
+                        except GroupNotFoundException:
+                            is_mod = True
+                            self.delete_group_not_found(membergroup.group_id)
+
+                        if is_mod:
                             group_ids.add(membergroup.group_id)
                             mod_group_ids.append(membergroup.group_id)
                             mod_group_ids.append(group.group_id)
@@ -777,6 +789,14 @@ class GroupManager(models.Manager):
             course_id=course_id
         ).update(
             priority=PRIORITY_NONE, queue_id=None
+        )
+
+    def delete_group_not_found(self, group_id):
+        super(GroupManager, self).get_queryset().filter(
+            group_id=group_id
+        ).update(
+            is_deleted=True, deleted_by='gws',
+            deleted_date=datetime.utcnow().replace(tzinfo=utc)
         )
 
 

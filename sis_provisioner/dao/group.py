@@ -28,7 +28,8 @@ def is_modified_group(group_id, mtime):
         return (group.membership_modified > mtime)
     except DataFailureException as err:
         if err.status == 404:
-            return True
+            raise GroupNotFoundException(
+                "Group not found: {}".format(group_id))
         else:
             raise
 
