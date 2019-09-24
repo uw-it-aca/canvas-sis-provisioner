@@ -30,7 +30,9 @@ class GroupPolicyTest(TestCase):
 class GroupModifiedTest(TestCase):
     def test_modified_group(self):
         mtime = datetime.now()
-        self.assertEquals(is_modified_group('u_does_not_exist', mtime), True)
+        self.assertRaises(
+            GroupNotFoundException, is_modified_group,
+            'u_does_not_exist', mtime)
 
         mtime = datetime(2000, 10, 10, 0, 0, 0)
         self.assertEquals(is_modified_group('u_acadev_tester', mtime), True)
