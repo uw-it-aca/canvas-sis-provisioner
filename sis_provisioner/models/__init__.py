@@ -722,19 +722,18 @@ class GroupManager(models.Manager):
                 if is_mod:
                     mod_group_ids.append(group.group_id)
                 else:
-                    for membergroup in GroupMemberGroup.objects.filter(
-                            root_group_id=group.group_id,
-                            is_deleted__isnull=True):
+                    for mgroup in GroupMemberGroup.objects.get_active_by_root(
+                            group.group_id):
                         try:
-                            is_mod = is_modified_group(membergroup.group_id,
+                            is_mod = is_modified_group(mgroup.group_id,
                                                        modified_since)
                         except GroupNotFoundException:
                             is_mod = True
-                            self.delete_group_not_found(membergroup.group_id)
+                            self.delete_group_not_found(mgroup.group_id)
 
                         if is_mod:
-                            group_ids.add(membergroup.group_id)
-                            mod_group_ids.append(membergroup.group_id)
+                            group_ids.add(mgroup.group_id)
+                            mod_group_ids.append(mgroup.group_id)
                             mod_group_ids.append(group.group_id)
                             break
 
