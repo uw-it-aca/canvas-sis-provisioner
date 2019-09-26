@@ -124,14 +124,16 @@ class NetidPolicyTest(TestCase):
         self.assertEquals(valid_net_id('sadm_javerage'), None)
         self.assertEquals(valid_net_id('a_canvas_application'), None)
         self.assertEquals(valid_net_id('j1234567890'), None)
+        self.assertEquals(valid_net_id('css1234'), None)
 
         # Invalid
         self.assertRaises(MissingLoginIdException, valid_net_id, None)
         self.assertRaises(MissingLoginIdException, valid_net_id, '')
-        self.assertRaises(TemporaryNetidException, valid_net_id, 'wire1234')
+        self.assertRaises(TemporaryNetidException, valid_net_id, 'wire12345')
         self.assertRaises(TemporaryNetidException, valid_net_id, 'event1234')
-        self.assertRaises(TemporaryNetidException, valid_net_id, 'lib1234')
-        self.assertRaises(TemporaryNetidException, valid_net_id, 'css1234')
+        self.assertRaises(TemporaryNetidException, valid_net_id, 'lib12345')
+        self.assertRaises(TemporaryNetidException, valid_net_id, 'lawlib1234')
+        self.assertRaises(TemporaryNetidException, valid_net_id, 'uwctc1234')
         self.assertRaises(InvalidLoginIdException, valid_net_id, '1abcdef')
 
     def test_valid_admin_netid(self):
