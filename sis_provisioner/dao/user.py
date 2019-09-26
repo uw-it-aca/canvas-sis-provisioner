@@ -10,10 +10,10 @@ from sis_provisioner.exceptions import (
     InvalidLoginIdException)
 import re
 
-
 RE_ADMIN_NETID = re.compile(r"^[a-z]adm_[a-z][a-z0-9]{0,7}$", re.I)
 RE_APPLICATION_NETID = re.compile(r"^a_[\w]{1,18}$", re.I)
-RE_TEMPORARY_NETID = re.compile(r"^(?:css|wire|lib|event)[0-9]{4,}$", re.I)
+RE_TEMPORARY_NETID = re.compile(
+    r"^(?:wire|event|lib|lawlib|uwctc)[0-9]{4,}$", re.I)
 RE_CANVAS_ID = re.compile(r"^\d+$")
 
 
