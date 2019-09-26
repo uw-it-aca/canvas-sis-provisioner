@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from uw_sws.util import fdao_sws_override
 from uw_pws.util import fdao_pws_override
 from sis_provisioner.builders import Builder
@@ -43,3 +43,21 @@ class BuilderTest(TestCase):
         section = builder.get_section_resource_by_id(
             '2013-winter-DROP_T-100-B')
         self.assertEqual(builder.add_registrations_by_section(section), None)
+
+    @override_settings(LOGIN_DOMAIN_WHITELIST=['gmail.com'])
+    def test_add_group_enrollment_data(self):
+        builder = Builder()
+        builder.add_group_enrollment_data(
+            'javerage', '2013-winter-AAA-BB-groups', 'student', 'active')
+        self.assertEqual(
+            str(builder.data.enrollments[0]), (
+                ',,9136CCB8F66711D5BE060004AC494FFE,student,'
+                ',2013-winter-AAA-BB-groups,active,\n'))
+
+        builder = Builder()
+        builder.add_group_enrollment_data(
+            'jav.erage@gmail.com', '2013-winter-AAA-BB-groups', 'ta', 'active')
+        self.assertEqual(
+            str(builder.data.enrollments[0]), (
+                ',,javerage@gmail.com,ta,'
+                ',2013-winter-AAA-BB-groups,active,\n'))

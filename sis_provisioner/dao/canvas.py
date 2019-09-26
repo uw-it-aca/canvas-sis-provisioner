@@ -15,7 +15,8 @@ from uw_canvas.models import CanvasEnrollment, SISImport as SISImportModel
 from restclients_core.exceptions import DataFailureException
 from restclients_core.util.retry import retry
 from sis_provisioner.dao.course import (
-    valid_academic_course_sis_id, valid_academic_section_sis_id)
+    valid_academic_course_sis_id, valid_academic_section_sis_id,
+    group_section_sis_id)
 from sis_provisioner.exceptions import CoursePolicyException
 from urllib3.exceptions import SSLError
 from logging import getLogger
@@ -205,6 +206,11 @@ def get_sis_enrollments_for_course(course_sis_id):
             canvas.get_enrollments_for_section(section.section_id)
         )
     return enrollments
+
+
+def get_group_enrollments_for_course(course_sis_id):
+    return Enrollments().get_enrollments_for_section(
+        group_section_sis_id(course_sis_id))
 
 
 def get_sis_enrollments_for_user_in_course(user_sis_id, course_sis_id):
