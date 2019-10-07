@@ -19,16 +19,15 @@ class GroupBuilder(Builder):
     def _init_build(self, **kwargs):
         self.cached_sis_enrollments = {}
         self.cached_group_enrollments = {}
-        self.items = list(set(self.items))
 
     def _process(self, course_id):
         try:
             self._verify_canvas_course(course_id)
 
-            # Get the Canvas enrollments for Group section for this course
+            # Get the Canvas enrollments for the Group section in this course
             current_enrollments = self.all_group_section_enrollments(course_id)
 
-            # Build a flattened dict of current group memberships from GWS
+            # Build a flattened set of current group memberships from GWS
             current_members = self.all_group_memberships(course_id)
 
         except DataFailureException as err:
