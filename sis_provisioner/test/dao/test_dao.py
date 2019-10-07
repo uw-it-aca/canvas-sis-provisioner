@@ -1,7 +1,5 @@
-from django.test import TestCase, override_settings
-from django.utils.timezone import utc, localtime
-from sis_provisioner.dao import titleize, localize
-from datetime import datetime
+from django.test import TestCase
+from sis_provisioner.dao import titleize
 
 
 class DaoTest(TestCase):
@@ -26,13 +24,3 @@ class DaoTest(TestCase):
         self.assertEquals(titleize('xml/Xml'), 'XML/XML')
         self.assertEquals(titleize('the "xml"'), 'The "XML"')
         self.assertEquals(titleize('the "now"'), 'The "Now"')
-
-    @override_settings(TIME_ZONE='America/Los_Angeles')
-    def test_localize(self):
-        self.assertRaises(AttributeError, localize, None)
-
-        dt = datetime(2013, 1, 1)
-        self.assertEquals(str(localize(dt)), '2013-01-01 00:00:00-08:00')
-
-        dt = datetime(2013, 1, 1).replace(tzinfo=utc)
-        self.assertEquals(str(localize(dt)), '2012-12-31 16:00:00-08:00')

@@ -1,4 +1,5 @@
 from django.test import TestCase, override_settings
+from django.utils.timezone import utc
 from restclients_core.exceptions import DataFailureException
 from sis_provisioner.dao.group import *
 from sis_provisioner.exceptions import (
@@ -34,10 +35,10 @@ class GroupModifiedTest(TestCase):
             GroupNotFoundException, is_modified_group,
             'u_does_not_exist', mtime)
 
-        mtime = datetime(2000, 10, 10, 0, 0, 0)
+        mtime = datetime(2000, 10, 10, 0, 0, 0).replace(tzinfo=utc)
         self.assertEquals(is_modified_group('u_acadev_tester', mtime), True)
 
-        mtime = datetime(2020, 10, 10, 0, 0, 0)
+        mtime = datetime(2020, 10, 10, 0, 0, 0).replace(tzinfo=utc)
         self.assertEquals(is_modified_group('u_acadev_tester', mtime), False)
 
 

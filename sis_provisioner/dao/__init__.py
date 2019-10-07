@@ -1,5 +1,3 @@
-from django.utils.timezone import (
-    get_default_timezone, localtime, is_naive, make_aware)
 import re
 
 
@@ -31,10 +29,3 @@ def titleize(s):
         new_s += re.sub(
             RE_TITLE_ABBR, lambda m: m.group(0).upper(), word.capitalize())
     return new_s
-
-
-def localize(dt):
-    if is_naive(dt):
-        return make_aware(dt, get_default_timezone())
-    else:
-        return localtime(dt)
