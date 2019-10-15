@@ -810,9 +810,9 @@ class Group(models.Model):
     objects = GroupManager()
 
     def update_priority(self, priority):
-        for key, val in PRIORITY_CHOICES:
+        for val, txt in PRIORITY_CHOICES:
             if val == priority:
-                self.priority = key
+                self.priority = val
                 self.save()
                 return
 

@@ -23,10 +23,11 @@ def valid_group_id(group_id):
             "This group cannot be used in Canvas: {}".format(group_id))
 
 
-def is_modified_group(group_id, mtime):
+def is_modified_group(group_id, changed_since_dt):
     try:
         group = GWS().get_group_by_id(group_id)
-        return (group.membership_modified.replace(tzinfo=utc) > mtime)
+        member_mtime = group.membership_modified.replace(tzinfo=utc)
+        return (member_mtime > changed_since_dt)
     except DataFailureException as err:
         if err.status == 404:
             raise GroupNotFoundException(

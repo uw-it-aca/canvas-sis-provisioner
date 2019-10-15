@@ -22,6 +22,21 @@ class GroupModelTest(TestCase):
         create_group(course_id='456', group_id='test_group_3')
         create_group(course_id='789', group_id='test_group_1', role='student')
 
+    def test_update_priority(self):
+        create_group(course_id='1099', group_id='test_priority', role='ta')
+        group = Group.objects.get(group_id='test_priority')
+        self.assertEqual(group.priority, PRIORITY_DEFAULT)
+
+        # Set a valid priority value
+        group.update_priority(PRIORITY_HIGH)
+        group = Group.objects.get(group_id='test_priority')
+        self.assertEqual(group.priority, PRIORITY_HIGH)
+
+        # Set an invalid priority value
+        group.update_priority(-1)
+        group = Group.objects.get(group_id='test_priority')
+        self.assertEqual(group.priority, PRIORITY_HIGH)
+
     def test_find_by_search(self):
         r = Group.objects.find_by_search(course_id='123')
         self.assertEqual(r.count(), 2)
