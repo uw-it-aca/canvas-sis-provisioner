@@ -683,7 +683,7 @@ class GroupManager(models.Manager):
             priority=priority, queue_id__isnull=True
         ).order_by(
             'provisioned_date'
-        ).values_list('course_id', flat=True)[:filter_limit]
+        ).values_list('course_id', flat=True).distinct()[:filter_limit]
 
         if not len(course_ids):
             raise EmptyQueueException()

@@ -154,25 +154,18 @@ def get_section_by_sis_id(section_sis_id):
 
 
 def get_sis_sections_for_course(course_sis_id):
-    @retry(DataFailureException, status_codes=RETRY_STATUS_CODES,
-           tries=RETRY_MAX, delay=RETRY_DELAY, logger=logger)
-    def _get_sections(course_sis_id):
-        try:
-            return Sections().get_sections_in_course_by_sis_id(course_sis_id)
-        except DataFailureException as err:
-            if err.status == 404:
-                return []
-            else:
-                raise
-
     sis_sections = []
-    for section in _get_sections(course_sis_id):
-        try:
-            valid_academic_section_sis_id(section.sis_section_id)
-            sis_sections.append(section)
-        except CoursePolicyException:
-            continue
-
+    try:
+        for section in Sections().get_sections_in_course_by_sis_id(
+                course_sis_id):
+            try:
+                valid_academic_section_sis_id(section.sis_section_id)
+                sis_sections.append(section)
+            except CoursePolicyException:
+                pass
+    except DataFailureException as err:
+        if err.status != 404:
+            raise
     return sis_sections
 
 
@@ -199,18 +192,27 @@ def enrollment_status_from_registration(registration):
 
 
 def get_sis_enrollments_for_course(course_sis_id):
-    canvas = Enrollments()
-    enrollments = []
+    section_sis_ids = []
     for section in get_sis_sections_for_course(course_sis_id):
-        enrollments.extend(
-            canvas.get_enrollments_for_section(section.section_id)
-        )
-    return enrollments
+        section_sis_ids.append(section.sis_section_id)
+
+    if not len(section_sis_ids):
+        return []
+
+    return Enrollments().get_enrollments_for_course_by_sis_id(
+        course_sis_id,
+        {'state': [ENROLLMENT_ACTIVE], 'sis_section_id': section_sis_ids})
 
 
 def get_group_enrollments_for_course(course_sis_id):
-    return Enrollments().get_enrollments_for_section(
-        group_section_sis_id(course_sis_id))
+    section_sis_id = group_section_sis_id(course_sis_id)
+    enrollments = []
+    for enrollment in Enrollments().get_enrollments_for_section_by_sis_id(
+            section_sis_id, {'state': [ENROLLMENT_ACTIVE]}):
+        # Ignore the Canvas preview 'user'
+        if 'StudentViewEnrollment' != enrollment.role:
+            enrollments.append(enrollment)
+    return enrollments
 
 
 def get_sis_enrollments_for_user_in_course(user_sis_id, course_sis_id):

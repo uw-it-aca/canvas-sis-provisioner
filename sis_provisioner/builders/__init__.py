@@ -88,13 +88,17 @@ class Builder(object):
                     status=status))
 
         except InvalidLoginIdException:
-            person = get_person_by_gmail_id(login_id)
-            if status == ENROLLMENT_ACTIVE:
-                self.data.add(UserCSV(person))
+            try:
+                person = get_person_by_gmail_id(login_id)
+                if status == ENROLLMENT_ACTIVE:
+                    self.data.add(UserCSV(person))
 
-            self.data.add(EnrollmentCSV(
-                section_id=section_id, person=person, role=role,
-                status=status))
+                self.data.add(EnrollmentCSV(
+                    section_id=section_id, person=person, role=role,
+                    status=status))
+            except InvalidLoginIdException as ex:
+                self.logger.info("Skip group member {}: {}".format(
+                    login_id, ex))
 
     def add_registrations_by_section(self, section):
         try:
