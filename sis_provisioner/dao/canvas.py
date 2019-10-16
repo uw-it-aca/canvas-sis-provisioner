@@ -191,6 +191,16 @@ def enrollment_status_from_registration(registration):
         return ENROLLMENT_DELETED
 
 
+def get_enrollments_for_course_by_sis_id(course_sis_id):
+    enrollments = []
+    for enrollment in Enrollments().get_enrollments_for_course_by_sis_id(
+            course_sis_id, {'state': [ENROLLMENT_ACTIVE]}):
+        # Ignore the Canvas preview 'user'
+        if 'StudentViewEnrollment' != enrollment.role:
+            enrollments.append(enrollment)
+    return enrollments
+
+
 def get_sis_enrollments_for_course(course_sis_id):
     section_sis_ids = []
     for section in get_sis_sections_for_course(course_sis_id):
@@ -202,17 +212,6 @@ def get_sis_enrollments_for_course(course_sis_id):
     return Enrollments().get_enrollments_for_course_by_sis_id(
         course_sis_id,
         {'state': [ENROLLMENT_ACTIVE], 'sis_section_id': section_sis_ids})
-
-
-def get_group_enrollments_for_course(course_sis_id):
-    section_sis_id = group_section_sis_id(course_sis_id)
-    enrollments = []
-    for enrollment in Enrollments().get_enrollments_for_section_by_sis_id(
-            section_sis_id, {'state': [ENROLLMENT_ACTIVE]}):
-        # Ignore the Canvas preview 'user'
-        if 'StudentViewEnrollment' != enrollment.role:
-            enrollments.append(enrollment)
-    return enrollments
 
 
 def get_sis_enrollments_for_user_in_course(user_sis_id, course_sis_id):
