@@ -177,14 +177,6 @@ class CanvasEnrollmentsTest(TestCase):
                            request_date=section.term.census_day)
         self.assertEquals(enrollment_status_from_registration(reg), 'deleted')
 
-    @mock.patch.object(Enrollments, 'get_enrollments_for_section')
-    @mock.patch.object(Sections, 'get_sections_in_course_by_sis_id')
-    def test_get_sis_enrollments_for_course(
-            self, mock_sections, mock_enrollments):
-        r = get_sis_enrollments_for_course('abc')
-        mock_sections.assert_called_with('abc')
-        self.assertEquals(len(r), 0)
-
     @mock.patch.object(Enrollments, 'get_enrollments_for_course_by_sis_id')
     def test_get_sis_enrollments_for_user_in_course(self, mock_method):
         r = get_sis_enrollments_for_user_in_course('abc', 'def')

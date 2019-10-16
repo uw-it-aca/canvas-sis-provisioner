@@ -201,19 +201,6 @@ def get_enrollments_for_course_by_sis_id(course_sis_id):
     return enrollments
 
 
-def get_sis_enrollments_for_course(course_sis_id):
-    section_sis_ids = []
-    for section in get_sis_sections_for_course(course_sis_id):
-        section_sis_ids.append(section.sis_section_id)
-
-    if not len(section_sis_ids):
-        return []
-
-    return Enrollments().get_enrollments_for_course_by_sis_id(
-        course_sis_id,
-        {'state': [ENROLLMENT_ACTIVE], 'sis_section_id': section_sis_ids})
-
-
 def get_sis_enrollments_for_user_in_course(user_sis_id, course_sis_id):
     canvas = Enrollments()
     enrollments = []
