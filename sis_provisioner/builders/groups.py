@@ -96,8 +96,9 @@ class GroupBuilder(Builder):
         if canvas_course.sis_course_id is None:
             update_course_sis_id(canvas_course.course_id, course_id)
 
+        group_section_id = group_section_sis_id(course_id)
         try:
-            section = get_section_by_sis_id(group_section_sis_id(course_id))
+            section = get_section_by_sis_id(group_section_id)
         except DataFailureException as err:
             if err.status == 404:
                 self.data.add(SectionCSV(
