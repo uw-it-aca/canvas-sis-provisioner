@@ -7,7 +7,7 @@ from sis_provisioner.dao.course import (
     get_section_by_id, get_registrations_by_section)
 from sis_provisioner.dao.canvas import ENROLLMENT_ACTIVE
 from sis_provisioner.exceptions import (
-    UserPolicyException, CoursePolicyException)
+    UserPolicyException, CoursePolicyException, InvalidLoginIdException)
 from restclients_core.exceptions import DataFailureException
 from logging import getLogger
 
@@ -76,27 +76,29 @@ class Builder(object):
         if self.add_user_data_for_person(registration.person):
             self.data.add(EnrollmentCSV(registration=registration))
 
-    def add_group_enrollment_data(self, member, section_id, role, status):
+    def add_group_enrollment_data(self, login_id, section_id, role, status):
         """
         Generates one enrollment for the passed group member.
         """
-        if member.is_uwnetid():
-            person = get_person_by_netid(member.name)
+        try:
+            person = get_person_by_netid(login_id)
             if self.add_user_data_for_person(person):
                 self.data.add(EnrollmentCSV(
                     section_id=section_id, person=person, role=role,
                     status=status))
 
-        elif member.is_eppn():
-            if (status == ENROLLMENT_ACTIVE and hasattr(member, 'login')):
-                person = get_person_by_gmail_id(member.login)
-                self.data.add(UserCSV(person))
-            else:
-                person = get_person_by_gmail_id(member.name)
+        except InvalidLoginIdException:
+            try:
+                person = get_person_by_gmail_id(login_id)
+                if status == ENROLLMENT_ACTIVE:
+                    self.data.add(UserCSV(person))
 
-            self.data.add(EnrollmentCSV(
-                section_id=section_id, person=person, role=role,
-                status=status))
+                self.data.add(EnrollmentCSV(
+                    section_id=section_id, person=person, role=role,
+                    status=status))
+            except InvalidLoginIdException as ex:
+                self.logger.info("Skip group member {}: {}".format(
+                    login_id, ex))
 
     def add_registrations_by_section(self, section):
         try:

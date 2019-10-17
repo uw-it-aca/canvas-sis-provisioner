@@ -7,25 +7,55 @@ from dateutil import tz
 import mock
 
 
+def create_group(course_id, group_id, role='teacher', added_by='javerage'):
+    group = Group(course_id=course_id,
+                  group_id=group_id,
+                  role=role,
+                  added_by=added_by)
+    group.save()
+
+
 class GroupModelTest(TestCase):
-    @mock.patch.object(QuerySet, 'filter')
-    def test_find_by_search(self, mock_filter):
-        r = Group.objects.find_by_search(
-            group_id='123', role='role', queue_id='345')
-        mock_filter.assert_called_with(
-            group_id='123', is_deleted__isnull=True, queue_id='345',
-            role='role')
+    def setUp(self):
+        create_group(course_id='123', group_id='test_group_1')
+        create_group(course_id='123', group_id='test_group_2')
+        create_group(course_id='456', group_id='test_group_3')
+        create_group(course_id='789', group_id='test_group_1', role='student')
 
-    @mock.patch.object(QuerySet, 'filter')
-    def test_get_active_by_course(self, mock_filter):
+    def test_update_priority(self):
+        create_group(course_id='1099', group_id='test_priority', role='ta')
+        group = Group.objects.get(group_id='test_priority')
+        self.assertEqual(group.priority, PRIORITY_DEFAULT)
+
+        # Set a valid priority value
+        group.update_priority(PRIORITY_HIGH)
+        group = Group.objects.get(group_id='test_priority')
+        self.assertEqual(group.priority, PRIORITY_HIGH)
+
+        # Set an invalid priority value
+        group.update_priority(-1)
+        group = Group.objects.get(group_id='test_priority')
+        self.assertEqual(group.priority, PRIORITY_HIGH)
+
+    def test_find_by_search(self):
+        r = Group.objects.find_by_search(course_id='123')
+        self.assertEqual(r.count(), 2)
+
+        r = Group.objects.find_by_search(group_id='test_group_1',
+                                         role='teacher')
+        self.assertEqual(r.count(), 1)
+
+    def test_get_active_by_course(self):
         r = Group.objects.get_active_by_course('123')
-        mock_filter.assert_called_with(
-            course_id='123', is_deleted__isnull=True)
+        self.assertEqual(r.count(), 2)
 
-    @mock.patch.object(QuerySet, 'filter')
-    def test_queued(self, mock_filter):
-        r = Group.objects.queued('123')
-        mock_filter.assert_called_with(queue_id='123')
+    def test_queued(self):
+        r = Group.objects.queued('12345')
+        self.assertEqual(len(r), 0)
+
+        Group.objects.all().update(queue_id='12345')
+        r = Group.objects.queued('12345')
+        self.assertEqual(len(r), 3)
 
     @mock.patch.object(QuerySet, 'update')
     def test_dequeue(self, mock_update):
