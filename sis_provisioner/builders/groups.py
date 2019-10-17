@@ -17,7 +17,7 @@ from restclients_core.exceptions import DataFailureException
 class SetMember(object):
     def __init__(self, login, role):
         self.login = login.lower()
-        self.role = role.replace('Enrollment', '').lower()
+        self.role = role.replace('Enrollment', '')
 
     def __eq__(self, other):
         return (self.login == other.login and self.role == other.role)
