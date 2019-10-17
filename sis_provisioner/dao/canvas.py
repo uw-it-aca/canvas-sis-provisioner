@@ -192,8 +192,9 @@ def enrollment_status_from_registration(registration):
 
 
 def get_enrollments_for_course_by_sis_id(course_sis_id):
+    canvas = Enrollments(per_page=200)
     enrollments = []
-    for enrollment in Enrollments().get_enrollments_for_course_by_sis_id(
+    for enrollment in canvas.get_enrollments_for_course_by_sis_id(
             course_sis_id, {'state': [ENROLLMENT_ACTIVE]}):
         # Ignore the Canvas preview 'user'
         if 'StudentViewEnrollment' != enrollment.role:
