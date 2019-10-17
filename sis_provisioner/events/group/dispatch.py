@@ -1,4 +1,6 @@
 from django.conf import settings
+from sis_provisioner.dao.user import valid_net_id, valid_gmail_id
+from sis_provisioner.exceptions import UserPolicyException
 from sis_provisioner.models import (
     Group, GroupMemberGroup, PRIORITY_HIGH, PRIORITY_IMMEDIATE)
 import xml.etree.ElementTree as ET
@@ -73,27 +75,33 @@ class UWGroupDispatch(Dispatch):
     """
     Canvas Enrollment Group Event Dispatcher
     """
-    def __init__(self, config, message=None):
-        super(UWGroupDispatch, self).__init__(config, message)
-        self._valid_members = []
-
     def mine(self, group_id):
-        self._groups = Group.objects.get_active_by_group(group_id)
-        self._membergroups = GroupMemberGroup.objects.filter(
-            group_id=group_id)
-        return len(self._groups) > 0 or len(self._membergroups) > 0
+        return (Group.objects.filter(group_id=group_id).count() or
+                GroupMemberGroup.objects.filter(group_id=group_id).count())
+
+    @staticmethod
+    def _valid_member(login_id):
+        try:
+            valid_net_id(login_id)
+            return 1
+        except UserPolicyException:
+            try:
+                valid_gmail_id(login_id)
+                return 1
+            except UserPolicyException:
+                pass
+        return 0
 
     def update_members(self, group_id, message):
         # body contains list of members to be added or removed
         group_id = message.findall('./name')[0].text
-        reg_id = message.findall('./regid')[0].text
         member_count = 0
 
         for el in message.findall('./add-members/add-member'):
-            member_count += 1
+            member_count += self._valid_member(el.text)
 
         for el in message.findall('./delete-members/delete-member'):
-            member_count += 1
+            member_count += self._valid_member(el.text)
 
         if member_count > 0:
             for group in Group.objects.get_active_by_group(group_id):
@@ -112,7 +120,6 @@ class UWGroupDispatch(Dispatch):
 
     def delete_group(self, group_id, message):
         group_id = message.findall('./name')[0].text
-        reg_id = message.findall('./regid')[0].text
 
         # mark group as deleted and ready for import
         Group.objects.delete_group_not_found(group_id)

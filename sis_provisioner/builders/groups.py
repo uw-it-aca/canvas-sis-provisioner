@@ -31,7 +31,7 @@ class GroupBuilder(Builder):
         group_section_id = group_section_sis_id(course_id)
 
         try:
-            self._verify_canvas_course(course_id)
+            self.verify_canvas_course(course_id)
         except DataFailureException as err:
             if err.status == 404:
                 Group.objects.deprioritize_course(course_id)
@@ -61,7 +61,7 @@ class GroupBuilder(Builder):
                     member.login, group_section_id, member.role,
                     status=ENROLLMENT_DELETED)
             except DataFailureException as err:
-                self.logger.info("Skip group member {}: {}".format(
+                self.logger.info("Skip remove group member {}: {}".format(
                     member.login, err))
 
         # Add group members not already enrolled to the groups section,
@@ -69,7 +69,7 @@ class GroupBuilder(Builder):
         for member in (current_members - group_enrollments):
             if member.login in sis_enrollments:
                 self.logger.info(
-                    "Skip group member {} (present in {})".format(
+                    "Skip add group member {} (present in {})".format(
                         member.login, sis_enrollments[member.login]))
                 continue
 
@@ -78,10 +78,10 @@ class GroupBuilder(Builder):
                     member.login, group_section_id, member.role,
                     status=ENROLLMENT_ACTIVE)
             except DataFailureException as err:
-                self.logger.info("Skip group member {}: {}".format(
+                self.logger.info("Skip add group member {}: {}".format(
                     member.login, err))
 
-    def _verify_canvas_course(self, course_id):
+    def verify_canvas_course(self, course_id):
         """
         Verify that the Canvas course still exists, has a correct sis_id, and
         contains a UW Group section.
