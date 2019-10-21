@@ -1,28 +1,37 @@
 from sis_provisioner.builders import Builder
 from sis_provisioner.csv.format import SectionCSV
 from sis_provisioner.dao.group import get_effective_members
-from sis_provisioner.dao.user import valid_gmail_id
 from sis_provisioner.dao.course import (
-    valid_adhoc_course_sis_id, valid_academic_course_sis_id,
+    valid_adhoc_course_sis_id, valid_academic_section_sis_id,
     group_section_sis_id, group_section_name)
 from sis_provisioner.dao.canvas import (
-    get_course_by_id, get_course_by_sis_id, update_course_sis_id,
-    get_sis_enrollments_for_course, ENROLLMENT_ACTIVE, ENROLLMENT_DELETED)
-from sis_provisioner.models import Group, GroupMemberGroup, CourseMember
+    get_course_by_id, get_course_by_sis_id, get_section_by_sis_id,
+    update_course_sis_id, get_enrollments_for_course_by_sis_id,
+    ENROLLMENT_ACTIVE, ENROLLMENT_DELETED)
+from sis_provisioner.models import Group, GroupMemberGroup
 from sis_provisioner.exceptions import (
     CoursePolicyException, GroupPolicyException)
 from restclients_core.exceptions import DataFailureException
 
 
-class GroupBuilder(Builder):
-    def _init_build(self, **kwargs):
-        self.delta = kwargs.get('delta', True)
-        self.cached_course_enrollments = {}
-        self.items = list(set(self.items))
+class SetMember(object):
+    def __init__(self, login, role):
+        self.login = login.lower()
+        self.role = role.replace('Enrollment', '')
 
+    def __eq__(self, other):
+        return (self.login == other.login and self.role == other.role)
+
+    def __hash__(self):
+        return hash((self.login, self.role))
+
+
+class GroupBuilder(Builder):
     def _process(self, course_id):
+        group_section_id = group_section_sis_id(course_id)
+
         try:
-            self._verify_canvas_course(course_id)
+            self.verify_canvas_course(course_id)
         except DataFailureException as err:
             if err.status == 404:
                 Group.objects.deprioritize_course(course_id)
@@ -32,74 +41,51 @@ class GroupBuilder(Builder):
                 self._requeue_course(course_id, err)
             return
 
-        group_section_id = group_section_sis_id(course_id)
-        self.data.add(SectionCSV(
-            section_id=group_section_id, course_id=course_id,
-            name=group_section_name()))
-
-        # Get the enrollments for academic courses from Canvas, excluding
-        # ad-hoc and group sections
         try:
-            valid_academic_course_sis_id(course_id)
-            if course_id not in self.cached_course_enrollments:
-                canvas_enrollments = get_sis_enrollments_for_course(course_id)
-                self.cached_course_enrollments[course_id] = canvas_enrollments
+            # Get the enrollments for SIS and Group sections in this course
+            (sis_enrollments, group_enrollments) = self.all_course_enrollments(
+                course_id)
 
-        except CoursePolicyException:
-            self.cached_course_enrollments[course_id] = []
+            # Build a flattened set of current group memberships from GWS
+            current_members = self.all_group_memberships(course_id)
+
         except DataFailureException as err:
             self._requeue_course(course_id, err)
             return
 
-        current_members = []
-        for group in Group.objects.get_active_by_course(course_id):
+        # Remove enrollments not in the current group membership from
+        # the groups section
+        for member in (group_enrollments - current_members):
             try:
-                current_members.extend(self._get_current_members(group))
-
+                self.add_group_enrollment_data(
+                    member.login, group_section_id, member.role,
+                    status=ENROLLMENT_DELETED)
             except DataFailureException as err:
-                self._requeue_course(course_id, err)
-                return
+                self.logger.info("Skip remove group member {}: {}".format(
+                    member.login, err))
 
-            # skip on any group policy exception
-            except GroupPolicyException as err:
+        # Add group members not already enrolled to the groups section,
+        # unless the user already has an sis enrollment in the course
+        for member in (current_members - group_enrollments):
+            if member.login in sis_enrollments:
                 self.logger.info(
-                    "Skip group {} ({})".format(group.group_id, err))
+                    "Skip add group member {} (present in {})".format(
+                        member.login, sis_enrollments[member.login]))
+                continue
 
-        cached_members = CourseMember.objects.get_by_course(course_id)
-        for member in cached_members:
-            match = next((m for m in current_members if m == member), None)
+            try:
+                self.add_group_enrollment_data(
+                    member.login, group_section_id, member.role,
+                    status=ENROLLMENT_ACTIVE)
+            except DataFailureException as err:
+                self.logger.info("Skip add group member {}: {}".format(
+                    member.login, err))
 
-            if match is None:
-                if not self.delta or not member.is_deleted:
-                    try:
-                        self.add_group_enrollment_data(
-                            member, group_section_id, member.role,
-                            status=ENROLLMENT_DELETED)
-                    except Exception as err:
-                        self.logger.info("Skip group member {} ({})".format(
-                            member.name, err))
-
-                member.deactivate()
-
-        for member in current_members:
-            match = next((m for m in cached_members if m == member), None)
-
-            # new or previously removed member
-            if not self.delta or match is None or match.is_deleted:
-                try:
-                    self.add_group_enrollment_data(
-                        member, group_section_id, member.role,
-                        status=ENROLLMENT_ACTIVE)
-                except Exception as err:
-                    self.logger.info("Skip group member {} ({})".format(
-                        member.name, err))
-
-                if match is None:
-                    member.save()
-                elif match.is_deleted:
-                    match.activate()
-
-    def _verify_canvas_course(self, course_id):
+    def verify_canvas_course(self, course_id):
+        """
+        Verify that the Canvas course still exists, has a correct sis_id, and
+        contains a UW Group section.
+        """
         try:
             valid_adhoc_course_sis_id(course_id)
             (prefix, canvas_course_id) = course_id.split('_')
@@ -110,44 +96,55 @@ class GroupBuilder(Builder):
         if canvas_course.sis_course_id is None:
             update_course_sis_id(canvas_course.course_id, course_id)
 
-    def _get_current_members(self, group):
-        (members, invalid_members, member_groups) = get_effective_members(
-            group.group_id, act_as=group.added_by)
-
-        self._reconcile_member_groups(group, member_groups)
-
-        for member in invalid_members:
-            self.logger.info("Skip group member {} ({})".format(
-                member.name, member.error))
-
-        current_members = []
-        for member in members:
-            login_id = member.name
-            if member.is_uwnetid():
-                user_id = member.name
-            elif member.is_eppn():
-                user_id = valid_gmail_id(member.name)
+        group_section_id = group_section_sis_id(course_id)
+        try:
+            section = get_section_by_sis_id(group_section_id)
+        except DataFailureException as err:
+            if err.status == 404:
+                self.data.add(SectionCSV(
+                    section_id=group_section_id, course_id=course_id,
+                    name=group_section_name()))
             else:
-                continue
+                raise
 
-            # Skip members already in academic course sections, removing
-            # from -group section
-            enrollments = self.cached_course_enrollments[group.course_id]
-            match = next((m for m in enrollments if (
-                m.login_id is not None and
-                m.login_id.lower() == login_id.lower())), None)
+    def all_course_enrollments(self, course_id):
+        group_section_id = group_section_sis_id(course_id)
+        sis_enrollments = {}
+        group_enrollments = set()
+        for enr in get_enrollments_for_course_by_sis_id(course_id):
+            # Split the enrollments into sis and group enrollments,
+            # discarding enrollments for adhoc sections
+            try:
+                valid_academic_section_sis_id(enr.sis_section_id)
+                sis_enrollments[enr.login_id.lower()] = enr.sis_section_id
 
-            if match:
-                self.logger.info("Skip group member {} (present in {})".format(
-                    member.name, match.sis_section_id))
-                continue
+            except CoursePolicyException:
+                if enr.sis_section_id == group_section_id:
+                    group_enrollments.add(SetMember(enr.login_id, enr.role))
 
-            course_member = CourseMember(course_id=group.course_id,
-                                         name=user_id,
-                                         type=member.type,
-                                         role=group.role)
-            course_member.login = login_id
-            current_members.append(course_member)
+        return (sis_enrollments, group_enrollments)
+
+    def all_group_memberships(self, course_id):
+        current_members = set()
+        for group in Group.objects.get_active_by_course(course_id):
+            try:
+                (members, invalid_members,
+                    member_groups) = get_effective_members(
+                        group.group_id, act_as=group.added_by)
+
+                self._reconcile_member_groups(group, member_groups)
+
+                for member in invalid_members:
+                    self.logger.info("Skip group member {} ({})".format(
+                        member.name, member.error))
+
+                for member in members:
+                    current_members.add(SetMember(member.name, group.role))
+
+            # Skip on any group policy exception
+            except GroupPolicyException as err:
+                self.logger.info(
+                    "Skip group {} ({})".format(group.group_id, err))
         return current_members
 
     def _reconcile_member_groups(self, group, member_group_ids):
