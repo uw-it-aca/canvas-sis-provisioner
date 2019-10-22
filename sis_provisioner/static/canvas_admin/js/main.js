@@ -1121,8 +1121,8 @@ $(document).ready(function () {
                             added_date: format_date(group.added_date),
                             is_deleted: group.is_deleted,
                             deleted_by: group.deleted_by,
-                            deleted_date: group.deleted_date,
-                            updated: group.provisioned_date ? format_relative_date(group.provisioned_date) : "pending"
+                            deleted_date: format_date(group.deleted_date),
+                            updated_date: format_date(group.provisioned_date)
                         });
                     });
 
