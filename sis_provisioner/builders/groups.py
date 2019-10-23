@@ -81,6 +81,17 @@ class GroupBuilder(Builder):
                 self.logger.info("Skip add group member {}: {}".format(
                     member.login, err))
 
+        # Remove any existing group enrollments that also have an
+        # sis enrollment in the course
+        for member in group_enrollments:
+            if member.login in sis_enrollments:
+                self.add_group_enrollment_data(
+                    member.login, group_section_id, member.role,
+                    status=ENROLLMENT_DELETED)
+                self.logger.info(
+                    "Remove group enrollment {} (present in {})".format(
+                        member.login, sis_enrollments[member.login]))
+
     def verify_canvas_course(self, course_id):
         """
         Verify that the Canvas course still exists, has a correct sis_id, and
