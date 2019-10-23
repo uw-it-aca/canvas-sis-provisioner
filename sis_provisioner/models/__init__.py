@@ -874,87 +874,6 @@ class GroupMemberGroup(models.Model):
         self.save()
 
 
-class CourseMemberManager(models.Manager):
-    def queue_by_priority(self, priority=PRIORITY_DEFAULT):
-        filter_limit = settings.SIS_IMPORT_LIMIT['coursemember']['default']
-
-        pks = super(CourseMemberManager, self).get_queryset().filter(
-            priority=priority, queue_id__isnull=True
-        ).values_list('pk', flat=True)[:filter_limit]
-
-        if not len(pks):
-            raise EmptyQueueException()
-
-        imp = Import(priority=priority, csv_type='coursemember')
-        imp.save()
-
-        super(CourseMemberManager, self).get_queryset().filter(
-            pk__in=list(pks)).update(queue_id=imp.pk)
-
-        return imp
-
-    def queued(self, queue_id):
-        return super(CourseMemberManager, self).get_queryset().filter(
-            queue_id=queue_id)
-
-    def dequeue(self, sis_import):
-        if sis_import.is_imported():
-            # Decrement the priority
-            super(CourseMemberManager, self).get_queryset().filter(
-                queue_id=sis_import.pk, priority__gt=PRIORITY_NONE
-            ).update(
-                queue_id=None, priority=F('priority') - 1)
-        else:
-            self.queued(sis_import.pk).update(queue_id=None)
-
-    def get_by_course(self, course_id):
-        return super(CourseMemberManager, self).get_queryset().filter(
-            course_id=course_id)
-
-
-class CourseMember(models.Model):
-    UWNETID_TYPE = "uwnetid"
-    EPPN_TYPE = "eppn"
-
-    TYPE_CHOICES = (
-        (UWNETID_TYPE, "UWNetID"),
-        (EPPN_TYPE, "ePPN")
-    )
-
-    course_id = models.CharField(max_length=80)
-    name = models.CharField(max_length=256)
-    type = models.SlugField(max_length=16, choices=TYPE_CHOICES)
-    role = models.CharField(max_length=80)
-    is_deleted = models.NullBooleanField()
-    deleted_date = models.DateTimeField(null=True, blank=True)
-    priority = models.SmallIntegerField(default=0, choices=PRIORITY_CHOICES)
-    queue_id = models.CharField(max_length=30, null=True)
-
-    objects = CourseMemberManager()
-
-    def is_uwnetid(self):
-        return self.type.lower() == self.UWNETID_TYPE
-
-    def is_eppn(self):
-        return self.type.lower() == self.EPPN_TYPE
-
-    def deactivate(self):
-        self.is_deleted = True
-        self.deleted_date = datetime.utcnow().replace(tzinfo=utc)
-        self.save()
-
-    def activate(self):
-        self.is_deleted = None
-        self.deleted_date = None
-        self.save()
-
-    def __eq__(self, other):
-        return (self.course_id == other.course_id and
-                self.name.lower() == other.name.lower() and
-                self.type.lower() == other.type.lower() and
-                self.role.lower() == other.role.lower())
-
-
 class CurriculumManager(models.Manager):
     def queued(self, queue_id):
         return super(CurriculumManager, self).get_queryset()
@@ -1337,7 +1256,6 @@ class Import(models.Model):
         ('user', 'User'),
         ('course', 'Course'),
         ('unused_course', 'Term'),
-        ('coursemember', 'CourseMember'),
         ('enrollment', 'Enrollment'),
         ('group', 'Group')
     )
