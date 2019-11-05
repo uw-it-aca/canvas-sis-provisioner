@@ -57,7 +57,7 @@ class RestClientsCache(TimedCache):
 
     def _get_cache_policy(self, service, url):
         for policy in RestClientsCache.url_policies.get(service, []):
-            if policy[0].match(url):
+            if policy[0].search(url):
                 return policy[1]
         return 0
 

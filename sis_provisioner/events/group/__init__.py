@@ -91,9 +91,7 @@ class GroupProcessor(SISProvisionerProcessor):
             raise ProcessorException('Cannot read: {}'.format(ex))
 
     def process_message_body(self, json_data):
-        if json_data is None:
-            raise ProcessorException('Payload is None: {}, {}'.format(
-                self._action, self._groupname))
-        n = self._dispatch.run(self._action, self._groupname, json_data)
-        if n:
-            self.record_success_to_log(n)
+        if json_data is not None:
+            n = self._dispatch.run(self._action, self._groupname, json_data)
+            if n:
+                self.record_success_to_log(n)
