@@ -93,9 +93,9 @@ class SISProvisionerProcessor(MessageBodyProcessor):
             kws = KWS()
             key = None
             if 'KeyURL' in header:
-                key = kws._key_from_json(kws._get_resource(header['KeyURL']))
+                key = kws.get_key(url=header['KeyURL'])
             elif 'KeyId' in self._header:
-                key = kws.get_key(header['KeyId'])
+                key = kws.get_key(key_id=self._header['KeyId'])
             else:
                 try:
                     key = kws.get_current_key(header['MessageType'])

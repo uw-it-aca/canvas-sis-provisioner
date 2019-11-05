@@ -1,14 +1,12 @@
 from django.conf import settings
 from rc_django.cache_implementation import TimedCache
 from rc_django.models import CacheEntryTimed
+from uw_kws import ENCRYPTION_KEY_URL, ENCRYPTION_CURRENT_KEY_URL
 import re
 
 
 class RestClientsCache(TimedCache):
     """ A custom cache implementation for Canvas """
-
-    kws_url_current_key = '/key/v1/type/{}/encryption/current'
-    kws_url_key = '/key/v1/encryption/{}.json'
 
     url_policies = {}
     url_policies["sws"] = (
@@ -23,10 +21,12 @@ class RestClientsCache(TimedCache):
         (re.compile(r"^/identity/v\d/entity/"), 60 * 60),
     )
     url_policies["kws"] = (
-        (re.compile(r"^{}".format(
-            kws_url_key.format(r'[\-\da-fA-F]{36}'))), 60 * 60 * 24 * 30),
-        (re.compile(r"^{}".format(
-            kws_url_current_key.format(r"[\-\da-zA-Z]+"))), 60 * 60 * 24 * 7),
+        (re.compile(r"{}".format(
+            ENCRYPTION_KEY_URL.format(r'[\-\da-fA-F]{36}'))),
+            60 * 60 * 24 * 30),
+        (re.compile(r"{}".format(
+            ENCRYPTION_CURRENT_KEY_URL.format(r"[\-\da-zA-Z]+"))),
+            60 * 60 * 24 * 7),
     )
     url_policies["gws"] = (
         (re.compile(r"^/group_sws/v\d/group/{}/effective_member/".format(
@@ -49,10 +49,11 @@ class RestClientsCache(TimedCache):
             return
 
     def delete_cached_kws_current_key(self, resource_type):
-        self.deleteCache('kws', self.kws_url_current_key.format(resource_type))
+        self.deleteCache('kws', ENCRYPTION_CURRENT_KEY_URL.format(
+            resource_type))
 
     def delete_cached_kws_key(self, key_id):
-        self.deleteCache('kws', self.kws_url_key.format(key_id))
+        self.deleteCache('kws', ENCRYPTION_KEY_URL.format(key_id))
 
     def _get_cache_policy(self, service, url):
         for policy in RestClientsCache.url_policies.get(service, []):
