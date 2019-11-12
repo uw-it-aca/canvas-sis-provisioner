@@ -17,13 +17,14 @@ from restclients_core.exceptions import DataFailureException
 class SetMember(object):
     def __init__(self, login, role):
         self.login = login.lower()
-        self.role = role.replace('Enrollment', '').lower()
+        self.role = role.replace('Enrollment', '')  # Used for importing
+        self.__role = self.role.lower()  # Used for comparison
 
     def __eq__(self, other):
-        return (self.login == other.login and self.role == other.role)
+        return (self.login == other.login and self.__role == other.__role)
 
     def __hash__(self):
-        return hash((self.login, self.role))
+        return hash((self.login, self.__role))
 
 
 class GroupBuilder(Builder):

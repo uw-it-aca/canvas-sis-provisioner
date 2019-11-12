@@ -12,13 +12,13 @@ class SetMemberTest(TestCase):
     def test_set_member(self):
         member1 = SetMember('Javerage', 'StudentEnrollment')
         self.assertEqual(member1.login, 'javerage')
-        self.assertEqual(member1.role, 'student')
+        self.assertEqual(member1.role, 'Student')
 
         member2 = SetMember('javerage', 'student')
-        self.assertEqual(member1.login, 'javerage')
-        self.assertEqual(member1.role, 'student')
+        self.assertEqual(member2.login, 'javerage')
+        self.assertEqual(member2.role, 'student')
 
-        member3 = SetMember('javerage', 'TA')
+        member3 = SetMember('javerage', 'TAEnrollment')
 
         self.assertTrue(member1 == member2)
         self.assertFalse(member1 == member3)
