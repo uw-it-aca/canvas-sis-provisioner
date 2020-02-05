@@ -18,7 +18,7 @@ RE_CANVAS_ID = re.compile(r"^\d+$")
 
 
 def is_group_member(group_id, login_id, act_as=None):
-    return GWS({'actas': act_as}).is_effective_member(group_id, login_id)
+    return GWS(act_as=act_as).is_effective_member(group_id, login_id)
 
 
 def is_group_admin(group_id, login_id):

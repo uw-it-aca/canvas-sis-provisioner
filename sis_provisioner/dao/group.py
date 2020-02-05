@@ -53,7 +53,7 @@ def get_sis_import_members():
 
 
 def get_effective_members(group_id, act_as=None):
-    gws = GWS({'actas': act_as})
+    gws = GWS(act_as=act_as)
 
     def _get_members(group_id):
         valid_members = {}
