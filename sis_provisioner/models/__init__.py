@@ -714,7 +714,8 @@ class GroupManager(models.Manager):
 
                 try:
                     is_mod = is_modified_group(
-                        group.group_id, group.provisioned_date)
+                        group.group_id,
+                        group.provisioned_date or group.added_date)
                 except GroupNotFoundException:
                     is_mod = True
                     self.delete_group_not_found(group.group_id)
@@ -730,7 +731,8 @@ class GroupManager(models.Manager):
 
                             try:
                                 is_mod = is_modified_group(
-                                    mgroup.group_id, group.provisioned_date)
+                                    mgroup.group_id,
+                                    group.provisioned_date or group.added_date)
                             except GroupNotFoundException:
                                 is_mod = True
                                 self.delete_group_not_found(mgroup.group_id)

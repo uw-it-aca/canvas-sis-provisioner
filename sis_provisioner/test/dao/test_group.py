@@ -41,6 +41,10 @@ class GroupModifiedTest(TestCase):
         mtime = datetime(2020, 10, 10, 0, 0, 0).replace(tzinfo=utc)
         self.assertEquals(is_modified_group('u_acadev_tester', mtime), False)
 
+        mtime = None
+        self.assertRaises(
+            TypeError, is_modified_group, 'u_acadev_tester', mtime)
+
 
 @fdao_gws_override
 @fdao_pws_override
