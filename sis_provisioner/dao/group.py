@@ -91,7 +91,7 @@ def get_effective_members(group_id, act_as=None):
             elif err.status == 401:
                 raise GroupUnauthorizedException(
                     "Group not permitted for {}: {}".format(
-                        gws.actas, group_id))
+                        gws.act_as, group_id))
             else:
                 raise
 
