@@ -46,8 +46,9 @@ class SISProvisionerCommand(BaseCommand):
         if (not job.last_status_date or
                 (now - job.last_status_date) > datetime.timedelta(hours=1)):
             try:
-                mail_admins("Provisioning job may be having issues",
-                            message, fail_silently=True)
+                mail_admins(
+                    'Provisioning job "{}" may be having issues'.format(
+                        job.title), message, fail_silently=True)
                 job.last_status_date = now
             except Exception as err:
                 self.log.error(
