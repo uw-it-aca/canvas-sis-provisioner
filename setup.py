@@ -24,6 +24,7 @@ setup(
         'Django>=2.0.13,<2.1',
         'django-compressor',
         'django-user-agents',
+        'django-prometheus>=1.0,<2.0',
         'lxml>=4.2.5,<4.3',
         'python-dateutil',
         'mock==2.0.0',

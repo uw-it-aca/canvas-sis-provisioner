@@ -5,6 +5,7 @@ ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS += [
     'compressor',
+    'django_prometheus',
     'django.contrib.humanize',
     'django_user_agents',
     'supporttools',
@@ -22,6 +23,7 @@ INSTALLED_APPS += [
 
 # Assign rather than append since order of BLTI middleware is significant
 MIDDLEWARE = [
+    'django_prometheus.middleware.PrometheusBeforeMiddleware',
     'django.middleware.common.CommonMiddleware',
     'blti.middleware.CSRFHeaderMiddleware',
     'blti.middleware.SessionHeaderMiddleware',
@@ -32,6 +34,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.PersistentRemoteUserMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django_user_agents.middleware.UserAgentMiddleware',
+    'django_prometheus.middleware.PrometheusAfterMiddleware',
 ]
 
 TEMPLATES[0]['OPTIONS']['context_processors'].extend([
@@ -71,6 +74,7 @@ else:
     SIS_IMPORT_CSV_DEBUG = False
     CANVAS_MANAGER_ADMIN_GROUP = os.getenv('ADMIN_GROUP', '')
     RESTCLIENTS_ADMIN_GROUP = os.getenv('SUPPORT_GROUP', '')
+    RESTCLIENTS_DAO_CACHE_CLASS = 'sis_provisioner.cache.RestClientsCache'
 
 RESTCLIENTS_DISABLE_THREADING = True
 RESTCLIENTS_ADMIN_AUTH_MODULE = 'sis_provisioner.views.admin.can_view_source_data'
@@ -83,7 +87,6 @@ except NameError:
 
 EVENT_AWS_SQS_CERT = os.getenv('AWS_SQS_CERT', '')
 EVENT_AWS_SQS_KEY = os.getenv('AWS_SQS_KEY', '')
-EVENT_COUNT_PRUNE_AFTER_DAY = 7
 
 AWS_CA_BUNDLE = RESTCLIENTS_CA_BUNDLE
 AWS_SQS = {
