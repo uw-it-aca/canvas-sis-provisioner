@@ -176,7 +176,8 @@ class AdminModelTest(TestCase):
         Admin.objects.start_reconcile(queue_id=imp.pk)
 
         Admin.objects.queued(imp.pk).update(
-            deleted_date=(datetime.utcnow() - timedelta(days=100)))
+            deleted_date=(datetime.utcnow() - timedelta(days=100)).replace(
+                tzinfo=utc))
 
         Admin.objects.finish_reconcile(queue_id=imp.pk)
 

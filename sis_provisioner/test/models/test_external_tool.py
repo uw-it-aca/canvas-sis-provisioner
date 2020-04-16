@@ -9,7 +9,8 @@ import mock
 
 
 @override_settings(RESTCLIENTS_CANVAS_ACCOUNT_ID='1',
-                   RESTCLIENTS_CANVAS_HOST='http://canvas.edu')
+                   RESTCLIENTS_CANVAS_HOST='http://canvas.edu',
+                   TIME_ZONE='UTC')
 class ExternalToolModelTest(TestCase):
     def setUp(self):
         self.account1 = create_account('1', 'test1')
