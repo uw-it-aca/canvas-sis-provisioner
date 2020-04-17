@@ -156,12 +156,13 @@ class CSVDataTest(TestCase):
         csv.enrollments.append(1)
         self.assertEquals(csv.has_data(), True)
 
-        path = csv.write_files()
+        with self.settings(SIS_IMPORT_CSV_DEBUG=False):
+            path = csv.write_files()
 
-        mock_os.path.join.assert_called_with(path, 'enrollments.csv')
-        mock_open.assert_called_with(path, 'w')
-        mock_os.chmod.assert_called_with(path, csv.filemode)
-        self.assertEquals(csv.has_data(), False)
+            mock_os.path.join.assert_called_with(path, 'enrollments.csv')
+            mock_open.assert_called_with(path, 'w')
+            mock_os.chmod.assert_called_with(path, csv.filemode)
+            self.assertEquals(csv.has_data(), False)
 
     @mock.patch('sis_provisioner.csv.data.stat')
     @mock.patch('sis_provisioner.csv.data.os')
