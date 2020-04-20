@@ -5,7 +5,6 @@ ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS += [
     'compressor',
-    'django_prometheus',
     'django.contrib.humanize',
     'django_user_agents',
     'supporttools',
