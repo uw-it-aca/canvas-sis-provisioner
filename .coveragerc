@@ -1,0 +1,8 @@
+[run]
+source = canvas-sis-provisioner
+parallel = True
+
+[paths]
+source =
+  sis_provisioner/
+  /app/sis_provisioner/
