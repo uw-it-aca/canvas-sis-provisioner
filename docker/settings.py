@@ -40,28 +40,34 @@ TEMPLATES[0]['OPTIONS']['context_processors'].extend([
     'supporttools.context_processors.supportools_globals'
 ])
 
-COMPRESS_ENABLED = True
-COMPRESS_OFFLINE = True
 COMPRESS_ROOT = '/static/'
-
-COMPRESS_PRECOMPILERS = (
-    ('text/less', 'lessc {infile} {outfile}'),
-)
 
 STATICFILES_FINDERS += (
     'compressor.finders.CompressorFinder',
 )
 
-COMPRESS_PRECOMPILERS += (
+COMPRESS_PRECOMPILERS = (
+    ('text/less', 'lessc {infile} {outfile}'),
     ('text/x-sass', 'pyscss {infile} > {outfile}'),
     ('text/x-scss', 'pyscss {infile} > {outfile}'),
 )
+
+COMPRESS_CSS_FILTERS = [
+    'compressor.filters.css_default.CssAbsoluteFilter',
+    'compressor.filters.cssmin.CSSMinFilter'
+]
+
+COMPRESS_JS_FILTERS = [
+    'compressor.filters.jsmin.JSMinFilter',
+]
+
+COMPRESS_OFFLINE = True
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_DOMAIN = '.uw.edu'
 
-if os.getenv('ENV') == 'localdev':
+if os.getenv('ENV', 'localdev') == 'localdev':
     DEBUG = True
     SIS_IMPORT_CSV_DEBUG = True
     CANVAS_MANAGER_ADMIN_GROUP = 'u_test_group'
@@ -69,7 +75,6 @@ if os.getenv('ENV') == 'localdev':
     RESTCLIENTS_DAO_CACHE_CLASS = None
     CANVAS_ACCOUNT_ID = '12345'
 else:
-    DEBUG = False
     SIS_IMPORT_CSV_DEBUG = False
     CANVAS_MANAGER_ADMIN_GROUP = os.getenv('ADMIN_GROUP', '')
     RESTCLIENTS_ADMIN_GROUP = os.getenv('SUPPORT_GROUP', '')
