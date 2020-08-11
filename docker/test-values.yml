@@ -1,0 +1,89 @@
+ingress:
+  enabled: true
+  tls:
+    gradepage:
+      secretName: test-apps.canvas.uw.edu-ingress-cert
+      hosts:
+        - test-apps.canvas.uw.edu
+  hosts:
+    gradepage:
+      host: test-apps.canvas.uw.edu
+      paths:
+        - "/"
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+lifecycle:
+  enabled: true
+  preStop:
+    enabled: true
+affinity:
+   podsSpanNodes: true
+readiness:
+  enabled: true
+externalService:
+  enabled: true
+  name: canvas-db-service
+  type: ClusterIP
+  serviceAddress:
+  servicePort: 3306
+database:
+  engine: mysql
+  name: canvas_test
+  hostname: canvas-db-service
+  secretName: test-apps.canvas.uw.edu-sql-secrets
+repo: canvas-sis-provisioner
+instance: test
+image:
+  repository: registry.hub.docker.com/acait/canvas
+  tag: IMAGE_TAG
+memcached:
+  enabled: true
+  replicaCount: 1
+  updateStrategy:
+    type: RollingUpdate
+cronjob:
+  enabled: false
+certs:
+  mounted: true
+  certPath: /certs/test-client.canvas.uw.edu-uwca.cert
+  keyPath: /certs/test-client.canvas.uw.edu-uwca.key
+  secretName: test-apps.canvas.uw.edu-uwca-certs
+environmentVariables:
+  - name: ENV
+    value: test
+
+  - name: PWS_ENV
+    value: EVAL
+
+  - name: SWS_ENV
+    value: EVAL
+  - name: SWS_TIMEOUT
+    value: "10"
+
+  - name: GWS_ENV
+    value: PROD
+
+  - name: CANVAS_ENV
+    value: EVAL
+  - name: CANVAS_TIMEOUT
+    value: "10"
+
+  - name: AUTH
+    value: SAML
+  - name: SAML_ENTITY_ID
+    value: https://test-apps.canvas.uw.edu/saml2
+  - name: CLUSTER_CNAME
+    value: test-apps.canvas.uw.edu
+
+externalSecrets:
+  enabled: true
+  secrets:
+    - name: test-apps.canvas.uw.edu-secrets
+      externalKey: axdd/kv/data/canvas/test/secrets
+      data:
+        - name: canvas-account-id
+          property: canvas-account-id
+        - name: canvas-api-token
+          property: canvas-api-token
+        - name: django-secret
+          property: django-secret
