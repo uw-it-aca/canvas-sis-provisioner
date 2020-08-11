@@ -184,8 +184,8 @@ ANCILLARY_CANVAS_ROLES = {
 LTI_ENFORCE_SSL = False
 LTI_CONSUMERS = {}
 
-BLTI_AES_KEY = bytes(os.getenv('BLTI_AES_KEY', ''))
-BLTI_AES_IV = bytes(os.getenv('BLTI_AES_IV', ''))
+BLTI_AES_KEY = bytes(os.getenv('BLTI_AES_KEY', ''), encoding='utf8')
+BLTI_AES_IV = bytes(os.getenv('BLTI_AES_IV', ''), encoding='utf8')
 
 UW_GROUP_BLACKLIST = [
     'uw_affiliation_',
