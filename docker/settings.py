@@ -7,31 +7,17 @@ INSTALLED_APPS += [
     'django_user_agents',
     'supporttools',
     'rc_django',
-    'blti',
     'groups',
     'libguide',
     'course_roster',
     'canvas_users',
     'grading_standard',
-    'anonymous_feedback',
     'grade_conversion_calculator',
     'sis_provisioner.apps.SISProvisionerConfig',
 ]
 
-# Assign rather than append since order of BLTI middleware is significant
-MIDDLEWARE = [
-    'django_prometheus.middleware.PrometheusBeforeMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'blti.middleware.CSRFHeaderMiddleware',
-    'blti.middleware.SessionHeaderMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.contrib.auth.middleware.PersistentRemoteUserMiddleware',
-    'django.middleware.locale.LocaleMiddleware',
+MIDDLEWARE += [
     'django_user_agents.middleware.UserAgentMiddleware',
-    'django_prometheus.middleware.PrometheusAfterMiddleware',
 ]
 
 TEMPLATES[0]['OPTIONS']['context_processors'].extend([
