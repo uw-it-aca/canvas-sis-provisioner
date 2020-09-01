@@ -30,7 +30,7 @@ setup(
         'django-pyscss',
         'beautifulsoup4',
         'suds-jurko==0.6',
-        'django-blti>=2.1.2,<3.0',
+        'django-blti>=2.2.0,<3.0',
         'django-aws-message>=1.5.1',
         'UW-Canvas-Users-LTI>=0.8,<1.0',
         'UW-Groups-LTI>=0.7.3,<1.0',
