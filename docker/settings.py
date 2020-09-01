@@ -1,8 +1,6 @@
 from .base_settings import *
 import os
 
-ALLOWED_HOSTS = ['*']
-
 INSTALLED_APPS += [
     'compressor',
     'django.contrib.humanize',
@@ -78,7 +76,7 @@ else:
     SIS_IMPORT_CSV_DEBUG = False
     CANVAS_MANAGER_ADMIN_GROUP = os.getenv('ADMIN_GROUP', '')
     RESTCLIENTS_ADMIN_GROUP = os.getenv('SUPPORT_GROUP', '')
-    RESTCLIENTS_DAO_CACHE_CLASS = 'sis_provisioner.cache.RestClientsCache'
+    RESTCLIENTS_DAO_CACHE_CLASS = 'sis_provisioner.cache.CanvasMemcachedCache'
 
 RESTCLIENTS_DISABLE_THREADING = True
 RESTCLIENTS_ADMIN_AUTH_MODULE = 'sis_provisioner.views.admin.can_view_source_data'
@@ -183,10 +181,11 @@ ANCILLARY_CANVAS_ROLES = {
     },
 }
 
+LTI_ENFORCE_SSL = False
 LTI_CONSUMERS = {}
 
-BLTI_AES_KEY = os.getenv('BLTI_AES_KEY', '')
-BLTI_AES_IV = os.getenv('BLTI_AES_IV', '')
+BLTI_AES_KEY = bytes(os.getenv('BLTI_AES_KEY', ''), encoding='utf8')
+BLTI_AES_IV = bytes(os.getenv('BLTI_AES_IV', ''), encoding='utf8')
 
 UW_GROUP_BLACKLIST = [
     'uw_affiliation_',
@@ -204,7 +203,7 @@ LOGIN_DOMAIN_WHITELIST = ['gmail.com', 'google.com', 'googlemail.com']
 ADD_USER_DOMAIN_WHITELIST = [
     'uw.edu', 'washington.edu', 'u.washington.edu', 'cac.washington.edu']
 
-PERMISSIONS_CHECK_ACCOUNTS = ['83919', '103216']
+PERMISSIONS_CHECK_ACCOUNTS = [CANVAS_ACCOUNT_ID, '103216']
 
 SIS_IMPORT_ROOT_ACCOUNT_ID = 'uwcourse'
 SIS_IMPORT_CSV_ROOT = os.getenv('SIS_IMPORT_CSV_ROOT', '')
