@@ -1,0 +1,4 @@
+-e .
+-e git+https://github.com/uw-it-aca/python3-saml-patch/#egg=python3-saml-patch
+-e git+https://github.com/uw-it-aca/canvas-analytics/#egg=canvas-analytics
+-e git+https://github.com/uw-it-aca/scheduled-job-client/#egg=scheduled_job_client

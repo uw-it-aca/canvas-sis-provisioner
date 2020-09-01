@@ -7,7 +7,10 @@ from sis_provisioner.dao.user import valid_net_id, valid_gmail_id
 from sis_provisioner.exceptions import (
     UserPolicyException, GroupPolicyException, GroupNotFoundException,
     GroupUnauthorizedException)
+from logging import getLogger
 import re
+
+logger = getLogger(__name__)
 
 
 def valid_group_id(group_id):
@@ -96,6 +99,11 @@ def get_effective_members(group_id, act_as=None):
                 raise
 
         except GroupPolicyException as err:
+            raise
+
+        except RecursionError as err:
+            logger.info("Error: {}, Group: {}, Member groups: {}".format(
+                err, group_id, member_group_ids))
             raise
 
         return (valid_members, invalid_members, member_group_ids)
