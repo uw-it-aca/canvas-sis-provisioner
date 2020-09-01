@@ -35,8 +35,6 @@ class AdminViewTest(TestCase):
 
     def test_params(self):
         params = AdminView()._params(self.request)
-        self.assertEqual(params['CURRENT_QUARTER'], '')
-        self.assertEqual(params['CURRENT_YEAR'], datetime.now().year)
         self.assertEqual(params['can_manage_admin_group'], True)
         self.assertEqual(params['can_view_restclients'], True)
         self.assertEqual(params['can_manage_jobs'], True)
