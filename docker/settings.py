@@ -13,6 +13,7 @@ INSTALLED_APPS += [
     'canvas_users',
     'grading_standard',
     'grade_conversion_calculator',
+    'rest_framework.authtoken',
     'sis_provisioner.apps.SISProvisionerConfig',
 ]
 
