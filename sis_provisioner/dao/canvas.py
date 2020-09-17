@@ -99,8 +99,11 @@ def delete_admin(account_id, user_id, role):
     return ret
 
 
-@retry(SSLError, tries=3, delay=1, logger=logger)
 def get_course_roles_in_account(account_id):
+    if str(account_id) not in getattr(
+            settings, 'PERMISSIONS_CHECK_ACCOUNTS', []):
+        account_id = getattr(settings, 'RESTCLIENTS_CANVAS_ACCOUNT_ID')
+
     return Roles().get_effective_course_roles_in_account(account_id)
 
 

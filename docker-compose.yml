@@ -5,7 +5,7 @@ services:
     environment:
       - ENV=localdev
       - PORT=8000
-      - AUTH=SAML_MOCK
+      - AUTH=SAML_MOCK BLTI_DEV
     restart: always
     container_name: canvas_sis_provisioner
     build:

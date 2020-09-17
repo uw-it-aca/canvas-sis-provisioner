@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from sis_provisioner.dao.canvas import *
 from sis_provisioner.dao.course import get_section_by_label
 from uw_pws.util import fdao_pws_override
@@ -58,10 +58,14 @@ class CanvasExternalToolsTest(TestCase):
 
 
 class CanvasRolesTest(TestCase):
+    @override_settings(RESTCLIENTS_CANVAS_ACCOUNT_ID='12345')
     @mock.patch.object(Roles, 'get_effective_course_roles_in_account')
     def test_get_course_roles_in_account(self, mock_method):
-        r = get_course_roles_in_account('abc')
-        mock_method.assert_called_with('abc')
+        r = get_course_roles_in_account('12345')
+        mock_method.assert_called_with('12345')
+
+        r = get_course_roles_in_account('67890')
+        mock_method.assert_called_with('12345')
 
     @mock.patch.object(Roles, 'get_roles_in_account')
     def test_get_account_role_data(self, mock_method):

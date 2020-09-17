@@ -5,12 +5,20 @@ from sis_provisioner.models import Account
 from sis_provisioner.dao.canvas import (
     get_account_by_id, get_sub_accounts, get_external_tools,
     create_external_tool, update_external_tool, delete_external_tool)
-from blti.models import BLTIKeyStore
 from datetime import datetime
 import string
 import random
 import json
 import os
+
+
+class BLTIKeyStore(models.Model):
+    consumer_key = models.CharField(max_length=80, unique=True)
+    shared_secret = models.CharField(max_length=80)
+    added_date = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'blti_bltikeystore'
 
 
 class ExternalToolManager(models.Manager):
