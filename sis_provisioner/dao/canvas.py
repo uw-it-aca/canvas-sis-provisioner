@@ -100,13 +100,11 @@ def delete_admin(account_id, user_id, role):
 
 
 def get_course_roles_in_account(account_id):
-    account_id = str(account_id)
-    root_account_id = getattr(settings, 'RESTCLIENTS_CANVAS_ACCOUNT_ID')
-    if (account_id != root_account_id and
-            account_id in getattr(settings, 'PERMISSIONS_CHECK_ACCOUNTS', [])):
-        return Roles().get_effective_course_roles_in_account(account_id)
-    else:
-        return Roles().get_roles_in_account(root_account_id)
+    if str(account_id) not in getattr(
+            settings, 'PERMISSIONS_CHECK_ACCOUNTS', []):
+        account_id = getattr(settings, 'RESTCLIENTS_CANVAS_ACCOUNT_ID')
+
+    return Roles().get_effective_course_roles_in_account(account_id)
 
 
 def get_account_role_data(account_id):
