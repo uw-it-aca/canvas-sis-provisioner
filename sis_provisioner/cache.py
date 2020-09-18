@@ -73,4 +73,5 @@ class RestClientsCache(TimedCache):
             service, url, headers, get_cache_time(service, url))
 
     def processResponse(self, service, url, response):
-        return self._process_response(service, url, response)
+        if get_cache_time(service, url):
+            return self._process_response(service, url, response)
