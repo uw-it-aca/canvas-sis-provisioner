@@ -21,7 +21,8 @@ def get_cache_time(service, url):
             return ONE_HOUR * 10
 
     if 'pws' == service:
-        return ONE_HOUR
+        if re.match(r'^/identity/v\d/', url):
+            return ONE_HOUR
 
     if 'kws' == service:
         if re.match(r'{}'.format(
