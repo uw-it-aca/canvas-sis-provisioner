@@ -21,7 +21,8 @@ def get_cache_time(service, url):
             return ONE_HOUR * 10
 
     if 'pws' == service:
-        return ONE_HOUR
+        if re.match(r'^/identity/v\d/', url):
+            return ONE_HOUR
 
     if 'kws' == service:
         if re.match(r'{}'.format(
@@ -40,7 +41,7 @@ def get_cache_time(service, url):
         if re.match(r'^/api/v\d/accounts/sis_account_id:', url):
             return ONE_HOUR * 10
         if re.match(r'^/api/v\d/accounts/\d+/roles', url):
-            return ONE_HOUR * 4
+            return ONE_WEEK
 
     if 'libcurrics' == service:
         return ONE_HOUR * 4
@@ -72,4 +73,5 @@ class RestClientsCache(TimedCache):
             service, url, headers, get_cache_time(service, url))
 
     def processResponse(self, service, url, response):
-        return self._process_response(service, url, response)
+        if get_cache_time(service, url):
+            return self._process_response(service, url, response)
