@@ -8,11 +8,7 @@ INSTALLED_APPS += [
     'supporttools',
     'rc_django',
     'groups',
-    'libguide',
-    'course_roster',
     'canvas_users',
-    'grading_standard',
-    'grade_conversion_calculator',
     'rest_framework.authtoken',
     'sis_provisioner.apps.SISProvisionerConfig',
 ]
@@ -58,7 +54,7 @@ if os.getenv('ENV', 'localdev') == 'localdev':
     CANVAS_MANAGER_ADMIN_GROUP = 'u_test_group'
     RESTCLIENTS_ADMIN_GROUP = 'u_test_group'
     RESTCLIENTS_DAO_CACHE_CLASS = None
-    CANVAS_ACCOUNT_ID = '12345'
+    RESTCLIENTS_CANVAS_ACCOUNT_ID = '12345'
 else:
     SIS_IMPORT_CSV_DEBUG = False
     CANVAS_MANAGER_ADMIN_GROUP = os.getenv('ADMIN_GROUP', '')
@@ -168,12 +164,6 @@ ANCILLARY_CANVAS_ROLES = {
     },
 }
 
-LTI_ENFORCE_SSL = False
-LTI_CONSUMERS = {}
-
-BLTI_AES_KEY = bytes(os.getenv('BLTI_AES_KEY', ''), encoding='utf8')
-BLTI_AES_IV = bytes(os.getenv('BLTI_AES_IV', ''), encoding='utf8')
-
 UW_GROUP_BLACKLIST = [
     'uw_affiliation_',
     'uw_employee',
@@ -190,7 +180,8 @@ LOGIN_DOMAIN_WHITELIST = ['gmail.com', 'google.com', 'googlemail.com']
 ADD_USER_DOMAIN_WHITELIST = [
     'uw.edu', 'washington.edu', 'u.washington.edu', 'cac.washington.edu']
 
-PERMISSIONS_CHECK_ACCOUNTS = [CANVAS_ACCOUNT_ID, '103216']
+CONTINUUM_ACCOUNT_ID = os.getenv('CONTINUUM_ACCOUNT_ID', '')
+PERMISSIONS_CHECK_ACCOUNTS = [RESTCLIENTS_CANVAS_ACCOUNT_ID, CONTINUUM_ACCOUNT_ID]
 
 SIS_IMPORT_ROOT_ACCOUNT_ID = 'uwcourse'
 SIS_IMPORT_CSV_ROOT = os.getenv('SIS_IMPORT_CSV_ROOT', '')
