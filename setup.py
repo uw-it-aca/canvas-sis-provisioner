@@ -32,6 +32,7 @@ setup(
         'suds-jurko==0.6',
         'django-blti>=2.2.0,<3.0',
         'django-aws-message>=1.5.1',
+        'djangorestframework>=3.6.4',
         'UW-Canvas-Users-LTI>=0.9.1,<1.0',
         'UW-Groups-LTI>=0.7.3,<1.0',
         'UW-Course-Roster-LTI>=1.0,<2.0',
