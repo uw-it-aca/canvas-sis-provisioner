@@ -24,14 +24,14 @@ externalService:
   enabled: true
   name: canvas-db-service
   type: ClusterIP
-  serviceAddress:
+  serviceAddress: 172.18.0.28
   servicePort: 3306
 database:
   engine: mysql
-  name: canvas_test
+  name: sis_provisioner_test
   hostname: canvas-db-service
   secretName: test-apps.canvas.uw.edu-sql-secrets
-repo: canvas-sis-provisioner
+repo: canvas
 instance: test
 image:
   repository: registry.hub.docker.com/acait/canvas
@@ -45,8 +45,8 @@ cronjob:
   enabled: false
 certs:
   mounted: true
-  certPath: /certs/test-client.canvas.uw.edu-uwca.cert
-  keyPath: /certs/test-client.canvas.uw.edu-uwca.key
+  certPath: /certs/test-apps.canvas.uw.edu-uwca.cert
+  keyPath: /certs/test-apps.canvas.uw.edu-uwca.key
   secretName: test-apps.canvas.uw.edu-uwca-certs
 environmentVariables:
   - name: ENV
@@ -82,11 +82,8 @@ environmentVariables:
   - name: ASTRA_APPLICATION
     value: Canvas
 
-  - name: LIBCURRICS_ENV
-    value: PROD
-
   - name: AUTH
-    value: SAML
+    value: "SAML BLTI"
   - name: SAML_ENTITY_ID
     value: https://test-apps.canvas.uw.edu/saml2
   - name: CLUSTER_CNAME
@@ -95,13 +92,24 @@ environmentVariables:
 externalSecrets:
   enabled: true
   secrets:
-    - name: test-apps.canvas.uw.edu-secrets
-      externalKey: axdd/kv/data/canvas/test/secrets
+    - name: test-apps.canvas.uw.edu-shared-secrets
+      externalKey: axdd/kv/data/canvas/shared/secrets
       data:
         - name: canvas-account-id
           property: canvas-account-id
+        - name: continuum-account-id
+          property: continuum-account-id
         - name: canvas-api-token
           property: canvas-api-token
+        - name: lti-consumers
+          property: lti-consumers
+        - name: storage-bucket-name
+          property: storage-bucket-name
+        - name: storage-project-id
+          property: storage-project-id
+    - name: test-apps.canvas.uw.edu-secrets
+      externalKey: axdd/kv/data/canvas/test/secrets
+      data:
         - name: django-secret
           property: django-secret
         - name: blti-aes-iv
@@ -140,12 +148,8 @@ externalSecrets:
           property: sqs-person-key-id
         - name: sqs-person-queue-arn
           property: sqs-person-queue-arn
-        - name: storage-bucket-name
-          property: storage-bucket-name
-        - name: storage-project-id
-          property: storage-project-id
     - name: test-apps.canvas.uw.edu-sql-secrets
-      externalKey: axdd/kv/data/canvas/test/sql-secrets
+      externalKey: axdd/kv/data/canvas/shared/sql-secrets
       data:
         - name: username
           property: username
@@ -154,10 +158,10 @@ externalSecrets:
     - name: test-apps.canvas.uw.edu-uwca-certs
       externalKey: axdd/kv/data/canvas/test/uwca-certs
       data:
-        - name: test-client.canvas.uw.edu-uwca.cert
-          property: test-client.canvas.uw.edu-uwca.cert
-        - name: test-client.canvas.uw.edu-uwca.key
-          property: test-client.canvas.uw.edu-uwca.key
+        - name: test-apps.canvas.uw.edu-uwca.cert
+          property: test-apps.canvas.uw.edu-uwca.cert
+        - name: test-apps.canvas.uw.edu-uwca.key
+          property: test-apps.canvas.uw.edu-uwca.key
     - name: test-apps.canvas.uw.edu-ic-certs
       externalKey: axdd/kv/data/canvas/test/ic-certs
       data:
@@ -175,12 +179,16 @@ environmentVariablesSecrets:
     secretKey: django-secret
   canvasAPIToken:
     name: CANVAS_OAUTH_BEARER
-    secretName: test-apps.canvas.uw.edu-secrets
+    secretName: test-apps.canvas.uw.edu-shared-secrets
     secretKey: canvas-api-token
   canvasAccountID:
     name: CANVAS_ACCOUNT_ID
-    secretName: test-apps.canvas.uw.edu-secrets
+    secretName: test-apps.canvas.uw.edu-shared-secrets
     secretKey: canvas-account-id
+  continuumAccountID:
+    name: CONTINUUM_ACCOUNT_ID
+    secretName: test-apps.canvas.uw.edu-shared-secrets
+    secretKey: continuum-account-id
   enrollmentQueueArn:
     name: SQS_ENROLLMENT_QUEUE_ARN
     secretName: test-apps.canvas.uw.edu-secrets
@@ -245,13 +253,25 @@ environmentVariablesSecrets:
     name: SQS_INSTRUCTOR_DROP_KEY
     secretName: test-apps.canvas.uw.edu-secrets
     secretKey: sqs-instructordrop-key
+  BLTIAESKey:
+    name: BLTI_AES_KEY
+    secretName: test-apps.canvas.uw.edu-secrets
+    secretKey: blti-aes-key
+  BLTIAESIV:
+    name: BLTI_AES_IV
+    secretName: test-apps.canvas.uw.edu-secrets
+    secretKey: blti-aes-iv
+  LTIConsumers:
+    name: LTI_CONSUMERS
+    secretName: test-apps.canvas.uw.edu-shared-secrets
+    secretKey: lti-consumers
   storageBucketName:
     name: STORAGE_BUCKET_NAME
-    secretName: test-apps.canvas.uw.edu-secrets
+    secretName: test-apps.canvas.uw.edu-shared-secrets
     secretKey: storage-bucket-name
   storageProjectId:
     name: STORAGE_PROJECT_ID
-    secretName: test-apps.canvas.uw.edu-secrets
+    secretName: test-apps.canvas.uw.edu-shared-secrets
     secretKey: storage-project-id
   samlSPCert:
     name: SP_CERT
