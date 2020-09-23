@@ -2,6 +2,8 @@ FROM acait/django-container:1.1.3 as app-container
 
 USER root
 RUN apt-get update && apt-get install mysql-client libmysqlclient-dev -y
+RUN chgrp acait /etc/apache2/apache2.conf
+RUN chmod g+w /etc/apache2/apache2.conf
 USER acait
 
 ADD --chown=acait:acait sis_provisioner/VERSION /app/sis_provisioner/
