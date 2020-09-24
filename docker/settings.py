@@ -14,6 +14,7 @@ INSTALLED_APPS += [
 ]
 
 MIDDLEWARE += [
+    'userservice.user.UserServiceMiddleware',
     'django_user_agents.middleware.UserAgentMiddleware',
 ]
 
