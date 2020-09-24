@@ -1,4 +1,4 @@
-version: '2'
+version: '3.4'
 
 services:
   app:
@@ -7,9 +7,10 @@ services:
       - PORT=8000
       - AUTH=SAML_MOCK BLTI_DEV
     restart: always
-    container_name: canvas_sis_provisioner
+    container_name: app-sis-provisioner
     build:
       context: .
+      target: app-container
     volumes:
       - ./sis_provisioner:/app/sis_provisioner
     ports:

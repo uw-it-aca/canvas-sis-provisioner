@@ -41,7 +41,7 @@ def get_cache_time(service, url):
         if re.match(r'^/api/v\d/accounts/sis_account_id:', url):
             return ONE_HOUR * 10
         if re.match(r'^/api/v\d/accounts/\d+/roles', url):
-            return ONE_WEEK
+            return ONE_MONTH
 
     if 'libcurrics' == service:
         return ONE_HOUR * 4
