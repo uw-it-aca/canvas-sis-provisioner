@@ -89,6 +89,9 @@ environmentVariables:
   - name: CLUSTER_CNAME
     value: test-apps.canvas.uw.edu
 
+  - name: SIS_IMPORT_CSV_ROOT
+    value: "/csv"
+
 externalSecrets:
   enabled: true
   secrets:
@@ -107,6 +110,10 @@ externalSecrets:
           property: storage-bucket-name
         - name: storage-project-id
           property: storage-project-id
+        - name: support-group-id
+          property: support-group-id
+        - name: admin-group-id
+          property: admin-group-id
     - name: test-apps.canvas.uw.edu-secrets
       externalKey: axdd/kv/data/canvas/test/secrets
       data:
@@ -189,6 +196,14 @@ environmentVariablesSecrets:
     name: CONTINUUM_ACCOUNT_ID
     secretName: test-apps.canvas.uw.edu-shared-secrets
     secretKey: continuum-account-id
+  supportGroup:
+    name: SUPPORT_GROUP
+    secretName: test-apps.canvas.uw.edu-shared-secrets
+    secretKey: support-group-id
+  adminGroup:
+    name: ADMIN_GROUP
+    secretName: test-apps.canvas.uw.edu-shared-secrets
+    secretKey: admin-group-id
   enrollmentQueueArn:
     name: SQS_ENROLLMENT_QUEUE_ARN
     secretName: test-apps.canvas.uw.edu-secrets
