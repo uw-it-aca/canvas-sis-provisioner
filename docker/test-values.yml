@@ -53,10 +53,10 @@ environmentVariables:
     value: test
 
   - name: PWS_ENV
-    value: PROD
+    value: EVAL
 
   - name: SWS_ENV
-    value: PROD
+    value: EVAL
   - name: SWS_TIMEOUT
     value: "10"
 
