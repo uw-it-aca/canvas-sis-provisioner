@@ -1275,10 +1275,10 @@ class AdminManager(models.Manager):
                 if self.has_role(admin.user.login_id, parent_role):
                     return True
 
-        # 08/06/2019: Add an ASTRA exception for a Canvas service user that
-        # supports the Conditional Release feature
-        COND_RELEASE_LOGIN = 'conditional-release-service@instructure.auth'
-        if admin.user.login_id == COND_RELEASE_LOGIN:
+        # Check for allowed admins not in ASTRA, or admins with a
+        # non-standard ancillary role
+        if (admin.user.login_id in getattr(
+                settings, 'ASTRA_ADMIN_EXCEPTIONS', [])):
             return True
 
         return False
