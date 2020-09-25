@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.files.storage import default_storage
 from sis_provisioner.csv.format import (
     UserHeader, AccountHeader, AdminHeader, TermHeader, CourseHeader,
     SectionHeader, EnrollmentHeader, XlistHeader, UserCSV, AccountCSV,
@@ -127,8 +128,7 @@ class Collector(object):
         """
         filepath = None
         if self.has_data():
-            root = getattr(settings, 'SIS_IMPORT_CSV_ROOT', '')
-            filepath = self.create_filepath(root)
+            filepath = datetime.now().strftime('%Y/%m/%d/%H%M%S-%f')
             for csv_type in self.headers:
                 try:
                     data = list(getattr(self, csv_type).values())
@@ -138,8 +138,7 @@ class Collector(object):
 
                 if len(data):
                     filename = os.path.join(filepath, csv_type + '.csv')
-                    f = open(filename, 'w')
-                    os.chmod(filename, self.filemode)
+                    f = default_storage.open(filename, mode='w')
 
                     try:
                         headers = self.headers[csv_type]
@@ -157,7 +156,7 @@ class Collector(object):
         else:
             return filepath
 
-    def create_filepath(self, root):
+    def X_create_filepath(self, root):
         """
         Create a fresh directory for the csv files
         """

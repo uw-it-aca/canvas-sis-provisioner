@@ -1,4 +1,5 @@
 from .base_settings import *
+from google.oauth2 import service_account
 import os
 
 INSTALLED_APPS += [
@@ -56,11 +57,20 @@ if os.getenv('ENV', 'localdev') == 'localdev':
     RESTCLIENTS_ADMIN_GROUP = 'u_test_group'
     RESTCLIENTS_DAO_CACHE_CLASS = None
     RESTCLIENTS_CANVAS_ACCOUNT_ID = '12345'
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+    MEDIA_ROOT = os.getenv('SIS_IMPORT_CSV_ROOT', '/app/csv')
 else:
     SIS_IMPORT_CSV_DEBUG = False
     CANVAS_MANAGER_ADMIN_GROUP = os.getenv('ADMIN_GROUP', '')
     RESTCLIENTS_ADMIN_GROUP = os.getenv('SUPPORT_GROUP', '')
     RESTCLIENTS_DAO_CACHE_CLASS = 'sis_provisioner.cache.CanvasMemcachedCache'
+    DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
+    GS_PROJECT_ID = os.getenv('STORAGE_PROJECT_ID', '')
+    GS_BUCKET_NAME = os.getenv('STORAGE_BUCKET_NAME', '')
+    GS_LOCATION = os.path.join(os.getenv('SIS_IMPORT_CSV_ROOT', ''))
+    GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
+        '/gcs/credentials.json')
+
 
 RESTCLIENTS_DISABLE_THREADING = True
 RESTCLIENTS_ADMIN_AUTH_MODULE = 'sis_provisioner.views.admin.can_view_source_data'
@@ -185,7 +195,6 @@ CONTINUUM_ACCOUNT_ID = os.getenv('CONTINUUM_ACCOUNT_ID', '')
 PERMISSIONS_CHECK_ACCOUNTS = [RESTCLIENTS_CANVAS_ACCOUNT_ID, CONTINUUM_ACCOUNT_ID]
 
 SIS_IMPORT_ROOT_ACCOUNT_ID = 'uwcourse'
-SIS_IMPORT_CSV_ROOT = os.getenv('SIS_IMPORT_CSV_ROOT', '')
 SIS_IMPORT_GROUPS = ['uw_student', 'uw_faculty', 'uw_staff']
 SIS_IMPORT_LIMIT = {
     'course': {
