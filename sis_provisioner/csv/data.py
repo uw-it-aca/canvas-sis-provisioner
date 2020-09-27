@@ -6,8 +6,6 @@ from sis_provisioner.csv.format import (
     AdminCSV, TermCSV, CourseCSV, SectionCSV, EnrollmentCSV, XlistCSV)
 from datetime import datetime
 import os
-import errno
-import stat
 
 
 class Collector(object):
@@ -35,11 +33,6 @@ class Collector(object):
             'enrollments': EnrollmentHeader(),
             'xlists': XlistHeader(),
         }
-        self.filemode = (stat.S_IRUSR | stat.S_IWUSR |
-                         stat.S_IRGRP | stat.S_IWGRP |
-                         stat.S_IROTH)
-        self.dirmode = self.filemode | (stat.S_IXUSR | stat.S_IXGRP |
-                                        stat.S_IXOTH)
 
     def add(self, formatter):
         """
@@ -155,26 +148,3 @@ class Collector(object):
             return None
         else:
             return filepath
-
-    def X_create_filepath(self, root):
-        """
-        Create a fresh directory for the csv files
-        """
-        base = os.path.join(root, datetime.now().strftime('%Y%m%d-%H%M%S'))
-
-        max_collisions = getattr(
-            settings, 'SIS_IMPORT_CSV_FILEPATH_COLLISIONS_MAX', 100)
-
-        for collision in range(max_collisions):
-            try:
-                filepath = base if (
-                    collision < 1) else '{}-{:3d}'.format(base, collision)
-                os.makedirs(filepath)
-                os.chmod(filepath, self.dirmode)  # ugo+x
-                return filepath
-            except OSError as err:
-                if err.errno != errno.EEXIST:
-                    raise
-
-        raise EnvironmentError(
-            'Too many attempts ({:d})'.format(max_collisions))

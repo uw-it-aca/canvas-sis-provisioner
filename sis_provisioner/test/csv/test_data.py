@@ -158,21 +158,3 @@ class CSVDataTest(TestCase):
             path = csv.write_files()
             mock_open.assert_called_with(path + '/enrollments.csv', mode='w')
             self.assertEquals(csv.has_data(), False)
-
-    @mock.patch('sis_provisioner.csv.data.stat')
-    @mock.patch('sis_provisioner.csv.data.os')
-    def skip_create_filepath(self, mock_os, mock_stat):
-        with self.settings(SIS_IMPORT_CSV_FILEPATH_COLLISIONS_MAX=1):
-            csv = Collector()
-            root = ''
-
-            path = csv.create_filepath(root)
-
-            mock_os.makedirs.assert_called_with(path)
-            mock_os.chmod.assert_called_with(path, csv.dirmode)
-
-        with self.settings(SIS_IMPORT_CSV_FILEPATH_COLLISIONS_MAX=0):
-            csv = Collector()
-            root = ''
-
-            self.assertRaises(EnvironmentError, csv.create_filepath, root)
