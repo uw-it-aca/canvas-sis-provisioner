@@ -4,7 +4,6 @@ from django.urls import include, re_path
 
 urlpatterns += [
     re_path(r'^', include('sis_provisioner.urls')),
-    re_path(r'^saml/', include('uw_saml.urls')),
     re_path(r'^blti/', include('blti.urls')),
     re_path(r'^groups/', include('groups.urls')),
     re_path(r'^users/', include('canvas_users.urls')),
