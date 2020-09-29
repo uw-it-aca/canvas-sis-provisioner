@@ -218,6 +218,7 @@ SIS_IMPORT_LIMIT = {
 NONPERSONAL_NETID_EXCEPTION_GROUP = 'u_acadev_canvas_nonpersonal_netids'
 ASTRA_ADMIN_EXCEPTIONS = [
     'conditional-release-service@instructure.auth',
+    'readygoadmin@cidilabs.com',
     'a_gradeit_canvas_int',
 ]
 
