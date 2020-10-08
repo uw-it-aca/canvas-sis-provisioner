@@ -159,10 +159,10 @@ ASTRA_ROLE_MAPPING = {
     "AllyApplication": "Ally application",
     "NoodleManager": "Noodle Manager",
     "NoodleTermPrep": "Noodle Term Prep",
-    "NoodleInstructionalDesigner": "Noodle Instructional Designer",
-    "NoodleStudentSuccessCoach": "Noodle Student Success Coach",
+    "NoodleInstDesigner": "Noodle Instructional Designer",
+    "NoodleStdScsCoach": "Noodle Student Success Coach",
     "NoodleSupportDesk": "Noodle Support Desk",
-    "NoodleAPIServiceAccount": "Noodle API Service Account",
+    "NoodleAPISvcAccount": "Noodle API Service Account",
     "NoodleLCMSAPI": "Noodle LCMS API"
 }
 
