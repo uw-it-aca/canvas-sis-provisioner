@@ -156,7 +156,14 @@ ASTRA_ROLE_MAPPING = {
     "UWEOReadOnly": "UWEO Read Only",
     "APIUserReadOnly": "API User (Read Only)",
     "APIUserReadWrite": "API User (Read-Write)",
-    "AllyApplication": "Ally application"
+    "AllyApplication": "Ally application",
+    "NoodleManager": "Noodle Manager",
+    "NoodleTermPrep": "Noodle Term Prep",
+    "NoodleInstDesigner": "Noodle Instructional Designer",
+    "NoodleStdScsCoach": "Noodle Student Success Coach",
+    "NoodleSupportDesk": "Noodle Support Desk",
+    "NoodleAPISvcAccount": "Noodle API Service Account",
+    "NoodleLCMSAPI": "Noodle LCMS API"
 }
 
 CANVAS_MASQUERADE_ROLE = "Become users only (dept. admin)"
@@ -170,6 +177,14 @@ ANCILLARY_CANVAS_ROLES = {
         "canvas_role": CANVAS_MASQUERADE_ROLE
     },
     "UWEOManager": {
+        "account": "root",
+        "canvas_role": CANVAS_MASQUERADE_ROLE
+    },
+    "NoodleManager": {
+        "account": "root",
+        "canvas_role": CANVAS_MASQUERADE_ROLE
+    },
+    "NoodleSupportDesk": {
         "account": "root",
         "canvas_role": CANVAS_MASQUERADE_ROLE
     },
