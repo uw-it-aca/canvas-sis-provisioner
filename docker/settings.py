@@ -63,7 +63,7 @@ else:
     SIS_IMPORT_CSV_DEBUG = False
     CANVAS_MANAGER_ADMIN_GROUP = os.getenv('ADMIN_GROUP', '')
     RESTCLIENTS_ADMIN_GROUP = os.getenv('SUPPORT_GROUP', '')
-    RESTCLIENTS_DAO_CACHE_CLASS = 'sis_provisioner.cache.CanvasMemcachedCache'
+    RESTCLIENTS_DAO_CACHE_CLASS = 'sis_provisioner.cache.RestClientsCache'
     DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
     GS_PROJECT_ID = os.getenv('STORAGE_PROJECT_ID', '')
     GS_BUCKET_NAME = os.getenv('STORAGE_BUCKET_NAME', '')
