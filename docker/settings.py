@@ -68,9 +68,8 @@ else:
     GS_PROJECT_ID = os.getenv('STORAGE_PROJECT_ID', '')
     GS_BUCKET_NAME = os.getenv('STORAGE_BUCKET_NAME', '')
     GS_LOCATION = os.path.join(os.getenv('SIS_IMPORT_CSV_ROOT', ''))
-    #GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
-    #    '/gcs/credentials.json')
-
+    GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
+        '/gcs/credentials.json')
 
 RESTCLIENTS_DISABLE_THREADING = True
 RESTCLIENTS_ADMIN_AUTH_MODULE = 'sis_provisioner.views.admin.can_view_source_data'
