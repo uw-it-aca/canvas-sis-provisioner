@@ -59,6 +59,13 @@ cronjob:
       schedule: "5 16 * * 1-5"
       command: ["/scripts/management_command.sh"]
       args: ["load_accounts"]
+daemon:
+  enabled: true
+  daemons:
+    - name: monitor-imports
+      replicaCount: 1
+      command: ["/scripts/management_daemon.sh"]
+      args: ["monitor_imports"]
 certs:
   mounted: true
   certPath: /certs/test-apps.canvas.uw.edu-uwca.cert
