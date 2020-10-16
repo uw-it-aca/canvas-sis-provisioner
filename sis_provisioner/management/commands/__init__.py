@@ -17,6 +17,23 @@ class SISProvisionerCommand(BaseCommand):
         self.log = getLogger(__name__)
         self.health_check()
 
+    def add_arguments(self, parser):
+        parser.add_argument('--daemon', dest='daemon', action='store_true',
+                            default=False, help='Daemonize command')
+        parser.add_argument('--delay', dest='delay', type='int', default=15,
+                            help='Daemon interval in seconds')
+
+    def handle(self, *args, **options):
+        while True:
+            self.process(*args, **options)
+            if options.get('daemon'):
+                sleep(options.get('delay'))
+            else:
+                break
+
+    def process(self, *args, **options):
+        raise NotImplementedError()
+
     def is_active_job(self):
         name = self.name_from_argv()
         try:

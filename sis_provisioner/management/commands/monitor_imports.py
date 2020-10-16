@@ -6,7 +6,7 @@ from sis_provisioner.models import Import
 class Command(SISProvisionerCommand):
     help = "Monitors the status of sis imports to Canvas."
 
-    def handle(self, *args, **options):
+    def process(self, *args, **options):
         try:
             with Pidfile():
                 for imp in Import.objects.find_by_requires_update():
