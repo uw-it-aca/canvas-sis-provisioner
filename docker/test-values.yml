@@ -59,6 +59,10 @@ cronjob:
       schedule: "5 16 * * 1-5"
       command: ["/scripts/management_command.sh"]
       args: ["load_accounts"]
+    - name: import-admins
+      schedule: "55 12-23 * * 1-5"
+      command: ["/scripts/management_command.sh"]
+      args: ["import_admins", "--commit"]
 daemon:
   enabled: true
   daemons:
