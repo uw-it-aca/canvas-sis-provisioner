@@ -70,6 +70,14 @@ daemon:
       replicaCount: 1
       command: ["/scripts/management_daemon.sh"]
       args: ["monitor_imports"]
+    - name: import-courses-immediate
+      replicaCount: 1
+      command: ["/scripts/management_daemon.sh"]
+      args: ["import_courses", "3", "--delay", "30"]
+    - name: import-groups-immediate
+      replicaCount: 1
+      command: ["/scripts/management_daemon.sh"]
+      args: ["import_groups", "3", "--delay", "30"]
 certs:
   mounted: true
   certPath: /certs/test-apps.canvas.uw.edu-uwca.cert
