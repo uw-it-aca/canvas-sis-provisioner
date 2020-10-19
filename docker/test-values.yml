@@ -87,6 +87,9 @@ environmentVariables:
   - name: ENV
     value: test
 
+  - name: SESSION_BACKEND
+    value: MEMCACHED
+
   - name: PWS_ENV
     value: EVAL
 
