@@ -69,7 +69,7 @@ daemon:
     - name: monitor-imports
       replicaCount: 1
       command: ["/scripts/management_daemon.sh"]
-      args: ["monitor_imports"]
+      args: ["--delay", "15", "monitor_imports"]
     - name: import-courses-immediate
       replicaCount: 1
       command: ["/scripts/management_daemon.sh"]
