@@ -5,7 +5,6 @@ from sis_provisioner.dao.user import (
     get_person_by_netid, get_person_by_gmail_id, user_sis_id, user_email,
     user_fullname)
 from restclients_core.exceptions import DataFailureException
-import json
 
 
 class LoginValidationView(APIView):
@@ -13,8 +12,7 @@ class LoginValidationView(APIView):
 
     def post(self, request, *args, **kwargs):
         try:
-            request_data = json.loads(request.data)
-            login_data = request_data['logins']
+            login_data = request.data['logins']
         except KeyError as ex:
             return RESTDispatch.error_response(400, 'Missing list of logins')
         except Exception as ex:
