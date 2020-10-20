@@ -240,7 +240,8 @@ LMS_OWNERSHIP_SUBACCOUNT = {
     'PCE_AP': 'uwcourse:uweo:ap-managed',
     'PCE_IELP': 'uwcourse:uweo:ielp-managed',
     'PCE_OL': 'uwcourse:uweo:ol-managed',
-    'PCE_NONE': 'uwcourse:uweo:noncredit-campus-managed'
+    'PCE_NONE': 'uwcourse:uweo:noncredit-campus-managed',
+    'ISCHOOL': 'canvas_104251',
 }
 
 ADMIN_EVENT_GRAPH_FREQ = 10
