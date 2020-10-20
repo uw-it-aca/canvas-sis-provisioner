@@ -8,6 +8,8 @@ from datetime import datetime
 from logging import getLogger
 import os
 
+logger = getLogger(__name__)
+
 
 class Collector(object):
     def __init__(self):
@@ -145,7 +147,6 @@ class Collector(object):
             self._init_data()
 
         if getattr(settings, 'SIS_IMPORT_CSV_DEBUG', False):
-            logger = getLogger(__name__)
             logger.debug('CSV PATH: {}'.format(filepath))
             return None
         else:
