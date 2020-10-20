@@ -66,10 +66,10 @@ cronjob:
 daemon:
   enabled: true
   daemons:
-    - name: monitor-imports
+    - name: monitor-sisimports
       replicaCount: 1
       command: ["/scripts/management_daemon.sh"]
-      args: ["--delay", "15", "monitor_imports"]
+      args: ["monitor_imports"]
     - name: import-courses-immediate
       replicaCount: 1
       command: ["/scripts/management_daemon.sh"]
@@ -86,9 +86,6 @@ certs:
 environmentVariables:
   - name: ENV
     value: test
-
-  #- name: SESSION_BACKEND
-  #value: MEMCACHED
 
   - name: PWS_ENV
     value: EVAL
