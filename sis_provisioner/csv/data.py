@@ -5,7 +5,10 @@ from sis_provisioner.csv.format import (
     SectionHeader, EnrollmentHeader, XlistHeader, UserCSV, AccountCSV,
     AdminCSV, TermCSV, CourseCSV, SectionCSV, EnrollmentCSV, XlistCSV)
 from datetime import datetime
+from logging import getLogger
 import os
+
+logger = getLogger(__name__)
 
 
 class Collector(object):
@@ -144,7 +147,7 @@ class Collector(object):
             self._init_data()
 
         if getattr(settings, 'SIS_IMPORT_CSV_DEBUG', False):
-            print('CSV PATH: {}'.format(filepath))
+            logger.debug('CSV PATH: {}'.format(filepath))
             return None
         else:
             return filepath
