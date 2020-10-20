@@ -13,7 +13,10 @@ class LoginValidationView(APIView):
 
     def post(self, request, *args, **kwargs):
         try:
-            login_data = json.loads(request.data)
+            request_data = json.loads(request.data)
+            login_data = request_data['logins']
+        except KeyError as ex:
+            return RESTDispatch.error_response(400, 'Missing list of logins')
         except Exception as ex:
             return RESTDispatch.error_response(400, ex)
 
