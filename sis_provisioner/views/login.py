@@ -36,18 +36,15 @@ class LoginValidationView(APIView):
                         user['sis_id'] = user_sis_id(person)
                         user['email'] = user_email(person)
                         user['full_name'] = user_fullname(person)
-                        users.append(user)
 
             except DataFailureException as ex:
-                if err.status == 404:
-                    user['login'] = login
-                    user['error'] = 'Login not found'
-                    users.append(user)
-                else:
-                    return RESTDispatch.error_response(500, ex.msg)
+                user['login'] = login
+                user['error'] = ex.msg
+
             except Exception as ex:
                 user['login'] = login
                 user['error'] = ex
-                users.append(user)
+
+            users.append(user)
 
         return RESTDispatch.json_response(users)
