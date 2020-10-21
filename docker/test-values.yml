@@ -59,6 +59,26 @@ cronjob:
       schedule: "5 16 * * 1-5"
       command: ["/scripts/management_command.sh"]
       args: ["load_accounts"]
+    - name: load-groups
+      schedule: "5 14 * * 1-5"
+      command: ["/scripts/management_command.sh"]
+      args: ["load_groups"]
+    - name: queue-active-courses
+      schedule: "35 14 * * 1-5"
+      command: ["/scripts/management_command.sh"]
+      args: ["queue_active_courses"]
+    - name: cleanup-sis-errors
+      schedule: "5 15 * * 1-5"
+      command: ["/scripts/management_command.sh"]
+      args: ["cleanup_sis_errors"]
+    - name: import-accounts
+      schedule: "55 15 * * 1-5"
+      command: ["/scripts/management_command.sh"]
+      args: ["import_accounts"]
+    - name: import-enrollments
+      schedule: "*/10 12-23 * * 1-5"
+      command: ["/scripts/management_command.sh"]
+      args: ["import_enrollments"]
     - name: import-admins
       schedule: "55 12-23 * * 1-5"
       command: ["/scripts/management_command.sh"]
