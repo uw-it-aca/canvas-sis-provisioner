@@ -45,6 +45,7 @@ setup(
         'UW-RestClients-Django-Utils>=2.1.8,<3.0',
         'Django-SupportTools>=3.4,<4.0',
         'UW-Django-SAML2>=1.4,<2.0',
+        'prometheus-client>=0.7,<1.0',
     ],
     license='Apache License, Version 2.0',
     description='An application that manages SIS imports to Canvas',
