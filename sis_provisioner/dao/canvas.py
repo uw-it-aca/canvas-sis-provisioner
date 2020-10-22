@@ -282,7 +282,6 @@ def sis_import_by_path(csv_path, override_sis_stickiness=False):
             filepath = csv_path + '/' + filename
             with default_storage.open(filepath, mode='r') as csv:
                 archive.writestr(filename, csv.read(), zipfile.ZIP_DEFLATED)
-    archive.close()
 
     params = {}
     if override_sis_stickiness:
