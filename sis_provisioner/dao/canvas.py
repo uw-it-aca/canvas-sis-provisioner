@@ -276,12 +276,16 @@ def get_unused_course_report_data(term_sis_id):
 def sis_import_by_path(csv_path, override_sis_stickiness=False):
     dirs, files = default_storage.listdir(csv_path)
 
-    archive = zipfile.ZipFile(BytesIO(), 'w')
+    archive = BytesIO()
+    zip_file = zipfile.ZipFile(archive, 'w')
     for filename in CSV_FILES:
         if filename in files:
             filepath = csv_path + '/' + filename
             with default_storage.open(filepath, mode='r') as csv:
-                archive.writestr(filename, csv.read(), zipfile.ZIP_DEFLATED)
+                zip_file.writestr(filename, csv.read(), zipfile.ZIP_DEFLATED)
+
+    zip_file.close()
+    archive.seek(0)
 
     params = {}
     if override_sis_stickiness:
