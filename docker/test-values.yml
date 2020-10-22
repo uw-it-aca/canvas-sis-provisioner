@@ -174,8 +174,6 @@ externalSecrets:
           property: canvas-api-token
         - name: lti-consumers
           property: lti-consumers
-        - name: storage-bucket-name
-          property: storage-bucket-name
         - name: storage-project-id
           property: storage-project-id
         - name: support-group-id
@@ -196,6 +194,8 @@ externalSecrets:
           property: blti-aes-iv
         - name: blti-aes-key
           property: blti-aes-key
+        - name: storage-bucket-name
+          property: storage-bucket-name
         - name: sqs-enrollment-key
           property: sqs-enrollment-key
         - name: sqs-enrollment-key-id
@@ -355,7 +355,7 @@ environmentVariablesSecrets:
     secretKey: lti-consumers
   storageBucketName:
     name: STORAGE_BUCKET_NAME
-    secretName: test-apps.canvas.uw.edu-shared-secrets
+    secretName: test-apps.canvas.uw.edu-secrets
     secretKey: storage-bucket-name
   storageProjectId:
     name: STORAGE_PROJECT_ID
