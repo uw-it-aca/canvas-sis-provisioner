@@ -83,6 +83,22 @@ cronjob:
       schedule: "55 12-23 * * 1-5"
       command: ["/scripts/management_command.sh"]
       args: ["import_admins", "--commit"]
+    - name: import-users
+      schedule: "15,45 12-23 * * 1-5"
+      command: ["/scripts/management_command.sh"]
+      args: ["import_users", "2"]
+    - name: import-courses
+      schedule: "5,20,35,50 12-23 * * 1-5"
+      command: ["/scripts/management_command.sh"]
+      args: ["import_courses", "1"]
+    - name: import-courses-high
+      schedule: "*/10 12-23 * * 1-5"
+      command: ["/scripts/management_command.sh"]
+      args: ["import_courses", "2"]
+    - name: import-groups
+      schedule: "*/15 12-23 * * 1-5"
+      command: ["/scripts/management_command.sh"]
+      args: ["import_groups", "2"]
 daemon:
   enabled: true
   daemons:
