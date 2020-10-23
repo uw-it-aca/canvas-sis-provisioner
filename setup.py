@@ -41,7 +41,7 @@ setup(
         'UW-RestClients-PWS>=2.0.5,<3.0',
         'UW-RestClients-GWS>=2.3,<3.0',
         'UW-RestClients-KWS>=1.1,<2.0',
-        'UW-RestClients-Canvas>=1.1.11,<2.0',
+        'UW-RestClients-Canvas>=1.1.12,<2.0',
         'UW-RestClients-Django-Utils>=2.1.8,<3.0',
         'Django-SupportTools>=3.4,<4.0',
         'UW-Django-SAML2>=1.4,<2.0',
