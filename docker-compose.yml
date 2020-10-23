@@ -3,9 +3,9 @@ version: '3.4'
 services:
   app:
     environment:
-      - ENV=localdev
-      - PORT=8000
-      - AUTH=SAML_MOCK BLTI_DEV
+      ENV: localdev
+      PORT: 8000
+      AUTH: SAML_MOCK BLTI_DEV
     restart: always
     container_name: app-sis-provisioner
     build:

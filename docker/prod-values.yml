@@ -1,13 +1,27 @@
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 4
+targetAverageUtilization: 100
+resources:
+  limits:
+    cpu: 1.0
+    memory: 768Mi
+  requests:
+    cpu: 100m
+    memory: 700Mi
+affinity:
+   podsSpanNodes: true
 ingress:
   enabled: true
   tls:
     canvas:
-      secretName: test-apps.canvas.uw.edu-ingress-cert
+      secretName: prod-apps.canvas.uw.edu-ingress-cert
       hosts:
-        - test-apps.canvas.uw.edu
+        - prod-apps.canvas.uw.edu
   hosts:
     canvas:
-      host: test-apps.canvas.uw.edu
+      host: prod-apps.canvas.uw.edu
       paths:
         - "/"
   annotations:
@@ -16,8 +30,6 @@ lifecycle:
   enabled: true
   preStop:
     enabled: true
-affinity:
-   podsSpanNodes: true
 readiness:
   enabled: true
 externalService:
@@ -28,22 +40,22 @@ externalService:
   servicePort: 3306
 database:
   engine: mysql
-  name: sis_provisioner_test
+  name: sis_provisioner_prod
   hostname: canvas-db-service
-  secretName: test-apps.canvas.uw.edu-sql-secrets
+  secretName: apps.canvas.uw.edu-sql-secrets
 repo: canvas
-instance: test
+instance: prod
 image:
   repository: registry.hub.docker.com/acait/canvas
   tag: IMAGE_TAG
 memcached:
   enabled: true
-  replicaCount: 1
+  replicaCount: 2
   updateStrategy:
     type: RollingUpdate
 gcsCredentials:
   mounted: true
-  secretName: test-apps.canvas.uw.edu-gcs-credentials
+  secretName: apps.canvas.uw.edu-gcs-credentials
 cronjob:
   enabled: true
   jobs:
@@ -156,18 +168,18 @@ daemon:
       args: ["--delay", "30", "process_group_events"]
 certs:
   mounted: true
-  certPath: /certs/test-apps.canvas.uw.edu-uwca.cert
-  keyPath: /certs/test-apps.canvas.uw.edu-uwca.key
-  secretName: test-apps.canvas.uw.edu-uwca-certs
+  certPath: /certs/apps.canvas.uw.edu-uwca.cert
+  keyPath: /certs/apps.canvas.uw.edu-uwca.key
+  secretName: apps.canvas.uw.edu-uwca-certs
 environmentVariables:
   - name: ENV
-    value: test
+    value: prod
 
   - name: PWS_ENV
-    value: EVAL
+    value: PROD
 
   - name: SWS_ENV
-    value: EVAL
+    value: PROD
   - name: SWS_TIMEOUT
     value: "10"
 
@@ -177,33 +189,33 @@ environmentVariables:
     value: "5"
 
   - name: KWS_ENV
-    value: EVAL
+    value: PROD
   - name: KWS_TIMEOUT
     value: "5"
   - name: KWS_POOL_SIZE
     value: "5"
 
   - name: CANVAS_ENV
-    value: EVAL
+    value: PROD
   - name: CANVAS_TIMEOUT
     value: "60"
 
   - name: ASTRA_ENV
-    value: EVAL
+    value: PROD
   - name: ASTRA_APPLICATION
     value: Canvas
 
   - name: AUTH
     value: "SAML BLTI"
   - name: SAML_ENTITY_ID
-    value: https://test-apps.canvas.uw.edu/saml2
+    value: https://apps.canvas.uw.edu/shibboleth
   - name: CLUSTER_CNAME
-    value: test-apps.canvas.uw.edu
+    value: apps.canvas.uw.edu
 
 externalSecrets:
   enabled: true
   secrets:
-    - name: test-apps.canvas.uw.edu-shared-secrets
+    - name: apps.canvas.uw.edu-shared-secrets
       externalKey: axdd/kv/data/canvas/shared/secrets
       data:
         - name: canvas-account-id
@@ -220,13 +232,13 @@ externalSecrets:
           property: support-group-id
         - name: admin-group-id
           property: admin-group-id
-    - name: test-apps.canvas.uw.edu-gcs-credentials
+    - name: apps.canvas.uw.edu-gcs-credentials
       externalKey: axdd/kv/data/canvas/shared/gcs-credentials
       data:
         - name: credentials.json
           property: credentials.json
-    - name: test-apps.canvas.uw.edu-secrets
-      externalKey: axdd/kv/data/canvas/test/secrets
+    - name: apps.canvas.uw.edu-secrets
+      externalKey: axdd/kv/data/canvas/prod/secrets
       data:
         - name: django-secret
           property: django-secret
@@ -268,26 +280,26 @@ externalSecrets:
           property: sqs-person-key-id
         - name: sqs-person-queue-arn
           property: sqs-person-queue-arn
-    - name: test-apps.canvas.uw.edu-sql-secrets
+    - name: apps.canvas.uw.edu-sql-secrets
       externalKey: axdd/kv/data/canvas/shared/sql-secrets
       data:
         - name: username
           property: username
         - name: password
           property: password
-    - name: test-apps.canvas.uw.edu-uwca-certs
-      externalKey: axdd/kv/data/canvas/test/uwca-certs
+    - name: apps.canvas.uw.edu-uwca-certs
+      externalKey: axdd/kv/data/canvas/prod/uwca-certs
       data:
-        - name: test-apps.canvas.uw.edu-uwca.cert
-          property: test-apps.canvas.uw.edu-uwca.cert
-        - name: test-apps.canvas.uw.edu-uwca.key
-          property: test-apps.canvas.uw.edu-uwca.key
-    - name: test-apps.canvas.uw.edu-ic-certs
-      externalKey: axdd/kv/data/canvas/test/ic-certs
+        - name: apps.canvas.uw.edu-uwca.cert
+          property: apps.canvas.uw.edu-uwca.cert
+        - name: apps.canvas.uw.edu-uwca.key
+          property: apps.canvas.uw.edu-uwca.key
+    - name: apps.canvas.uw.edu-ic-certs
+      externalKey: axdd/kv/data/canvas/prod/ic-certs
       data:
-        - name: test-apps.canvas.uw.edu-ic.cert
-          property: test-apps.canvas.uw.edu-ic.cert
-    - name: test-apps.canvas.uw.edu-uw-idp-cert
+        - name: prod-apps.canvas.uw.edu-ic.cert
+          property: prod-apps.canvas.uw.edu-ic.cert
+    - name: apps.canvas.uw.edu-uw-idp-cert
       externalKey: axdd/kv/data/idp-cert
       data:
         - name: uw-idp-cert
@@ -295,117 +307,117 @@ externalSecrets:
 environmentVariablesSecrets:
   djangoSecret:
     name: DJANGO_SECRET
-    secretName: test-apps.canvas.uw.edu-secrets
+    secretName: apps.canvas.uw.edu-secrets
     secretKey: django-secret
   canvasAPIToken:
     name: CANVAS_OAUTH_BEARER
-    secretName: test-apps.canvas.uw.edu-shared-secrets
+    secretName: apps.canvas.uw.edu-shared-secrets
     secretKey: canvas-api-token
   canvasAccountID:
     name: CANVAS_ACCOUNT_ID
-    secretName: test-apps.canvas.uw.edu-shared-secrets
+    secretName: apps.canvas.uw.edu-shared-secrets
     secretKey: canvas-account-id
   continuumAccountID:
     name: CONTINUUM_ACCOUNT_ID
-    secretName: test-apps.canvas.uw.edu-shared-secrets
+    secretName: apps.canvas.uw.edu-shared-secrets
     secretKey: continuum-account-id
   supportGroup:
     name: SUPPORT_GROUP
-    secretName: test-apps.canvas.uw.edu-shared-secrets
+    secretName: apps.canvas.uw.edu-shared-secrets
     secretKey: support-group-id
   adminGroup:
     name: ADMIN_GROUP
-    secretName: test-apps.canvas.uw.edu-shared-secrets
+    secretName: apps.canvas.uw.edu-shared-secrets
     secretKey: admin-group-id
   enrollmentQueueArn:
     name: SQS_ENROLLMENT_QUEUE_ARN
-    secretName: test-apps.canvas.uw.edu-secrets
+    secretName: apps.canvas.uw.edu-secrets
     secretKey: sqs-enrollment-queue-arn
   enrollmentKeyId:
     name: SQS_ENROLLMENT_KEY_ID
-    secretName: test-apps.canvas.uw.edu-secrets
+    secretName: apps.canvas.uw.edu-secrets
     secretKey: sqs-enrollment-key-id
   enrollmentKey:
     name: SQS_ENROLLMENT_KEY
-    secretName: test-apps.canvas.uw.edu-secrets
+    secretName: apps.canvas.uw.edu-secrets
     secretKey: sqs-enrollment-key
   groupQueueArn:
     name: SQS_GROUP_QUEUE_ARN
-    secretName: test-apps.canvas.uw.edu-secrets
+    secretName: apps.canvas.uw.edu-secrets
     secretKey: sqs-group-queue-arn
   groupKeyId:
     name: SQS_GROUP_KEY_ID
-    secretName: test-apps.canvas.uw.edu-secrets
+    secretName: apps.canvas.uw.edu-secrets
     secretKey: sqs-group-key-id
   groupKey:
     name: SQS_GROUP_KEY
-    secretName: test-apps.canvas.uw.edu-secrets
+    secretName: apps.canvas.uw.edu-secrets
     secretKey: sqs-group-key
   groupDecryptKey:
     name: SQS_GROUP_DECRYPT_KEY
-    secretName: test-apps.canvas.uw.edu-secrets
+    secretName: apps.canvas.uw.edu-secrets
     secretKey: sqs-group-decrypt-key
   personQueueArn:
     name: SQS_PERSON_QUEUE_ARN
-    secretName: test-apps.canvas.uw.edu-secrets
+    secretName: apps.canvas.uw.edu-secrets
     secretKey: sqs-person-queue-arn
   personKeyId:
     name: SQS_PERSON_KEY_ID
-    secretName: test-apps.canvas.uw.edu-secrets
+    secretName: apps.canvas.uw.edu-secrets
     secretKey: sqs-person-key-id
   personKey:
     name: SQS_PERSON_KEY
-    secretName: test-apps.canvas.uw.edu-secrets
+    secretName: apps.canvas.uw.edu-secrets
     secretKey: sqs-person-key
   instructorAddQueueArn:
     name: SQS_INSTRUCTOR_ADD_QUEUE_ARN
-    secretName: test-apps.canvas.uw.edu-secrets
+    secretName: apps.canvas.uw.edu-secrets
     secretKey: sqs-instructoradd-queue-arn
   instructorAddKeyId:
     name: SQS_INSTRUCTOR_ADD_KEY_ID
-    secretName: test-apps.canvas.uw.edu-secrets
+    secretName: apps.canvas.uw.edu-secrets
     secretKey: sqs-instructoradd-key-id
   instructorAddKey:
     name: SQS_INSTRUCTOR_ADD_KEY
-    secretName: test-apps.canvas.uw.edu-secrets
+    secretName: apps.canvas.uw.edu-secrets
     secretKey: sqs-instructoradd-key
   instructorDropQueueArn:
     name: SQS_INSTRUCTOR_DROP_QUEUE_ARN
-    secretName: test-apps.canvas.uw.edu-secrets
+    secretName: apps.canvas.uw.edu-secrets
     secretKey: sqs-instructordrop-queue-arn
   instructorDropKeyId:
     name: SQS_INSTRUCTOR_DROP_KEY_ID
-    secretName: test-apps.canvas.uw.edu-secrets
+    secretName: apps.canvas.uw.edu-secrets
     secretKey: sqs-instructordrop-key-id
   instructorDropKey:
     name: SQS_INSTRUCTOR_DROP_KEY
-    secretName: test-apps.canvas.uw.edu-secrets
+    secretName: apps.canvas.uw.edu-secrets
     secretKey: sqs-instructordrop-key
   BLTIAESKey:
     name: BLTI_AES_KEY
-    secretName: test-apps.canvas.uw.edu-secrets
+    secretName: apps.canvas.uw.edu-secrets
     secretKey: blti-aes-key
   BLTIAESIV:
     name: BLTI_AES_IV
-    secretName: test-apps.canvas.uw.edu-secrets
+    secretName: apps.canvas.uw.edu-secrets
     secretKey: blti-aes-iv
   LTIConsumers:
     name: LTI_CONSUMERS
-    secretName: test-apps.canvas.uw.edu-shared-secrets
+    secretName: apps.canvas.uw.edu-shared-secrets
     secretKey: lti-consumers
   storageBucketName:
     name: STORAGE_BUCKET_NAME
-    secretName: test-apps.canvas.uw.edu-secrets
+    secretName: apps.canvas.uw.edu-secrets
     secretKey: storage-bucket-name
   storageProjectId:
     name: STORAGE_PROJECT_ID
-    secretName: test-apps.canvas.uw.edu-shared-secrets
+    secretName: apps.canvas.uw.edu-shared-secrets
     secretKey: storage-project-id
   samlSPCert:
     name: SP_CERT
-    secretName: test-apps.canvas.uw.edu-ic-certs
-    secretKey: test-apps.canvas.uw.edu-ic.cert
+    secretName: apps.canvas.uw.edu-ic-certs
+    secretKey: prod-apps.canvas.uw.edu-ic.cert
   samlIDPCert:
     name: IDP_CERT
-    secretName: test-apps.canvas.uw.edu-uw-idp-cert
+    secretName: apps.canvas.uw.edu-uw-idp-cert
     secretKey: uw-idp-cert
