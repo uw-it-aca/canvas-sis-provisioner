@@ -1,6 +1,6 @@
 from django.conf import settings
-from sis_provisioner.management.commands import (
-    SISProvisionerCommand, CommandError)
+from django.core.management.base import CommandError
+from sis_provisioner.management.commands import SISProvisionerCommand
 from sis_provisioner.models import RoleCache
 
 
