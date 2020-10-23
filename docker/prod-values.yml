@@ -1,0 +1,423 @@
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 4
+targetAverageUtilization: 100
+resources:
+  limits:
+    cpu: 1.0
+    memory: 768Mi
+  requests:
+    cpu: 100m
+    memory: 700Mi
+affinity:
+   podsSpanNodes: true
+ingress:
+  enabled: true
+  tls:
+    canvas:
+      secretName: prod-apps.canvas.uw.edu-ingress-cert
+      hosts:
+        - prod-apps.canvas.uw.edu
+  hosts:
+    canvas:
+      host: prod-apps.canvas.uw.edu
+      paths:
+        - "/"
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+lifecycle:
+  enabled: true
+  preStop:
+    enabled: true
+readiness:
+  enabled: true
+externalService:
+  enabled: true
+  name: canvas-db-service
+  type: ClusterIP
+  serviceAddress: 172.18.0.28
+  servicePort: 3306
+database:
+  engine: mysql
+  name: sis_provisioner_prod
+  hostname: canvas-db-service
+  secretName: apps.canvas.uw.edu-sql-secrets
+repo: canvas
+instance: prod
+image:
+  repository: registry.hub.docker.com/acait/canvas
+  tag: IMAGE_TAG
+memcached:
+  enabled: true
+  replicaCount: 2
+  updateStrategy:
+    type: RollingUpdate
+gcsCredentials:
+  mounted: true
+  secretName: apps.canvas.uw.edu-gcs-credentials
+cronjob:
+  enabled: true
+  jobs:
+    - name: load-users
+      schedule: "5 17 * * 1-5"
+      command: ["/scripts/management_command.sh"]
+      args: ["load_users"]
+    - name: load-courses
+      schedule: "5 18 * * 1-5"
+      command: ["/scripts/management_command.sh"]
+      args: ["load_courses"]
+    - name: load-accounts
+      schedule: "5 16 * * 1-5"
+      command: ["/scripts/management_command.sh"]
+      args: ["load_accounts"]
+    - name: load-groups
+      schedule: "5 14 * * 1-5"
+      command: ["/scripts/management_command.sh"]
+      args: ["load_groups"]
+    - name: queue-active-courses
+      schedule: "35 14 * * 1-5"
+      command: ["/scripts/management_command.sh"]
+      args: ["queue_active_courses"]
+    - name: cleanup-sis-errors
+      schedule: "5 15 * * 1-5"
+      command: ["/scripts/management_command.sh"]
+      args: ["cleanup_sis_errors"]
+    - name: import-accounts
+      schedule: "55 15 * * 1-5"
+      command: ["/scripts/management_command.sh"]
+      args: ["import_accounts"]
+    - name: import-enrollments
+      schedule: "*/10 12-23 * * 1-5"
+      command: ["/scripts/management_command.sh"]
+      args: ["import_enrollments"]
+    - name: import-admins
+      schedule: "55 12-23 * * 1-5"
+      command: ["/scripts/management_command.sh"]
+      args: ["import_admins", "--commit"]
+    - name: import-users
+      schedule: "15,45 12-23 * * 1-5"
+      command: ["/scripts/management_command.sh"]
+      args: ["import_users", "2"]
+    - name: import-courses
+      schedule: "5,20,35,50 12-23 * * 1-5"
+      command: ["/scripts/management_command.sh"]
+      args: ["import_courses", "1"]
+    - name: import-courses-high
+      schedule: "*/10 12-23 * * 1-5"
+      command: ["/scripts/management_command.sh"]
+      args: ["import_courses", "2"]
+    - name: import-groups
+      schedule: "*/15 12-23 * * 1-5"
+      command: ["/scripts/management_command.sh"]
+      args: ["import_groups", "2"]
+    - name: remove-unauthorized-admins
+      schedule: "25 1,18 * * 1-5"
+      command: ["/scripts/management_command.sh"]
+      args: ["remove_unauthorized_admins"]
+    - name: check-role-permissions
+      schedule: "20 22 * * 1-5"
+      command: ["/scripts/management_command.sh"]
+      args: ["check_role_permissions"]
+    - name: delete-unused-courses
+      schedule: "30 23 * * 1-5"
+      command: ["/scripts/management_command.sh"]
+      args: ["delete_unused_courses"]
+    - name: sync-external-tools
+      schedule: "40 3 * * 1-5"
+      command: ["/scripts/management_command.sh"]
+      args: ["sync_external_tools"]
+    - name: set-term-overrides
+      schedule: "10 5 * * 1"
+      command: ["/scripts/management_command.sh"]
+      args: ["update_term_overrides"]
+    - name: update-test-urls
+      schedule: "5,35 18-20 * * 0"
+      command: ["/scripts/management_command.sh"]
+      args: ["update_test_urls"]
+daemon:
+  enabled: true
+  daemons:
+    - name: monitor-imports
+      replicaCount: 1
+      command: ["/scripts/management_daemon.sh"]
+      args: ["monitor_imports"]
+    - name: import-courses-immediate
+      replicaCount: 1
+      command: ["/scripts/management_daemon.sh"]
+      args: ["--delay", "30", "import_courses", "3"]
+    - name: import-groups-immediate
+      replicaCount: 1
+      command: ["/scripts/management_daemon.sh"]
+      args: ["--delay", "30", "import_groups", "3"]
+    - name: process-enrollment-events
+      replicaCount: 1
+      command: ["/scripts/management_daemon.sh"]
+      args: ["load_enrollments"]
+    - name: process-instructor-events
+      replicaCount: 1
+      command: ["/scripts/management_daemon.sh"]
+      args: ["load_instructors"]
+    - name: process-person-events
+      replicaCount: 1
+      command: ["/scripts/management_daemon.sh"]
+      args: ["--delay", "30", "load_person"]
+    - name: process-group-events
+      replicaCount: 1
+      command: ["/scripts/management_daemon.sh"]
+      args: ["--delay", "30", "process_group_events"]
+certs:
+  mounted: true
+  certPath: /certs/apps.canvas.uw.edu-uwca.cert
+  keyPath: /certs/apps.canvas.uw.edu-uwca.key
+  secretName: apps.canvas.uw.edu-uwca-certs
+environmentVariables:
+  - name: ENV
+    value: prod
+
+  - name: PWS_ENV
+    value: PROD
+
+  - name: SWS_ENV
+    value: PROD
+  - name: SWS_TIMEOUT
+    value: "10"
+
+  - name: GWS_ENV
+    value: PROD
+  - name: GWS_TIMEOUT
+    value: "5"
+
+  - name: KWS_ENV
+    value: PROD
+  - name: KWS_TIMEOUT
+    value: "5"
+  - name: KWS_POOL_SIZE
+    value: "5"
+
+  - name: CANVAS_ENV
+    value: PROD
+  - name: CANVAS_TIMEOUT
+    value: "60"
+
+  - name: ASTRA_ENV
+    value: PROD
+  - name: ASTRA_APPLICATION
+    value: Canvas
+
+  - name: AUTH
+    value: "SAML BLTI"
+  - name: SAML_ENTITY_ID
+    value: https://apps.canvas.uw.edu/shibboleth
+  - name: CLUSTER_CNAME
+    value: apps.canvas.uw.edu
+
+externalSecrets:
+  enabled: true
+  secrets:
+    - name: apps.canvas.uw.edu-shared-secrets
+      externalKey: axdd/kv/data/canvas/shared/secrets
+      data:
+        - name: canvas-account-id
+          property: canvas-account-id
+        - name: continuum-account-id
+          property: continuum-account-id
+        - name: canvas-api-token
+          property: canvas-api-token
+        - name: lti-consumers
+          property: lti-consumers
+        - name: storage-project-id
+          property: storage-project-id
+        - name: support-group-id
+          property: support-group-id
+        - name: admin-group-id
+          property: admin-group-id
+    - name: apps.canvas.uw.edu-gcs-credentials
+      externalKey: axdd/kv/data/canvas/shared/gcs-credentials
+      data:
+        - name: credentials.json
+          property: credentials.json
+    - name: apps.canvas.uw.edu-secrets
+      externalKey: axdd/kv/data/canvas/prod/secrets
+      data:
+        - name: django-secret
+          property: django-secret
+        - name: blti-aes-iv
+          property: blti-aes-iv
+        - name: blti-aes-key
+          property: blti-aes-key
+        - name: storage-bucket-name
+          property: storage-bucket-name
+        - name: sqs-enrollment-key
+          property: sqs-enrollment-key
+        - name: sqs-enrollment-key-id
+          property: sqs-enrollment-key-id
+        - name: sqs-enrollment-queue-arn
+          property: sqs-enrollment-queue-arn
+        - name: sqs-group-key
+          property: sqs-group-key
+        - name: sqs-group-key-id
+          property: sqs-group-key-id
+        - name: sqs-group-queue-arn
+          property: sqs-group-queue-arn
+        - name: sqs-group-decrypt-key
+          property: sqs-group-decrypt-key
+        - name: sqs-instructoradd-key
+          property: sqs-instructoradd-key
+        - name: sqs-instructoradd-key-id
+          property: sqs-instructoradd-key-id
+        - name: sqs-instructoradd-queue-arn
+          property: sqs-instructoradd-queue-arn
+        - name: sqs-instructordrop-key
+          property: sqs-instructordrop-key
+        - name: sqs-instructordrop-key-id
+          property: sqs-instructordrop-key-id
+        - name: sqs-instructordrop-queue-arn
+          property: sqs-instructordrop-queue-arn
+        - name: sqs-person-key
+          property: sqs-person-key
+        - name: sqs-person-key-id
+          property: sqs-person-key-id
+        - name: sqs-person-queue-arn
+          property: sqs-person-queue-arn
+    - name: apps.canvas.uw.edu-sql-secrets
+      externalKey: axdd/kv/data/canvas/shared/sql-secrets
+      data:
+        - name: username
+          property: username
+        - name: password
+          property: password
+    - name: apps.canvas.uw.edu-uwca-certs
+      externalKey: axdd/kv/data/canvas/prod/uwca-certs
+      data:
+        - name: apps.canvas.uw.edu-uwca.cert
+          property: apps.canvas.uw.edu-uwca.cert
+        - name: apps.canvas.uw.edu-uwca.key
+          property: apps.canvas.uw.edu-uwca.key
+    - name: apps.canvas.uw.edu-ic-certs
+      externalKey: axdd/kv/data/canvas/prod/ic-certs
+      data:
+        - name: prod-apps.canvas.uw.edu-ic.cert
+          property: prod-apps.canvas.uw.edu-ic.cert
+    - name: apps.canvas.uw.edu-uw-idp-cert
+      externalKey: axdd/kv/data/idp-cert
+      data:
+        - name: uw-idp-cert
+          property: cert
+environmentVariablesSecrets:
+  djangoSecret:
+    name: DJANGO_SECRET
+    secretName: apps.canvas.uw.edu-secrets
+    secretKey: django-secret
+  canvasAPIToken:
+    name: CANVAS_OAUTH_BEARER
+    secretName: apps.canvas.uw.edu-shared-secrets
+    secretKey: canvas-api-token
+  canvasAccountID:
+    name: CANVAS_ACCOUNT_ID
+    secretName: apps.canvas.uw.edu-shared-secrets
+    secretKey: canvas-account-id
+  continuumAccountID:
+    name: CONTINUUM_ACCOUNT_ID
+    secretName: apps.canvas.uw.edu-shared-secrets
+    secretKey: continuum-account-id
+  supportGroup:
+    name: SUPPORT_GROUP
+    secretName: apps.canvas.uw.edu-shared-secrets
+    secretKey: support-group-id
+  adminGroup:
+    name: ADMIN_GROUP
+    secretName: apps.canvas.uw.edu-shared-secrets
+    secretKey: admin-group-id
+  enrollmentQueueArn:
+    name: SQS_ENROLLMENT_QUEUE_ARN
+    secretName: apps.canvas.uw.edu-secrets
+    secretKey: sqs-enrollment-queue-arn
+  enrollmentKeyId:
+    name: SQS_ENROLLMENT_KEY_ID
+    secretName: apps.canvas.uw.edu-secrets
+    secretKey: sqs-enrollment-key-id
+  enrollmentKey:
+    name: SQS_ENROLLMENT_KEY
+    secretName: apps.canvas.uw.edu-secrets
+    secretKey: sqs-enrollment-key
+  groupQueueArn:
+    name: SQS_GROUP_QUEUE_ARN
+    secretName: apps.canvas.uw.edu-secrets
+    secretKey: sqs-group-queue-arn
+  groupKeyId:
+    name: SQS_GROUP_KEY_ID
+    secretName: apps.canvas.uw.edu-secrets
+    secretKey: sqs-group-key-id
+  groupKey:
+    name: SQS_GROUP_KEY
+    secretName: apps.canvas.uw.edu-secrets
+    secretKey: sqs-group-key
+  groupDecryptKey:
+    name: SQS_GROUP_DECRYPT_KEY
+    secretName: apps.canvas.uw.edu-secrets
+    secretKey: sqs-group-decrypt-key
+  personQueueArn:
+    name: SQS_PERSON_QUEUE_ARN
+    secretName: apps.canvas.uw.edu-secrets
+    secretKey: sqs-person-queue-arn
+  personKeyId:
+    name: SQS_PERSON_KEY_ID
+    secretName: apps.canvas.uw.edu-secrets
+    secretKey: sqs-person-key-id
+  personKey:
+    name: SQS_PERSON_KEY
+    secretName: apps.canvas.uw.edu-secrets
+    secretKey: sqs-person-key
+  instructorAddQueueArn:
+    name: SQS_INSTRUCTOR_ADD_QUEUE_ARN
+    secretName: apps.canvas.uw.edu-secrets
+    secretKey: sqs-instructoradd-queue-arn
+  instructorAddKeyId:
+    name: SQS_INSTRUCTOR_ADD_KEY_ID
+    secretName: apps.canvas.uw.edu-secrets
+    secretKey: sqs-instructoradd-key-id
+  instructorAddKey:
+    name: SQS_INSTRUCTOR_ADD_KEY
+    secretName: apps.canvas.uw.edu-secrets
+    secretKey: sqs-instructoradd-key
+  instructorDropQueueArn:
+    name: SQS_INSTRUCTOR_DROP_QUEUE_ARN
+    secretName: apps.canvas.uw.edu-secrets
+    secretKey: sqs-instructordrop-queue-arn
+  instructorDropKeyId:
+    name: SQS_INSTRUCTOR_DROP_KEY_ID
+    secretName: apps.canvas.uw.edu-secrets
+    secretKey: sqs-instructordrop-key-id
+  instructorDropKey:
+    name: SQS_INSTRUCTOR_DROP_KEY
+    secretName: apps.canvas.uw.edu-secrets
+    secretKey: sqs-instructordrop-key
+  BLTIAESKey:
+    name: BLTI_AES_KEY
+    secretName: apps.canvas.uw.edu-secrets
+    secretKey: blti-aes-key
+  BLTIAESIV:
+    name: BLTI_AES_IV
+    secretName: apps.canvas.uw.edu-secrets
+    secretKey: blti-aes-iv
+  LTIConsumers:
+    name: LTI_CONSUMERS
+    secretName: apps.canvas.uw.edu-shared-secrets
+    secretKey: lti-consumers
+  storageBucketName:
+    name: STORAGE_BUCKET_NAME
+    secretName: apps.canvas.uw.edu-secrets
+    secretKey: storage-bucket-name
+  storageProjectId:
+    name: STORAGE_PROJECT_ID
+    secretName: apps.canvas.uw.edu-shared-secrets
+    secretKey: storage-project-id
+  samlSPCert:
+    name: SP_CERT
+    secretName: apps.canvas.uw.edu-ic-certs
+    secretKey: prod-apps.canvas.uw.edu-ic.cert
+  samlIDPCert:
+    name: IDP_CERT
+    secretName: apps.canvas.uw.edu-uw-idp-cert
+    secretKey: uw-idp-cert
