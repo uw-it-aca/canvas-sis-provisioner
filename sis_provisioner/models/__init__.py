@@ -409,6 +409,14 @@ class EnrollmentManager(models.Manager):
         else:
             self.queued(sis_import.pk).update(queue_id=None)
 
+        self.purge_expired()
+
+    def purge_expired(self):
+        retention = getattr(settings, 'ENROLLMENT_EVENT_RETENTION_DAYS', 180)
+        retention_dt = datetime.now() - timedelta(days=retention)
+        return super(EnrollmentManager, self).get_queryset().filter(
+            priority=PRIORITY_NONE, last_modified__lt=retention_dt).delete()
+
     def add_enrollment(self, enrollment_data):
         section = enrollment_data.get('Section')
         reg_id = enrollment_data.get('UWRegID')
@@ -1179,15 +1187,16 @@ class AdminManager(models.Manager):
             queue_id=queue_id).update(is_deleted=True)
 
     def finish_reconcile(self, queue_id):
+        retention = getattr(settings, 'REMOVED_ADMIN_RETENTION_DAYS', 90)
         now_dt = datetime.utcnow().replace(tzinfo=utc)
-        retention_dt = now_dt - timedelta(days=90)
+        retention_dt = now_dt - timedelta(days=retention)
 
         # Set deleted date for admins who were just deleted
         super(AdminManager, self).get_queryset().filter(
             queue_id=queue_id, is_deleted__isnull=False,
             deleted_date=None).update(deleted_date=now_dt)
 
-        # Delete removed admins older than N days
+        # Purge expired removed admins
         super(AdminManager, self).get_queryset().filter(
             queue_id=queue_id, is_deleted__isnull=False,
             deleted_date__lt=retention_dt).delete()
