@@ -27,10 +27,11 @@ class CanvasAccountsTest(TestCase):
         r = get_account_by_sis_id('abc')
         mock_method.assert_called_with('abc')
 
-    @mock.patch.object(Accounts, 'get_all_sub_accounts')
+    @mock.patch.object(Accounts, 'get_sub_accounts')
     def test_get_all_sub_accounts(self, mock_method):
         r = get_all_sub_accounts('abc')
-        mock_method.assert_called_with('abc')
+        mock_method.assert_called_with('abc', params={
+            'recursive': 'true', 'per_page': 100})
 
 
 class CanvasExternalToolsTest(TestCase):
@@ -78,7 +79,7 @@ class CanvasAdminsTest(TestCase):
     @mock.patch.object(Admins, 'get_admins')
     def test_get_admins(self, mock_method):
         r = get_admins('12345')
-        mock_method.assert_called_with('12345')
+        mock_method.assert_called_with('12345', params={'per_page': 100})
 
     @mock.patch.object(Admins, 'delete_admin')
     def test_delete_admin(self, mock_method):
