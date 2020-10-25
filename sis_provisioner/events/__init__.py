@@ -155,7 +155,7 @@ class SISProvisionerProcessor(MessageBodyProcessor):
         log_model = self._logModel
 
         if event_count > 0:
-            m = re.match(r'^events_(.+)log$', log_model.Meta.db_table)
+            m = re.match(r'^events_(.+)log$', log_model._meta.db_table)
             label = m.group(1) if m else 'unlabeled'
             prometheus_canvas_events.labels(label).inc(event_count)
 
