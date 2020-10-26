@@ -9,7 +9,6 @@ INSTALLED_APPS += [
     'supporttools',
     'rc_django',
     'groups',
-    'canvas_users',
     'rest_framework.authtoken',
     'sis_provisioner.apps.SISProvisionerConfig',
 ]
