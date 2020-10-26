@@ -38,7 +38,7 @@ class CanvasExternalToolsTest(TestCase):
     @mock.patch.object(ExternalTools, 'get_external_tools_in_account')
     def test_get_external_tools(self, mock_method):
         r = get_external_tools('abc')
-        mock_method.assert_called_with('abc')
+        mock_method.assert_called_with('abc', params={'per_page': 100})
 
     @mock.patch.object(ExternalTools, 'create_external_tool_in_account')
     def test_create_external_tool(self, mock_method):

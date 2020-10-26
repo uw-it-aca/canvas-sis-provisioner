@@ -48,7 +48,7 @@ def get_account_by_sis_id(sis_account_id):
 
 
 def get_sub_accounts(account_id):
-    return Accounts().get_sub_accounts(account_id)
+    return Accounts().get_sub_accounts(account_id, params={'per_page': 100})
 
 
 def get_all_sub_accounts(account_id):
@@ -61,7 +61,8 @@ def update_account_sis_id(account_id, sis_account_id):
 
 
 def get_external_tools(account_id):
-    return ExternalTools().get_external_tools_in_account(account_id)
+    return ExternalTools().get_external_tools_in_account(
+        account_id, params={'per_page': 100})
 
 
 def create_external_tool(account_id, config):
