@@ -3,7 +3,10 @@ from sis_provisioner.models import Admin
 from sis_provisioner.exceptions import (
     EmptyQueueException, MissingImportPathException)
 from sis_provisioner.builders.admins import AdminBuilder
+from logging import getLogger
 import traceback
+
+logger = getLogger(__name__)
 
 
 class Command(SISProvisionerCommand):
@@ -39,8 +42,9 @@ class Command(SISProvisionerCommand):
                 if not imp.csv_errors:
                     imp.delete()
         else:
-            print('CSV Path: {}'.format(imp.csv_path))
-            print('Error: {}'.format(imp.csv_errors))
+            logger.info('Import Admins CSV Path: {}'.format(imp.csv_path))
+            if imp.csv_errors:
+                logger.info('Import Admins Errors: {}'.format(imp.csv_errors))
             imp.delete()
 
         self.update_job()

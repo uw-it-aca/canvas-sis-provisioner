@@ -4,6 +4,7 @@ from sis_provisioner.cache import RestClientsCache
 from sis_provisioner.exceptions import EventException
 from restclients_core.exceptions import DataFailureException
 from aws_message.crypto import aes128cbc, Signature, CryptoException
+from prometheus_client import Counter
 from uw_kws import KWS
 from logging import getLogger
 from base64 import b64decode
@@ -13,6 +14,10 @@ import json
 import re
 
 logger = getLogger(__name__)
+prometheus_canvas_events = Counter(
+    'canvas_events',
+    'Canvas Event Counter',
+    ['events'])
 
 
 class SISProvisionerProcessor(MessageBodyProcessor):
@@ -148,6 +153,12 @@ class SISProvisionerProcessor(MessageBodyProcessor):
 
     def record_success_to_log(self, event_count=0):
         log_model = self._logModel
+
+        if event_count > 0:
+            m = re.match(r'^events_(.+)log$', log_model._meta.db_table)
+            label = m.group(1) if m else 'unlabeled'
+            prometheus_canvas_events.labels(label).inc(event_count)
+
         minute = int(floor(time() / 60))
         try:
             e = log_model.objects.get(minute=minute)

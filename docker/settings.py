@@ -1,4 +1,5 @@
 from .base_settings import *
+from google.oauth2 import service_account
 import os
 
 INSTALLED_APPS += [
@@ -8,16 +9,12 @@ INSTALLED_APPS += [
     'supporttools',
     'rc_django',
     'groups',
-    'libguide',
-    'course_roster',
-    'canvas_users',
-    'grading_standard',
-    'grade_conversion_calculator',
     'rest_framework.authtoken',
     'sis_provisioner.apps.SISProvisionerConfig',
 ]
 
 MIDDLEWARE += [
+    'userservice.user.UserServiceMiddleware',
     'django_user_agents.middleware.UserAgentMiddleware',
 ]
 
@@ -58,12 +55,20 @@ if os.getenv('ENV', 'localdev') == 'localdev':
     CANVAS_MANAGER_ADMIN_GROUP = 'u_test_group'
     RESTCLIENTS_ADMIN_GROUP = 'u_test_group'
     RESTCLIENTS_DAO_CACHE_CLASS = None
-    CANVAS_ACCOUNT_ID = '12345'
+    RESTCLIENTS_CANVAS_ACCOUNT_ID = '12345'
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+    MEDIA_ROOT = os.getenv('SIS_IMPORT_CSV_ROOT', '/app/csv')
 else:
     SIS_IMPORT_CSV_DEBUG = False
     CANVAS_MANAGER_ADMIN_GROUP = os.getenv('ADMIN_GROUP', '')
     RESTCLIENTS_ADMIN_GROUP = os.getenv('SUPPORT_GROUP', '')
-    RESTCLIENTS_DAO_CACHE_CLASS = 'sis_provisioner.cache.CanvasMemcachedCache'
+    RESTCLIENTS_DAO_CACHE_CLASS = 'sis_provisioner.cache.RestClientsCache'
+    DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
+    GS_PROJECT_ID = os.getenv('STORAGE_PROJECT_ID', '')
+    GS_BUCKET_NAME = os.getenv('STORAGE_BUCKET_NAME', '')
+    GS_LOCATION = os.path.join(os.getenv('SIS_IMPORT_CSV_ROOT', ''))
+    GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
+        '/gcs/credentials.json')
 
 RESTCLIENTS_DISABLE_THREADING = True
 RESTCLIENTS_ADMIN_AUTH_MODULE = 'sis_provisioner.views.admin.can_view_source_data'
@@ -74,8 +79,8 @@ try:
 except NameError:
     SUPPORTTOOLS_PARENT_APP_URL = '/'
 
-EVENT_AWS_SQS_CERT = os.getenv('AWS_SQS_CERT', '')
-EVENT_AWS_SQS_KEY = os.getenv('AWS_SQS_KEY', '')
+EVENT_AWS_SQS_CERT = os.getenv('AWS_SQS_CERT', APPLICATION_CERT_PATH)
+EVENT_AWS_SQS_KEY = os.getenv('AWS_SQS_KEY', APPLICATION_KEY_PATH)
 
 AWS_CA_BUNDLE = RESTCLIENTS_CA_BUNDLE
 AWS_SQS = {
@@ -149,7 +154,14 @@ ASTRA_ROLE_MAPPING = {
     "UWEOReadOnly": "UWEO Read Only",
     "APIUserReadOnly": "API User (Read Only)",
     "APIUserReadWrite": "API User (Read-Write)",
-    "AllyApplication": "Ally application"
+    "AllyApplication": "Ally application",
+    "NoodleManager": "Noodle Manager",
+    "NoodleTermPrep": "Noodle Term Prep",
+    "NoodleInstDesigner": "Noodle Instructional Designer",
+    "NoodleStdScsCoach": "Noodle Student Success Coach",
+    "NoodleSupportDesk": "Noodle Support Desk",
+    "NoodleAPISvcAccount": "Noodle API Service Account",
+    "NoodleLCMSAPI": "Noodle LCMS API"
 }
 
 CANVAS_MASQUERADE_ROLE = "Become users only (dept. admin)"
@@ -166,13 +178,15 @@ ANCILLARY_CANVAS_ROLES = {
         "account": "root",
         "canvas_role": CANVAS_MASQUERADE_ROLE
     },
+    "NoodleManager": {
+        "account": "root",
+        "canvas_role": CANVAS_MASQUERADE_ROLE
+    },
+    "NoodleSupportDesk": {
+        "account": "root",
+        "canvas_role": CANVAS_MASQUERADE_ROLE
+    },
 }
-
-LTI_ENFORCE_SSL = False
-LTI_CONSUMERS = {}
-
-BLTI_AES_KEY = bytes(os.getenv('BLTI_AES_KEY', ''), encoding='utf8')
-BLTI_AES_IV = bytes(os.getenv('BLTI_AES_IV', ''), encoding='utf8')
 
 UW_GROUP_BLACKLIST = [
     'uw_affiliation_',
@@ -190,12 +204,11 @@ LOGIN_DOMAIN_WHITELIST = ['gmail.com', 'google.com', 'googlemail.com']
 ADD_USER_DOMAIN_WHITELIST = [
     'uw.edu', 'washington.edu', 'u.washington.edu', 'cac.washington.edu']
 
-PERMISSIONS_CHECK_ACCOUNTS = [CANVAS_ACCOUNT_ID, '103216']
+CONTINUUM_ACCOUNT_ID = os.getenv('CONTINUUM_ACCOUNT_ID', '')
+PERMISSIONS_CHECK_ACCOUNTS = [RESTCLIENTS_CANVAS_ACCOUNT_ID, CONTINUUM_ACCOUNT_ID]
 
 SIS_IMPORT_ROOT_ACCOUNT_ID = 'uwcourse'
-SIS_IMPORT_CSV_ROOT = os.getenv('SIS_IMPORT_CSV_ROOT', '')
 SIS_IMPORT_GROUPS = ['uw_student', 'uw_faculty', 'uw_staff']
-SIS_IMPORT_IMMEDIATE_COURSE_SOCKET = os.getenv('SIS_IMPORT_IMMEDIATE_COURSE_SOCKET', '')
 SIS_IMPORT_LIMIT = {
     'course': {
         'default': 500,
@@ -216,13 +229,110 @@ SIS_IMPORT_LIMIT = {
 }
 
 NONPERSONAL_NETID_EXCEPTION_GROUP = 'u_acadev_canvas_nonpersonal_netids'
+ASTRA_ADMIN_EXCEPTIONS = [
+    'conditional-release-service@instructure.auth',
+    'readygoadmin@cidilabs.com',
+    'a_gradeit_canvas_int',
+]
 
 LMS_OWNERSHIP_SUBACCOUNT = {
     'PCE_AP': 'uwcourse:uweo:ap-managed',
     'PCE_IELP': 'uwcourse:uweo:ielp-managed',
     'PCE_OL': 'uwcourse:uweo:ol-managed',
-    'PCE_NONE': 'uwcourse:uweo:noncredit-campus-managed'
+    'PCE_NONE': 'uwcourse:uweo:noncredit-campus-managed',
+    'ISCHOOL': 'canvas_104251',
 }
 
 ADMIN_EVENT_GRAPH_FREQ = 10
 ADMIN_IMPORT_STATUS_FREQ = 30
+
+REMOVED_ADMIN_RETENTION_DAYS = 90
+ENROLLMENT_EVENT_RETENTION_DAYS = 180
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'filters': {
+        'stdout_stream': {
+            '()': 'django.utils.log.CallbackFilter',
+            'callback': lambda record: record.levelno < logging.WARNING
+        },
+        'stderr_stream': {
+            '()': 'django.utils.log.CallbackFilter',
+            'callback': lambda record: record.levelno > logging.ERROR
+        }
+    },
+    'formatters': {
+        'sis_provisioner': {
+            'format': '%(levelname)-4s %(asctime)s %(module)s %(message)s [%(name)s]',
+            'datefmt': '[%Y-%m-%d %H:%M:%S]',
+        },
+        'restclients_timing': {
+            'format': '%(levelname)-4s restclients_timing %(module)s %(asctime)s %(message)s [%(name)s]',
+            'datefmt': '[%Y-%m-%d %H:%M:%S]',
+        },
+    },
+    'handlers': {
+        'stdout': {
+            'class': 'logging.StreamHandler',
+            'stream': sys.stdout,
+            'filters': ['stdout_stream'],
+            'formatter': 'sis_provisioner',
+        },
+        'stderr': {
+            'class': 'logging.StreamHandler',
+            'stream': sys.stderr,
+            'filters': ['stderr_stream'],
+            'formatter': 'sis_provisioner',
+        },
+        'restclients_timing': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'stream': sys.stdout,
+            'filters': ['stdout_stream'],
+            'formatter': 'restclients_timing',
+        },
+        'null': {
+            'class': 'logging.NullHandler',
+        },
+    },
+    'loggers': {
+        'django.security.DisallowedHost': {
+            'handlers': ['null'],
+            'propagate': False,
+        },
+        'django.request': {
+            'handlers': ['stderr'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+        'sis_provisioner': {
+            'handlers': ['stdout'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'restclients_core': {
+            'handlers': ['restclients_timing'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'aws_message': {
+            'handlers': ['stdout'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'groups': {
+            'handlers': ['stdout'],
+            'level': 'DEBUG',
+        },
+        'blti': {
+            'handlers': ['stdout'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        '': {
+            'handlers': ['stdout', 'stderr'],
+            'level': 'INFO' if os.getenv('ENV', 'localdev') == 'prod' else 'DEBUG'
+        }
+    }
+}

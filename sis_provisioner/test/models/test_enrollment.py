@@ -1,10 +1,11 @@
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.db.models.query import QuerySet
 from django.utils.timezone import utc
 from datetime import datetime
 from sis_provisioner.dao.course import get_section_by_id
 from sis_provisioner.models import (
-    Course, Enrollment, Import, PRIORITY_NONE, PRIORITY_DEFAULT, PRIORITY_HIGH)
+    Course, Enrollment, EnrollmentManager, Import, PRIORITY_NONE,
+    PRIORITY_DEFAULT, PRIORITY_HIGH)
 from uw_sws.util import fdao_sws_override
 from uw_pws.util import fdao_pws_override
 import mock
@@ -103,7 +104,8 @@ class EnrollmentModelTest(TestCase):
         Enrollment.objects.all().delete()
 
     @mock.patch.object(QuerySet, 'filter')
-    def test_dequeue_imported(self, mock_filter):
+    @mock.patch.object(EnrollmentManager, 'purge_expired')
+    def test_dequeue_imported(self, mock_purge, mock_filter):
         dt = datetime.now()
         r = Enrollment.objects.dequeue(Import(pk=1,
                                               priority=PRIORITY_HIGH,
@@ -118,3 +120,13 @@ class EnrollmentModelTest(TestCase):
     def test_dequeue_not_imported(self, mock_update):
         r = Enrollment.objects.dequeue(Import(pk=1, priority=PRIORITY_HIGH))
         mock_update.assert_called_with(queue_id=None)
+
+    @mock.patch.object(QuerySet, 'filter')
+    @mock.patch('sis_provisioner.models.datetime')
+    @override_settings(ENROLLMENT_EVENT_RETENTION_DAYS=3)
+    def test_purge_expired(self, mock_datetime, mock_filter):
+        mock_datetime.now.return_value = datetime(2013, 1, 4, 0, 0, 0)
+        r = Enrollment.objects.purge_expired()
+        mock_filter.assert_called_with(
+            priority=0,
+            last_modified__lt=datetime(2013, 1, 1, 0, 0, 0))
