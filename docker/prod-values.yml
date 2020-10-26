@@ -57,7 +57,7 @@ gcsCredentials:
   mounted: true
   secretName: apps.canvas.uw.edu-gcs-credentials
 cronjob:
-  enabled: true
+  enabled: false
   jobs:
     - name: load-users
       schedule: "5 12,20 * * *"
@@ -136,7 +136,7 @@ cronjob:
       command: ["/scripts/management_command.sh"]
       args: ["update_test_urls"]
 daemon:
-  enabled: true
+  enabled: false
   daemons:
     - name: monitor-imports
       replicaCount: 1
