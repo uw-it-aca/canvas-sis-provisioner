@@ -5,6 +5,7 @@ from uw_pws.util import fdao_pws_override
 from uw_sws.util import fdao_sws_override
 from uw_sws.models import Registration
 from datetime import datetime
+from unittest.mock import ANY
 import mock
 
 
@@ -26,17 +27,18 @@ class CanvasAccountsTest(TestCase):
         r = get_account_by_sis_id('abc')
         mock_method.assert_called_with('abc')
 
-    @mock.patch.object(Accounts, 'get_all_sub_accounts')
+    @mock.patch.object(Accounts, 'get_sub_accounts')
     def test_get_all_sub_accounts(self, mock_method):
         r = get_all_sub_accounts('abc')
-        mock_method.assert_called_with('abc')
+        mock_method.assert_called_with('abc', params={
+            'recursive': 'true', 'per_page': 100})
 
 
 class CanvasExternalToolsTest(TestCase):
     @mock.patch.object(ExternalTools, 'get_external_tools_in_account')
     def test_get_external_tools(self, mock_method):
         r = get_external_tools('abc')
-        mock_method.assert_called_with('abc')
+        mock_method.assert_called_with('abc', params={'per_page': 100})
 
     @mock.patch.object(ExternalTools, 'create_external_tool_in_account')
     def test_create_external_tool(self, mock_method):
@@ -77,7 +79,7 @@ class CanvasAdminsTest(TestCase):
     @mock.patch.object(Admins, 'get_admins')
     def test_get_admins(self, mock_method):
         r = get_admins('12345')
-        mock_method.assert_called_with('12345')
+        mock_method.assert_called_with('12345', params={'per_page': 100})
 
     @mock.patch.object(Admins, 'delete_admin')
     def test_delete_admin(self, mock_method):
@@ -194,14 +196,17 @@ class CanvasReportsTest(TestCase):
 
 
 class CanvasSISImportsTest(TestCase):
-    @mock.patch.object(SISImport, 'import_dir')
-    def test_sis_import_by_path(self, mock_method):
-        r = sis_import_by_path('/abc')
-        mock_method.assert_called_with('/abc', params={})
+    @mock.patch('sis_provisioner.dao.canvas.default_storage.listdir')
+    @mock.patch.object(SISImport, 'import_archive')
+    def test_sis_import_by_path(self, mock_method, mock_listdir):
+        mock_listdir.return_value = ((), ())
 
-        r = sis_import_by_path('/abc', override_sis_stickiness=True)
+        r = sis_import_by_path('abc')
+        mock_method.assert_called_with(ANY, params={})
+
+        r = sis_import_by_path('abc', override_sis_stickiness=True)
         mock_method.assert_called_with(
-            '/abc', params={'override_sis_stickiness': '1'})
+            ANY, params={'override_sis_stickiness': '1'})
 
     @mock.patch('sis_provisioner.dao.canvas.SISImportModel')
     @mock.patch.object(SISImport, 'get_import_status')

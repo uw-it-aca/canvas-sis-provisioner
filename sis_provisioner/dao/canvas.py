@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.files.storage import default_storage
 from uw_canvas import Canvas
 from uw_canvas.accounts import Accounts
 from uw_canvas.admins import Admins
@@ -10,10 +11,9 @@ from uw_canvas.roles import Roles
 from uw_canvas.users import Users
 from uw_canvas.terms import Terms
 from uw_canvas.external_tools import ExternalTools
-from uw_canvas.sis_import import SISImport
+from uw_canvas.sis_import import SISImport, CSV_FILES
 from uw_canvas.models import CanvasEnrollment, SISImport as SISImportModel
 from restclients_core.exceptions import DataFailureException
-from restclients_core.util.retry import retry
 from sis_provisioner.dao.course import (
     valid_academic_course_sis_id, valid_academic_section_sis_id,
     group_section_sis_id)
@@ -21,6 +21,8 @@ from sis_provisioner.exceptions import CoursePolicyException
 from urllib3.exceptions import SSLError
 from logging import getLogger
 from csv import reader
+from io import BytesIO
+import zipfile
 import json
 
 logger = getLogger(__name__)
@@ -31,10 +33,6 @@ AUDITOR_ENROLLMENT = 'Auditor'
 ENROLLMENT_ACTIVE = CanvasEnrollment.STATUS_ACTIVE
 ENROLLMENT_INACTIVE = CanvasEnrollment.STATUS_INACTIVE
 ENROLLMENT_DELETED = CanvasEnrollment.STATUS_DELETED
-
-RETRY_STATUS_CODES = [408, 500, 502, 503, 504]
-RETRY_MAX = 5
-RETRY_DELAY = 3
 
 
 def valid_canvas_id(canvas_id):
@@ -50,13 +48,12 @@ def get_account_by_sis_id(sis_account_id):
 
 
 def get_sub_accounts(account_id):
-    return Accounts().get_sub_accounts(account_id)
+    return Accounts().get_sub_accounts(account_id, params={'per_page': 100})
 
 
-@retry(DataFailureException, status_codes=RETRY_STATUS_CODES,
-       tries=RETRY_MAX, delay=RETRY_DELAY, logger=logger)
 def get_all_sub_accounts(account_id):
-    return Accounts().get_all_sub_accounts(account_id)
+    return Accounts().get_sub_accounts(account_id, params={
+        'recursive': 'true', 'per_page': 100})
 
 
 def update_account_sis_id(account_id, sis_account_id):
@@ -64,7 +61,8 @@ def update_account_sis_id(account_id, sis_account_id):
 
 
 def get_external_tools(account_id):
-    return ExternalTools().get_external_tools_in_account(account_id)
+    return ExternalTools().get_external_tools_in_account(
+        account_id, params={'per_page': 100})
 
 
 def create_external_tool(account_id, config):
@@ -83,10 +81,8 @@ def delete_external_tool(account_id, external_tool_id):
         account_id, external_tool_id)
 
 
-@retry(DataFailureException, status_codes=RETRY_STATUS_CODES,
-       tries=RETRY_MAX, delay=RETRY_DELAY, logger=logger)
 def get_admins(account_id):
-    return Admins().get_admins(account_id)
+    return Admins().get_admins(account_id, params={'per_page': 100})
 
 
 def delete_admin(account_id, user_id, role):
@@ -150,8 +146,6 @@ def update_term_overrides(term_sis_id, override_dates):
     return Terms().update_term_overrides(term_sis_id, overrides=overrides)
 
 
-@retry(DataFailureException, status_codes=RETRY_STATUS_CODES,
-       tries=RETRY_MAX, delay=RETRY_DELAY, logger=logger)
 def get_section_by_sis_id(section_sis_id):
     return Sections().get_section_by_sis_id(section_sis_id)
 
@@ -271,10 +265,24 @@ def get_unused_course_report_data(term_sis_id):
 
 
 def sis_import_by_path(csv_path, override_sis_stickiness=False):
+    dirs, files = default_storage.listdir(csv_path)
+
+    archive = BytesIO()
+    zip_file = zipfile.ZipFile(archive, 'w')
+    for filename in CSV_FILES:
+        if filename in files:
+            filepath = csv_path + '/' + filename
+            with default_storage.open(filepath, mode='r') as csv:
+                zip_file.writestr(filename, csv.read(), zipfile.ZIP_DEFLATED)
+
+    zip_file.close()
+    archive.seek(0)
+
     params = {}
     if override_sis_stickiness:
         params['override_sis_stickiness'] = '1'
-    return SISImport().import_dir(csv_path, params=params)
+
+    return SISImport().import_archive(archive, params=params)
 
 
 def get_sis_import_status(import_id):

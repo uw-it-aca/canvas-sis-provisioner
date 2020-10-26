@@ -4,7 +4,7 @@ from django.http import HttpResponse
 from django.utils.decorators import method_decorator
 from django.views import View
 from sis_provisioner.dao.user import is_group_admin, valid_net_id, valid_reg_id
-from sis_provisioner.dao.term import get_term_by_date
+from sis_provisioner.dao.term import get_current_active_term
 from sis_provisioner.models import Admin
 from restclients_core.exceptions import DataFailureException
 from uw_saml.decorators import group_required
@@ -24,13 +24,13 @@ class AdminView(View):
         return render(request, self.template_name, self._params(request))
 
     def _params(self, request):
-        curr_date = datetime.now().date()
+        curr_dt = datetime.now()
         try:
-            term = get_term_by_date(curr_date)
+            term = get_current_active_term(curr_dt)
             curr_year = term.year
             curr_quarter = term.quarter
         except DataFailureException as ex:
-            curr_year = curr_date.year
+            curr_year = curr_dt.year
             curr_quarter = ''
 
         return {
