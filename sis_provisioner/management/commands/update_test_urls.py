@@ -13,10 +13,27 @@ class Command(SISProvisionerCommand):
     help = "Fixes the discovery and LTI URLs for uw.test and uw.beta"
 
     HOSTS = {
-        'canvas': {'prod': 'https://apps.canvas.uw.edu',
-                   'test': 'https://canvas-test.s.uw.edu'},
-        'panopto': {'prod': 'https://panopto-app.uw.edu',
-                    'test': 'https://panopto-dev.s.uw.edu'}
+        'canvas': {
+            'prod': 'https://apps.canvas.uw.edu',
+            'test': 'https://test-apps.canvas.uw.edu'},
+        'panopto': {
+            'prod': 'https://panopto-app.uw.edu',
+            'test': 'https://panopto-dev.s.uw.edu'},
+        'course-users': {
+            'prod': 'https://course-users.canvas.uw.edu',
+            'test': 'https://test-course-users.canvas.uw.edu'},
+        'course-roster': {
+            'prod': 'https://courseroster.canvas.uw.edu',
+            'test': 'https://test-courseroster.canvas.uw.edu'},
+        'grading-standards': {
+            'prod': 'https://grading-standards.canvas.uw.edu',
+            'test': 'https://test-grading-standards.canvas.uw.edu'},
+        'libguides': {
+            'prod': 'https://libguides.canvas.uw.edu',
+            'test': 'https://test-libguides.canvas.uw.edu'},
+        'infohub': {
+            'prod': 'https://infohub.canvas.uw.edu',
+            'test': 'https://test-infohub.canvas.uw.edu'},
     }
 
     def handle(self, *args, **options):
