@@ -58,6 +58,10 @@ daemon:
       replicaCount: 1
       command: ["/scripts/management_daemon.sh"]
       args: ["monitor_imports"]
+    - name: process-person-events
+      replicaCount: 1
+      command: ["/scripts/management_daemon.sh"]
+      args: ["--delay", "30", "load_person"]
 certs:
   mounted: true
   certPath: /certs/test-apps.canvas.uw.edu-uwca.cert
