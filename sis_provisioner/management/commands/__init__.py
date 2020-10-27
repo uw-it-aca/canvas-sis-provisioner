@@ -3,15 +3,8 @@ from django.core.mail import mail_admins
 from django.utils.timezone import utc
 from sis_provisioner.models import Job
 from logging import getLogger
-from prometheus_client import Counter
 import datetime
 import sys
-
-
-prometheus_management_command = Counter(
-    'canvas_management_command',
-    'Canvas Mangement Command Count',
-    ['command'])
 
 
 class SISProvisionerCommand(BaseCommand):
@@ -20,8 +13,6 @@ class SISProvisionerCommand(BaseCommand):
 
         if not self.is_active_job():
             sys.exit(0)
-
-        prometheus_management_command.labels(self.name_from_argv()).inc()
 
         self.log = getLogger(__name__)
         self.health_check()
