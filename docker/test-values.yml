@@ -58,22 +58,10 @@ daemon:
       replicaCount: 1
       command: ["/scripts/management_daemon.sh"]
       args: ["monitor_imports"]
-    - name: process-enrollment-events
-      replicaCount: 1
-      command: ["/scripts/management_daemon.sh"]
-      args: ["load_enrollments"]
-    - name: process-instructor-events
-      replicaCount: 1
-      command: ["/scripts/management_daemon.sh"]
-      args: ["load_instructors"]
     - name: process-person-events
       replicaCount: 1
       command: ["/scripts/management_daemon.sh"]
       args: ["--delay", "30", "load_person"]
-    - name: process-group-events
-      replicaCount: 1
-      command: ["/scripts/management_daemon.sh"]
-      args: ["--delay", "30", "process_group_events"]
 certs:
   mounted: true
   certPath: /certs/test-apps.canvas.uw.edu-uwca.cert
