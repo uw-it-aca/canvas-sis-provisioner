@@ -16,12 +16,12 @@ ingress:
   enabled: true
   tls:
     canvas:
-      secretName: prod-apps.canvas.uw.edu-ingress-cert
+      secretName: apps.canvas.uw.edu-ingress-cert
       hosts:
-        - prod-apps.canvas.uw.edu
+        - apps.canvas.uw.edu
   hosts:
     canvas:
-      host: prod-apps.canvas.uw.edu
+      host: apps.canvas.uw.edu
       paths:
         - "/"
   annotations:
@@ -57,7 +57,7 @@ gcsCredentials:
   mounted: true
   secretName: apps.canvas.uw.edu-gcs-credentials
 cronjob:
-  enabled: false
+  enabled: true
   jobs:
     - name: load-users
       schedule: "5 12,20 * * *"
@@ -114,7 +114,7 @@ cronjob:
     - name: remove-unauthorized-admins
       schedule: "25 18,23 * * *"
       command: ["/scripts/management_command.sh"]
-      args: ["remove_unauthorized_admins"]
+      args: ["remove_unauthorized_admins", "--commit"]
     - name: check-role-permissions
       schedule: "35 22 * * *"
       command: ["/scripts/management_command.sh"]
@@ -136,7 +136,7 @@ cronjob:
       command: ["/scripts/management_command.sh"]
       args: ["update_test_urls"]
 daemon:
-  enabled: false
+  enabled: true
   daemons:
     - name: monitor-imports
       replicaCount: 1
@@ -208,9 +208,9 @@ environmentVariables:
   - name: AUTH
     value: "SAML BLTI"
   - name: SAML_ENTITY_ID
-    value: https://prod-apps.canvas.uw.edu/saml2
+    value: https://apps.canvas.uw.edu/shibboleth
   - name: CLUSTER_CNAME
-    value: prod-apps.canvas.uw.edu
+    value: apps.canvas.uw.edu
 
 externalSecrets:
   enabled: true
@@ -297,8 +297,8 @@ externalSecrets:
     - name: apps.canvas.uw.edu-ic-certs
       externalKey: axdd/kv/data/canvas/prod/ic-certs
       data:
-        - name: prod-apps.canvas.uw.edu-ic.cert
-          property: prod-apps.canvas.uw.edu-ic.cert
+        - name: apps.canvas.uw.edu-ic.cert
+          property: apps.canvas.uw.edu-ic.cert
     - name: apps.canvas.uw.edu-uw-idp-cert
       externalKey: axdd/kv/data/idp-cert
       data:
@@ -416,7 +416,7 @@ environmentVariablesSecrets:
   samlSPCert:
     name: SP_CERT
     secretName: apps.canvas.uw.edu-ic-certs
-    secretKey: prod-apps.canvas.uw.edu-ic.cert
+    secretKey: apps.canvas.uw.edu-ic.cert
   samlIDPCert:
     name: IDP_CERT
     secretName: apps.canvas.uw.edu-uw-idp-cert
