@@ -114,7 +114,7 @@ cronjob:
     - name: remove-unauthorized-admins
       schedule: "25 18,23 * * *"
       command: ["/scripts/management_command.sh"]
-      args: ["remove_unauthorized_admins"]
+      args: ["remove_unauthorized_admins", "--commit"]
     - name: check-role-permissions
       schedule: "35 22 * * *"
       command: ["/scripts/management_command.sh"]
