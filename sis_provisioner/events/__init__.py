@@ -13,11 +13,12 @@ from math import floor
 import json
 import re
 
+
 logger = getLogger(__name__)
 prometheus_canvas_events = Counter(
-    'canvas_events',
+    'canvas_event_count',
     'Canvas Event Counter',
-    ['events'])
+    ['source'])
 
 
 class SISProvisionerProcessor(MessageBodyProcessor):
@@ -156,8 +157,8 @@ class SISProvisionerProcessor(MessageBodyProcessor):
 
         if event_count > 0:
             m = re.match(r'^events_(.+)log$', log_model._meta.db_table)
-            label = m.group(1) if m else 'unlabeled'
-            prometheus_canvas_events.labels(label).inc(event_count)
+            source = m.group(1) if m else log_model._meta.db_table
+            prometheus_canvas_events.labels(source).inc(event_count)
 
         minute = int(floor(time() / 60))
         try:
