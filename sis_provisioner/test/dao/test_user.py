@@ -84,24 +84,27 @@ class UserPolicyTest(TestCase):
     @override_settings(LOGIN_DOMAIN_WHITELIST=['gmail.com'])
     def test_user_fullname(self):
         user = PWS().get_person_by_netid('javerage')
-        user.display_name = None
-        self.assertEquals(user_fullname(user), 'James Student')
+        name = user_fullname(user)
+        self.assertEquals(len(name), 2)
+        self.assertEquals(name[0], 'Jamesy')
+        self.assertEquals(name[1], 'McJamesy')
 
-        user.display_name = ''
-        self.assertEquals(user_fullname(user), 'James Student')
-
-        user.display_name = 'JOHN SMITH'
-        self.assertEquals(user_fullname(user), 'James Student')
-
-        user.display_name = 'Johnny S'
-        self.assertEquals(user_fullname(user), user.display_name)
+        user = PWS().get_person_by_regid('8BD26A286A7D11D5A4AE0004AC494FFE')
+        name = user_fullname(user)
+        self.assertEquals(len(name), 2)
+        self.assertEquals(name[0], 'BILL AVERAGE')
+        self.assertEquals(name[1], 'TEACHER')
 
         # non-personal netid
         user = PWS().get_entity_by_netid('somalt')
-        self.assertEquals(user_fullname(user), user.display_name)
+        name = user_fullname(user)
+        self.assertEquals(len(name), 1)
+        self.assertEquals(name[0], user.display_name)
 
         user = get_person_by_gmail_id('john.smith@gmail.com')
-        self.assertEquals(user_fullname(user), 'john.smith')
+        name = user_fullname(user)
+        self.assertEquals(len(name), 1)
+        self.assertEquals(name[0], 'john.smith')
 
         user = InvalidPerson()
         self.assertRaises(UserPolicyException, user_fullname, user)

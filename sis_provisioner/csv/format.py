@@ -218,12 +218,20 @@ class UserCSV(CSVFormat):
     """
     def __init__(self, user, status='active'):
         self.key = user_sis_id(user)
+        name = user_fullname(user)
+        if len(name) == 2:
+            first_name = name[0]
+            last_name = name[1]
+            full_name = None
+        else:
+            first_name = None
+            last_name = None
+            full_name = name[0]
+
         self.data = [
             self.key,
             user.uwnetid if hasattr(user, 'uwnetid') else user.login_id,
-            None, None, None,
-            user_fullname(user),
-            None, None,
+            None, first_name, last_name, full_name, None, None,
             user_email(user),
             status]
 

@@ -37,7 +37,7 @@ setup(
         'UW-Groups-LTI>=0.7.3,<1.0',
         'UW-RestClients-Core>=1.2.1,<2.0',
         'UW-RestClients-SWS>=2.2.1,<3.0',
-        'UW-RestClients-PWS>=2.0.5,<3.0',
+        'UW-RestClients-PWS>=2.1.2,<3.0',
         'UW-RestClients-GWS>=2.3,<3.0',
         'UW-RestClients-KWS>=1.1,<2.0',
         'UW-RestClients-Canvas>=1.1.12,<2.0',
