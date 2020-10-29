@@ -31,7 +31,7 @@ class GroupPolicyTest(TestCase):
 @fdao_pws_override
 class GetGroupTest(TestCase):
     @mock.patch.object(GWS, 'get_group_by_id')
-    def test_get_group(self):
+    def test_get_group(self, mock_method):
         r = get_group('javerage', '123')
         mock_method.assert_called_with('123')
 
