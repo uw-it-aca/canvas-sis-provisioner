@@ -1,0 +1,86 @@
+// overrides for blti implementations
+
+body { background: none; font: 13px/1.5 "Helvetica Neue",Arial,"Liberation Sans",FreeSans,sans-serif; }
+.container { margin: 0; }
+#main-wrapper { margin: 0; float: none; max-width: 940px; box-shadow: none; -webkit-box-shadow: none; height: auto !important; }
+.inner { margin: 0 1em !important; }
+.groups-table-container { width: auto !important; }
+
+
+#main-wrapper {
+
+    h2 { text-transform: none; color: #444; font-size: 1.8em; margin-bottom: 1.25em; line-height: 1.25; font-weight: normal; }
+    h3 { text-transform: none; color: #555; font-size: 1.5em; margin-bottom: 1.25em; line-height: 1.25; font-weight: normal; }
+}
+
+#main {
+
+    /* UW Groups manager iframe in Canvas  */
+    .canvas-UW-group-manager-container {
+
+        h3 {font-size: 1.35em; font-weight: normal; margin-bottom: 0;}
+
+        p { line-height: 1.2;}
+
+        span.group-delete, span.group-undelete { line-height: 1; }
+
+        ul { list-style-type: none;}
+
+        .existing-groups {
+            div.groups-table-container { padding: 8px; background-color: #f0f0f0; width: 100%; }
+            table { width: 100%; }
+            tr {
+                th { text-align: left; }
+                td { border-top: 1px solid #c0c0c0; line-height: 28px; }
+                td span.group-delete, td span.group-undelete { display: none; }
+                td span.group-warning { display: inline-block; width: 18px; height: 18px; margin-left: 8px; vertical-align: middle; background: transparent url('../img/warning.png') center center no-repeat; }
+
+
+            }
+            tr.is-deleted td.strike { text-decoration: line-through; color: #777;}
+            tr:hover td, tr.isdeleted:hover td { background-color: #C0C0C0;}
+        }
+
+        .new-group-list { background-color: #f0f0f0; margin-bottom: 30px; padding: 15px;
+            ol, ul { margin-left: 0px;
+
+                li { margin-bottom: 8px; }
+            }
+
+            div { display: inline-block;
+                span { display: none; }
+            }
+
+            div.textinput { width: 355px;
+                input { width: 340px; }
+            }
+
+            div.loading {
+                span { display: inline-block; width: 18px; height: 18px; margin-left: -22px ; background: transparent url('../img/processing.gif') center center no-repeat; }
+            }
+            div.warning {
+                span { display: inline-block; width: 18px; height: 18px; margin-left: -22px ; background: transparent url('../img/warning.png') center center no-repeat; }
+            }
+            div.valid {
+                span { display: inline-block; width: 18px; height: 18px; margin-left: -22px ; background: transparent url('../img/check.png') center center no-repeat; }
+            }
+            div.invalid { vertical-align: top;
+                span { display: block; color: red; }
+                input { border: 1px solid red; color: red; background-color: #ffb7c5; margin-bottom: 2px; }
+            }
+
+            div.no-value {
+                input { font-style: italic; opacity: .6; }
+            }
+        }
+
+        #closing-success {
+            .membership-exceptions { padding: 6px 8px; background-color: #FFF5BF;
+                p > span { font-weight: bold; }
+                div > span { font-style: italic; }
+            }
+        }
+    }
+    /* End UW Groups manager */
+    
+}

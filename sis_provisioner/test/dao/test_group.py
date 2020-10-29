@@ -7,6 +7,7 @@ from sis_provisioner.exceptions import (
 from datetime import datetime, timedelta
 from uw_gws.utilities import fdao_gws_override
 from uw_pws.util import fdao_pws_override
+import mock
 
 
 @fdao_gws_override
@@ -24,6 +25,34 @@ class GroupPolicyTest(TestCase):
         self.assertRaises(GroupPolicyException, valid_group_id, '1')
         self.assertRaises(GroupPolicyException, valid_group_id, 'uw_student')
         self.assertRaises(GroupPolicyException, valid_group_id, 'uw_staff')
+
+
+@fdao_gws_override
+@fdao_pws_override
+class GetGroupTest(TestCase):
+    @mock.patch.object(GWS, 'get_group_by_id')
+    def test_get_group(self, mock_method):
+        r = get_group('javerage', '123')
+        mock_method.assert_called_with('123')
+
+    @mock.patch.object(GWS, 'search_groups')
+    def test_search_groups(self, mock_method):
+        r = search_groups('javerage')
+        mock_method.assert_called_with(scope='all')
+
+        r = search_groups('javerage', name='foo')
+        mock_method.assert_called_with(name='foo*', scope='all')
+
+        r = search_groups('javerage', name='foo*')
+        mock_method.assert_called_with(name='foo*', scope='all')
+
+    @mock.patch('sis_provisioner.dao.group.GWS')
+    def test_gws_constructor(self, mock_object):
+        r = get_group('javerage', '123')
+        mock_object.assert_called_with(act_as='javerage')
+
+        r = search_groups('javerage')
+        mock_object.assert_called_with(act_as='javerage')
 
 
 @fdao_gws_override
