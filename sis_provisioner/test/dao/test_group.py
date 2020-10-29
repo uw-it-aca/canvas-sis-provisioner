@@ -46,7 +46,7 @@ class GetGroupTest(TestCase):
         r = search_groups('javerage', name='foo*')
         mock_method.assert_called_with(name='foo*', scope='all')
 
-    @mock.patch('groups.dao.group.GWS')
+    @mock.patch('sis_provisioner.dao.group.GWS')
     def test_gws_constructor(self, mock_object):
         r = get_group('javerage', '123')
         mock_object.assert_called_with(act_as='javerage')
