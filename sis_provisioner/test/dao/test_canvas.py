@@ -60,14 +60,18 @@ class CanvasExternalToolsTest(TestCase):
 
 
 class CanvasRolesTest(TestCase):
-    @override_settings(RESTCLIENTS_CANVAS_ACCOUNT_ID='12345')
     @mock.patch.object(Roles, 'get_effective_course_roles_in_account')
+    @override_settings(RESTCLIENTS_CANVAS_ACCOUNT_ID='12345',
+                       CONTINUUM_CANVAS_ACCOUNT_ID='50000')
     def test_get_course_roles_in_account(self, mock_method):
-        r = get_course_roles_in_account('12345')
+        r = get_course_roles_in_account('')
         mock_method.assert_called_with('12345')
 
-        r = get_course_roles_in_account('67890')
+        r = get_course_roles_in_account('uwcourse:abc')
         mock_method.assert_called_with('12345')
+
+        r = get_course_roles_in_account('uwcourse:uweo:abc')
+        mock_method.assert_called_with('50000')
 
     @mock.patch.object(Roles, 'get_roles_in_account')
     def test_get_account_role_data(self, mock_method):

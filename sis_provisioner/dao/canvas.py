@@ -95,9 +95,10 @@ def delete_admin(account_id, user_id, role):
     return ret
 
 
-def get_course_roles_in_account(account_id):
-    if str(account_id) not in getattr(
-            settings, 'PERMISSIONS_CHECK_ACCOUNTS', []):
+def get_course_roles_in_account(account_sis_id):
+    if account_sis_id.startswith('uwcourse:uweo'):
+        account_id = getattr(settings, 'CONTINUUM_CANVAS_ACCOUNT_ID')
+    else:
         account_id = getattr(settings, 'RESTCLIENTS_CANVAS_ACCOUNT_ID')
 
     return Roles().get_effective_course_roles_in_account(account_id)
