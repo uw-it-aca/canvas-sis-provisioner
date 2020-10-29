@@ -39,6 +39,28 @@ def is_modified_group(group_id, changed_since_dt):
             raise
 
 
+def get_group(act_as, group_id):
+    return GWS(act_as=act_as).get_group_by_id(group_id)
+
+
+def search_groups(act_as, **kwargs):
+    if not kwargs.get('scope'):
+        kwargs['scope'] = 'all'
+
+    if kwargs.get('name') and not kwargs['name'].endswith('*'):
+        kwargs['name'] += '*'
+
+    groups = []
+    for group in GWS(act_as=act_as).search_groups(**kwargs):
+        try:
+            valid_group_id(group.name)
+            groups.append(group)
+        except GroupPolicyException:
+            pass
+
+    return groups
+
+
 def get_sis_import_members():
     gws = GWS()
 
