@@ -61,7 +61,7 @@ daemon:
     - name: process-person-events
       replicaCount: 1
       command: ["/scripts/management_daemon.sh"]
-      args: ["--delay", "20", "load_person"]
+      args: ["--delay", "30", "load_person"]
 certs:
   mounted: true
   certPath: /certs/test-apps.canvas.uw.edu-uwca.cert
