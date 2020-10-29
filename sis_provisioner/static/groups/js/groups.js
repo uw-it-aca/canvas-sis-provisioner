@@ -67,7 +67,7 @@ $(document).ready(function() {
             minLength: 4,
             items: 50,
             source: function (query, process) {
-                return $.get('api/v1/uw/group/',
+                return $.get('api/v1/uwgroup/',
                              {
                                  name: query
                              },
@@ -155,7 +155,7 @@ $(document).ready(function() {
 
                 $.ajax({
                     type: 'GET',
-                    url: 'api/v1/uw/group/' + group + '/membership',
+                    url: 'api/v1/uwgroup/' + group + '/members',
                     async: false
                 }).done(function(data) {
                     validateGroupMembers(group, data.invalid, warnBadNewGroupMembers);
@@ -408,7 +408,7 @@ $(document).ready(function() {
         $.ajax({
             type: 'GET',
             dataType: 'json',
-            url: 'api/v1/account/' + account_id + '/course_roles',
+            url: 'api/v1/course-roles',
         }).done(function (data) {
             window.course_groups.roles = data.roles;
             newGroupInput();
@@ -416,7 +416,7 @@ $(document).ready(function() {
         }).fail(function (msg) {
             $('div.new-group-list').html('Error loading course roles: ' + msg);
         }).always(function () {
-            $('.loading_roles').hide();  
+            $('.loading_roles').hide();
         });
     };
 
@@ -479,7 +479,7 @@ $(document).ready(function() {
                         // validate membership
                         $.ajax({
                             type: 'GET',
-                            url: 'api/v1/uw/group/' + j.id + '/membership',
+                            url: 'api/v1/uwgroup/' + j.id + '/members',
                             success: function (data) {
                                 var content = validateGroupMembers(
                                         j.group_id, data.invalid,
