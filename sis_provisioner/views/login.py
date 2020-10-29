@@ -1,3 +1,4 @@
+from django.conf import settings
 from rest_framework.views import APIView
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
@@ -24,7 +25,7 @@ class LoginValidationView(APIView):
 
         users = []
         for login in login_data:
-            login = login.lower()
+            login = login.strip().lower()
             if not any(u.get('login') == login for u in users):
                 try:
                     user = {}
@@ -32,6 +33,7 @@ class LoginValidationView(APIView):
                         person = get_person_by_gmail_id(login)
                         user['login'] = person.login_id
                     except UserPolicyException:
+                        login = self.strip_domain(login)
                         person = get_person_by_netid(login)
                         user['login'] = person.uwnetid
 
@@ -49,3 +51,13 @@ class LoginValidationView(APIView):
                     users.append({'login': login, 'error': '{}'.format(ex)})
 
         return RESTDispatch.json_response({'users': users})
+
+    @staticmethod
+    def strip_domain(login):
+        try:
+            (username, domain) = login.split('@')
+            if domain in getattr(settings, 'ADD_USER_DOMAIN_WHITELIST', []):
+                return username
+        except ValueError:
+            pass
+        return login
