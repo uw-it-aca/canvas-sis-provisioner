@@ -34,6 +34,9 @@ class RestClientsCache(RestclientPymemcacheClient):
                 return ONE_WEEK
 
         if 'gws' == service:
+            if re.match(r'^/group_sws/v\d/group/u_somalt_', url):
+                return ONE_HOUR
+
             if re.match(r'^/group_sws/v\d/group/{}/effective_member/'.format(
                     NONPERSONAL_NETID_EXCEPTION_GROUP), url):
                 return ONE_HOUR

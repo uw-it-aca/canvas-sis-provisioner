@@ -51,6 +51,13 @@ image:
 memcached:
   enabled: true
   replicaCount: 2
+  command:
+    - "memcached"
+    - "-m"
+    - "256"
+    - "-o"
+    - "modern"
+    - "-v"
   updateStrategy:
     type: RollingUpdate
 gcsCredentials:
