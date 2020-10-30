@@ -1,0 +1,166 @@
+{% extends 'groups/base.html' %}
+
+{% block content %}
+<div class="canvas-UW-group-manager-container">
+
+<!-- Header and help text -->
+<h2 id="uw-groups-header">Manage users with UW Groups</h2>
+<p>You can add people to this course by using UW Groups. <a href="https://itconnect.uw.edu/learn/tools/canvas/canvas-help-for-instructors/getting-started/add-people/#add" target="_blank">Learn more about using UW Groups</a> or <a href="https://groups.uw.edu/?view=search" target="_blank">browse to find groups</a>.</p>
+
+<!-- List of existing groups -->
+
+<div class="existing-groups" style="display: none;">
+    <h3>UW Groups already added</h3>
+    <div class="groups-table-container">
+         <table>
+           <tr>
+             <th style="width: 40%;">UW Group</th>
+             <th style="width: 25%;">Role</th>
+             <th style="width: 20%;">Added by</th>
+             <th style="width: 15%;">&nbsp;</th>
+           </tr>
+         </table>
+    </div>
+
+<!-- Add new groups table -->
+
+<h3>Add new UW Groups</h3>
+</div>
+
+<!-- New group template loop and link -->
+
+<div class="new-group-list">
+    <span class="loading_roles"><strong>Loading...</strong></span>
+    <ul></ul>
+    <a href="javascript:void(0);" style="display: none;">+ Add another group</a>
+</div>
+
+<p style="color: red;display: none;">You have unsaved changes.</p>
+
+<button type="button" class="btn" disabled="disabled">Save</button>
+<!-- Existing group loop -->
+
+{% verbatim %}
+<script id="existing-group" type="text/x-handlebars-template">
+<tr>
+  <td class = "strike">{{group_id}}<input type="hidden" id="group-model-id" value="{{ id }}"></td>
+  <td class = "strike">{{role}}</td>
+  <td class = "strike">{{added_by}}</td>
+  <td>
+    <span class="group-delete"><a class="btn btn-small " href="javascript:void(0);">Remove</a></span>
+    <span class="group-undelete"><a class="btn btn-small " href="javascript:void(0);">Undo</a></span>
+  </td>
+</tr>
+</script>
+{% endverbatim %}
+
+<!-- New group row template -->
+{% verbatim %}
+<script id="new-group-item" type="text/x-handlebars-template">
+<li>
+Add <div class="textinput"><input size="340" type="text" value="{{group_id}}"><span></span></div> as
+<select style="width: 240px;">
+  <option value="">choose ...</option>
+  {{#each roles}}
+  <option value="{{this}}">{{this}}</option>
+  {{/each}}
+</select>
+</li>
+</script>
+{% endverbatim %}
+
+<!-- Group membership exceptions template -->
+{% verbatim %}
+<script id="group-member-exceptions" type="text/x-handlebars-template">
+This group contains {{count}} member{{plural}} who cannot access Canvas:
+<ul>
+{{#members}}
+  </li>{{member}}<li>
+{{/members}}
+</ul>
+Canvas access is limited to UW NetIds only.
+</script>
+{% endverbatim %}
+
+<!-- Unsaved changes alert -->
+{% verbatim %}
+<script id="beforeunload-warning" type="text/x-handlebars-template">
+You have unsaved changes.  If you leave this page your changes will be lost.
+</script>
+{% endverbatim %}
+
+<!-- success/error modal after save -->
+<div id="closing-success" class="modal hide fade in" style="display: none; ">
+<div class="modal-header">
+<!-- <a class="close" data-dismiss="modal">×</a> -->
+<h4>Changes Submitted</h4>
+</div>
+<div class="modal-body">
+<p>Please allow up to 10 minutes for changes to take effect.</p>
+<div>
+</div>
+</div>
+<div class="modal-footer">
+<a href="#" class="btn" data-dismiss="modal">OK</a>
+</div>
+</div>
+
+<!-- Group membership exceptions template -->
+{% verbatim %}
+<script id="closing-modal-exceptions" type="text/x-handlebars-template">
+<div class="membership-exceptions">
+  <p><span>NOTE</span>: This group contains a non-UW NetID</p>
+
+{{#exceptions}}
+  <div>
+    <span>{{group}}</span> contains {{count}} member{{plural}} who cannot access Canvas:
+    <ul>
+      {{#members}}
+        </li>{{member}}<li>
+      {{/members}}
+    </ul>
+  </div>
+{{/exceptions}}
+
+<p>Canvas access is limited to UW NetIDs only.</p>
+
+</div>
+</script>
+{% endverbatim %}
+
+<!-- Group membership view 401 error template -->
+{% verbatim %}
+<script id="permission-denied-exception" type="text/x-handlebars-template">
+You do not have permission to use this group.
+</script>
+{% endverbatim %}
+
+<div id="closing-failure" class="modal hide fade in" style="display: none; ">
+  <div class="modal-header">
+    <!-- <a class="close" data-dismiss="modal">×</a> -->
+    <h4 style="color:red;">Changes Failed</h4>
+  </div>
+  <div class="modal-body">
+    <p>One or more errors occurred while adding your group</p>
+    <div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <a href="#" class="btn" data-dismiss="modal">OK</a>
+  </div>
+</div>
+
+<script type="text/javascript">
+window.course_groups = {
+  session_id: '{{ session_id }}',
+  csrftoken: '{{ csrf_token }}',
+  sis_course_id: '{{ sis_course_id|safe }}',
+  canvas_course_id: '{{ canvas_course_id }}',
+  canvas_account_id: '{{ canvas_account_id }}',
+  roles: [],
+  launch_presentation_return_url: '{{ launch_presentation_return_url|safe }}'
+};
+</script>
+
+{% endblock %}
+</div>

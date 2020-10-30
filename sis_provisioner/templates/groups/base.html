@@ -1,0 +1,40 @@
+<!doctype html>
+<html class="no-js">
+<head>
+    <title>UW Groups</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="HandheldFriendly" content="true">
+
+    {% load staticfiles %}
+    {% load compress %}
+
+    <link rel="stylesheet" type="text/css" href="{% static "groups/css/vendor/bootstrap.min.css" %}"/>
+    <link rel="stylesheet" type="text/css" href="{% static "groups/css/vendor/bootstrap-responsive.min.css" %}"/>
+
+    {% compress css %}
+    <link rel="stylesheet" type="text/less" href="{% static "groups/css/mobile.less" %}" media="screen, handheld" />
+    <link rel="stylesheet" type="text/less" href="{% static "groups/css/desktop.less" %}" media="screen and (min-width: 480px)" />
+    <link rel="stylesheet" type="text/less" href="{% static "groups/css/blti.less" %}" media="screen and (min-width: 480px)" />
+    {% endcompress %}
+    <link rel="shortcut icon" href="{% static "groups/img/favicon.ico" %}">
+</head>
+<body>
+
+    <div id="wrapper" class="container" style="position:relative;">
+
+        <div id="main-wrapper">
+        	<div id="main" aria-labelledby="uw-groups-header">
+        	   <div class="inner">{% block content %}{% endblock %}</div>
+        	</div><!--end #main-->
+        </div>
+    </div>
+
+    <link href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css" rel="stylesheet" type="text/css"/>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script>
+    <script src="{% static "groups/js/vendor/bootstrap.min.js" %}"></script>
+    <script src="{% static "groups/js/vendor/handlebars-1.0.0.min.js" %}"></script>
+    <script src="{% static "groups/js/groups.js" %}"></script>
+</body>
+</html>
