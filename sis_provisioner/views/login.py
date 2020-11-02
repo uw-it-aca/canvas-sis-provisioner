@@ -43,7 +43,10 @@ class LoginValidationView(APIView):
                         if len(name) == 2:
                             user['first_name'] = name[0]
                             user['last_name'] = name[1]
+                            user['full_name'] = ' '.join(name)
                         else:
+                            user['first_name'] = None
+                            user['last_name'] = None
                             user['full_name'] = name[0]
                         users.append(user)
 
