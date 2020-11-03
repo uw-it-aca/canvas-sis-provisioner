@@ -41,15 +41,7 @@ class LoginValidationView(APIView):
                     if not any(u.get('sis_id') == sis_id for u in users):
                         user['sis_id'] = sis_id
                         user['email'] = user_email(person)
-                        name = user_fullname(person)
-                        if len(name) == 2:
-                            user['first_name'] = name[0]
-                            user['last_name'] = name[1]
-                            user['full_name'] = ' '.join(name)
-                        else:
-                            user['first_name'] = None
-                            user['last_name'] = None
-                            user['full_name'] = name[0]
+                        user['full_name'] = ' '.join(user_fullname(person))
                         users.append(user)
 
                 except DataFailureException as ex:
