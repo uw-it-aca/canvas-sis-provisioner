@@ -17,7 +17,9 @@ from sis_provisioner.views.events import EventListView
 from sis_provisioner.views.astra import AdminSearch, AccountSearch, AccountSoC
 from sis_provisioner.views.external_tools import (
     ExternalToolView, ExternalToolListView)
-
+from sis_provisioner.views.groups import GroupsLaunchView, GroupView
+from sis_provisioner.views.groups.roles import CanvasCourseRoles
+from sis_provisioner.views.groups.validate import GWSGroup, GWSGroupMembers
 
 urlpatterns = [
     re_path(r'^$', TemplateView.as_view(template_name='index.html')),
@@ -32,7 +34,17 @@ urlpatterns = [
     re_path(r'^admin/external_tools$', ManageExternalTools.as_view(),
             name='ManageExternalTools'),
 
-    # API urls
+    # Groups LTI
+    re_path(r'^groups/?$', GroupsLaunchView.as_view()),
+    re_path(r'^groups/api/v1/group/(?P<id>[0-9]+)?$', GroupView.as_view()),
+    re_path(r'^groups/api/v1/course-roles$', CanvasCourseRoles.as_view(),
+            name='GroupCourseRoles'),
+    re_path(r'^groups/api/v1/uwgroup/(?P<group_id>[a-zA-Z0-9\-\_\.]*)$',
+            GWSGroup.as_view(), name='UWGroup'),
+    re_path(r'^groups/api/v1/uwgroup/(?P<group_id>[a-zA-Z0-9\-\_\.]+)/members',
+            GWSGroupMembers.as_view(), name='UWGroupMembers'),
+
+    # Admin API urls
     re_path(r'api/v1/canvas$', CanvasStatus.as_view()),
     re_path(r'api/v1/canvas/course/(?P<sis_id>[a-zA-Z0-9 &-]+)$',
             CanvasCourseView.as_view()),

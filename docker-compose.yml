@@ -15,3 +15,4 @@ services:
       - ./sis_provisioner:/app/sis_provisioner
     ports:
       - "8000:8000"
+      - "8001:8001"
