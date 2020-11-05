@@ -580,6 +580,7 @@ $(document).ready(function () {
                                             imp.post_status !== 200 &&
                                             imp.canvas_errors &&
                                             imp.canvas_errors.length),
+                            timeout_exceeded = moment().diff(moment(imp.added_date), 'hours'),
                             canvas_state = imp.canvas_state || '',
                             canvas_failed = (canvas_state.match(/^failed/) !== null),
                             output = [],
@@ -641,7 +642,7 @@ $(document).ready(function () {
                             'exception_failure': exception_failure,
                             'csv_failed': csv_failure,
                             'post_failed': post_failure,
-                            'import_failed': (post_failure || canvas_failed || csv_failure),
+                            'import_failed': (post_failure || canvas_failed || csv_failure || timeout_exceeded),
                             'canvas_finished': (canvas_state.match(/^(imported|failed)/) !== null),
                             'with_messages': (canvas_state.match(/^(imported|failed)_with_messages/) !== null),
                             'is_pending': (imp.csv_path !== null &&
