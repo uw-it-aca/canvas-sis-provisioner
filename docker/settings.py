@@ -210,7 +210,7 @@ SIS_IMPORT_ROOT_ACCOUNT_ID = 'uwcourse'
 SIS_IMPORT_GROUPS = ['uw_student', 'uw_faculty', 'uw_staff']
 SIS_IMPORT_LIMIT = {
     'course': {
-        'default': 500,
+        'default': 400,
         'high': 200
     },
     'enrollment': {
