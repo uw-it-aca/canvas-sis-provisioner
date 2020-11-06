@@ -54,6 +54,10 @@
         {{#if with_messages}}
     <a href="javascript:void(0);" class="action action-delete" title="Clear status for import ID {{ queue_id }}"></a>
         {{/if}}
+      {{else}}
+        {{#if timeout_exceeded}}
+        <a href="javascript:void(0);" class="action action-requeue" title="Requeue import ID {{ queue_id }}"></a>
+        {{/if}}
       {{/if}}
     {{/if}}
     {{#if is_pending}}
