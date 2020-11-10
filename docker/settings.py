@@ -69,6 +69,16 @@ else:
     GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
         '/gcs/credentials.json')
 
+    DATABASES['analytics'] = {
+        'ENGINE': 'django.db.backends.mysql',
+        'HOST': os.getenv('ANALYTICS_DATABASE_HOSTNAME', 'localhost'),
+        'NAME': os.getenv('ANALYTICS_DATABASE_NAME', 'canvas_analytics'),
+        'USER': os.getenv('ANALYTICS_DATABASE_USERNAME', None),
+        'PASSWORD': os.getenv('ANALYTICS_DATABASE_PASSWORD', None),
+    }
+
+    DATABASE_ROUTERS = ['sis_provisioner.models.router.AnalyticsRouter']
+
 RESTCLIENTS_DISABLE_THREADING = True
 RESTCLIENTS_ADMIN_AUTH_MODULE = 'sis_provisioner.views.admin.can_view_source_data'
 SUPPORTTOOLS_PARENT_APP = 'Canvas LMS'
