@@ -108,6 +108,11 @@ environmentVariables:
   - name: CLUSTER_CNAME
     value: test-apps.canvas.uw.edu
 
+  - name: ANALYTICS_DATABASE_HOSTNAME
+    value: 172.18.0.41
+  - name: ANALYTICS_DATABASE_NAME
+    value: canvas_analytics_test
+
 externalSecrets:
   enabled: true
   secrets:
@@ -183,6 +188,10 @@ externalSecrets:
           property: username
         - name: password
           property: password
+        - name: analytics-username
+          property: analytics-username
+        - name: analytics-password
+          property: analytics-password
     - name: test-apps.canvas.uw.edu-uwca-certs
       externalKey: axdd/kv/data/canvas/test/uwca-certs
       data:
@@ -317,3 +326,11 @@ environmentVariablesSecrets:
     name: IDP_CERT
     secretName: test-apps.canvas.uw.edu-uw-idp-cert
     secretKey: uw-idp-cert
+  analyticsDatabaseUser:
+    name: ANALYTICS_DATABASE_USERNAME
+    secretName: test-apps.canvas.uw.edu-sql-secrets
+    secretKey: analytics-username
+  analyticsDatabasePassword:
+    name: ANALYTICS_DATABASE_PASSWORD
+    secretName: test-apps.canvas.uw.edu-sql-secrets
+    secretKey: analytics-password
