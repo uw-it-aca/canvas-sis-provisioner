@@ -1,17 +1,17 @@
 class AnalyticsRouter:
     def db_for_read(self, model, **hints):
         """
-        Attempts to read canvas_analytics models go to analytics db.
+        Attempts to read analytics models go to analytics db.
         """
-        if model._meta.app_label == 'canvas_analytics':
+        if model._meta.app_label == 'analytics':
             return 'analytics'
         return None
 
     def db_for_write(self, model, **hints):
         """
-        Attempts to write canvas_analytics models go to analytics db.
+        Attempts to write analytics models go to analytics db.
         """
-        if model._meta.app_label == 'canvas_analytics':
+        if model._meta.app_label == 'analytics':
             return 'analytics'
         return None
 
@@ -23,8 +23,8 @@ class AnalyticsRouter:
 
     def allow_migrate(self, db, app_label, model_name=None, **hints):
         """
-        Make sure the canvas_analytics app only appears in the analytics db.
+        Make sure the analytics app only appears in the analytics db.
         """
-        if app_label == 'canvas_analytics':
+        if app_label == 'analytics':
             return db == 'analytics'
         return None
