@@ -412,8 +412,8 @@ class EnrollmentManager(models.Manager):
         self.purge_expired()
 
     def purge_expired(self):
-        retention = getattr(settings, 'ENROLLMENT_EVENT_RETENTION_DAYS', 180)
-        retention_dt = datetime.now() - timedelta(days=retention)
+        retention_dt = datetime.now().replace(tzinfo=None) - timedelta(
+            days=getattr(settings, 'ENROLLMENT_EVENT_RETENTION_DAYS', 180))
         return super(EnrollmentManager, self).get_queryset().filter(
             priority=PRIORITY_NONE, last_modified__lt=retention_dt).delete()
 
