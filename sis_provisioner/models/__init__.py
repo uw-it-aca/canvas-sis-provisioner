@@ -412,7 +412,7 @@ class EnrollmentManager(models.Manager):
         self.purge_expired()
 
     def purge_expired(self):
-        retention_dt = datetime.now().replace(tzinfo=None) - timedelta(
+        retention_dt = datetime.utcnow().replace(tzinfo=utc) - timedelta(
             days=getattr(settings, 'ENROLLMENT_EVENT_RETENTION_DAYS', 180))
         return super(EnrollmentManager, self).get_queryset().filter(
             priority=PRIORITY_NONE, last_modified__lt=retention_dt).delete()
@@ -422,7 +422,7 @@ class EnrollmentManager(models.Manager):
         reg_id = enrollment_data.get('UWRegID')
         role = enrollment_data.get('Role')
         status = enrollment_data.get('Status').lower()
-        last_modified = enrollment_data.get('LastModified')
+        last_modified = enrollment_data.get('LastModified').replace(tzinfo=utc)
         request_date = enrollment_data.get('RequestDate')
         instructor_reg_id = enrollment_data.get('InstructorUWRegID', None)
 
