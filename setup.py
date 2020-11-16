@@ -33,7 +33,7 @@ setup(
         'django-aws-message>=1.5.1',
         'djangorestframework>=3.11.1,<3.12.0',
         'django-storages[google]',
-        'uw-memcached-clients>=1.0.2,<2.0',
+        'uw-memcached-clients>=1.0.5,<2.0',
         'UW-RestClients-Core>=1.2.1,<2.0',
         'UW-RestClients-SWS>=2.2.1,<3.0',
         'UW-RestClients-PWS>=2.0.5,<3.0',
