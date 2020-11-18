@@ -60,6 +60,9 @@ class SISProvisionerCommand(BaseCommand):
     def name_from_argv(self):
         name = sys.argv[1]
         args = sys.argv[2:]
+        if name == '--delay':
+            name = sys.argv[3]
+            args = sys.argv[4:]
         if len(args):
             name += ':' + ':'.join(args).replace('--', '')
         return name

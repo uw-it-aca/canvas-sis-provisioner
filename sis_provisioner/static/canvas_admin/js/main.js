@@ -643,6 +643,7 @@ $(document).ready(function () {
                             'post_failed': post_failure,
                             'import_failed': (post_failure || canvas_failed || csv_failure),
                             'canvas_finished': (canvas_state.match(/^(imported|failed)/) !== null),
+                            'timeout_exceeded': moment().diff(moment(imp.added_date), 'hours'),
                             'with_messages': (canvas_state.match(/^(imported|failed)_with_messages/) !== null),
                             'is_pending': (imp.csv_path !== null &&
                                            imp.post_status === null &&

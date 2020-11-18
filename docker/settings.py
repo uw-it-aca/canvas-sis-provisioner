@@ -8,6 +8,7 @@ INSTALLED_APPS += [
     'django_user_agents',
     'supporttools',
     'rc_django',
+    'analytics',
     'rest_framework.authtoken',
     'sis_provisioner.apps.SISProvisionerConfig',
 ]
@@ -68,6 +69,16 @@ else:
     GS_LOCATION = os.path.join(os.getenv('SIS_IMPORT_CSV_ROOT', ''))
     GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
         '/gcs/credentials.json')
+
+    DATABASES['analytics'] = {
+        'ENGINE': 'django.db.backends.mysql',
+        'HOST': os.getenv('ANALYTICS_DATABASE_HOSTNAME', 'localhost'),
+        'NAME': os.getenv('ANALYTICS_DATABASE_NAME', 'canvas_analytics'),
+        'USER': os.getenv('ANALYTICS_DATABASE_USERNAME', None),
+        'PASSWORD': os.getenv('ANALYTICS_DATABASE_PASSWORD', None),
+    }
+
+    DATABASE_ROUTERS = ['sis_provisioner.models.router.AnalyticsRouter']
 
 RESTCLIENTS_DISABLE_THREADING = True
 RESTCLIENTS_ADMIN_AUTH_MODULE = 'sis_provisioner.views.admin.can_view_source_data'
@@ -187,7 +198,7 @@ ANCILLARY_CANVAS_ROLES = {
     },
 }
 
-UW_GROUP_BLACKLIST = [
+DISALLOWED_UW_GROUPS = [
     'uw_affiliation_',
     'uw_employee',
     'uw_faculty',
@@ -199,8 +210,8 @@ UW_GROUP_BLACKLIST = [
 
 DEFAULT_GROUP_SECTION_NAME = 'UW Group members'
 
-LOGIN_DOMAIN_WHITELIST = ['gmail.com', 'google.com', 'googlemail.com']
-ADD_USER_DOMAIN_WHITELIST = [
+ALLOWED_LOGIN_DOMAINS = ['gmail.com', 'google.com', 'googlemail.com']
+ALLOWED_ADD_USER_DOMAINS = [
     'uw.edu', 'washington.edu', 'u.washington.edu', 'cac.washington.edu']
 
 CONTINUUM_ACCOUNT_ID = os.getenv('CONTINUUM_ACCOUNT_ID', '')
@@ -210,7 +221,7 @@ SIS_IMPORT_ROOT_ACCOUNT_ID = 'uwcourse'
 SIS_IMPORT_GROUPS = ['uw_student', 'uw_faculty', 'uw_staff']
 SIS_IMPORT_LIMIT = {
     'course': {
-        'default': 500,
+        'default': 400,
         'high': 200
     },
     'enrollment': {

@@ -142,6 +142,10 @@ cronjob:
       schedule: "5,35 18-20 * * 0"
       command: ["/scripts/management_command.sh"]
       args: ["update_test_urls"]
+    - name: weekly-activity-report
+      schedule: "5 13 * * 0"
+      command: ["/scripts/management_command.sh"]
+      args: ["build_subaccount_activity_report"]
 daemon:
   enabled: true
   daemons:
@@ -205,7 +209,7 @@ environmentVariables:
   - name: CANVAS_ENV
     value: PROD
   - name: CANVAS_TIMEOUT
-    value: "60"
+    value: "90"
 
   - name: ASTRA_ENV
     value: PROD
@@ -218,6 +222,11 @@ environmentVariables:
     value: https://apps.canvas.uw.edu/shibboleth
   - name: CLUSTER_CNAME
     value: apps.canvas.uw.edu
+
+  - name: ANALYTICS_DATABASE_HOSTNAME
+    value: 172.18.0.41
+  - name: ANALYTICS_DATABASE_NAME
+    value: canvas_analytics_prod
 
 externalSecrets:
   enabled: true
@@ -294,6 +303,10 @@ externalSecrets:
           property: username
         - name: password
           property: password
+        - name: analytics-username
+          property: analytics-username
+        - name: analytics-password
+          property: analytics-password
     - name: apps.canvas.uw.edu-uwca-certs
       externalKey: axdd/kv/data/canvas/prod/uwca-certs
       data:
@@ -428,3 +441,11 @@ environmentVariablesSecrets:
     name: IDP_CERT
     secretName: apps.canvas.uw.edu-uw-idp-cert
     secretKey: uw-idp-cert
+  analyticsDatabaseUser:
+    name: ANALYTICS_DATABASE_USERNAME
+    secretName: apps.canvas.uw.edu-sql-secrets
+    secretKey: analytics-username
+  analyticsDatabasePassword:
+    name: ANALYTICS_DATABASE_PASSWORD
+    secretName: apps.canvas.uw.edu-sql-secrets
+    secretKey: analytics-password

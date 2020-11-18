@@ -78,7 +78,7 @@ def valid_gmail_id(login_id):
     except Exception:
         raise InvalidLoginIdException("Invalid username: {}".format(login_id))
 
-    if domain not in getattr(settings, 'LOGIN_DOMAIN_WHITELIST', []):
+    if domain not in getattr(settings, 'ALLOWED_LOGIN_DOMAINS', []):
         raise InvalidLoginIdException("Invalid domain: {}".format(login_id))
 
     return "{}@{}".format(username, domain)

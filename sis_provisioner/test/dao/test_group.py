@@ -13,7 +13,7 @@ import mock
 @fdao_gws_override
 @fdao_pws_override
 class GroupPolicyTest(TestCase):
-    @override_settings(UW_GROUP_BLACKLIST=['uw_student', 'uw_staff'])
+    @override_settings(DISALLOWED_UW_GROUPS=['uw_student', 'uw_staff'])
     def test_valid_group(self):
         # Valid
         self.assertEquals(valid_group_id('u_javerage_test'), None)
@@ -93,7 +93,7 @@ class SISImportMembersTest(TestCase):
 @fdao_gws_override
 @fdao_pws_override
 class EffectiveMemberTest(TestCase):
-    @override_settings(UW_GROUP_BLACKLIST=['uw_student', 'uw_staff'])
+    @override_settings(DISALLOWED_UW_GROUPS=['uw_student', 'uw_staff'])
     def test_effective_members(self):
         valid_members, invalid_members, member_groups = get_effective_members(
             'u_acadev_unittest')
