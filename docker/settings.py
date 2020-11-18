@@ -198,7 +198,7 @@ ANCILLARY_CANVAS_ROLES = {
     },
 }
 
-UW_GROUP_BLACKLIST = [
+DISALLOWED_UW_GROUPS = [
     'uw_affiliation_',
     'uw_employee',
     'uw_faculty',
@@ -210,8 +210,8 @@ UW_GROUP_BLACKLIST = [
 
 DEFAULT_GROUP_SECTION_NAME = 'UW Group members'
 
-LOGIN_DOMAIN_WHITELIST = ['gmail.com', 'google.com', 'googlemail.com']
-ADD_USER_DOMAIN_WHITELIST = [
+ALLOWED_LOGIN_DOMAINS = ['gmail.com', 'google.com', 'googlemail.com']
+ALLOWED_ADD_USER_DOMAINS = [
     'uw.edu', 'washington.edu', 'u.washington.edu', 'cac.washington.edu']
 
 CONTINUUM_ACCOUNT_ID = os.getenv('CONTINUUM_ACCOUNT_ID', '')

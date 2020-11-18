@@ -56,7 +56,7 @@ class LoginValidationView(APIView):
     def strip_domain(login):
         try:
             (username, domain) = login.split('@')
-            if domain in getattr(settings, 'ADD_USER_DOMAIN_WHITELIST', []):
+            if domain in getattr(settings, 'ALLOWED_ADD_USER_DOMAINS', []):
                 return username
         except ValueError:
             pass

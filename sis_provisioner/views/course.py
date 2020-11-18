@@ -183,10 +183,10 @@ class CourseListView(RESTDispatch):
                 quarter = request.GET.get('quarter')
                 term = get_term_by_year_and_quarter(year, quarter)
 
-                white_list = []
+                valid = []
                 for section in get_sections_by_instructor_and_term(
                         instructor, term):
-                    white_list.append('-'.join([
+                    valid.append('-'.join([
                         section.term.canvas_sis_id(),
                         section.curriculum_abbr.upper(),
                         section.course_number,
@@ -198,7 +198,7 @@ class CourseListView(RESTDispatch):
 
         include_sws_url = self.can_view_source_data(request)
         for course in course_list:
-            if 'white_list' in locals() and course.course_id not in white_list:
+            if 'valid' in locals() and course.course_id not in valid:
                 continue
 
             json_data = course.json_data(include_sws_url)
