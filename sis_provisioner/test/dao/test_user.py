@@ -53,7 +53,7 @@ class UserPolicyTest(TestCase):
         self.assertRaises(UserPolicyException, valid_canvas_user_id, 'abc')
         self.assertRaises(UserPolicyException, valid_canvas_user_id, '1234z')
 
-    @override_settings(LOGIN_DOMAIN_WHITELIST=['gmail.com'])
+    @override_settings(ALLOWED_LOGIN_DOMAINS=['gmail.com'])
     def test_user_sis_id(self):
         user = PWS().get_person_by_netid('javerage')
         self.assertEquals(
@@ -62,7 +62,7 @@ class UserPolicyTest(TestCase):
         user = get_person_by_gmail_id('john.smith@gmail.com')
         self.assertEquals(user_sis_id(user), 'johnsmith@gmail.com')
 
-    @override_settings(LOGIN_DOMAIN_WHITELIST=['gmail.com'])
+    @override_settings(ALLOWED_LOGIN_DOMAINS=['gmail.com'])
     def test_user_email(self):
         user = PWS().get_person_by_netid('javerage')
         self.assertEquals(user_email(user), 'javerage@uw.edu')
@@ -81,7 +81,7 @@ class UserPolicyTest(TestCase):
         user = InvalidPerson()
         self.assertRaises(UserPolicyException, user_email, user)
 
-    @override_settings(LOGIN_DOMAIN_WHITELIST=['gmail.com'])
+    @override_settings(ALLOWED_LOGIN_DOMAINS=['gmail.com'])
     def test_user_fullname(self):
         user = PWS().get_person_by_netid('javerage')
         user.display_name = None
@@ -230,7 +230,7 @@ class GmailPolicyTest(TestCase):
         "@gmail.com",
     ]
 
-    @override_settings(LOGIN_DOMAIN_WHITELIST=valid_domains)
+    @override_settings(ALLOWED_LOGIN_DOMAINS=valid_domains)
     def test_get_person_by_gmail_id(self):
         default_user = "johnsmith@gmail.com"
 
@@ -242,7 +242,7 @@ class GmailPolicyTest(TestCase):
             self.assertRaises(
                 UserPolicyException, get_person_by_gmail_id, user)
 
-    @override_settings(LOGIN_DOMAIN_WHITELIST=valid_domains)
+    @override_settings(ALLOWED_LOGIN_DOMAINS=valid_domains)
     def test_valid_domains(self):
         default_user = "johnsmith"
 
@@ -261,7 +261,7 @@ class GmailPolicyTest(TestCase):
             self.assertRaises(
                 InvalidLoginIdException, valid_gmail_id, user)
 
-    @override_settings(LOGIN_DOMAIN_WHITELIST=valid_domains)
+    @override_settings(ALLOWED_LOGIN_DOMAINS=valid_domains)
     def test_valid_user(self):
         default_user = "johnsmith@gmail.com"
 
@@ -277,7 +277,7 @@ class GmailPolicyTest(TestCase):
         for user in self.invalid_users:
             self.assertRaises(UserPolicyException, valid_gmail_id, user)
 
-    @override_settings(LOGIN_DOMAIN_WHITELIST=[])
+    @override_settings(ALLOWED_LOGIN_DOMAINS=[])
     def test_valid_user_no_domains(self):
         for user in self.valid_users:
             self.assertRaises(UserPolicyException, valid_gmail_id, user)

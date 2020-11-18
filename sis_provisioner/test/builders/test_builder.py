@@ -44,7 +44,7 @@ class BuilderTest(TestCase):
             '2013-winter-DROP_T-100-B')
         self.assertEqual(builder.add_registrations_by_section(section), None)
 
-    @override_settings(LOGIN_DOMAIN_WHITELIST=['gmail.com'])
+    @override_settings(ALLOWED_LOGIN_DOMAINS=['gmail.com'])
     def test_add_group_enrollment_data(self):
         builder = Builder()
         builder.add_group_enrollment_data(
