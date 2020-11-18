@@ -19,9 +19,9 @@ def valid_group_id(group_id):
     except InvalidGroupID:
         raise GroupPolicyException("Invalid Group ID: {}".format(group_id))
 
-    RE_GROUP_BLACKLIST = re.compile(r'^({}).*$'.format('|'.join(
-        getattr(settings, 'UW_GROUP_BLACKLIST', []))))
-    if RE_GROUP_BLACKLIST.match(group_id):
+    RE_GROUP_DISALLOWED = re.compile(r'^({}).*$'.format('|'.join(
+        getattr(settings, 'DISALLOWED_UW_GROUPS', []))))
+    if RE_GROUP_DISALLOWED.match(group_id):
         raise GroupPolicyException(
             "This group cannot be used in Canvas: {}".format(group_id))
 
