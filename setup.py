@@ -42,7 +42,7 @@ setup(
         'UW-RestClients-Canvas>=1.1.12,<2.0',
         'UW-RestClients-Django-Utils>=2.1.8,<3.0',
         'Django-SupportTools>=3.4,<4.0',
-        'UW-Django-SAML2>=1.4,<2.0',
+        'UW-Django-SAML2>=1.5.1,<2.0',
         'prometheus-client>=0.7,<1.0',
     ],
     license='Apache License, Version 2.0',
