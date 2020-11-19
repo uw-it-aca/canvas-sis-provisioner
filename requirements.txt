@@ -1,2 +1,2 @@
 -e .
--e git+https://github.com/uw-it-aca/canvas-analytics@v1.0.1#egg=canvas-analytics
+-e git+https://github.com/uw-it-aca/canvas-analytics@v1.0.2#egg=canvas-analytics
