@@ -21,7 +21,7 @@ setup(
     packages=['sis_provisioner'],
     include_package_data=True,
     install_requires = [
-        'Django>=2.1,<2.2',
+        'Django>=2.2,<3.0',
         'django-compressor',
         'django-user-agents',
         'lxml>=4.2.5,<4.3',
