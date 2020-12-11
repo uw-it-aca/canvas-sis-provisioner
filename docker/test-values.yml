@@ -13,18 +13,6 @@ ingress:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt
     nginx.ingress.kubernetes.io/proxy-read-timeout: "180"
-autoscaling:
-  enabled: true
-  minReplicas: 1
-  maxReplicas: 1
-targetAverageUtilization: 100
-resources:
-  limits:
-    cpu: 1.0
-    memory: 768Mi
-  requests:
-    cpu: 100m
-    memory: 700Mi
 lifecycle:
   enabled: true
   preStop:
