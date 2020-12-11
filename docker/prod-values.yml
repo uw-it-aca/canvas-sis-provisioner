@@ -26,6 +26,7 @@ ingress:
         - "/"
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "180"
 lifecycle:
   enabled: true
   preStop:

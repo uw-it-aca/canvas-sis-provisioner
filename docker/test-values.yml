@@ -12,6 +12,7 @@ ingress:
         - "/"
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "180"
 lifecycle:
   enabled: true
   preStop:
@@ -70,6 +71,9 @@ certs:
 environmentVariables:
   - name: ENV
     value: test
+
+  - name: WEBSERVER
+    value: nginx
 
   - name: PWS_ENV
     value: EVAL
