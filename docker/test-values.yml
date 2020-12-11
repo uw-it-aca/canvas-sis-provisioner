@@ -85,7 +85,7 @@ environmentVariables:
     value: test
 
   - name: WEBSERVER
-    value: nginx
+    value: apache2
 
   - name: PWS_ENV
     value: EVAL
