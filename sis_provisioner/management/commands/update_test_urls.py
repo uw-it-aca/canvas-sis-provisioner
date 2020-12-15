@@ -18,7 +18,7 @@ class Command(SISProvisionerCommand):
             'test': 'https://test-apps.canvas.uw.edu'},
         'panopto': {
             'prod': 'https://panopto-app.uw.edu',
-            'test': 'https://panopto-dev.s.uw.edu'},
+            'test': 'https://test.panopto-app.uw.edu'},
         'course-users': {
             'prod': 'https://course-users.canvas.uw.edu',
             'test': 'https://test-course-users.canvas.uw.edu'},
