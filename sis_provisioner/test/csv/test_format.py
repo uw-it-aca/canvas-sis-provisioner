@@ -5,6 +5,7 @@ from uw_sws.util import fdao_sws_override
 from sis_provisioner.models import Curriculum
 from sis_provisioner.dao.course import (
     get_section_by_label, get_registrations_by_section)
+from sis_provisioner.dao.user import get_person_by_gmail_id
 from sis_provisioner.exceptions import (
     CoursePolicyException, EnrollmentPolicyException, AccountPolicyException)
 from sis_provisioner.csv.format import *
@@ -216,8 +217,20 @@ class UserCSVTest(TestCase):
         user = PWS().get_person_by_netid('javerage')
         self.assertEquals(
             str(UserCSV(user, 'active')), (
-                '9136CCB8F66711D5BE060004AC494FFE,javerage,,,,'
-                'Jamesy McJamesy,,,javerage@uw.edu,active\n'))
+                '9136CCB8F66711D5BE060004AC494FFE,javerage,,Jamesy,'
+                'McJamesy,,,,javerage@uw.edu,active\n'))
+
+        user = PWS().get_entity_by_netid('somalt')
+        self.assertEquals(
+            str(UserCSV(user, 'active')), (
+                '605764A811A847E690F107D763A4B32A,somalt,,,,'
+                'SOM ACADEMIC LRNG TECHNOLOGY,,,somalt@uw.edu,active\n'))
+
+        user = get_person_by_gmail_id('john.smith@gmail.com')
+        self.assertEquals(
+            str(UserCSV(user, 'active')), (
+                'johnsmith@gmail.com,john.smith@gmail.com,,,,'
+                'john.smith,,,john.smith@gmail.com,active\n'))
 
 
 class XlistCSVTest(TestCase):
