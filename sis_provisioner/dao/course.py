@@ -7,7 +7,6 @@ from uw_sws.models import Section
 from uw_canvas.models import CanvasCourse, CanvasSection
 from restclients_core.exceptions import DataFailureException
 from sis_provisioner.exceptions import CoursePolicyException
-from sis_provisioner.dao.user import user_fullname
 from sis_provisioner.dao import titleize
 from logging import getLogger
 from urllib.parse import unquote
@@ -139,7 +138,8 @@ def section_long_name(section):
         for person in section.get_instructors():
             if person.uwregid == section.independent_study_instructor_regid:
                 name = '{name} ({user_fullname})'.format(
-                    name=name, user_fullname=user_fullname(person))
+                    name=name,
+                    user_fullname=person.get_formatted_name('{first} {last}'))
                 break
 
     return name
