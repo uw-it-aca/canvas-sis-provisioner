@@ -132,7 +132,7 @@ cronjob:
       command: ["/scripts/management_command.sh"]
       args: ["delete_unused_courses"]
     - name: sync-external-tools
-      schedule: "15 14 * * *1-6"
+      schedule: "15 14 * * 1-6"
       command: ["/scripts/management_command.sh"]
       args: ["sync_external_tools"]
     - name: set-term-overrides
