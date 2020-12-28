@@ -68,23 +68,23 @@ cronjob:
   enabled: true
   jobs:
     - name: load-users
-      schedule: "5 12,20 * * *"
+      schedule: "5 12,20 * * 1-6"
       command: ["/scripts/management_command.sh"]
       args: ["load_users"]
     - name: load-courses
-      schedule: "30 12,21 * * *"
+      schedule: "30 12,21 * * 1-6"
       command: ["/scripts/management_command.sh"]
       args: ["load_courses"]
     - name: load-accounts
-      schedule: "30 11 * * 1-5"
+      schedule: "30 11 * * 1-6"
       command: ["/scripts/management_command.sh"]
       args: ["load_accounts"]
     - name: load-groups
-      schedule: "15 12 * * *"
+      schedule: "15 12 * * 1-6"
       command: ["/scripts/management_command.sh"]
       args: ["load_groups"]
     - name: queue-active-courses
-      schedule: "35 13 * * *"
+      schedule: "35 13 * * 1-6"
       command: ["/scripts/management_command.sh"]
       args: ["queue_active_courses"]
     - name: cleanup-sis-errors
@@ -92,7 +92,7 @@ cronjob:
       command: ["/scripts/management_command.sh"]
       args: ["cleanup_sis_errors"]
     - name: import-accounts
-      schedule: "10 9 * * 1-5"
+      schedule: "10 9 * * 1-6"
       command: ["/scripts/management_command.sh"]
       args: ["import_accounts"]
     - name: import-enrollments
@@ -100,23 +100,23 @@ cronjob:
       command: ["/scripts/management_command.sh"]
       args: ["import_enrollments"]
     - name: import-admins
-      schedule: "50 11-23 * * 1-5"
+      schedule: "50 11-23 * * 1-6"
       command: ["/scripts/management_command.sh"]
       args: ["import_admins", "--commit"]
     - name: import-users
-      schedule: "15,45 * * * *"
+      schedule: "15,45 * * * 1-6"
       command: ["/scripts/management_command.sh"]
       args: ["import_users", "2"]
     - name: import-courses
-      schedule: "10,25,40,55 * * * *"
+      schedule: "10,25,40,55 * * * 1-6"
       command: ["/scripts/management_command.sh"]
       args: ["import_courses", "1"]
     - name: import-courses-high
-      schedule: "*/10 * * * *"
+      schedule: "*/10 * * * 1-6"
       command: ["/scripts/management_command.sh"]
       args: ["import_courses", "2"]
     - name: import-groups
-      schedule: "*/15 12-23 * * *"
+      schedule: "*/15 12-23 * * 1-6"
       command: ["/scripts/management_command.sh"]
       args: ["import_groups", "2"]
     - name: remove-unauthorized-admins
@@ -132,7 +132,7 @@ cronjob:
       command: ["/scripts/management_command.sh"]
       args: ["delete_unused_courses"]
     - name: sync-external-tools
-      schedule: "15 14 * * *"
+      schedule: "15 14 * * *1-6"
       command: ["/scripts/management_command.sh"]
       args: ["sync_external_tools"]
     - name: set-term-overrides
