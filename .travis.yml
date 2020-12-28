@@ -1,11 +1,12 @@
 sudo: required
+
 language: python
 python:
 - '3.6'
+
 services:
 - docker
-os:
-- linux
+
 env:
   global:
   - RELEASE_NAME="canvas"
@@ -16,37 +17,30 @@ env:
   - secure: LAA4psxyr1F55afHH0Yz96HNJtNCHiGlo3NnF3Za1ft5iUzuREYuBKsH/VSiMAtnPcO11T7/AmOs7nTeu0YfuYrtbo9rr3c/G2kHtHBaLuP6E3T9Lrnzf21pR57BzxudMp61tEq66KDTod8BjYfR2DyftGthTJW6WRHXRok6NYJXST+MLuixwnIp5dIew/21yJTRu1Uzp7eRMtutOmSTIAprAgI+vlTGz0KBtObifn+Gpo1XqBom5xZzt0Pxcqg1j4zCaXJTbwxfcjBN7y765wxbcH8IF0T2jDEPiO1V3gWJxwYp4+a31xAFfP9dVTjsK16erjWMGLfW0dLMRHeJi2lWPyF2GXhklsy113SRtfKaiFU8W5zXYJjGP//hhvZDsutUdd7CF7AhJnpFWrKt7IwlAoOtWRX2ZpVgdQvmXXYWFZtMc5RaoMfeQnw7xtWtZKUhzFO8DLRAmKny+D4Eqx4VHeXftwORkC6gPMlhwd4hO6/hFkoFZsiVKBT66ZxjhOlJAglV1+RwURwWOPn3yzNbDbldFPEOK1VRrD52QKUD/O5GVy5cvRti93wLVZdZWJaG7k5/KJMbtNptBHRmeZLTExUFm8M8wfoiLVaTUJBE++Zj/Hh8W76sW2E168LF2nLm6UxBzWsBI8s6p3xUF3PeHYaPiz4Fq+eIq0hpCFk=
   - secure: vVo1EwIpL/tMH0DbEX44/yYcx6piDprwqV6QHnnDVx6ab+FDWoKsFVZQuAbef91FROdFDpabQ27Lo+6XoTae1gkVZoRGjjYbjlujBKb2U5Nrb5JUOhKMWCQr1iGHto/sq+Bra/lxTdDuUp5lpCFWyuc0tLn5pBlnBw88ZY7xU/zqmXWjAc9z9UTHI/b9ndkAZLwMIx8DaM7QN8bfx54w2JbHhuc6ail+WFNVc9bdTW3Y+YGr66BL+82hNnWgLfHiLd5Z0ccZOk8X3G0HR7coPBIk1c2U5z/tavEktWl1/wAabebxu9vPfdcoZMmB52Vxb3aU+IAsi6e8JEvb+cOGaqkR3oBqPLsF+lCH0YBu/YYfqJHCH/J9L5rBVKirMKW/aegbfQhs9WAvSQRB/gIPK09kU7rA7datpYRlHXxpla++OyV0pANwuiAI/OqaiSRJzvyaR0bppaVmYx80ph+iknI701oBLvPhlOv9Q80b4+2ywv/ywvkeA55B3WZWwMkfPB10w2jBQJPLaXB3A8TshDycIZ5nEk8sIDku/b6qq8vR26UavJKcp12vsERdHeFN50iYcBaQ72G7GT+ZgqX8RgRiUoNT04/JrNqQ9ihdT6yimzGl/V/o9bS5VMJ0gbbZ9wrHTcw2TVeaAw6Qyk90Z/06TXHpdvHuJt9Hu8itqI4=
   - secure: RAq++wmdRPpCh1wCmr+rvCYwrzc+TKD3AMMMX6758nzBG8FKIC0oFxdKiAev6Loqh5AUAfMr3dNzCa6aAsiMG1MZ649AaP/02zYki7MERA352jcfTX8V8XbtUXVBSwwyG6702N+eNNAaxkI3RoirxcPuzXoFCM2FnWoKmDxkI/WU44QkH7t+pdw0YmujZgQJNGRpTkyYyzZzG3bhim+1HH2gn3GZdYw5+CG3UN9+5KLIE9LDrKMeJ2wYPTSUXt6jGpRF8lhQEtSquB6vqB7aatLgIbESEL1PvwxX8nmtvkD4oAjwJFbZ2xDYPQoYOSiosPFtlEWb1VWMTHrvD/R2Wz3SBKVsRezQDTOQOhlYnk85saQcnyVI3jafEvf0vBKloHBaemVWI90FF9uXpIRQpDRzs/TNIVW14Y44gj0ltk6XY0cMSUKz+v9TX+9EhTMKsKsosr3Cayx1f2b750W56D06wb5lflA+vGineZgWUOPDMMy3j0lK4Q+wO50bW6Z7wsfBYbfW5o24JMmYCfZlEVWJ5A6R3VEqGX71hfcEE3rd2LQkljD+kW8bFIa4xw6Wg5IlYe4P1sdoUQgWSYDDTgfUwgDmXHracycvdS3OIALlrTvRSZzx/9OZGhEcEgBMssFKfTvpowollN9BHHK6SYTiFGjA3O4zkA7RoS5DAbo=
+
 install:
 - docker build --target app-container -t "$IMAGE_TAG" .
-- docker build -t "${IMAGE_TAG}-test" .
+- docker build -t app-test-container .
+
 before_script:
 - pip install coverage
 - pip install coveralls
+
 script:
-- docker run -u root -it -v /tmp:/coverage -e DJANGO_APP="$DJANGO_APP" -e "ENV=localdev"
-  -e "AUTH=SAML_MOCK BLTI_DEV" "${IMAGE_TAG}-test" bash -c ". ./travis-ci/test.sh"
+- docker run -u root -it -v /tmp:/coverage -e DJANGO_APP="$DJANGO_APP" -e "ENV=localdev" -e "AUTH=SAML_MOCK BLTI_DEV" app-test-container bash -c ". ./travis-ci/test.sh"
+
 after_success:
 - cp /tmp/.coverage.* .
 - coverage combine
 - coveralls
-- |
-  if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
-    case "$TRAVIS_BRANCH" in
-      "main")
-        export APP_INSTANCE="prod";
-        ;;
-      "qa")
-        export APP_INSTANCE="test";
-        ;;
-      *)
-        unset APP_INSTANCE
-        ;;
-    esac
-    if [[ "$APP_INSTANCE" ]]; then
-      curl -Ls ${DEPLOY_SCRIPT_BASE}/travis-ci/deploy.sh | bash;
-    fi
-  fi
-cache:
-  directories:
-  - "$HOME/helm"
-  - "$HOME/kubeval"
+
+deploy:
+  - provider: script
+    skip_cleanup: true
+    script: >-
+      curl -Ls ${DEPLOY_SCRIPT_BASE}/travis-ci/deploy.sh | bash
+    on:
+      all_branches: true
+      condition: >-
+        $TRAVIS_PULL_REQUEST == "false" &&
+        $TRAVIS_BRANCH =~ ^(main|qa)$
