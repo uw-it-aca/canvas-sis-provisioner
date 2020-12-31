@@ -13,6 +13,7 @@ ingress:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt
     nginx.ingress.kubernetes.io/proxy-read-timeout: "180"
+    nginx.ingress.kubernetes.io/ssl-ciphers: "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-SHA256"
 lifecycle:
   enabled: true
   preStop:
@@ -59,10 +60,6 @@ daemon:
       replicaCount: 1
       command: ["/scripts/management_daemon.sh"]
       args: ["monitor_imports"]
-    - name: process-person-events
-      replicaCount: 1
-      command: ["/scripts/management_daemon.sh"]
-      args: ["--delay", "30", "load_person"]
 certs:
   mounted: true
   certPath: /certs/test-apps.canvas.uw.edu-uwca.cert
