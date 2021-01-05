@@ -36,7 +36,7 @@ database:
 repo: canvas
 instance: test
 image:
-  repository: registry.hub.docker.com/acait/canvas
+  repository: gcr.io/uwit-mci-axdd/canvas
   tag: IMAGE_TAG
 memcached:
   enabled: true
