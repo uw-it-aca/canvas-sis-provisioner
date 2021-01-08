@@ -38,7 +38,7 @@ class CSVHeaderTest(TestCase):
         self.assertEquals(
             str(UserHeader()), (
                 'user_id,login_id,password,first_name,last_name,full_name,'
-                'sortable_name,short_name,email,status\n'))
+                'sortable_name,short_name,email,pronouns,status\n'))
         self.assertEquals(
             str(XlistHeader()), 'xlist_course_id,section_id,status\n')
 
@@ -218,19 +218,19 @@ class UserCSVTest(TestCase):
         self.assertEquals(
             str(UserCSV(user, 'active')), (
                 '9136CCB8F66711D5BE060004AC494FFE,javerage,,Jamesy,'
-                'McJamesy,,,,javerage@uw.edu,active\n'))
+                'McJamesy,,,,javerage@uw.edu,,active\n'))
 
         user = PWS().get_entity_by_netid('somalt')
         self.assertEquals(
             str(UserCSV(user, 'active')), (
                 '605764A811A847E690F107D763A4B32A,somalt,,,,'
-                'SOM ACADEMIC LRNG TECHNOLOGY,,,somalt@uw.edu,active\n'))
+                'SOM ACADEMIC LRNG TECHNOLOGY,,,somalt@uw.edu,,active\n'))
 
         user = get_person_by_gmail_id('john.smith@gmail.com')
         self.assertEquals(
             str(UserCSV(user, 'active')), (
                 'johnsmith@gmail.com,john.smith@gmail.com,,,,'
-                'john.smith,,,john.smith@gmail.com,active\n'))
+                'john.smith,,,john.smith@gmail.com,,active\n'))
 
 
 class XlistCSVTest(TestCase):

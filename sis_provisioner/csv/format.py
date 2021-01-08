@@ -79,7 +79,7 @@ class UserHeader(CSVFormat):
     def __init__(self):
         self.data = ['user_id', 'login_id', 'password', 'first_name',
                      'last_name', 'full_name', 'sortable_name', 'short_name',
-                     'email', 'status']
+                     'email', 'pronouns', 'status']
 
 
 class XlistHeader(CSVFormat):
@@ -232,8 +232,7 @@ class UserCSV(CSVFormat):
             self.key,
             user.uwnetid if hasattr(user, 'uwnetid') else user.login_id,
             None, first_name, last_name, full_name, None, None,
-            user_email(user),
-            status]
+            user_email(user), getattr(user, 'pronouns', ''), status]
 
 
 class XlistCSV(CSVFormat):
