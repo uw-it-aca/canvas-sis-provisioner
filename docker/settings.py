@@ -60,8 +60,8 @@ if os.getenv('ENV', 'localdev') == 'localdev':
     MEDIA_ROOT = os.getenv('SIS_IMPORT_CSV_ROOT', '/app/csv')
 else:
     SIS_IMPORT_CSV_DEBUG = False
-    CANVAS_MANAGER_ADMIN_GROUP = os.getenv('ADMIN_GROUP', '')
-    RESTCLIENTS_ADMIN_GROUP = os.getenv('SUPPORT_GROUP', '')
+    CANVAS_MANAGER_ADMIN_GROUP = os.getenv('SUPPORT_GROUP', '')
+    RESTCLIENTS_ADMIN_GROUP = os.getenv('ADMIN_GROUP', '')
     RESTCLIENTS_DAO_CACHE_CLASS = 'sis_provisioner.cache.RestClientsCache'
     DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
     GS_PROJECT_ID = os.getenv('STORAGE_PROJECT_ID', '')
