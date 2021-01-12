@@ -4,8 +4,7 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from sis_provisioner.views.admin import RESTDispatch
 from sis_provisioner.dao.user import (
-    get_person_by_netid, get_person_by_gmail_id, user_sis_id, user_email,
-    user_fullname)
+    get_person_by_netid, get_person_by_gmail_id, user_sis_id, user_email)
 from sis_provisioner.exceptions import UserPolicyException
 from restclients_core.exceptions import DataFailureException
 from logging import getLogger
@@ -32,16 +31,18 @@ class LoginValidationView(APIView):
                     try:
                         person = get_person_by_gmail_id(login)
                         user['login'] = person.login_id
+                        user['full_name'] = person.login_id
                     except UserPolicyException:
                         login = self.strip_domain(login)
                         person = get_person_by_netid(login)
                         user['login'] = person.uwnetid
+                        user['full_name'] = person.get_formatted_name(
+                            '{first} {last}')
 
                     sis_id = user_sis_id(person)
                     if not any(u.get('sis_id') == sis_id for u in users):
                         user['sis_id'] = sis_id
                         user['email'] = user_email(person)
-                        user['full_name'] = ' '.join(user_fullname(person))
                         users.append(user)
 
                 except DataFailureException as ex:

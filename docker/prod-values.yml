@@ -48,7 +48,7 @@ database:
 repo: canvas
 instance: prod
 image:
-  repository: registry.hub.docker.com/acait/canvas
+  repository: gcr.io/uwit-mci-axdd/canvas
   tag: IMAGE_TAG
 memcached:
   enabled: true
@@ -187,6 +187,9 @@ certs:
 environmentVariables:
   - name: ENV
     value: prod
+
+  - name: WEBSERVER
+    value: nginx
 
   - name: PWS_ENV
     value: PROD
