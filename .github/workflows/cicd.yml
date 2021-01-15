@@ -2,10 +2,15 @@
 name: Build, Test and Deploy
 
 env:
+  # release name must match "repo" value in docker/*-values.yml
   RELEASE_NAME: canvas
   DJANGO_APP: sis_provisioner
   GCR_TAG_BASE: gcr.io/uwit-mci-axdd
 
+#
+# Be sure that branches defined here have corresponding steps
+# defined in the "deploy" job
+#
 on:
   push:
     branches: [main, qa]
@@ -129,13 +134,10 @@ jobs:
           echo "IMAGE_TAG=${{ env.RELEASE_NAME }}:$COMMIT_HASH" >> $GITHUB_ENV
           echo "GIT_REPO_BRANCH=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
 
-      - name: Checkout Repo
-        uses: actions/checkout@v2
-
       - name: Deploy Production
-        if: env.GIT_REPO_BRANCH == 'main' || env.GIT_REPO_BRANCH == 'master'
+        if: env.GIT_REPO_BRANCH == 'main'
         run: curl -Ls ${DEPLOY_APP_BASE}/${DEPLOY_APP_BRANCH}/deploy.sh | bash
 
       - name: Deploy Test Branch
-        if: env.GIT_REPO_BRANCH == 'develop'
+        if: env.GIT_REPO_BRANCH == 'qa'
         run: curl -Ls ${DEPLOY_APP_BASE}/${DEPLOY_APP_BRANCH}/deploy.sh | bash
