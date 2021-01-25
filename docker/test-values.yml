@@ -22,6 +22,8 @@ affinity:
    podsSpanNodes: true
 readiness:
   enabled: true
+securityPolicy:
+  enabled: true
 externalService:
   enabled: true
   name: canvas-db-service
