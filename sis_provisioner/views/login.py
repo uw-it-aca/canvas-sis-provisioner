@@ -36,8 +36,11 @@ class LoginValidationView(APIView):
                         login = self.strip_domain(login)
                         person = get_person_by_netid(login)
                         user['login'] = person.uwnetid
-                        user['full_name'] = person.get_formatted_name(
-                            '{first} {last}')
+                        try:
+                            user['full_name'] = person.get_formatted_name(
+                                '{first} {last}')
+                        except AttributeError as ex:
+                            user['full_name'] = person.display_name
 
                     sis_id = user_sis_id(person)
                     if not any(u.get('sis_id') == sis_id for u in users):
