@@ -210,6 +210,7 @@ DISALLOWED_UW_GROUPS = [
 
 DEFAULT_GROUP_SECTION_NAME = 'UW Group members'
 
+ALLOWED_CANVAS_LOGIN_USERS = 'u_acadev_canvas_login-users'
 ALLOWED_LOGIN_DOMAINS = ['gmail.com', 'google.com', 'googlemail.com']
 ALLOWED_ADD_USER_DOMAINS = [
     'uw.edu', 'washington.edu', 'u.washington.edu', 'cac.washington.edu']
