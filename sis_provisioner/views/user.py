@@ -83,7 +83,7 @@ class UserView(RESTDispatch):
             'queue_id': None,
             'person_url': None,
             'enrollment_url': None,
-            'has_canvas_access': can_access_canvas(person.uwnetid),
+            'can_access_canvas': can_access_canvas(person.uwnetid),
         }
 
         if self.can_view_source_data(self.request):
