@@ -16,10 +16,18 @@
     {{#if added_date}}
 added for provisioning on {{ added_date }}
     {{else}}
-has NOT been provisioned to Canvas. <button class="btn" type="button" id="user_add_button">Provision <b>{{ net_id }}</b></button>
+has <strong>NOT</strong> been provisioned to Canvas. <button class="btn" type="button" id="user_add_button">Provision <b>{{ net_id }}</b></button>
     {{/if}}
   {{/if}}
+  <br/>
   {{#if net_id}}
+    <br/>
+    {{#if can_access_canvas}}
+    This UWNetID is currently allowed to access Canvas.
+    {{else}}
+    This UWNetID is currently <strong>NOT</strong> allowed to access Canvas.
+    {{/if}}
+    <br/>
   {{#if person_url}}
   <br /><a class="js-sws-person" href="{{person_url}}"><i class="fa fa-database"></i> View user details in the Person Web Service</a>
   {{/if}}
