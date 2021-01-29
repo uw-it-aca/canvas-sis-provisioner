@@ -44,6 +44,12 @@ class IsGroupAdminTest(TestCase):
 @fdao_pws_override
 @fdao_gws_override
 class UserPolicyTest(TestCase):
+    @override_settings(ALLOWED_CANVAS_LOGIN_USERS='u_acadev_unittest')
+    def test_can_access_canvas(self):
+        self.assertEqual(can_access_canvas('javerage'), True)
+        self.assertEqual(can_access_canvas('baverage'), False)
+        self.assertEqual(can_access_canvas('joe@gmail.com'), True)
+
     def test_valid_canvas_user_id(self):
         self.assertEquals(valid_canvas_user_id(12345), None)
         self.assertEquals(valid_canvas_user_id('12345'), None)
