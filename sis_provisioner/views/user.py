@@ -7,7 +7,8 @@ from restclients_core.exceptions import (
 from uw_sws.models import Person
 from sis_provisioner.dao.canvas import get_user_by_sis_id, create_user
 from sis_provisioner.dao.user import (
-    get_person_by_netid, get_person_by_regid, get_person_by_gmail_id)
+    get_person_by_netid, get_person_by_regid, get_person_by_gmail_id,
+    can_access_canvas)
 from sis_provisioner.models import User, PRIORITY_IMMEDIATE
 from sis_provisioner.views.admin import RESTDispatch
 
@@ -81,7 +82,8 @@ class UserView(RESTDispatch):
             'priority': 'normal',
             'queue_id': None,
             'person_url': None,
-            'enrollment_url': None
+            'enrollment_url': None,
+            'can_access_canvas': can_access_canvas(person.uwnetid),
         }
 
         if self.can_view_source_data(self.request):

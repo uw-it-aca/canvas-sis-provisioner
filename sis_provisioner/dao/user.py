@@ -114,6 +114,17 @@ def user_fullname(user):
             raise UserPolicyException('Invalid user')
 
 
+def can_access_canvas(login_id):
+    try:
+        valid_gmail_id(login_id)
+        return True
+    except InvalidLoginIdException:
+        pass
+
+    login_group_id = getattr(settings, 'ALLOWED_CANVAS_LOGIN_USERS')
+    return is_group_member(login_group_id, login_id)
+
+
 def get_person_by_netid(netid):
     pws = PWS()
     try:

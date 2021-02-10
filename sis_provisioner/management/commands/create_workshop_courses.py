@@ -17,12 +17,14 @@ class Command(BaseCommand):
         parser.add_argument('file_path', help='File path')
         parser.add_argument('workshop_name', help='Workshop name')
         parser.add_argument('term_sis_id', help='Term SIS ID')
+        parser.add_argument('account_sis_id', help='Account SIS ID',
+                            default='course-request-sandbox')
 
     def handle(self, *args, **options):
         file_path = options.get('file_path')
         workshop_name = options.get('workshop_name')
         term_sis_id = options.get('term_sis_id')
-        account_sis_id = 'course-request-sandbox'
+        account_sis_id = options.get('account_sis_id')
 
         with open(file_path, 'r') as infile:
             file_data = infile.read()
