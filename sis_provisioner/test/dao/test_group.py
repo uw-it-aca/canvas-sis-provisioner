@@ -79,13 +79,13 @@ class GroupModifiedTest(TestCase):
 @fdao_pws_override
 class SISImportMembersTest(TestCase):
     @override_settings(
-        SIS_IMPORT_GROUPS=['u_acadev_unittest', 'u_acadev_tester'])
+        SIS_IMPORT_USERS='u_acadev_unittest')
     def test_sis_import_members(self):
         members = get_sis_import_members()
 
-        self.assertEquals(len(members), 5)
+        self.assertEquals(len(members), 3)
 
-    @override_settings(SIS_IMPORT_GROUPS=['u_does_not_exist'])
+    @override_settings(SIS_IMPORT_USERS='u_does_not_exist')
     def test_sis_import_members_none(self):
         self.assertRaises(DataFailureException, get_sis_import_members)
 
