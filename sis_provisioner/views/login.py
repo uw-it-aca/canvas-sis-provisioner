@@ -4,7 +4,8 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from sis_provisioner.views.admin import RESTDispatch
 from sis_provisioner.dao.user import (
-    get_person_by_netid, get_person_by_gmail_id, user_sis_id, user_email)
+    get_person_by_netid, get_person_by_gmail_id, can_access_canvas,
+    user_sis_id, user_email)
 from sis_provisioner.exceptions import UserPolicyException
 from restclients_core.exceptions import DataFailureException
 from logging import getLogger
@@ -34,6 +35,7 @@ class LoginValidationView(APIView):
                         user['full_name'] = person.login_id
                     except UserPolicyException:
                         login = self.strip_domain(login)
+                        # can_access_canvas(login)
                         person = get_person_by_netid(login)
                         user['login'] = person.uwnetid
                         try:
