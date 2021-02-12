@@ -193,6 +193,8 @@ environmentVariables:
 
   - name: PWS_ENV
     value: PROD
+  - name: PWS_TIMEOUT
+    value: "10"
 
   - name: SWS_ENV
     value: PROD
