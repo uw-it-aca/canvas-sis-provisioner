@@ -122,7 +122,9 @@ def can_access_canvas(login_id):
         pass
 
     login_group_id = getattr(settings, 'ALLOWED_CANVAS_LOGIN_USERS')
-    return is_group_member(login_group_id, login_id)
+    if not is_group_member(login_group_id, login_id):
+        raise UserPolicyException('UWNetID not permitted')
+    return True
 
 
 def get_person_by_netid(netid):

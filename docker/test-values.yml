@@ -76,6 +76,8 @@ environmentVariables:
 
   - name: PWS_ENV
     value: EVAL
+  - name: PWS_TIMEOUT
+    value: "10"
 
   - name: SWS_ENV
     value: EVAL

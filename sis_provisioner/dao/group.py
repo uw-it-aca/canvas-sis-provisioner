@@ -62,17 +62,15 @@ def search_groups(act_as, **kwargs):
 
 
 def get_sis_import_members():
-    gws = GWS()
-
     valid_members = {}
-    for group_id in getattr(settings, 'SIS_IMPORT_GROUPS', []):
-        for member in gws.get_effective_members(group_id):
-            try:
-                if member.is_uwnetid():
-                    valid_net_id(member.name)
-                    valid_members[member.name] = member
-            except UserPolicyException as err:
-                pass
+    group_id = getattr(settings, 'SIS_IMPORT_USERS')
+    for member in GWS().get_effective_members(group_id):
+        try:
+            if member.is_uwnetid():
+                valid_net_id(member.name)
+                valid_members[member.name] = member
+        except UserPolicyException:
+            pass
 
     return list(valid_members.values())
 

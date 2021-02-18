@@ -157,7 +157,7 @@ class ImportGroupDispatch(Dispatch):
     Import Group Dispatcher
     """
     def mine(self, group):
-        return True if group in settings.SIS_IMPORT_GROUPS else False
+        return group == getattr(settings, 'SIS_IMPORT_USERS', '')
 
     def update_members(self, group, message):
         self._log.info('{} IGNORE canvas user update: {}'.format(
