@@ -83,7 +83,6 @@ class UserView(RESTDispatch):
             'queue_id': None,
             'person_url': None,
             'enrollment_url': None,
-            'can_access_canvas': can_access_canvas(person.uwnetid),
         }
 
         if self.can_view_source_data(self.request):
@@ -98,9 +97,11 @@ class UserView(RESTDispatch):
         try:
             user = User.objects.get(reg_id=person.uwregid)
             response.update(user.json_data())
-
+            response['can_access_canvas'] = can_access_canvas(person.uwnetid)
         except User.DoesNotExist:
             pass
+        except UserPolicyException:
+            response['can_access_canvas'] = False
 
         return self.json_response(response)
 
@@ -114,15 +115,17 @@ class UserView(RESTDispatch):
             'added_date': None,
             'provisioned_date': None,
             'priority': 'normal',
-            'queue_id': None
+            'queue_id': None,
         }
 
         try:
             user = get_user_by_sis_id(person.sis_user_id)
             response['provisioned_date'] = datetime.datetime.now().isoformat()
             response['display_name'] = user.name
-
+            response['can_access_canvas'] = can_access_canvas(person.login_id)
         except DataFailureException:
             pass
+        except UserPolicyException:
+            response['can_access_canvas'] = False
 
         return self.json_response(response)
