@@ -71,9 +71,6 @@ environmentVariables:
   - name: ENV
     value: test
 
-  - name: WEBSERVER
-    value: nginx
-
   - name: PWS_ENV
     value: EVAL
   - name: PWS_TIMEOUT
