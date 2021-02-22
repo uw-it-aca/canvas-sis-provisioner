@@ -188,9 +188,6 @@ environmentVariables:
   - name: ENV
     value: prod
 
-  - name: WEBSERVER
-    value: nginx
-
   - name: PWS_ENV
     value: PROD
   - name: PWS_TIMEOUT
