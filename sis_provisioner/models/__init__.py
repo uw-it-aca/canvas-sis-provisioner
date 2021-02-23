@@ -1417,13 +1417,13 @@ class Import(models.Model):
             self.monitor_date = datetime.utcnow().replace(tzinfo=utc)
             self.canvas_state = sis_import.workflow_state
             self.canvas_progress = sis_import.progress
-
             self.canvas_warnings = None
-            if len(sis_import.processing_warnings):
-                self.canvas_warnings = json.dumps(
-                    sis_import.processing_warnings)
-
             self.canvas_errors = None
+
+            warnings = self._process_warnings(sis_import.processing_warnings)
+            if len(warnings):
+                self.canvas_warnings = json.dumps(warnings)
+
             if len(sis_import.processing_errors):
                 self.canvas_errors = json.dumps(sis_import.processing_errors)
 
@@ -1443,8 +1443,9 @@ class Import(models.Model):
                 self.canvas_progress == 100)
 
     def is_cleanly_imported(self):
-        return (self.is_completed() and
-                self.canvas_state == 'imported')
+        return (self.is_imported() and
+                self.canvas_warnings is None and
+                self.canvas_errors is None)
 
     def is_imported(self):
         return (self.is_completed() and
@@ -1466,6 +1467,9 @@ class Import(models.Model):
     def delete(self, *args, **kwargs):
         self.dequeue_dependent_models()
         return super(Import, self).delete(*args, **kwargs)
+
+    def _process_warnings(self, warnings):
+        return [w for w in warnings if ('-MSIS-550-' not in w[-1])]
 
 
 class SubAccountOverrideManager(models.Manager):
