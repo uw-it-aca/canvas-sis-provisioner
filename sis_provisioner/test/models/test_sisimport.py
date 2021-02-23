@@ -22,8 +22,14 @@ class ImportModelTest(TestCase):
 
         imp = Import(
             post_status=200, canvas_progress=100,
-            canvas_state='imported_with_errors')
+            canvas_state='imported_with_messages',
+            canvas_warnings='[["users.csv", "oops"]]')
         self.assertEquals(imp.is_cleanly_imported(), False)
+
+        imp = Import(
+            post_status=200, canvas_progress=100,
+            canvas_state='imported_with_messages')
+        self.assertEquals(imp.is_cleanly_imported(), True)
 
         imp = Import(
             post_status=200, canvas_progress=100, canvas_state='imported')
@@ -38,7 +44,7 @@ class ImportModelTest(TestCase):
 
         imp = Import(
             post_status=200, canvas_progress=100,
-            canvas_state='imported_with_errors')
+            canvas_state='imported_with_messages')
         self.assertEquals(imp.is_imported(), True)
 
         imp = Import(
@@ -54,3 +60,16 @@ class ImportModelTest(TestCase):
 
         imp = Import(csv_type='user')
         self.assertEquals(imp.dependent_model(), User)
+
+    def test_process_warnings(self):
+        imp = Import()
+
+        empty_warning = []
+        one_warning = [['users.csv', 'oops']]
+        two_warnings = [['users.csv', 'oops'], [
+            'courses.csv',
+            '2013-spring-MSIS-550-B--, Course is not a valid course']]
+
+        self.assertEqual(imp._process_warnings(empty_warning), None)
+        self.assertEqual(imp._process_warnings(one_warning), one_warning)
+        self.assertEqual(imp._process_warnings(two_warnings), one_warning)
