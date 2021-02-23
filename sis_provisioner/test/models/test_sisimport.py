@@ -70,6 +70,6 @@ class ImportModelTest(TestCase):
             'courses.csv',
             '2013-spring-MSIS-550-B--, Course is not a valid course']]
 
-        self.assertEqual(imp._process_warnings(empty_warning), None)
+        self.assertEqual(imp._process_warnings(empty_warning), empty_warning)
         self.assertEqual(imp._process_warnings(one_warning), one_warning)
         self.assertEqual(imp._process_warnings(two_warnings), one_warning)
