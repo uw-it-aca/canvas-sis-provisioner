@@ -5,6 +5,7 @@ from logging import getLogger
 from restclients_core.exceptions import (
     InvalidNetID, InvalidRegID, DataFailureException)
 from uw_sws.models import Person
+from sis_provisioner.exceptions import UserPolicyException
 from sis_provisioner.dao.canvas import get_user_by_sis_id, create_user
 from sis_provisioner.dao.user import (
     get_person_by_netid, get_person_by_regid, get_person_by_gmail_id,
