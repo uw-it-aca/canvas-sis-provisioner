@@ -1,23 +1,27 @@
 from django.conf import settings
+from uw_sws import sws_now
 from uw_sws.term import (
     get_term_by_year_and_quarter, get_term_after, get_term_before,
     get_term_by_date)
 from uw_canvas.models import CanvasEnrollment
 from restclients_core.exceptions import DataFailureException
-from datetime import datetime, timedelta
-
+from datetime import timedelta
 
 TERM_DATE_FORMAT = '%Y-%m-%dT00:00:00-0800'
 
 
-def get_current_active_term(dt):
+def get_current_active_term(dt=None):
+    if dt is None:
+        dt = sws_now()
     curr_term = get_term_by_date(dt.date())
     if dt > curr_term.grade_submission_deadline:
         curr_term = get_term_after(curr_term)
     return curr_term
 
 
-def get_all_active_terms(dt):
+def get_all_active_terms(dt=None):
+    if dt is None:
+        dt = sws_now()
     curr_term = get_current_active_term(dt)
     next_term = get_term_after(curr_term)
     return [curr_term, next_term, get_term_after(next_term)]
@@ -25,7 +29,7 @@ def get_all_active_terms(dt):
 
 def is_active_term(term, dt=None):
     if dt is None:
-        dt = datetime.now()
+        dt = sws_now()
     return (term in get_all_active_terms(dt))
 
 

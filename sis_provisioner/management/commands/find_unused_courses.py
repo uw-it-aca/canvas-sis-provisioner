@@ -1,9 +1,8 @@
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from sis_provisioner.dao.term import (
-    get_term_by_year_and_quarter, get_term_by_date)
+    get_term_by_year_and_quarter, get_current_active_term)
 from sis_provisioner.builders.courses import UnusedCourseBuilder
-from datetime import datetime
 
 
 class Command(BaseCommand):
@@ -20,7 +19,7 @@ class Command(BaseCommand):
             (year, quarter) = term_sis_id.split('-')
             term = get_term_by_year_and_quarter(year, quarter)
         else:
-            term = get_term_by_date(datetime.now().date())
+            term = get_current_active_term()
 
         term_sis_id = term.canvas_sis_id()
         csv_path = UnusedCourseBuilder().build(term_sis_id=term_sis_id)
