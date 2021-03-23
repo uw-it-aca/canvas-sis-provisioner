@@ -2,7 +2,7 @@ from sis_provisioner.management.commands import SISProvisionerCommand
 from sis_provisioner.models import (
     Term, EmptyQueueException, MissingImportPathException)
 from sis_provisioner.dao.term import (
-    get_term_by_date, get_term_before, get_term_by_year_and_quarter)
+    get_current_active_term, get_term_before, get_term_by_year_and_quarter)
 from sis_provisioner.builders.courses import UnusedCourseBuilder
 from datetime import datetime
 import traceback
@@ -23,10 +23,9 @@ class Command(SISProvisionerCommand):
             target_term = get_term_by_year_and_quarter(year, quarter)
 
         else:
-            curr_date = datetime.now().date()
-            curr_term = get_term_by_date(curr_date)
+            curr_term = get_current_active_term()
 
-            if curr_date < curr_term.census_day:
+            if datetime.now().date() < curr_term.census_day:
                 self.update_job()
                 return
 
