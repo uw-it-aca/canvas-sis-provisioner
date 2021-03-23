@@ -9,7 +9,6 @@ from sis_provisioner.models import Admin
 from restclients_core.exceptions import DataFailureException
 from uw_saml.decorators import group_required
 from uw_saml.utils import get_user, is_member_of_group
-from datetime import datetime
 import json
 
 
@@ -24,13 +23,12 @@ class AdminView(View):
         return render(request, self.template_name, self._params(request))
 
     def _params(self, request):
-        curr_dt = datetime.now()
         try:
-            term = get_current_active_term(curr_dt)
+            term = get_current_active_term()
             curr_year = term.year
             curr_quarter = term.quarter
         except DataFailureException as ex:
-            curr_year = curr_dt.year
+            curr_year = ''
             curr_quarter = ''
 
         return {
