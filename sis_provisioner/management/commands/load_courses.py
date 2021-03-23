@@ -1,7 +1,6 @@
 from sis_provisioner.management.commands import SISProvisionerCommand
 from sis_provisioner.dao.term import get_all_active_terms
 from sis_provisioner.models import Course
-from datetime import datetime
 
 
 class Command(SISProvisionerCommand):
@@ -13,8 +12,7 @@ class Command(SISProvisionerCommand):
         priority, and updates all courses from previous term to priority
         none.
         """
-        now_dt = datetime.now()
-        for term in get_all_active_terms(now_dt):
+        for term in get_all_active_terms():
             if term.bterm_last_day_add is not None:
                 curr_last_date = term.bterm_last_day_add
             else:
