@@ -1,5 +1,5 @@
 from sis_provisioner.management.commands import SISProvisionerCommand
-from sis_provisioner.dao.term import get_all_active_terms
+from sis_provisioner.dao.term import get_all_active_terms, sws_now
 from sis_provisioner.models import Course
 
 
@@ -18,7 +18,7 @@ class Command(SISProvisionerCommand):
             else:
                 curr_last_date = term.last_day_add
 
-            if now_dt.date() <= curr_last_date:
+            if sws_now().date() <= curr_last_date:
                 Course.objects.add_all_courses_for_term(term)
             else:
                 Course.objects.deprioritize_all_courses_for_term(term)
