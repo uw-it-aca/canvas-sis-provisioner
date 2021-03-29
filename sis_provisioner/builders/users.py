@@ -1,3 +1,6 @@
+# Copyright 2021 UW-IT, University of Washington
+# SPDX-License-Identifier: Apache-2.0
+
 from sis_provisioner.builders import Builder
 from sis_provisioner.dao.user import get_person_by_netid
 from sis_provisioner.exceptions import UserPolicyException

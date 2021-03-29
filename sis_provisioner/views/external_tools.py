@@ -1,3 +1,6 @@
+# Copyright 2021 UW-IT, University of Washington
+# SPDX-License-Identifier: Apache-2.0
+
 from sis_provisioner.models import Account
 from sis_provisioner.models.external_tools import ExternalTool
 from sis_provisioner.views.admin import RESTDispatch, get_user

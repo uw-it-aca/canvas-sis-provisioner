@@ -1,3 +1,6 @@
+# Copyright 2021 UW-IT, University of Washington
+# SPDX-License-Identifier: Apache-2.0
+
 from sis_provisioner.events import SISProvisionerProcessor
 from sis_provisioner.dao.course import is_time_schedule_construction
 from sis_provisioner.dao.term import (

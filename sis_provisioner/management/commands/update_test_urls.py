@@ -1,3 +1,6 @@
+# Copyright 2021 UW-IT, University of Washington
+# SPDX-License-Identifier: Apache-2.0
+
 from django.test.utils import override_settings
 from django.conf import settings
 from sis_provisioner.management.commands import SISProvisionerCommand

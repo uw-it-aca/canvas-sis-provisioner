@@ -1,3 +1,6 @@
+# Copyright 2021 UW-IT, University of Washington
+# SPDX-License-Identifier: Apache-2.0
+
 from sis_provisioner.models import User, Course
 from sis_provisioner.csv.data import Collector
 from sis_provisioner.csv.format import UserCSV, EnrollmentCSV
