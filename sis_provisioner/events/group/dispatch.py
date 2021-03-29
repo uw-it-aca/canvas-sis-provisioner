@@ -1,3 +1,6 @@
+# Copyright 2021 UW-IT, University of Washington
+# SPDX-License-Identifier: Apache-2.0
+
 from django.conf import settings
 from sis_provisioner.dao.user import valid_net_id, valid_gmail_id
 from sis_provisioner.exceptions import UserPolicyException

@@ -1,3 +1,6 @@
+# Copyright 2021 UW-IT, University of Washington
+# SPDX-License-Identifier: Apache-2.0
+
 from sis_provisioner.builders import Builder
 from sis_provisioner.dao.course import group_section_sis_id
 from sis_provisioner.dao.canvas import ENROLLMENT_ACTIVE, ENROLLMENT_DELETED
