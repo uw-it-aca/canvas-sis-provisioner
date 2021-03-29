@@ -1,3 +1,6 @@
+# Copyright 2021 UW-IT, University of Washington
+# SPDX-License-Identifier: Apache-2.0
+
 from sis_provisioner.dao.account import account_name, account_id_for_section
 from sis_provisioner.dao.term import (
     term_sis_id, term_name, term_start_date, term_end_date)

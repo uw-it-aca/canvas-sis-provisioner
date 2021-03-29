@@ -1,3 +1,6 @@
+# Copyright 2021 UW-IT, University of Washington
+# SPDX-License-Identifier: Apache-2.0
+
 from sis_provisioner.dao.course import (
     get_sections_by_instructor_and_term, valid_academic_course_sis_id,
     valid_adhoc_course_sis_id)

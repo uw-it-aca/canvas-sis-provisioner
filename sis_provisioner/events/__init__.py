@@ -1,3 +1,6 @@
+# Copyright 2021 UW-IT, University of Washington
+# SPDX-License-Identifier: Apache-2.0
+
 from aws_message.processor import MessageBodyProcessor, ProcessorException
 from sis_provisioner.models import Enrollment
 from sis_provisioner.cache import RestClientsCache
