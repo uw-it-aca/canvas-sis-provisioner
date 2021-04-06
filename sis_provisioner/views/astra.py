@@ -1,3 +1,6 @@
+# Copyright 2021 UW-IT, University of Washington
+# SPDX-License-Identifier: Apache-2.0
+
 from django.views import View
 from sis_provisioner.models import Admin, Account
 from sis_provisioner.views.admin import RESTDispatch

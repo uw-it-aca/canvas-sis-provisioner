@@ -1,3 +1,6 @@
+# Copyright 2021 UW-IT, University of Washington
+# SPDX-License-Identifier: Apache-2.0
+
 from sis_provisioner.events import SISProvisionerProcessor
 from sis_provisioner.models.events import EnrollmentLog
 from sis_provisioner.dao.user import valid_reg_id

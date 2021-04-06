@@ -1,3 +1,6 @@
+# Copyright 2021 UW-IT, University of Washington
+# SPDX-License-Identifier: Apache-2.0
+
 from django.core.management.base import BaseCommand
 from sis_provisioner.dao.user import get_person_by_netid
 from sis_provisioner.dao.canvas import INSTRUCTOR_ENROLLMENT, ENROLLMENT_ACTIVE

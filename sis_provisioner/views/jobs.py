@@ -1,3 +1,6 @@
+# Copyright 2021 UW-IT, University of Washington
+# SPDX-License-Identifier: Apache-2.0
+
 from logging import getLogger
 from sis_provisioner.models import Job
 from sis_provisioner.views.admin import RESTDispatch, get_user
