@@ -8,7 +8,6 @@ INSTALLED_APPS += [
     'django_user_agents',
     'supporttools',
     'rc_django',
-    'analytics',
     'rest_framework.authtoken',
     'sis_provisioner.apps.SISProvisionerConfig',
 ]
@@ -69,16 +68,6 @@ else:
     GS_LOCATION = os.path.join(os.getenv('SIS_IMPORT_CSV_ROOT', ''))
     GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
         '/gcs/credentials.json')
-
-    DATABASES['analytics'] = {
-        'ENGINE': 'django.db.backends.mysql',
-        'HOST': os.getenv('ANALYTICS_DATABASE_HOSTNAME', 'localhost'),
-        'NAME': os.getenv('ANALYTICS_DATABASE_NAME', 'canvas_analytics'),
-        'USER': os.getenv('ANALYTICS_DATABASE_USERNAME', None),
-        'PASSWORD': os.getenv('ANALYTICS_DATABASE_PASSWORD', None),
-    }
-
-    DATABASE_ROUTERS = ['sis_provisioner.models.router.AnalyticsRouter']
 
 RESTCLIENTS_DISABLE_THREADING = True
 RESTCLIENTS_ADMIN_AUTH_MODULE = 'sis_provisioner.views.admin.can_view_source_data'
