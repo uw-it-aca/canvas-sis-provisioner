@@ -11,7 +11,7 @@ from sis_provisioner.dao.canvas import (
     get_course_by_id, get_course_by_sis_id, get_section_by_sis_id,
     update_course_sis_id, get_enrollments_for_course_by_sis_id,
     ENROLLMENT_ACTIVE, ENROLLMENT_DELETED)
-from sis_provisioner.models import Group, GroupMemberGroup
+from sis_provisioner.models.group import Group, GroupMemberGroup
 from sis_provisioner.exceptions import (
     CoursePolicyException, GroupPolicyException)
 from restclients_core.exceptions import DataFailureException

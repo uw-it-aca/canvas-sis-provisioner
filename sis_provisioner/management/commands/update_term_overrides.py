@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from sis_provisioner.management.commands import SISProvisionerCommand
-from sis_provisioner.models import Term
+from sis_provisioner.models.term import Term
 
 
 class Command(SISProvisionerCommand):

@@ -9,7 +9,7 @@ from sis_provisioner.dao.course import (
 from sis_provisioner.dao.canvas import (
     get_section_by_sis_id, get_sis_sections_for_course,
     get_unused_course_report_data)
-from sis_provisioner.models import Course, PRIORITY_NONE
+from sis_provisioner.models.course import Course
 from sis_provisioner.exceptions import CoursePolicyException
 from restclients_core.exceptions import DataFailureException
 from uw_sws.exceptions import InvalidCanvasIndependentStudyCourse
@@ -45,7 +45,7 @@ class CourseBuilder(Builder):
             # This handles ind. study sections that were initially created
             # in the sdb without the ind. study flag set
             if section.is_withdrawn():
-                course.priority = PRIORITY_NONE
+                course.priority = course.PRIORITY_NONE
                 course.save()
         else:
             self._process_primary_section(section)

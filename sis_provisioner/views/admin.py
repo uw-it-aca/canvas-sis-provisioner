@@ -8,7 +8,7 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from sis_provisioner.dao.user import is_group_admin, valid_net_id, valid_reg_id
 from sis_provisioner.dao.term import get_current_active_term
-from sis_provisioner.models import Admin
+from sis_provisioner.models.admin import Admin
 from restclients_core.exceptions import DataFailureException
 from uw_saml.decorators import group_required
 from uw_saml.utils import get_user, is_member_of_group

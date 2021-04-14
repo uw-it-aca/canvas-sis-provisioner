@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from django.conf import settings
-from sis_provisioner.models import Admin
+from sis_provisioner.models.admin import Admin
 from sis_provisioner.dao.canvas import (
     get_account_by_id, get_all_sub_accounts, get_admins, delete_admin)
 from sis_provisioner.management.commands import SISProvisionerCommand

@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from sis_provisioner.builders import Builder
-from sis_provisioner.models import Curriculum
+from sis_provisioner.models.account import Curriculum
 from sis_provisioner.csv.format import AccountCSV
 from sis_provisioner.dao.account import (
     get_all_campuses, get_all_colleges, get_curricula_by_department,

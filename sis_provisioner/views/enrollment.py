@@ -3,7 +3,7 @@
 
 import re
 from logging import getLogger
-from sis_provisioner.models import Enrollment, PRIORITY_NONE
+from sis_provisioner.models.enrollment import Enrollment
 from sis_provisioner.views.admin import RESTDispatch
 from sis_provisioner.dao.user import get_person_by_netid
 
@@ -74,7 +74,7 @@ class EnrollmentListView(RESTDispatch):
 
         if filt_kwargs:
             try:
-                filt_kwargs['priority__gt'] = PRIORITY_NONE
+                filt_kwargs['priority__gt'] = Enrollment.PRIORITY_NONE
                 enrollments = list(Enrollment.objects.filter(**filt_kwargs))
                 for enrollment in enrollments:
                     json_rep['enrollments'].append(enrollment.json_data())

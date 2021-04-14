@@ -4,7 +4,7 @@
 from django.conf import settings
 from django.db import models
 from django.utils.timezone import utc, localtime
-from sis_provisioner.models import Account
+from sis_provisioner.models.account import Account
 from sis_provisioner.dao.canvas import (
     get_account_by_id, get_sub_accounts, get_external_tools,
     create_external_tool, update_external_tool, delete_external_tool)

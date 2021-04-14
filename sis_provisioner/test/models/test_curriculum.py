@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from django.test import TestCase
-from sis_provisioner.models import Curriculum
+from sis_provisioner.models.account import Curriculum
 
 
 class CurriculumModelTest(TestCase):

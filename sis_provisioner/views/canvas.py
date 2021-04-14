@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from django.conf import settings
-from sis_provisioner.models import Course
+from sis_provisioner.models.course import Course
 from sis_provisioner.views.admin import RESTDispatch
 from sis_provisioner.dao.canvas import (
     get_account_by_id, get_course_by_id, get_course_by_sis_id)

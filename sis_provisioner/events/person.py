@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from sis_provisioner.events import SISProvisionerProcessor
-from sis_provisioner.models import User, PRIORITY_HIGH
+from sis_provisioner.models.user import User
 from sis_provisioner.models.events import PersonLog
 from uw_sws.models import Person as PersonModel
 
@@ -44,7 +44,7 @@ class PersonProcessor(SISProvisionerProcessor):
 
             user = User.objects.update_priority(
                 PersonModel(uwregid=current['RegID'], uwnetid=net_id),
-                PRIORITY_HIGH)
+                User.PRIORITY_HIGH)
 
             if user is not None:
                 self.record_success_to_log(event_count=1)

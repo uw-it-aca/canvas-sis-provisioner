@@ -6,9 +6,9 @@ from django.db.models.query import QuerySet
 from django.utils.timezone import utc
 from datetime import datetime
 from sis_provisioner.dao.course import get_section_by_id
-from sis_provisioner.models import (
-    Course, Enrollment, EnrollmentManager, Import, PRIORITY_NONE,
-    PRIORITY_DEFAULT, PRIORITY_HIGH)
+from sis_provisioner.models import Import
+from sis_provisioner.models.enrollment import Enrollment, EnrollmentManager
+from sis_provisioner.models.course import Course
 from uw_sws.util import fdao_sws_override
 from uw_pws.util import fdao_pws_override
 import mock
@@ -52,8 +52,9 @@ class EnrollmentModelTest(TestCase):
         enrollment = Enrollment()
         self.assertEquals(enrollment.is_instructor(), False)
 
-    @mock.patch('sis_provisioner.models.is_active_term', return_value=False)
-    @mock.patch('sis_provisioner.models.logger')
+    @mock.patch('sis_provisioner.models.enrollment.is_active_term',
+                return_value=False)
+    @mock.patch('sis_provisioner.models.enrollment.logger')
     def test_add_enrollment(self, mock_logger, mock_is_active_term):
         now_dt = datetime(2013, 1, 1).replace(tzinfo=utc)
         student_data = {
@@ -110,22 +111,25 @@ class EnrollmentModelTest(TestCase):
     @mock.patch.object(EnrollmentManager, 'purge_expired')
     def test_dequeue_imported(self, mock_purge, mock_filter):
         dt = datetime.now()
-        r = Enrollment.objects.dequeue(Import(pk=1,
-                                              priority=PRIORITY_HIGH,
-                                              canvas_state='imported',
-                                              post_status=200,
-                                              canvas_progress=100,
-                                              monitor_date=dt))
+        r = Enrollment.objects.dequeue(Import(
+            pk=1,
+            priority=Enrollment.PRIORITY_HIGH,
+            canvas_state='imported',
+            post_status=200,
+            canvas_progress=100,
+            monitor_date=dt))
 
-        mock_filter.assert_called_with(queue_id=1, priority__gt=PRIORITY_NONE)
+        mock_filter.assert_called_with(
+            queue_id=1, priority__gt=Enrollment.PRIORITY_NONE)
 
     @mock.patch.object(QuerySet, 'update')
     def test_dequeue_not_imported(self, mock_update):
-        r = Enrollment.objects.dequeue(Import(pk=1, priority=PRIORITY_HIGH))
+        r = Enrollment.objects.dequeue(
+            Import(pk=1, priority=Enrollment.PRIORITY_HIGH))
         mock_update.assert_called_with(queue_id=None)
 
     @mock.patch.object(QuerySet, 'filter')
-    @mock.patch('sis_provisioner.models.datetime')
+    @mock.patch('sis_provisioner.models.enrollment.datetime')
     @override_settings(ENROLLMENT_EVENT_RETENTION_DAYS=3)
     def test_purge_expired(self, mock_datetime, mock_filter):
         mock_datetime.utcnow.return_value = datetime(2013, 1, 4, 0, 0, 0)

@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from aws_message.processor import MessageBodyProcessor, ProcessorException
-from sis_provisioner.models import Enrollment
+from sis_provisioner.models.enrollment import Enrollment
 from sis_provisioner.cache import RestClientsCache
 from sis_provisioner.exceptions import EventException
 from restclients_core.exceptions import DataFailureException
