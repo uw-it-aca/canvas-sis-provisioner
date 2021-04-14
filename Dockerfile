@@ -17,8 +17,6 @@ RUN . /app/bin/activate && pip install mysqlclient
 ADD --chown=acait:acait . /app/
 ADD --chown=acait:acait docker/ project/
 
-RUN . /app/bin/activate && python manage.py test
-
 RUN . /app/bin/activate && pip install nodeenv && nodeenv -p && \
     npm install -g npm && ./bin/npm install less -g
 

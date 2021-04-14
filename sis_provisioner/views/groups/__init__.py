@@ -4,7 +4,7 @@
 from django.utils.timezone import utc
 from django.http import HttpResponse
 from django.core.exceptions import ValidationError
-from sis_provisioner.models import Group, GroupMemberGroup
+from sis_provisioner.models.group import Group, GroupMemberGroup
 from sis_provisioner.models.course import Course
 from sis_provisioner.dao.group import valid_group_id
 from sis_provisioner.dao.course import (

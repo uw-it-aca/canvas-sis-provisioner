@@ -2,15 +2,11 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from django.db import models
-from django.db.models import F, Q
-from django.conf import settings
+from django.db.models import Q
 from django.utils.timezone import utc, localtime
-from sis_provisioner.dao.group import get_sis_import_members, is_modified_group
 from sis_provisioner.dao.canvas import (
     sis_import_by_path, get_sis_import_status)
-from sis_provisioner.exceptions import (
-    AccountPolicyException, EmptyQueueException, MissingImportPathException,
-    GroupNotFoundException)
+from sis_provisioner.exceptions import MissingImportPathException
 from restclients_core.exceptions import DataFailureException
 from datetime import datetime
 from logging import getLogger
@@ -18,18 +14,6 @@ import json
 import re
 
 logger = getLogger(__name__)
-
-PRIORITY_NONE = 0
-PRIORITY_DEFAULT = 1
-PRIORITY_HIGH = 2
-PRIORITY_IMMEDIATE = 3
-
-PRIORITY_CHOICES = (
-    (PRIORITY_NONE, 'none'),
-    (PRIORITY_DEFAULT, 'normal'),
-    (PRIORITY_HIGH, 'high'),
-    (PRIORITY_IMMEDIATE, 'immediate')
-)
 
 
 class Job(models.Model):
@@ -60,291 +44,6 @@ class Job(models.Model):
                 self.last_status_date).isoformat() if (
                     self.last_status_date is not None) else None,
         }
-
-
-class GroupManager(models.Manager):
-    def queue_by_priority(self, priority=PRIORITY_DEFAULT):
-        if priority > PRIORITY_DEFAULT:
-            filter_limit = settings.SIS_IMPORT_LIMIT['group']['high']
-        else:
-            filter_limit = settings.SIS_IMPORT_LIMIT['group']['default']
-
-        course_ids = super(GroupManager, self).get_queryset().filter(
-            priority=priority, queue_id__isnull=True
-        ).order_by(
-            'provisioned_date'
-        ).values_list('course_id', flat=True).distinct()[:filter_limit]
-
-        if not len(course_ids):
-            raise EmptyQueueException()
-
-        imp = Import(priority=priority, csv_type='group')
-        imp.save()
-
-        # Mark the groups as in process, and reset the priority
-        super(GroupManager, self).get_queryset().filter(
-            course_id__in=list(course_ids)
-        ).update(
-            priority=PRIORITY_DEFAULT, queue_id=imp.pk
-        )
-
-        return imp
-
-    def update_priority_by_modified_date(self):
-        groups = super(GroupManager, self).get_queryset().filter(
-            priority=PRIORITY_DEFAULT, queue_id__isnull=True
-        ).exclude(
-            is_deleted=True, provisioned_date__gt=F('deleted_date')
-        )
-
-        group_ids = set()
-        for group in groups:
-            if group.group_id not in group_ids:
-                group_ids.add(group.group_id)
-
-                try:
-                    is_mod = is_modified_group(
-                        group.group_id,
-                        group.provisioned_date or group.added_date)
-                except GroupNotFoundException:
-                    is_mod = True
-                    self.delete_group_not_found(group.group_id)
-
-                if is_mod:
-                    group.update_priority(PRIORITY_HIGH)
-                    continue
-                else:
-                    for mgroup in GroupMemberGroup.objects.get_active_by_root(
-                            group.group_id):
-                        if mgroup.group_id not in group_ids:
-                            group_ids.add(mgroup.group_id)
-
-                            try:
-                                is_mod = is_modified_group(
-                                    mgroup.group_id,
-                                    group.provisioned_date or group.added_date)
-                            except GroupNotFoundException:
-                                is_mod = True
-                                self.delete_group_not_found(mgroup.group_id)
-
-                            if is_mod:
-                                group.update_priority(PRIORITY_HIGH)
-                                break
-
-    def find_by_search(self, **kwargs):
-        kwargs['is_deleted__isnull'] = True
-        return super(GroupManager, self).get_queryset().filter(**kwargs)
-
-    def get_active_by_group(self, group_id):
-        return super(GroupManager, self).get_queryset().filter(
-            group_id=group_id, priority__gt=PRIORITY_NONE,
-            is_deleted__isnull=True)
-
-    def get_active_by_course(self, course_id):
-        return super(GroupManager, self).get_queryset().filter(
-            course_id=course_id, is_deleted__isnull=True)
-
-    def queued(self, queue_id):
-        return super(GroupManager, self).get_queryset().filter(
-            queue_id=queue_id).order_by('course_id').values_list(
-                'course_id', flat=True).distinct()
-
-    def dequeue(self, sis_import):
-        kwargs = {'queue_id': None}
-        if sis_import.is_imported():
-            kwargs['provisioned_date'] = sis_import.monitor_date
-            kwargs['priority'] = PRIORITY_DEFAULT
-
-        self.queued(sis_import.pk).update(**kwargs)
-
-    def dequeue_course(self, course_id):
-        super(GroupManager, self).get_queryset().filter(
-            course_id=course_id
-        ).update(
-            priority=PRIORITY_DEFAULT, queue_id=None
-        )
-
-    def deprioritize_course(self, course_id):
-        super(GroupManager, self).get_queryset().filter(
-            course_id=course_id
-        ).update(
-            priority=PRIORITY_NONE, queue_id=None
-        )
-
-    def update_group_id(self, old_group_id, new_group_id):
-        super(GroupManager, self).get_queryset().filter(
-            group_id=old_group_id).update(group_id=new_group_id)
-
-    def delete_group_not_found(self, group_id):
-        super(GroupManager, self).get_queryset().filter(
-            group_id=group_id, is_deleted__isnull=True
-        ).update(
-            is_deleted=True, deleted_by='gws',
-            deleted_date=datetime.utcnow().replace(tzinfo=utc)
-        )
-
-
-class Group(models.Model):
-    """ Represents the provisioned state of a course group
-    """
-    course_id = models.CharField(max_length=80)
-    group_id = models.CharField(max_length=256)
-    role = models.CharField(max_length=80)
-    added_by = models.CharField(max_length=20)
-    added_date = models.DateTimeField(auto_now_add=True, null=True)
-    is_deleted = models.NullBooleanField()
-    deleted_by = models.CharField(max_length=20, null=True)
-    deleted_date = models.DateTimeField(null=True)
-    provisioned_date = models.DateTimeField(null=True)
-    priority = models.SmallIntegerField(default=1, choices=PRIORITY_CHOICES)
-    queue_id = models.CharField(max_length=30, null=True)
-
-    objects = GroupManager()
-
-    def update_priority(self, priority):
-        for val, txt in PRIORITY_CHOICES:
-            if val == priority:
-                self.priority = val
-                self.save()
-                return
-
-    def json_data(self):
-        return {
-            "id": self.pk,
-            "group_id": self.group_id,
-            "course_id": self.course_id,
-            "role": self.role,
-            "added_by": self.added_by,
-            "added_date": localtime(self.added_date).isoformat(),
-            "is_deleted": True if self.is_deleted else None,
-            "deleted_date": localtime(self.deleted_date).isoformat() if (
-                self.deleted_date is not None) else None,
-            "provisioned_date": localtime(
-                self.provisioned_date).isoformat() if (
-                    self.provisioned_date is not None) else None,
-            "priority": PRIORITY_CHOICES[self.priority][1],
-            "queue_id": self.queue_id,
-        }
-
-    class Meta:
-        unique_together = ('course_id', 'group_id', 'role')
-
-
-class GroupMemberGroupManager(models.Manager):
-    def get_active_by_group(self, group_id):
-        return super(GroupMemberGroupManager, self).get_queryset().filter(
-            group_id=group_id, is_deleted__isnull=True)
-
-    def get_active_by_root(self, root_group_id):
-        return super(GroupMemberGroupManager, self).get_queryset().filter(
-            root_group_id=root_group_id, is_deleted__isnull=True)
-
-    def update_group_id(self, old_group_id, new_group_id):
-        super(GroupMemberGroupManager, self).get_queryset().filter(
-            group_id=old_group_id).update(group_id=new_group_id)
-
-    def update_root_group_id(self, old_group_id, new_group_id):
-        super(GroupMemberGroupManager, self).get_queryset().filter(
-            root_group_id=old_group_id).update(root_group_id=new_group_id)
-
-
-class GroupMemberGroup(models.Model):
-    """ Represents member group relationship
-    """
-    group_id = models.CharField(max_length=256)
-    root_group_id = models.CharField(max_length=256)
-    is_deleted = models.NullBooleanField()
-
-    objects = GroupMemberGroupManager()
-
-    def deactivate(self):
-        self.is_deleted = True
-        self.save()
-
-    def activate(self):
-        self.is_deleted = None
-        self.save()
-
-
-class CourseMemberManager(models.Manager):
-    def queue_by_priority(self, priority=PRIORITY_DEFAULT):
-        filter_limit = settings.SIS_IMPORT_LIMIT['coursemember']['default']
-
-        pks = super(CourseMemberManager, self).get_queryset().filter(
-            priority=priority, queue_id__isnull=True
-        ).values_list('pk', flat=True)[:filter_limit]
-
-        if not len(pks):
-            raise EmptyQueueException()
-
-        imp = Import(priority=priority, csv_type='coursemember')
-        imp.save()
-
-        super(CourseMemberManager, self).get_queryset().filter(
-            pk__in=list(pks)).update(queue_id=imp.pk)
-
-        return imp
-
-    def queued(self, queue_id):
-        return super(CourseMemberManager, self).get_queryset().filter(
-            queue_id=queue_id)
-
-    def dequeue(self, sis_import):
-        if sis_import.is_imported():
-            # Decrement the priority
-            super(CourseMemberManager, self).get_queryset().filter(
-                queue_id=sis_import.pk, priority__gt=PRIORITY_NONE
-            ).update(
-                queue_id=None, priority=F('priority') - 1)
-        else:
-            self.queued(sis_import.pk).update(queue_id=None)
-
-    def get_by_course(self, course_id):
-        return super(CourseMemberManager, self).get_queryset().filter(
-            course_id=course_id)
-
-
-class CourseMember(models.Model):
-    UWNETID_TYPE = "uwnetid"
-    EPPN_TYPE = "eppn"
-
-    TYPE_CHOICES = (
-        (UWNETID_TYPE, "UWNetID"),
-        (EPPN_TYPE, "ePPN")
-    )
-
-    course_id = models.CharField(max_length=80)
-    name = models.CharField(max_length=256)
-    type = models.SlugField(max_length=16, choices=TYPE_CHOICES)
-    role = models.CharField(max_length=80)
-    is_deleted = models.NullBooleanField()
-    deleted_date = models.DateTimeField(null=True, blank=True)
-    priority = models.SmallIntegerField(default=0, choices=PRIORITY_CHOICES)
-    queue_id = models.CharField(max_length=30, null=True)
-
-    objects = CourseMemberManager()
-
-    def is_uwnetid(self):
-        return self.type.lower() == self.UWNETID_TYPE
-
-    def is_eppn(self):
-        return self.type.lower() == self.EPPN_TYPE
-
-    def deactivate(self):
-        self.is_deleted = True
-        self.deleted_date = datetime.utcnow().replace(tzinfo=utc)
-        self.save()
-
-    def activate(self):
-        self.is_deleted = None
-        self.deleted_date = None
-        self.save()
-
-    def __eq__(self, other):
-        return (self.course_id == other.course_id and
-                self.name.lower() == other.name.lower() and
-                self.type.lower() == other.type.lower() and
-                self.role.lower() == other.role.lower())
 
 
 class ImportResource(models.Model):
@@ -382,7 +81,6 @@ class Import(models.Model):
         ('user', 'User'),
         ('course', 'Course'),
         ('unused_course', 'Term'),
-        ('coursemember', 'CourseMember'),
         ('enrollment', 'Enrollment'),
         ('group', 'Group')
     )
@@ -493,16 +191,12 @@ class Import(models.Model):
             for subclass in ImportResource.__subclasses__():
                 if subclass.__name__.endswith(self.get_csv_type_display()):
                     return subclass
-        return globals()[self.get_csv_type_display()]
+        raise ImportError()
 
     def queued_objects(self):
         return self.dependent_model().objects.queued(self.pk)
 
     def dequeue_dependent_models(self):
-        # XXX move this to dequeue() methods
-        # if self.csv_type != 'user' and self.csv_type != 'account':
-        #    User.objects.dequeue(self)
-
         self.dependent_model().objects.dequeue(self)
 
     def delete(self, *args, **kwargs):

@@ -6,6 +6,7 @@ from django.db.models import Q
 from django.conf import settings
 from django.utils.timezone import localtime
 from sis_provisioner.dao.user import get_person_by_netid
+from sis_provisioner.dao.group import get_sis_import_members
 from sis_provisioner.models import Import, ImportResource
 from sis_provisioner.exceptions import (
     MissingLoginIdException, EmptyQueueException)

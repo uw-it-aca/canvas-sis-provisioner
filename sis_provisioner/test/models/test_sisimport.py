@@ -57,10 +57,10 @@ class ImportModelTest(TestCase):
 
     def test_dependent_model(self):
         imp = Import()
-        self.assertRaises(KeyError, imp.dependent_model)
+        self.assertRaises(ImportError, imp.dependent_model)
 
         imp = Import(csv_type='fake')
-        self.assertRaises(KeyError, imp.dependent_model)
+        self.assertRaises(ImportError, imp.dependent_model)
 
         imp = Import(csv_type='user')
         self.assertEquals(imp.dependent_model(), User)

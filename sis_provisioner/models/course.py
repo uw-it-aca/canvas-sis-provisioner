@@ -4,7 +4,8 @@
 from django.db import models
 from django.conf import settings
 from django.utils.timezone import utc, localtime
-from sis_provisioner.models import Import, ImportResource, Group
+from sis_provisioner.models import Import, ImportResource
+from sis_provisioner.models.group import Group
 from sis_provisioner.models.user import User
 from sis_provisioner.dao.course import (
     valid_canvas_section, get_new_sections_by_term)

@@ -4,7 +4,8 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from logging import getLogger
-from sis_provisioner.models import Group, Import
+from sis_provisioner.models import Import
+from sis_provisioner.models.group import Group
 from sis_provisioner.models.course import Course
 from sis_provisioner.models.user import User
 from sis_provisioner.builders.users import UserBuilder
