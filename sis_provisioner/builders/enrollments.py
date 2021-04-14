@@ -3,7 +3,6 @@
 
 from sis_provisioner.builders import Builder
 from sis_provisioner.csv.format import CourseCSV, SectionCSV
-from sis_provisioner.models import PRIORITY_NONE, PRIORITY_DEFAULT
 from sis_provisioner.dao.user import get_person_by_regid
 from sis_provisioner.dao.course import is_active_section, section_id_from_url
 from sis_provisioner.exceptions import (
@@ -109,14 +108,14 @@ class EnrollmentBuilder(Builder):
 
     def _requeue_enrollment_event(self, enrollment, err):
         enrollment.queue_id = None
-        enrollment.priority = PRIORITY_DEFAULT
+        enrollment.priority = enrollment.PRIORITY_DEFAULT
         enrollment.save()
         self.logger.info("Requeue enrollment {} in {}: {}".format(
             enrollment.reg_id, enrollment.course_id, err))
 
     def _skip_enrollment_event(self, enrollment, err):
         enrollment.queue_id = None
-        enrollment.priority = PRIORITY_NONE
+        enrollment.priority = enrollment.PRIORITY_NONE
         enrollment.save()
         self.logger.info("Skip enrollment {} in {}: {}".format(
             enrollment.reg_id, enrollment.course_id, err))

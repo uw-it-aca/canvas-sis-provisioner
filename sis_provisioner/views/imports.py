@@ -7,7 +7,8 @@ import dateutil.parser
 from logging import getLogger
 from django.utils.timezone import utc
 from django.core.management import call_command
-from sis_provisioner.models import Import, User
+from sis_provisioner.models import Import
+from sis_provisioner.models.user import User
 from sis_provisioner.views.admin import RESTDispatch
 
 logger = getLogger(__name__)

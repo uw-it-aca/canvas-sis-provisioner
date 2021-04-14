@@ -3,7 +3,7 @@
 
 from logging import getLogger
 from sis_provisioner.management.commands import SISProvisionerCommand
-from sis_provisioner.models import Account
+from sis_provisioner.models.account import Account
 from restclients_core.exceptions import DataFailureException
 
 

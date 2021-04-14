@@ -3,7 +3,7 @@
 
 from django.conf import settings
 from restclients_core.exceptions import DataFailureException
-from sis_provisioner.models import Group
+from sis_provisioner.models.group import Group
 from sis_provisioner.dao.group import (
     valid_group_id, get_effective_members, get_group, search_groups)
 from sis_provisioner.exceptions import (

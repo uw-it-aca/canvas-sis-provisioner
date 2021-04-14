@@ -2,8 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from sis_provisioner.management.commands import SISProvisionerCommand
-from sis_provisioner.models import (
-    User, PRIORITY_DEFAULT, PRIORITY_HIGH, PRIORITY_IMMEDIATE)
+from sis_provisioner.models.user import User
 from sis_provisioner.exceptions import (
     EmptyQueueException, MissingImportPathException)
 from sis_provisioner.builders.users import UserBuilder
@@ -15,8 +14,10 @@ class Command(SISProvisionerCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            'priority', type=int, default=PRIORITY_DEFAULT,
-            choices=[PRIORITY_DEFAULT, PRIORITY_HIGH, PRIORITY_IMMEDIATE],
+            'priority', type=int, default=User.PRIORITY_DEFAULT,
+            choices=[User.PRIORITY_DEFAULT,
+                     User.PRIORITY_HIGH,
+                     User.PRIORITY_IMMEDIATE],
             help='Import users with priority <priority>')
 
     def handle(self, *args, **options):

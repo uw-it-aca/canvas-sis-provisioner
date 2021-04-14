@@ -5,7 +5,8 @@ from django.core.management.base import BaseCommand
 from sis_provisioner.dao.user import get_person_by_netid
 from sis_provisioner.dao.canvas import INSTRUCTOR_ENROLLMENT, ENROLLMENT_ACTIVE
 from sis_provisioner.exceptions import UserPolicyException
-from sis_provisioner.models import Import, PRIORITY_DEFAULT
+from sis_provisioner.models import Import
+from sis_provisioner.models.course import Course
 from sis_provisioner.csv.data import Collector
 from sis_provisioner.csv.format import UserCSV, EnrollmentCSV, CourseCSV
 from datetime import date
@@ -64,7 +65,7 @@ class Command(BaseCommand):
         csv_path = csvdata.write_files()
 
         if csv_path:
-            imp = Import(priority=PRIORITY_DEFAULT, csv_type='course',
+            imp = Import(priority=Course.PRIORITY_DEFAULT, csv_type='course',
                          csv_path=csv_path)
             imp.save()
             imp.import_csv()
