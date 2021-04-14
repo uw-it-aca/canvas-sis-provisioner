@@ -5,7 +5,7 @@ from django.conf import settings
 from django.test import TestCase, override_settings
 from django.db.models.query import QuerySet
 from django.utils.timezone import utc
-from sis_provisioner.models import Admin
+from sis_provisioner.models.admin import Admin
 from sis_provisioner.exceptions import AccountPolicyException
 from sis_provisioner.test.models.test_account import create_account
 from uw_canvas.utilities import fdao_canvas_override
