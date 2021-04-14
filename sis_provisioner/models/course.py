@@ -7,6 +7,7 @@ from django.utils.timezone import utc, localtime
 from sis_provisioner.models import Import, ImportResource
 from sis_provisioner.models.group import Group
 from sis_provisioner.models.user import User
+from sis_provisioner.models.term import Term
 from sis_provisioner.dao.course import (
     valid_canvas_section, get_new_sections_by_term)
 from sis_provisioner.dao.canvas import get_active_courses_for_term
