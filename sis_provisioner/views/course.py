@@ -6,8 +6,8 @@ from sis_provisioner.dao.course import (
     valid_adhoc_course_sis_id)
 from sis_provisioner.dao.term import get_term_by_year_and_quarter
 from sis_provisioner.dao.user import get_person_by_netid, get_person_by_regid
-from sis_provisioner.models import (
-    Course, Group, PRIORITY_NONE, PRIORITY_CHOICES)
+from sis_provisioner.models import Group
+from sis_provisioner.models.course import Course
 from sis_provisioner.views.admin import RESTDispatch
 from sis_provisioner.exceptions import CoursePolicyException
 from logging import getLogger
@@ -141,7 +141,7 @@ class CourseListView(RESTDispatch):
 
         if filt_kwargs:
             try:
-                filt_kwargs['priority__gt'] = PRIORITY_NONE
+                filt_kwargs['priority__gt'] = Course.PRIORITY_NONE
                 course_list = list(Course.objects.filter(
                     **filt_kwargs).order_by('course_id'))
 

@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from sis_provisioner.management.commands import SISProvisionerCommand
-from sis_provisioner.models import Enrollment, PRIORITY_DEFAULT
+from sis_provisioner.models.enrollment import Enrollment
 from sis_provisioner.exceptions import (
     EmptyQueueException, MissingImportPathException)
 from sis_provisioner.builders.enrollments import EnrollmentBuilder
@@ -13,7 +13,7 @@ class Command(SISProvisionerCommand):
     help = "Builds import files for enrollments."
 
     def handle(self, *args, **options):
-        priority = PRIORITY_DEFAULT
+        priority = Enrollment.PRIORITY_DEFAULT
         try:
             imp = Enrollment.objects.queue_by_priority(priority)
         except EmptyQueueException as ex:

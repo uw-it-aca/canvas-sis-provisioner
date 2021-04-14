@@ -13,7 +13,7 @@ from sis_provisioner.dao.canvas import get_user_by_sis_id, create_user
 from sis_provisioner.dao.user import (
     get_person_by_netid, get_person_by_regid, get_person_by_gmail_id,
     can_access_canvas)
-from sis_provisioner.models import User, PRIORITY_IMMEDIATE
+from sis_provisioner.models.user import User
 from sis_provisioner.views.admin import RESTDispatch
 
 logger = getLogger(__name__)
@@ -64,7 +64,7 @@ class UserView(RESTDispatch):
         except User.DoesNotExist:
             try:
                 user = User.objects.add_user(get_person_by_netid(net_id),
-                                             priority=PRIORITY_IMMEDIATE)
+                                             priority=User.PRIORITY_IMMEDIATE)
                 return self.json_response()
 
             except Exception as err:

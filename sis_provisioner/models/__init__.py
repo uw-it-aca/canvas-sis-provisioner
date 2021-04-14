@@ -9,29 +9,23 @@ from sis_provisioner.dao.account import (
     valid_academic_account_sis_id, adhoc_account_sis_id)
 from sis_provisioner.dao.astra import ASTRA
 from sis_provisioner.dao.group import get_sis_import_members, is_modified_group
-from sis_provisioner.dao.user import get_person_by_netid
-from sis_provisioner.dao.course import (
-    valid_canvas_section, get_new_sections_by_term)
 from sis_provisioner.dao.term import (
-    get_term_by_year_and_quarter, term_date_overrides, is_active_term)
+    get_term_by_year_and_quarter, term_date_overrides)
 from sis_provisioner.dao.canvas import (
-    get_active_courses_for_term, sis_import_by_path, get_sis_import_status,
+    sis_import_by_path, get_sis_import_status,
     get_account_by_id, get_all_sub_accounts, update_account_sis_id,
-    update_term_overrides, get_account_role_data,
-    ENROLLMENT_ACTIVE, INSTRUCTOR_ENROLLMENT)
+    update_term_overrides, get_account_role_data)
 from sis_provisioner.exceptions import (
-    AccountPolicyException, CoursePolicyException, MissingLoginIdException,
-    EmptyQueueException, MissingImportPathException, GroupNotFoundException)
+    AccountPolicyException, EmptyQueueException, MissingImportPathException,
+    GroupNotFoundException)
 from restclients_core.exceptions import DataFailureException
 from datetime import datetime, timedelta
 from logging import getLogger
-import traceback
 import json
 import re
 
 
 logger = getLogger(__name__)
-enrollment_log_prefix = 'ENROLLMENT:'
 
 PRIORITY_NONE = 0
 PRIORITY_DEFAULT = 1
@@ -136,559 +130,6 @@ class Term(models.Model):
     queue_id = models.CharField(max_length=30, null=True)
 
     objects = TermManager()
-
-
-class CourseManager(models.Manager):
-    def get_linked_course_ids(self, course_id):
-        return super(CourseManager, self).get_queryset().filter(
-            primary_id=course_id).values_list('course_id', flat=True)
-
-    def get_joint_course_ids(self, course_id):
-        return super(CourseManager, self).get_queryset().filter(
-            xlist_id=course_id).exclude(course_id=course_id).values_list(
-                'course_id', flat=True)
-
-    def queue_by_priority(self, priority=PRIORITY_DEFAULT):
-        if priority > PRIORITY_DEFAULT:
-            filter_limit = settings.SIS_IMPORT_LIMIT['course']['high']
-        else:
-            filter_limit = settings.SIS_IMPORT_LIMIT['course']['default']
-
-        pks = super(CourseManager, self).get_queryset().filter(
-            priority=priority, course_type=Course.SDB_TYPE,
-            queue_id__isnull=True, provisioned_error__isnull=True
-        ).order_by(
-            'provisioned_date', 'added_date'
-        ).values_list('pk', flat=True)[:filter_limit]
-
-        if not len(pks):
-            raise EmptyQueueException()
-
-        imp = Import(priority=priority, csv_type='course')
-        imp.save()
-
-        super(CourseManager, self).get_queryset().filter(
-            pk__in=list(pks)).update(queue_id=imp.pk)
-
-        return imp
-
-    def queued(self, queue_id):
-        return super(CourseManager, self).get_queryset().filter(
-            queue_id=queue_id)
-
-    def dequeue(self, sis_import):
-        kwargs = {'queue_id': None}
-        if sis_import.is_imported():
-            kwargs['provisioned_date'] = sis_import.monitor_date
-            kwargs['priority'] = PRIORITY_DEFAULT
-
-        self.queued(sis_import.pk).update(**kwargs)
-
-    def add_to_queue(self, section, queue_id):
-        if section.is_primary_section:
-            course_id = section.canvas_course_sis_id()
-        else:
-            course_id = section.canvas_section_sis_id()
-
-        try:
-            course = Course.objects.get(course_id=course_id)
-
-        except Course.DoesNotExist:
-            if section.is_primary_section:
-                primary_id = None
-            else:
-                primary_id = section.canvas_course_sis_id()
-
-            course = Course(course_id=course_id,
-                            course_type=Course.SDB_TYPE,
-                            term_id=section.term.canvas_sis_id(),
-                            primary_id=primary_id)
-
-        course.queue_id = queue_id
-        course.save()
-        return course
-
-    def remove_from_queue(self, course_id, error=None):
-        try:
-            course = Course.objects.get(course_id=course_id)
-            course.queue_id = None
-            if error is not None:
-                course.provisioned_error = True
-                course.provisioned_status = error
-            course.save()
-
-        except Course.DoesNotExist:
-            pass
-
-    def update_status(self, section):
-        if section.is_primary_section:
-            course_id = section.canvas_course_sis_id()
-        else:
-            course_id = section.canvas_section_sis_id()
-
-        try:
-            course = Course.objects.get(course_id=course_id)
-            try:
-                valid_canvas_section(section)
-                course.provisioned_status = None
-
-            except CoursePolicyException as err:
-                course.provisioned_status = 'Primary LMS: {} ({})'.format(
-                    section.primary_lms, err)
-
-            if section.is_withdrawn():
-                course.priority = PRIORITY_NONE
-
-            course.save()
-        except Course.DoesNotExist:
-            pass
-
-    def add_all_courses_for_term(self, term):
-        term_id = term.canvas_sis_id()
-        existing_course_ids = dict((c, p) for c, p in (
-            super(CourseManager, self).get_queryset().filter(
-                term_id=term_id, course_type=Course.SDB_TYPE
-            ).values_list('course_id', 'priority')))
-
-        last_search_date = datetime.utcnow().replace(tzinfo=utc)
-        try:
-            delta = Term.objects.get(term_id=term_id)
-        except Term.DoesNotExist:
-            delta = Term(term_id=term_id)
-
-        if delta.last_course_search_date is None:
-            delta.courses_changed_since_date = datetime.fromtimestamp(0, utc)
-        else:
-            delta.courses_changed_since_date = delta.last_course_search_date
-
-        new_courses = []
-        for section_data in get_new_sections_by_term(
-                localtime(delta.courses_changed_since_date).date(), term,
-                existing=existing_course_ids):
-
-            course_id = section_data['course_id']
-            if course_id in existing_course_ids:
-                if existing_course_ids[course_id] == PRIORITY_NONE:
-                    super(CourseManager, self).get_queryset().filter(
-                        course_id=course_id).update(priority=PRIORITY_HIGH)
-                continue
-
-            new_courses.append(Course(course_id=course_id,
-                                      course_type=Course.SDB_TYPE,
-                                      term_id=term_id,
-                                      primary_id=section_data['primary_id'],
-                                      priority=PRIORITY_HIGH))
-
-        Course.objects.bulk_create(new_courses)
-
-        delta.last_course_search_date = last_search_date
-        delta.save()
-
-    def prioritize_active_courses_for_term(self, term):
-        for sis_course_id in get_active_courses_for_term(term):
-            try:
-                course = Course.objects.get(course_id=sis_course_id)
-                course.priority = PRIORITY_HIGH
-                course.save()
-            except Course.DoesNotExist:
-                pass
-
-    def deprioritize_all_courses_for_term(self, term):
-        super(CourseManager, self).get_queryset().filter(
-            term_id=term.canvas_sis_id()).update(priority=PRIORITY_NONE)
-
-
-class Course(models.Model):
-    """ Represents the provisioned state of a course.
-    """
-    SDB_TYPE = 'sdb'
-    ADHOC_TYPE = 'adhoc'
-    TYPE_CHOICES = ((SDB_TYPE, 'SDB'), (ADHOC_TYPE, 'Ad Hoc'))
-
-    course_id = models.CharField(max_length=80, unique=True)
-    course_type = models.CharField(max_length=16, choices=TYPE_CHOICES)
-    term_id = models.CharField(max_length=20, db_index=True)
-    primary_id = models.CharField(max_length=80, null=True)
-    xlist_id = models.CharField(max_length=80, null=True)
-    added_date = models.DateTimeField(auto_now_add=True)
-    provisioned_date = models.DateTimeField(null=True)
-    provisioned_error = models.NullBooleanField()
-    provisioned_status = models.CharField(max_length=512, null=True)
-    priority = models.SmallIntegerField(default=1, choices=PRIORITY_CHOICES)
-    queue_id = models.CharField(max_length=30, null=True)
-
-    objects = CourseManager()
-
-    def is_sdb(self):
-        return self.course_type == self.SDB_TYPE
-
-    def is_adhoc(self):
-        return self.course_type == self.ADHOC_TYPE
-
-    def sws_url(self):
-        try:
-            (year, quarter, curr_abbr, course_num,
-                section_id) = self.course_id.split('-', 4)
-            sws_url = (
-                "/restclients/view/sws/student/v5/course/{year},{quarter},"
-                "{curr_abbr},{course_num}/{section_id}.json").format(
-                    year=year, quarter=quarter, curr_abbr=curr_abbr,
-                    course_num=course_num, section_id=section_id)
-        except ValueError:
-            sws_url = None
-
-        return sws_url
-
-    def update_priority(self, priority):
-        for key, val in PRIORITY_CHOICES:
-            if val == priority:
-                self.priority = key
-                self.save()
-                return
-
-        raise CoursePolicyException("Invalid priority: '{}'".format(priority))
-
-    def json_data(self, include_sws_url=False):
-        try:
-            group_models = Group.objects.filter(course_id=self.course_id,
-                                                is_deleted__isnull=True)
-            groups = list(group_models.values_list("group_id", flat=True))
-        except Group.DoesNotExist:
-            groups = []
-
-        return {
-            "course_id": self.course_id,
-            "term_id": self.term_id,
-            "xlist_id": self.xlist_id,
-            "is_sdb_type": self.is_sdb(),
-            "added_date": localtime(self.added_date).isoformat() if (
-                self.added_date is not None) else None,
-            "provisioned_date": localtime(
-                self.provisioned_date).isoformat() if (
-                    self.provisioned_date is not None) else None,
-            "priority": PRIORITY_CHOICES[self.priority][1],
-            "provisioned_error": self.provisioned_error,
-            "provisioned_status": self.provisioned_status,
-            "queue_id": self.queue_id,
-            "groups": groups,
-            "sws_url": self.sws_url() if (
-                include_sws_url and self.is_sdb()) else None,
-        }
-
-
-class EnrollmentManager(models.Manager):
-    def queue_by_priority(self, priority=PRIORITY_DEFAULT):
-        filter_limit = settings.SIS_IMPORT_LIMIT['enrollment']['default']
-
-        pks = super(EnrollmentManager, self).get_queryset().filter(
-            priority=priority, queue_id__isnull=True
-        ).order_by(
-            'last_modified'
-        ).values_list('pk', flat=True)[:filter_limit]
-
-        if not len(pks):
-            raise EmptyQueueException()
-
-        imp = Import(priority=priority, csv_type='enrollment')
-        imp.save()
-
-        super(EnrollmentManager, self).get_queryset().filter(
-            pk__in=list(pks)).update(queue_id=imp.pk)
-
-        return imp
-
-    def queued(self, queue_id):
-        return super(EnrollmentManager, self).get_queryset().filter(
-            queue_id=queue_id)
-
-    def dequeue(self, sis_import):
-        Course.objects.dequeue(sis_import)
-        if sis_import.is_imported():
-            # Decrement the priority
-            super(EnrollmentManager, self).get_queryset().filter(
-                queue_id=sis_import.pk, priority__gt=PRIORITY_NONE
-            ).update(
-                queue_id=None, priority=F('priority') - 1)
-        else:
-            self.queued(sis_import.pk).update(queue_id=None)
-
-        self.purge_expired()
-
-    def purge_expired(self):
-        retention_dt = datetime.utcnow().replace(tzinfo=utc) - timedelta(
-            days=getattr(settings, 'ENROLLMENT_EVENT_RETENTION_DAYS', 180))
-        return super(EnrollmentManager, self).get_queryset().filter(
-            priority=PRIORITY_NONE, last_modified__lt=retention_dt).delete()
-
-    def add_enrollment(self, enrollment_data):
-        section = enrollment_data.get('Section')
-        reg_id = enrollment_data.get('UWRegID')
-        role = enrollment_data.get('Role')
-        status = enrollment_data.get('Status').lower()
-        last_modified = enrollment_data.get('LastModified').replace(tzinfo=utc)
-        request_date = enrollment_data.get('RequestDate')
-        instructor_reg_id = enrollment_data.get('InstructorUWRegID', None)
-
-        course_id = '-'.join([section.term.canvas_sis_id(),
-                              section.curriculum_abbr.upper(),
-                              section.course_number,
-                              section.section_id.upper()])
-
-        primary_course_id = None
-        if section.is_primary_section:
-            primary_course_id = None
-        else:
-            primary_course_id = section.canvas_course_sis_id()
-
-        full_course_id = '-'.join([course_id, instructor_reg_id]) if (
-            instructor_reg_id is not None) else course_id
-
-        try:
-            course = Course.objects.get(course_id=full_course_id)
-            if course.provisioned_date:
-                enrollment = Enrollment.objects.get(course_id=course_id,
-                                                    reg_id=reg_id,
-                                                    role=role)
-                if (last_modified > enrollment.last_modified or (
-                        last_modified == enrollment.last_modified and
-                        status == ENROLLMENT_ACTIVE)):
-                    enrollment.status = status
-                    enrollment.last_modified = last_modified
-                    enrollment.request_date = request_date
-                    enrollment.primary_course_id = primary_course_id
-                    enrollment.instructor_reg_id = instructor_reg_id
-
-                    if enrollment.queue_id is None:
-                        enrollment.priority = PRIORITY_DEFAULT
-                    else:
-                        enrollment.priority = PRIORITY_HIGH
-                        logger.info('{} IN QUEUE {}, {}, {}, {}'.format(
-                            enrollment_log_prefix, full_course_id, reg_id,
-                            role, enrollment.queue_id))
-
-                    enrollment.save()
-                    logger.info('{} UPDATE {}, {}, {}, {}, {}'.format(
-                        enrollment_log_prefix, full_course_id, reg_id, role,
-                        status, last_modified))
-                else:
-                    logger.info('{} IGNORE {}, {}, {} before {}'.format(
-                        enrollment_log_prefix, full_course_id, reg_id,
-                        last_modified, enrollment.last_modified))
-            else:
-                logger.info('{} IGNORE Unprovisioned course {}, {}, {}'.format(
-                    enrollment_log_prefix, full_course_id, reg_id, role))
-                course.priority = PRIORITY_HIGH
-                course.save()
-
-        except Enrollment.DoesNotExist:
-            enrollment = Enrollment(course_id=course_id, reg_id=reg_id,
-                                    role=role, status=status,
-                                    last_modified=last_modified,
-                                    primary_course_id=primary_course_id,
-                                    instructor_reg_id=instructor_reg_id)
-            try:
-                enrollment.save()
-                logger.info('{} ADD {}, {}, {}, {}, {}'.format(
-                    enrollment_log_prefix, full_course_id, reg_id, role,
-                    status, last_modified))
-            except IntegrityError:
-                self.add_enrollment(enrollment_data)  # Try again
-        except Course.DoesNotExist:
-            if is_active_term(section.term):
-                # Initial course provisioning effectively picks up event
-                course = Course(course_id=full_course_id,
-                                course_type=Course.SDB_TYPE,
-                                term_id=section.term.canvas_sis_id(),
-                                primary_id=primary_course_id,
-                                priority=PRIORITY_HIGH)
-                try:
-                    course.save()
-                    logger.info(
-                        '{} IGNORE Unprovisioned course {}, {}, {}'.format(
-                            enrollment_log_prefix, full_course_id, reg_id,
-                            role))
-                except IntegrityError:
-                    self.add_enrollment(enrollment_data)  # Try again
-            else:
-                logger.info('{} IGNORE Inactive section {}, {}, {}'.format(
-                    enrollment_log_prefix, full_course_id, reg_id, role))
-
-
-class Enrollment(models.Model):
-    """ Represents the provisioned state of an enrollment.
-    """
-    reg_id = models.CharField(max_length=32)
-    status = models.CharField(max_length=16)
-    role = models.CharField(max_length=32)
-    course_id = models.CharField(max_length=80)
-    last_modified = models.DateTimeField()
-    request_date = models.DateTimeField(null=True)
-    primary_course_id = models.CharField(max_length=80, null=True)
-    instructor_reg_id = models.CharField(max_length=32, null=True)
-    priority = models.SmallIntegerField(default=1, choices=PRIORITY_CHOICES)
-    queue_id = models.CharField(max_length=30, null=True)
-
-    objects = EnrollmentManager()
-
-    def is_active(self):
-        return self.status.lower() == ENROLLMENT_ACTIVE.lower()
-
-    def is_instructor(self):
-        return self.role.lower() == INSTRUCTOR_ENROLLMENT.lower()
-
-    def json_data(self):
-        return {
-            "reg_id": self.reg_id,
-            "status": self.status,
-            "course_id": self.course_id,
-            "last_modified": localtime(self.last_modified).isoformat() if (
-                self.last_modified is not None) else None,
-            "request_date": localtime(self.request_date).isoformat() if (
-                self.request_date is not None) else None,
-            "primary_course_id": self.primary_course_id,
-            "instructor_reg_id": self.instructor_reg_id,
-            "role": self.role,
-            "priority": PRIORITY_CHOICES[self.priority][1],
-            "queue_id": self.queue_id,
-        }
-
-    class Meta:
-        unique_together = ("course_id", "reg_id", "role")
-
-
-class UserManager(models.Manager):
-    def queue_by_priority(self, priority=PRIORITY_DEFAULT):
-        if priority > PRIORITY_DEFAULT:
-            filter_limit = settings.SIS_IMPORT_LIMIT['user']['high']
-        else:
-            filter_limit = settings.SIS_IMPORT_LIMIT['user']['default']
-
-        pks = super(UserManager, self).get_queryset().filter(
-            priority=priority, queue_id__isnull=True
-        ).order_by(
-            'provisioned_date', 'added_date'
-        ).values_list('pk', flat=True)[:filter_limit]
-
-        if not len(pks):
-            raise EmptyQueueException()
-
-        imp = Import(csv_type='user', priority=priority)
-        if priority == PRIORITY_HIGH:
-            imp.override_sis_stickiness = True
-        imp.save()
-
-        super(UserManager, self).get_queryset().filter(
-            pk__in=list(pks)).update(queue_id=imp.pk)
-
-        return imp
-
-    def queued(self, queue_id):
-        return super(UserManager, self).get_queryset().filter(
-            queue_id=queue_id)
-
-    def dequeue(self, sis_import):
-        kwargs = {'queue_id': None}
-        if sis_import.is_imported():
-            kwargs['provisioned_date'] = sis_import.monitor_date
-            kwargs['priority'] = PRIORITY_DEFAULT
-
-        self.queued(sis_import.pk).update(**kwargs)
-
-    def add_all_users(self):
-        existing_netids = dict((u, p) for u, p in (
-            super(UserManager, self).get_queryset().values_list(
-                'net_id', 'priority')))
-
-        for member in get_sis_import_members():
-            if (member.name not in existing_netids or
-                    existing_netids[member.name] == PRIORITY_NONE):
-                try:
-                    user = self.add_user(get_person_by_netid(member.name))
-                    existing_netids[member.name] = user.priority
-                except Exception as err:
-                    logger.info('User: SKIP {}, {}'.format(member.name, err))
-
-    def _find_existing(self, net_id, reg_id):
-        if net_id is None:
-            raise MissingLoginIdException()
-
-        users = super(UserManager, self).get_queryset().filter(
-            models.Q(reg_id=reg_id) | models.Q(net_id=net_id))
-
-        user = None
-        if len(users) == 1:
-            user = users[0]
-        elif len(users) > 1:
-            users.delete()
-            user = User(net_id=net_id, reg_id=reg_id, priority=PRIORITY_HIGH)
-            user.save()
-
-        return user
-
-    def update_priority(self, person, priority):
-        user = self._find_existing(person.uwnetid, person.uwregid)
-
-        if (user is not None and user.priority != priority):
-            user.priority = priority
-            user.save()
-
-        return user
-
-    def get_user(self, person):
-        user = self._find_existing(person.uwnetid, person.uwregid)
-
-        if user is None:
-            user = self.add_user(person)
-
-        return user
-
-    def add_user(self, person, priority=PRIORITY_HIGH):
-        user = self._find_existing(person.uwnetid, person.uwregid)
-
-        if user is None:
-            user = User()
-
-        if (user.reg_id != person.uwregid or user.net_id != person.uwnetid or
-                user.priority != priority):
-            user.reg_id = person.uwregid
-            user.net_id = person.uwnetid
-            user.priority = priority
-            user.save()
-
-        return user
-
-
-class User(models.Model):
-    """ Represents the provisioned state of a user.
-    """
-    net_id = models.CharField(max_length=80, unique=True)
-    reg_id = models.CharField(max_length=32, unique=True)
-    added_date = models.DateTimeField(auto_now_add=True)
-    provisioned_date = models.DateTimeField(null=True)
-    invalid_enrollments_found_date = models.DateTimeField(null=True)
-    invalid_enrollments_deleted_date = models.DateTimeField(null=True)
-    priority = models.SmallIntegerField(default=1, choices=PRIORITY_CHOICES)
-    queue_id = models.CharField(max_length=30, null=True)
-
-    objects = UserManager()
-
-    def json_data(self):
-        return {
-            "net_id": self.net_id,
-            "reg_id": self.reg_id,
-            "added_date": localtime(self.added_date).isoformat(),
-            "provisioned_date": localtime(
-                self.provisioned_date).isoformat() if (
-                    self.provisioned_date) else None,
-            "invalid_enrollments_found_date": localtime(
-                self.invalid_enrollments_found_date).isoformat() if (
-                    self.invalid_enrollments_found_date) else None,
-            "invalid_enrollments_deleted_date": localtime(
-                self.invalid_enrollments_deleted_date).isoformat() if (
-                    self.invalid_enrollments_deleted_date) else None,
-            "priority": PRIORITY_CHOICES[self.priority][1],
-            "queue_id": self.queue_id,
-        }
 
 
 class GroupManager(models.Manager):
@@ -1341,6 +782,23 @@ class Admin(models.Model):
         }
 
 
+class ImportResource(models.Model):
+    PRIORITY_NONE = 0
+    PRIORITY_DEFAULT = 1
+    PRIORITY_HIGH = 2
+    PRIORITY_IMMEDIATE = 3
+
+    PRIORITY_CHOICES = (
+        (PRIORITY_NONE, 'none'),
+        (PRIORITY_DEFAULT, 'normal'),
+        (PRIORITY_HIGH, 'high'),
+        (PRIORITY_IMMEDIATE, 'immediate')
+    )
+
+    class Meta:
+        abstract = True
+
+
 class ImportManager(models.Manager):
     def find_by_requires_update(self):
         return super(ImportManager, self).get_queryset().filter(
@@ -1368,7 +826,9 @@ class Import(models.Model):
     csv_path = models.CharField(max_length=80, null=True)
     csv_errors = models.TextField(null=True)
     added_date = models.DateTimeField(auto_now_add=True)
-    priority = models.SmallIntegerField(default=1, choices=PRIORITY_CHOICES)
+    priority = models.SmallIntegerField(
+        default=ImportResource.PRIORITY_DEFAULT,
+        choices=ImportResource.PRIORITY_CHOICES)
     override_sis_stickiness = models.NullBooleanField()
     post_status = models.SmallIntegerField(null=True)
     monitor_date = models.DateTimeField(null=True)
@@ -1388,7 +848,7 @@ class Import(models.Model):
             "csv_path": self.csv_path,
             "type_name": self.get_csv_type_display(),
             "added_date": localtime(self.added_date).isoformat(),
-            "priority": PRIORITY_CHOICES[self.priority][1],
+            "priority": ImportResource.PRIORITY_CHOICES[self.priority][1],
             "override_sis_stickiness": self.override_sis_stickiness,
             "csv_errors": self.csv_errors,
             "post_status": self.post_status,
@@ -1464,14 +924,19 @@ class Import(models.Model):
                 re.match(r'^imported', self.canvas_state) is not None)
 
     def dependent_model(self):
+        if self.get_csv_type_display():
+            for subclass in ImportResource.__subclasses__():
+                if subclass.__name__.endswith(self.get_csv_type_display()):
+                    return subclass
         return globals()[self.get_csv_type_display()]
 
     def queued_objects(self):
         return self.dependent_model().objects.queued(self.pk)
 
     def dequeue_dependent_models(self):
-        if self.csv_type != 'user' and self.csv_type != 'account':
-            User.objects.dequeue(self)
+        # XXX move this to dequeue() methods
+        # if self.csv_type != 'user' and self.csv_type != 'account':
+        #    User.objects.dequeue(self)
 
         self.dependent_model().objects.dequeue(self)
 
