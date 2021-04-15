@@ -193,7 +193,7 @@ class Enrollment(ImportResource):
             "primary_course_id": self.primary_course_id,
             "instructor_reg_id": self.instructor_reg_id,
             "role": self.role,
-            "priority": PRIORITY_CHOICES[self.priority][1],
+            "priority": self.PRIORITY_CHOICES[self.priority][1],
             "queue_id": self.queue_id,
         }
 
