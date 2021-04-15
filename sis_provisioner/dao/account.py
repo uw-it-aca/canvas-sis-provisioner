@@ -91,7 +91,8 @@ def account_name(context):
 def account_id_for_section(section):
     global CACHED_ACCOUNTS, CACHED_OVERRIDES
     if not len(CACHED_ACCOUNTS):
-        from sis_provisioner.models import Curriculum, SubAccountOverride
+        from sis_provisioner.models.account import (
+            Curriculum, SubAccountOverride)
         CACHED_ACCOUNTS = Curriculum.objects.accounts_by_curricula()
         CACHED_OVERRIDES = SubAccountOverride.objects.overrides_by_course()
 

@@ -6,8 +6,8 @@ from django.db.models.query import QuerySet
 from django.utils.timezone import utc
 from datetime import datetime
 from sis_provisioner.dao.course import get_section_by_id
-from sis_provisioner.models import (
-    Course, Import, PRIORITY_NONE, PRIORITY_DEFAULT, PRIORITY_HIGH)
+from sis_provisioner.models import Import
+from sis_provisioner.models.course import Course
 from sis_provisioner.exceptions import CoursePolicyException
 from uw_sws.util import fdao_sws_override
 from uw_pws.util import fdao_pws_override
@@ -88,7 +88,7 @@ class CourseModelTest(TestCase):
         course = Course.objects.get(course_id=course_id)
         self.assertEquals(course.queue_id, '3')
         self.assertEquals(course.provisioned_status, None)
-        self.assertEquals(course.priority, PRIORITY_DEFAULT)
+        self.assertEquals(course.priority, course.PRIORITY_DEFAULT)
 
         section.delete_flag = section.DELETE_FLAG_WITHDRAWN
         course = Course.objects.add_to_queue(section, queue_id='4')
@@ -96,17 +96,17 @@ class CourseModelTest(TestCase):
         course = Course.objects.get(course_id=course_id)
         self.assertEquals(course.queue_id, '4')
         self.assertEquals(course.provisioned_status, None)
-        self.assertEquals(course.priority, PRIORITY_NONE)
+        self.assertEquals(course.priority, course.PRIORITY_NONE)
 
         Course.objects.all().delete()
 
     def test_update_priority(self):
         course = Course(course_type=Course.SDB_TYPE,
                         course_id='2013-summer-TRAIN-101-A')
-        self.assertEqual(course.priority, PRIORITY_DEFAULT)
+        self.assertEqual(course.priority, course.PRIORITY_DEFAULT)
 
         course.update_priority('high')
-        self.assertEqual(course.priority, PRIORITY_HIGH)
+        self.assertEqual(course.priority, course.PRIORITY_HIGH)
 
         self.assertRaises(CoursePolicyException, course.update_priority, '')
 
@@ -114,13 +114,14 @@ class CourseModelTest(TestCase):
     def test_dequeue(self, mock_update):
         dt = datetime.now()
         r = Course.objects.dequeue(Import(pk=1,
-                                          priority=PRIORITY_HIGH,
+                                          priority=Course.PRIORITY_HIGH,
                                           canvas_state='imported',
                                           post_status=200,
                                           canvas_progress=100,
                                           monitor_date=dt))
         mock_update.assert_called_with(
-            priority=PRIORITY_DEFAULT, queue_id=None, provisioned_date=dt)
+            priority=Course.PRIORITY_DEFAULT, queue_id=None,
+            provisioned_date=dt)
 
-        r = Course.objects.dequeue(Import(pk=1, priority=PRIORITY_HIGH))
+        r = Course.objects.dequeue(Import(pk=1, priority=Course.PRIORITY_HIGH))
         mock_update.assert_called_with(queue_id=None)

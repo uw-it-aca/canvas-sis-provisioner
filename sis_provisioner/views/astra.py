@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from django.views import View
-from sis_provisioner.models import Admin, Account
+from sis_provisioner.models.admin import Admin
+from sis_provisioner.models.account import Account
 from sis_provisioner.views.admin import RESTDispatch
 from logging import getLogger
 import re

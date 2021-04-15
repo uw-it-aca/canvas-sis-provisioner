@@ -4,7 +4,7 @@
 from django.conf import settings
 from django.core.management.base import CommandError
 from sis_provisioner.management.commands import SISProvisionerCommand
-from sis_provisioner.models import RoleCache
+from sis_provisioner.models.admin import RoleCache
 
 
 class Command(SISProvisionerCommand):

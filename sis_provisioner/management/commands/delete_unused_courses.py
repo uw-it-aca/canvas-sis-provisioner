@@ -2,8 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from sis_provisioner.management.commands import SISProvisionerCommand
-from sis_provisioner.models import (
-    Term, EmptyQueueException, MissingImportPathException)
+from sis_provisioner.models.term import Term
+from sis_provisioner.exceptions import (
+    EmptyQueueException, MissingImportPathException)
 from sis_provisioner.dao.term import (
     get_current_active_term, get_term_before, get_term_by_year_and_quarter)
 from sis_provisioner.builders.courses import UnusedCourseBuilder

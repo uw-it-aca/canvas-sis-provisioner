@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from django.test import TestCase
-from sis_provisioner.models import Import, User
+from sis_provisioner.models import Import
+from sis_provisioner.models.user import User
 
 
 class ImportModelTest(TestCase):
@@ -56,10 +57,10 @@ class ImportModelTest(TestCase):
 
     def test_dependent_model(self):
         imp = Import()
-        self.assertRaises(KeyError, imp.dependent_model)
+        self.assertRaises(ImportError, imp.dependent_model)
 
         imp = Import(csv_type='fake')
-        self.assertRaises(KeyError, imp.dependent_model)
+        self.assertRaises(ImportError, imp.dependent_model)
 
         imp = Import(csv_type='user')
         self.assertEquals(imp.dependent_model(), User)

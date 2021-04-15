@@ -4,8 +4,7 @@
 from django.conf import settings
 from sis_provisioner.dao.user import valid_net_id, valid_gmail_id
 from sis_provisioner.exceptions import UserPolicyException
-from sis_provisioner.models import (
-    Group, GroupMemberGroup, PRIORITY_HIGH, PRIORITY_IMMEDIATE)
+from sis_provisioner.models.group import Group, GroupMemberGroup
 import xml.etree.ElementTree as ET
 from logging import getLogger
 import re
@@ -108,13 +107,13 @@ class UWGroupDispatch(Dispatch):
 
         if member_count > 0:
             for group in Group.objects.get_active_by_group(group_id):
-                group.update_priority(PRIORITY_HIGH)
+                group.update_priority(group.PRIORITY_HIGH)
 
             for mgroup in GroupMemberGroup.objects.get_active_by_group(
                     group_id):
                 for group in Group.objects.get_active_by_group(
                         mgroup.root_group_id):
-                    group.update_priority(PRIORITY_HIGH)
+                    group.update_priority(group.PRIORITY_HIGH)
 
             self._log.info('{} UPDATE membership for {}'.format(
                 log_prefix, group_id))
@@ -133,7 +132,7 @@ class UWGroupDispatch(Dispatch):
 
             for group in Group.objects.get_active_by_group(
                     mgroup.root_group_id):
-                group.update_priority(PRIORITY_IMMEDIATE)
+                group.update_priority(group.PRIORITY_IMMEDIATE)
 
         self._log.info('{} DELETE {}'.format(log_prefix, group_id))
 

@@ -108,7 +108,7 @@ def get_course_roles_in_account(account_sis_id):
 
 def get_account_role_data(account_id):
     role_data = []
-    roles = Roles().get_roles_in_account(account_id)
+    roles = Roles(per_page=100).get_roles_in_account(account_id)
     for role in sorted(roles, key=lambda r: r.role_id):
         role_data.append(role.json_data())
     return json.dumps(role_data, sort_keys=True)

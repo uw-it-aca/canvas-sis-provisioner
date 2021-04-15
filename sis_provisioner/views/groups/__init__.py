@@ -4,8 +4,8 @@
 from django.utils.timezone import utc
 from django.http import HttpResponse
 from django.core.exceptions import ValidationError
-from sis_provisioner.models import (
-    Course, Group, GroupMemberGroup, PRIORITY_NONE, PRIORITY_IMMEDIATE)
+from sis_provisioner.models.group import Group, GroupMemberGroup
+from sis_provisioner.models.course import Course
 from sis_provisioner.dao.group import valid_group_id
 from sis_provisioner.dao.course import (
     valid_canvas_course_id, valid_course_sis_id, adhoc_course_sis_id)
@@ -85,7 +85,7 @@ class GroupView(RESTDispatch):
             logger.info('POST error: {}'.format(ex))
             return self.error_response(400, ex)
 
-        group.priority = PRIORITY_IMMEDIATE
+        group.priority = Course.PRIORITY_IMMEDIATE
         group.added_by = self.blti.user_login_id
         group.save()
 
@@ -97,7 +97,7 @@ class GroupView(RESTDispatch):
             group = Group.objects.get(id=id)
             group.is_deleted = True
             group.deleted_date = datetime.utcnow().replace(tzinfo=utc)
-            group.priority = PRIORITY_IMMEDIATE
+            group.priority = Course.PRIORITY_IMMEDIATE
             group.deleted_by = self.blti.user_login_id
             group.save()
 
@@ -168,7 +168,7 @@ class GroupView(RESTDispatch):
                 course_type=Course.ADHOC_TYPE,
                 term_id='',
                 added_date=datetime.utcnow().replace(tzinfo=utc),
-                priority=PRIORITY_NONE)
+                priority=Course.PRIORITY_NONE)
             course.save()
 
         return course.course_id

@@ -3,8 +3,7 @@
 
 from sis_provisioner.management.commands import SISProvisionerCommand
 from django.utils.timezone import make_aware, localtime, get_default_timezone
-from sis_provisioner.models import Course
-from sis_provisioner.models import PRIORITY_HIGH, PRIORITY_DEFAULT
+from sis_provisioner.models.course import Course
 from datetime import datetime, timedelta
 import re
 
@@ -15,7 +14,7 @@ class Command(SISProvisionerCommand):
     def handle(self, *args, **options):
         courses = Course.objects.filter(provisioned_error__isnull=False,
                                         queue_id__isnull=True,
-                                        priority__gte=PRIORITY_DEFAULT)
+                                        priority__gte=Course.PRIORITY_DEFAULT)
 
         retry_now_pattern = re.compile(r"500 (Timeout expired|DFDSRequest)")
         last_check_time = make_aware(datetime.now() - timedelta(hours=24),
@@ -30,7 +29,7 @@ class Command(SISProvisionerCommand):
 
                 course.provisioned_error = None
                 course.provisioned_status = None
-                course.priority = PRIORITY_HIGH
+                course.priority = Course.PRIORITY_HIGH
                 course.save()
 
         self.update_job()

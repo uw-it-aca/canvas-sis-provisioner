@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from django.test import TestCase
-from sis_provisioner.models import Account, RoleCache
+from sis_provisioner.models.account import Account
+from sis_provisioner.models.admin import RoleCache
 import mock
 
 
@@ -14,7 +15,7 @@ class RoleCacheModelTest(TestCase):
                           account_type=Account.SDB_TYPE)
         account.save()
 
-    @mock.patch('sis_provisioner.models.get_account_role_data')
+    @mock.patch('sis_provisioner.models.admin.get_account_role_data')
     def test_check_roles_for_account(self, mock_fn):
         mock_fn.return_value = '[test]'
         self.assertFalse(RoleCache.objects.check_roles_for_account('12345'))
