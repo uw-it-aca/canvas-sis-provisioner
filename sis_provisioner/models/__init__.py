@@ -192,8 +192,8 @@ class Import(models.Model):
             for subclass in ImportResource.__subclasses__():
                 if resource_name == subclass.__name__:
                     return subclass
-        raise ImportError('Model not found: {} ("{}")'.format(
-            resource_name, self.csv_type))
+        raise ImportError('Model "{}" not found in {}'.format(
+            resource_name, ImportResource.__subclasses__()))
 
     def queued_objects(self):
         return self.dependent_model().objects.queued(self.pk)
