@@ -2,12 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from django.test import TestCase
-from sis_provisioner.models import Import
-from sis_provisioner.models.user import User
-from sis_provisioner.models.course import Course
-from sis_provisioner.models.group import Group
-from sis_provisioner.models.enrollment import Enrollment
-from sis_provisioner.models.admin import Admin
+from sis_provisioner.models import Import, ImportResource
 
 
 class ImportModelTest(TestCase):
@@ -66,20 +61,19 @@ class ImportModelTest(TestCase):
         imp = Import(csv_type='fake')
         self.assertRaises(ImportError, imp.dependent_model)
 
-        imp = Import(csv_type='user')
-        self.assertEquals(imp.dependent_model(), User)
+        for csv_type in ['enrollment', 'user', 'course', 'admin', 'group']:
+            imp = Import(csv_type=csv_type)
+            self.assertTrue(issubclass(imp.dependent_model(), ImportResource))
+
+    def test_type_name(self):
+        imp = Import()
+        self.assertEquals(imp.type_name, None)
+
+        imp = Import(csv_type='fake')
+        self.assertEquals(imp.type_name, 'fake')
 
         imp = Import(csv_type='course')
-        self.assertEquals(imp.dependent_model(), Course)
-
-        imp = Import(csv_type='group')
-        self.assertEquals(imp.dependent_model(), Group)
-
-        imp = Import(csv_type='enrollment')
-        self.assertEquals(imp.dependent_model(), Enrollment)
-
-        imp = Import(csv_type='admin')
-        self.assertEquals(imp.dependent_model(), Admin)
+        self.assertEquals(imp.type_name, 'Course')
 
     def test_process_warnings(self):
         imp = Import()
