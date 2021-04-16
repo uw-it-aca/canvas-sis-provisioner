@@ -4,6 +4,10 @@
 from django.test import TestCase
 from sis_provisioner.models import Import
 from sis_provisioner.models.user import User
+from sis_provisioner.models.course import Course
+from sis_provisioner.models.group import Group
+from sis_provisioner.models.enrollment import Enrollment
+from sis_provisioner.models.admin import Admin
 
 
 class ImportModelTest(TestCase):
@@ -64,6 +68,18 @@ class ImportModelTest(TestCase):
 
         imp = Import(csv_type='user')
         self.assertEquals(imp.dependent_model(), User)
+
+        imp = Import(csv_type='course')
+        self.assertEquals(imp.dependent_model(), Course)
+
+        imp = Import(csv_type='group')
+        self.assertEquals(imp.dependent_model(), Group)
+
+        imp = Import(csv_type='enrollment')
+        self.assertEquals(imp.dependent_model(), Enrollment)
+
+        imp = Import(csv_type='admin')
+        self.assertEquals(imp.dependent_model(), Admin)
 
     def test_process_warnings(self):
         imp = Import()
