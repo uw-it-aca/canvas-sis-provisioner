@@ -187,12 +187,13 @@ class Import(models.Model):
                 re.match(r'^imported', self.canvas_state) is not None)
 
     def dependent_model(self):
-        if self.get_csv_type_display():
+        resource_name = self.get_csv_type_display()
+        if resource_name:
             for subclass in ImportResource.__subclasses__():
-                if subclass.__name__.endswith(self.get_csv_type_display()):
+                if resource_name == subclass.__name__:
                     return subclass
         raise ImportError('Model not found: {} ("{}")'.format(
-            self.get_csv_type_display(), self.csv_type))
+            resource_name, self.csv_type))
 
     def queued_objects(self):
         return self.dependent_model().objects.queued(self.pk)
