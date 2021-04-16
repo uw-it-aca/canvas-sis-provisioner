@@ -8,6 +8,7 @@ from sis_provisioner.dao.canvas import (
     sis_import_by_path, get_sis_import_status)
 from sis_provisioner.exceptions import MissingImportPathException
 from restclients_core.exceptions import DataFailureException
+from importlib import import_module
 from datetime import datetime
 from logging import getLogger
 import json
@@ -76,13 +77,13 @@ class Import(models.Model):
     """ Represents a set of files that have been queued for import.
     """
     CSV_TYPE_CHOICES = (
-        ('account', 'Curriculum'),
-        ('admin', 'Admin'),
-        ('user', 'User'),
-        ('course', 'Course'),
-        ('unused_course', 'Term'),
-        ('enrollment', 'Enrollment'),
-        ('group', 'Group')
+        ('account', 'sis_provisioner.models.account.Curriculum'),
+        ('admin', 'sis_provisioner.models.admin.Admin'),
+        ('user', 'sis_provisioner.models.user.User'),
+        ('course', 'sis_provisioner.models.course.Course'),
+        ('unused_course', 'sis_provisioner.models.term.Term'),
+        ('enrollment', 'sis_provisioner.models.enrollment.Enrollment'),
+        ('group', 'sis_provisioner.models.group.Group')
     )
 
     csv_type = models.SlugField(max_length=20, choices=CSV_TYPE_CHOICES)
@@ -104,12 +105,19 @@ class Import(models.Model):
 
     objects = ImportManager()
 
+    @property
+    def type_name(self):
+        model_cls = self.get_csv_type_display()
+        if model_cls:
+            modname, _, clsname = model_cls.rpartition('.')
+            return clsname
+
     def json_data(self):
         return {
             "queue_id": self.pk,
             "type": self.csv_type,
             "csv_path": self.csv_path,
-            "type_name": self.get_csv_type_display(),
+            "type_name": self.type_name,
             "added_date": localtime(self.added_date).isoformat(),
             "priority": ImportResource.PRIORITY_CHOICES[self.priority][1],
             "override_sis_stickiness": self.override_sis_stickiness,
@@ -187,11 +195,13 @@ class Import(models.Model):
                 re.match(r'^imported', self.canvas_state) is not None)
 
     def dependent_model(self):
-        if self.get_csv_type_display():
-            for subclass in ImportResource.__subclasses__():
-                if subclass.__name__.endswith(self.get_csv_type_display()):
-                    return subclass
-        raise ImportError()
+        model_cls = self.get_csv_type_display()
+        try:
+            modname, _, clsname = model_cls.rpartition('.')
+            module = import_module(modname)
+            return getattr(module, clsname)
+        except ValueError as ex:
+            raise ImportError('Model "{}" not found: {}'.format(model_cls, ex))
 
     def queued_objects(self):
         return self.dependent_model().objects.queued(self.pk)

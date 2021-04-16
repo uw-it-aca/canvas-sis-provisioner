@@ -1,9 +1,12 @@
 # Copyright 2021 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
+from django.core.management.base import CommandError
 from sis_provisioner.management.commands import SISProvisionerCommand
-from sis_provisioner.pidfile import Pidfile, ProcessRunningException
 from sis_provisioner.models import Import
+from logging import getLogger
+
+logger = getLogger(__name__)
 
 
 class Command(SISProvisionerCommand):
@@ -11,9 +14,9 @@ class Command(SISProvisionerCommand):
 
     def handle(self, *args, **options):
         try:
-            with Pidfile():
-                for imp in Import.objects.find_by_requires_update():
-                    imp.update_import_status()
-                self.update_job()
-        except ProcessRunningException as err:
-            pass
+            for imp in Import.objects.find_by_requires_update():
+                imp.update_import_status()
+            self.update_job()
+        except Exception as err:
+            logger.error("{}".format(err))
+            raise CommandError(err)
