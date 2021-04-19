@@ -230,6 +230,7 @@ class InvalidEnrollmentManager(models.Manager):
 
     def dequeue(self, sis_import):
         if sis_import.is_imported():
+            kwargs['queue_id'] = None
             kwargs['deleted_date'] = sis_import.monitor_date
             kwargs['priority'] = InvalidEnrollment.PRIORITY_NONE
             self.queued(sis_import.pk).update(**kwargs)
