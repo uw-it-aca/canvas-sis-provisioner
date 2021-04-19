@@ -126,8 +126,6 @@ class User(ImportResource):
     reg_id = models.CharField(max_length=32, unique=True)
     added_date = models.DateTimeField(auto_now_add=True)
     provisioned_date = models.DateTimeField(null=True)
-    invalid_enrollments_found_date = models.DateTimeField(null=True)
-    invalid_enrollments_deleted_date = models.DateTimeField(null=True)
     priority = models.SmallIntegerField(
         default=ImportResource.PRIORITY_DEFAULT,
         choices=ImportResource.PRIORITY_CHOICES)
@@ -143,12 +141,6 @@ class User(ImportResource):
             "provisioned_date": localtime(
                 self.provisioned_date).isoformat() if (
                     self.provisioned_date) else None,
-            "invalid_enrollments_found_date": localtime(
-                self.invalid_enrollments_found_date).isoformat() if (
-                    self.invalid_enrollments_found_date) else None,
-            "invalid_enrollments_deleted_date": localtime(
-                self.invalid_enrollments_deleted_date).isoformat() if (
-                    self.invalid_enrollments_deleted_date) else None,
             "priority": self.PRIORITY_CHOICES[self.priority][1],
             "queue_id": self.queue_id,
         }

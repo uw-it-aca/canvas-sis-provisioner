@@ -199,3 +199,51 @@ class Enrollment(ImportResource):
 
     class Meta:
         unique_together = ("course_id", "reg_id", "role")
+
+
+class InvalidEnrollmentManager(models.Manager):
+    def queue_by_priority(self, priority=ImportResource.PRIORITY_DEFAULT):
+        filter_limit = settings.SIS_IMPORT_LIMIT['enrollment']['default']
+
+        grace_period_dt = datetime.utcnow().replace(tzinfo=utc) - timedelta(
+            days=getattr(settings, 'INVALID_ENROLLMENT_GRACE_DAYS', 90))
+
+        pks = super(InvalidEnrollmentManager, self).get_queryset().filter(
+            priority=priority, queue_id__isnull=True,
+            found_date__lt=grace_period_dt
+        ).values_list('pk', flat=True)[:filter_limit]
+
+        if not len(pks):
+            raise EmptyQueueException()
+
+        imp = Import(priority=priority, csv_type='invalid_enrollment')
+        imp.save()
+
+        super(InvalidEnrollmentManager, self).get_queryset().filter(
+            pk__in=list(pks)).update(queue_id=imp.pk)
+
+        return imp
+
+    def queued(self, queue_id):
+        return super(InvalidEnrollmentManager, self).get_queryset().filter(
+            queue_id=queue_id)
+
+    def dequeue(self, sis_import):
+        if sis_import.is_imported():
+            kwargs['deleted_date'] = sis_import.monitor_date
+            kwargs['priority'] = InvalidEnrollment.PRIORITY_NONE
+            self.queued(sis_import.pk).update(**kwargs)
+
+
+class InvalidEnrollment(ImportResource):
+    reg_id = models.CharField(max_length=32)
+    role = models.CharField(max_length=32)
+    section_id = models.CharField(max_length=80)
+    found_date = models.DateTimeField(auto_now_add=True)
+    deleted_date = models.DateTimeField(null=True)
+    priority = models.SmallIntegerField(
+        default=ImportResource.PRIORITY_DEFAULT,
+        choices=ImportResource.PRIORITY_CHOICES)
+    queue_id = models.CharField(max_length=30, null=True)
+
+    objects = InvalidEnrollmentManager()

@@ -83,6 +83,8 @@ class Import(models.Model):
         ('course', 'sis_provisioner.models.course.Course'),
         ('unused_course', 'sis_provisioner.models.term.Term'),
         ('enrollment', 'sis_provisioner.models.enrollment.Enrollment'),
+        ('invalid_enrollment',
+            'sis_provisioner.models.enrollment.InvalidEnrollment'),
         ('group', 'sis_provisioner.models.group.Group')
     )
 
