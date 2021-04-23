@@ -195,6 +195,12 @@ class CanvasEnrollmentsTest(TestCase):
         mock_method.assert_called_with('def', {'user_id': 'sis_user_id%3Aabc'})
         self.assertEquals(len(r), 0)
 
+    @mock.patch.object(Enrollments, 'get_enrollments_for_regid')
+    def test_get_active_sis_enrollments_for_user(self, mock_method):
+        r = get_active_sis_enrollments_for_user('abc')
+        mock_method.assert_called_with('abc', {'state': ['active']})
+        self.assertEquals(len(r), 0)
+
 
 class CanvasReportsTest(TestCase):
     def test_get_active_courses_for_term(self):
