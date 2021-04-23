@@ -239,7 +239,7 @@ class InvalidEnrollmentManager(models.Manager):
             kwargs['priority'] = InvalidEnrollment.PRIORITY_NONE
             self.queued(sis_import.pk).update(**kwargs)
 
-    def add_invalid_enrollments(self):
+    def add_enrollments(self):
         student_group = getattr(settings, 'ALLOWED_CANVAS_STUDENT_USERS')
         affiliation_group = getattr(settings, 'ALLOWED_CANVAS_AFFILIATE_USERS')
         sponsored_group = getattr(settings, 'ALLOWED_CANVAS_SPONSORED_USERS')
