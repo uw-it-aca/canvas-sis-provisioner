@@ -7,6 +7,7 @@ from django.conf import settings
 from django.utils.timezone import utc, localtime
 from sis_provisioner.models import Import, ImportResource
 from sis_provisioner.models.course import Course
+from sis_provisioner.models.user import User
 from sis_provisioner.dao.term import is_active_term
 from sis_provisioner.dao.canvas import ENROLLMENT_ACTIVE, INSTRUCTOR_ENROLLMENT
 from sis_provisioner.exceptions import EmptyQueueException
@@ -237,7 +238,7 @@ class InvalidEnrollmentManager(models.Manager):
 
 
 class InvalidEnrollment(ImportResource):
-    reg_id = models.CharField(max_length=32)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     role = models.CharField(max_length=32)
     section_id = models.CharField(max_length=80)
     found_date = models.DateTimeField(auto_now_add=True)
@@ -246,5 +247,11 @@ class InvalidEnrollment(ImportResource):
         default=ImportResource.PRIORITY_DEFAULT,
         choices=ImportResource.PRIORITY_CHOICES)
     queue_id = models.CharField(max_length=30, null=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'role', 'section_id'],
+                                    name='unique_enrollment')
+        ]
 
     objects = InvalidEnrollmentManager()

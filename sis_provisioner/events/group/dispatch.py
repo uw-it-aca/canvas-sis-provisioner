@@ -2,9 +2,11 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from django.conf import settings
-from sis_provisioner.dao.user import valid_net_id, valid_gmail_id
+from sis_provisioner.dao.user import (
+    valid_net_id, valid_gmail_id, get_person_by_netid, is_group_member)
 from sis_provisioner.exceptions import UserPolicyException
 from sis_provisioner.models.group import Group, GroupMemberGroup
+from sis_provisioner.models.user import User
 import xml.etree.ElementTree as ET
 from logging import getLogger
 import re
@@ -154,17 +156,126 @@ class UWGroupDispatch(Dispatch):
         return 1
 
 
-class ImportGroupDispatch(Dispatch):
-    """
-    Import Group Dispatcher
-    """
-    def mine(self, group):
-        return group == getattr(settings, 'SIS_IMPORT_USERS', '')
+class LoginGroupDispatch(Dispatch):
+    def group(self):
+        raise NotImplementedError
 
-    def update_members(self, group, message):
-        self._log.info('{} IGNORE canvas user update: {}'.format(
-            log_prefix, group))
-        return 0
+    def mine(self, group_id):
+        return group_id == self.group()
+
+    def _flag_user(self, user):
+        user.invalid_enrollment_check_required = True
+        user.save()
+        self._log.info('{} FLAG {} in {} for invalid enrollment check'.format(
+            log_prefix, user.net_id, self.group()))
+
+    def _log_update(self):
+        self._log.info('{} UPDATE membership for {}'.format(
+            log_prefix, self.group()))
+
+    @property
+    def student_group(self):
+        return getattr(settings, 'ALLOWED_CANVAS_STUDENT_USERS')
+
+    @property
+    def affiliate_group(self):
+        return getattr(settings, 'ALLOWED_CANVAS_AFFILIATE_USERS')
+
+    @property
+    def sponsored_group(self):
+        return getattr(settings, 'ALLOWED_CANVAS_SPONSORED_USERS')
+
+    @staticmethod
+    def _add_user(net_id):
+        person = get_person_by_netid(net_id)
+        return User.objects.add_user(person)
+
+    @staticmethod
+    def _valid_member(net_id):
+        try:
+            valid_net_id(net_id)
+            return True
+        except UserPolicyException:
+            return False
+
+    @staticmethod
+    def _is_member(group_id, net_id):
+        return is_group_member(group_id, net_id)
+
+
+class AffiliateLoginGroupDispatch(LoginGroupDispatch):
+    def group(self):
+        return self.affiliate_group
+
+    def update_members(self, group_id, message):
+        member_count = 0
+        for el in message.findall('./add-members/add-member'):
+            if self._valid_member(el.text):
+                user = self._add_user(el.text)
+                member_count += 1
+
+        for el in message.findall('./delete-members/delete-member'):
+            if (self._valid_member(el.text) and
+                    self._is_member(self.student_group, el.text) and
+                    not self._is_member(self.sponsored_group, el.text)):
+                # Flag this user for invalid enrollment checks
+                user = self._add_user(el.text)
+                self._flag_user(user)
+                member_count += 1
+
+        if member_count:
+            self._log_update()
+
+        return member_count
+
+
+class SponsoredLoginGroupDispatch(LoginGroupDispatch):
+    def group(self):
+        return self.sponsored_group
+
+    def update_members(self, group_id, message):
+        member_count = 0
+        for el in message.findall('./add-members/add-member'):
+            if self._valid_member(el.text):
+                user = self._add_user(el.text)
+                member_count += 1
+
+        for el in message.findall('./delete-members/delete-member'):
+            if (self._valid_member(el.text) and
+                    self._is_member(self.student_group, el.text) and
+                    not self._is_member(self.affiliate_group, el.text)):
+                # Flag this user for invalid enrollment checks
+                user = self._add_user(el.text)
+                self._flag_user(user)
+                member_count += 1
+
+        if member_count:
+            self._log_update()
+
+        return member_count
+
+
+class StudentLoginGroupDispatch(LoginGroupDispatch):
+    def group(self):
+        return self.student_group
+
+    def update_members(self, group_id, message):
+        member_count = 0
+        for el in message.findall('./add-members/add-member'):
+            if self._valid_member(el.text):
+                user_exists = User.objects.filter(net_id=el.text).exists()
+                user = self._add_user(el.text)
+                if (user_exists and
+                        not self._is_member(self.affiliate_group, el.text) and
+                        not self._is_member(self.sponsored_group, el.text)):
+                    # Flag this user for invalid enrollment checks
+                    self._flag_user(user)
+                member_count += 1
+
+        if member_count:
+            self._log_update()
+
+        return member_count
 
 
 class CourseGroupDispatch(Dispatch):
