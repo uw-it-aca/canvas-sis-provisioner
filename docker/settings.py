@@ -254,7 +254,9 @@ REMOVED_ADMIN_RETENTION_DAYS = 90
 ENROLLMENT_EVENT_RETENTION_DAYS = 180
 
 INVALID_ENROLLMENT_GRACE_DAYS = 90
-ENROLLMENT_TYPES_INVALID_CHECK = ['teacher', 'ta', 'designer']
+ENROLLMENT_TYPES_INVALID_CHECK = [
+    'TeacherEnrollment', 'TaEnrollment', 'DesignerEnrollment'
+]
 
 LOGGING = {
     'version': 1,

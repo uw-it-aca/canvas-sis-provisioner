@@ -118,6 +118,12 @@ class UserManager(models.Manager):
 
         return user
 
+    def get_invalid_enrollment_check_users(self):
+        filter_limit = settings.SIS_IMPORT_LIMIT['user']['default']
+        return super(UserManager, self).get_queryset().filter(
+            invalid_enrollment_check_required=True,
+            provisioned_date__isnull=False)[:filter_limit]
+
 
 class User(ImportResource):
     """ Represents the provisioned state of a user.
