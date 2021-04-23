@@ -215,6 +215,19 @@ def get_sis_enrollments_for_user_in_course(user_sis_id, course_sis_id):
     return enrollments
 
 
+def get_active_sis_enrollments_for_user(user_sis_id):
+    canvas = Enrollments(per_page=100)
+    enrollments = []
+    for enrollment in canvas.get_enrollments_for_regid(
+            user_sis_id, {'state': [ENROLLMENT_ACTIVE]}):
+        try:
+            valid_academic_section_sis_id(enrollment.sis_section_id)
+            enrollments.append(enrollment)
+        except CoursePolicyException:
+            continue
+    return enrollments
+
+
 def get_active_courses_for_term(term, account_id=None):
     if account_id is None:
         account_id = getattr(settings, 'RESTCLIENTS_CANVAS_ACCOUNT_ID', None)
