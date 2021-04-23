@@ -251,11 +251,11 @@ class InvalidEnrollmentManager(models.Manager):
                     not is_group_member(affiliation_group, user.net_id) and
                     not is_group_member(sponsored_group, user.net_id)):
 
-                for enr in get_active_sis_enrollments_for_user(user.reg_id):
-                    if enr.role in check_roles:
-                        inv, _ = InvalidEnrollment.objects.get_or_create(
-                            user=user, role=role, section_id=enr.sis_section_id
-                        )
+                for enr in get_active_sis_enrollments_for_user(
+                        user.reg_id, roles=check_roles):
+                    inv, _ = InvalidEnrollment.objects.get_or_create(
+                        user=user, role=enr.role, section_id=enr.sis_section_id
+                    )
 
             # Clear check flag
             user.invalid_enrollment_check_required = False

@@ -201,6 +201,11 @@ class CanvasEnrollmentsTest(TestCase):
         mock_method.assert_called_with('abc', {'state': ['active']})
         self.assertEquals(len(r), 0)
 
+        r = get_active_sis_enrollments_for_user('abc', roles=['testRole'])
+        mock_method.assert_called_with('abc', {
+            'state': ['active'], 'type': ['testRole']})
+        self.assertEquals(len(r), 0)
+
 
 class CanvasReportsTest(TestCase):
     def test_get_active_courses_for_term(self):

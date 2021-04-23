@@ -215,11 +215,15 @@ def get_sis_enrollments_for_user_in_course(user_sis_id, course_sis_id):
     return enrollments
 
 
-def get_active_sis_enrollments_for_user(user_sis_id):
+def get_active_sis_enrollments_for_user(user_sis_id, roles=[]):
     canvas = Enrollments(per_page=100)
+
+    params = {'state': [ENROLLMENT_ACTIVE]}
+    if len(roles):
+        params['type'] = roles
+
     enrollments = []
-    for enrollment in canvas.get_enrollments_for_regid(
-            user_sis_id, {'state': [ENROLLMENT_ACTIVE]}):
+    for enrollment in canvas.get_enrollments_for_regid(user_sis_id, params):
         try:
             valid_academic_section_sis_id(enrollment.sis_section_id)
             enrollments.append(enrollment)
