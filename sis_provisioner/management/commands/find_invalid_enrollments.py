@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from sis_provisioner.management.commands import SISProvisionerCommand
-from sis_provisioner.models.enrollments import InvalidEnrollment
+from sis_provisioner.models.enrollment import InvalidEnrollment
 
 
 class Command(SISProvisionerCommand):
