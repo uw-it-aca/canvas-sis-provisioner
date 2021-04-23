@@ -157,9 +157,33 @@ class UWGroupDispatch(Dispatch):
 
 
 class LoginGroupDispatch(Dispatch):
-    student_group = getattr(settings, 'ALLOWED_CANVAS_STUDENT_USERS')
-    affiliate_group = getattr(settings, 'ALLOWED_CANVAS_AFFILIATE_USERS')
-    sponsored_group = getattr(settings, 'ALLOWED_CANVAS_SPONSORED_USERS')
+    def group(self):
+        raise NotImplementedError
+
+    def mine(self, group_id):
+        return group_id == self.group()
+
+    def _flag_user(self, user):
+        user.invalid_enrollment_check_required = True
+        user.save()
+        self._log.info('{} FLAG {} in {} for invalid enrollment check'.format(
+            log_prefix, user.net_id, self.group()))
+
+    def _log_update(self):
+        self._log.info('{} UPDATE membership for {}'.format(
+            log_prefix, self.group()))
+
+    @property
+    def student_group(self):
+        return getattr(settings, 'ALLOWED_CANVAS_STUDENT_USERS')
+
+    @property
+    def affiliate_group(self):
+        return getattr(settings, 'ALLOWED_CANVAS_AFFILIATE_USERS')
+
+    @property
+    def sponsored_group(self):
+        return getattr(settings, 'ALLOWED_CANVAS_SPONSORED_USERS')
 
     @staticmethod
     def _add_user(net_id):
@@ -180,13 +204,11 @@ class LoginGroupDispatch(Dispatch):
 
 
 class AffiliateLoginGroupDispatch(LoginGroupDispatch):
-    def mine(self):
-        return group == self.affiliate_group
+    def group(self):
+        return self.affiliate_group
 
     def update_members(self, group_id, message):
-        group_id = message.findall('./name')[0].text
         member_count = 0
-
         for el in message.findall('./add-members/add-member'):
             if self._valid_member(el.text):
                 user = self._add_user(el.text)
@@ -198,21 +220,21 @@ class AffiliateLoginGroupDispatch(LoginGroupDispatch):
                     not self._is_member(self.sponsored_group, el.text)):
                 # Flag this user for invalid enrollment checks
                 user = self._add_user(el.text)
-                user.invalid_enrollment_check_required = True
-                user.save()
+                self._flag_user(user)
                 member_count += 1
+
+        if member_count:
+            self._log_update()
 
         return member_count
 
 
-class SponsoredLoginGroupDispatch(Dispatch):
-    def mine(self):
-        return group == self.sponsored_group
+class SponsoredLoginGroupDispatch(LoginGroupDispatch):
+    def group(self):
+        return self.sponsored_group
 
     def update_members(self, group_id, message):
-        group_id = message.findall('./name')[0].text
         member_count = 0
-
         for el in message.findall('./add-members/add-member'):
             if self._valid_member(el.text):
                 user = self._add_user(el.text)
@@ -224,21 +246,21 @@ class SponsoredLoginGroupDispatch(Dispatch):
                     not self._is_member(self.affiliate_group, el.text)):
                 # Flag this user for invalid enrollment checks
                 user = self._add_user(el.text)
-                user.invalid_enrollment_check_required = True
-                user.save()
+                self._flag_user(user)
                 member_count += 1
+
+        if member_count:
+            self._log_update()
 
         return member_count
 
 
-class StudentLoginGroupDispatch(Dispatch):
-    def mine(self, group):
-        return group == self.student_group
+class StudentLoginGroupDispatch(LoginGroupDispatch):
+    def group(self):
+        return self.student_group
 
     def update_members(self, group_id, message):
-        group_id = message.findall('./name')[0].text
         member_count = 0
-
         for el in message.findall('./add-members/add-member'):
             if self._valid_member(el.text):
                 user_exists = User.objects.filter(net_id=el.text).exists()
@@ -247,9 +269,11 @@ class StudentLoginGroupDispatch(Dispatch):
                         not self._is_member(self.affiliate_group, el.text) and
                         not self._is_member(self.sponsored_group, el.text)):
                     # Flag this user for invalid enrollment checks
-                    user.invalid_enrollment_check_required = True
-                    user.save()
+                    self._flag_user(user)
                 member_count += 1
+
+        if member_count:
+            self._log_update()
 
         return member_count
 
