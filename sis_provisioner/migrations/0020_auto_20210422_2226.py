@@ -23,9 +23,6 @@ class Migration(migrations.Migration):
                 ('queue_id', models.CharField(max_length=30, null=True)),
             ],
         ),
-        migrations.DeleteModel(
-            name='CourseMember',
-        ),
         migrations.AddField(
             model_name='user',
             name='invalid_enrollment_check_required',
