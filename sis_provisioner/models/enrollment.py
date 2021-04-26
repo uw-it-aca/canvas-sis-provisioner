@@ -12,7 +12,6 @@ from sis_provisioner.dao.term import is_active_term
 from sis_provisioner.dao.canvas import (
     get_active_sis_enrollments_for_user, ENROLLMENT_ACTIVE,
     INSTRUCTOR_ENROLLMENT)
-from sis_provisioner.dao.user import is_group_member
 from sis_provisioner.exceptions import EmptyQueueException
 from datetime import datetime, timedelta
 from logging import getLogger
@@ -240,22 +239,19 @@ class InvalidEnrollmentManager(models.Manager):
             self.queued(sis_import.pk).update(**kwargs)
 
     def add_enrollments(self):
-        student_group = getattr(settings, 'ALLOWED_CANVAS_STUDENT_USERS')
-        affiliation_group = getattr(settings, 'ALLOWED_CANVAS_AFFILIATE_USERS')
-        sponsored_group = getattr(settings, 'ALLOWED_CANVAS_SPONSORED_USERS')
         check_roles = getattr(settings, 'ENROLLMENT_TYPES_INVALID_CHECK')
-
         for user in User.objects.get_invalid_enrollment_check_users():
             # Verify that the check conditions still exist
-            if (is_group_member(student_group, user.net_id) and
-                    not is_group_member(affiliation_group, user.net_id) and
-                    not is_group_member(sponsored_group, user.net_id)):
-
+            if user.has_student_affiliation_only():
                 for enr in get_active_sis_enrollments_for_user(
                         user.reg_id, roles=check_roles):
-                    inv, _ = InvalidEnrollment.objects.get_or_create(
+                    inv, created = InvalidEnrollment.objects.get_or_create(
                         user=user, role=enr.role, section_id=enr.sis_section_id
                     )
+                    if inv.priority == InvalidEnrollment.PRIORITY_NONE:
+                        inv.priority = InvalidEnrollment.PRIORITY_DEFAULT
+                        # reset found_date?
+                        inv.save()
 
             # Clear check flag
             user.invalid_enrollment_check_required = False
