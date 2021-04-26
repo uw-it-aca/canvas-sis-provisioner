@@ -172,5 +172,5 @@ class User(ImportResource):
             getattr(settings, 'ALLOWED_CANVAS_SPONSORED_USERS'), self.net_id)
 
     def has_student_affiliation_only(self):
-        return (self.is_student_user() and not
-                self.is_affiliate_user() and not self.is_sponsored_user())
+        return (self.is_student_user() and not self.is_affiliate_user() and
+                not self.is_sponsored_user())
