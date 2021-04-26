@@ -2,8 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from django.conf import settings
-from sis_provisioner.dao.user import (
-    valid_net_id, valid_gmail_id, get_person_by_netid)
+from sis_provisioner.dao.user import valid_net_id, valid_gmail_id
 from sis_provisioner.exceptions import UserPolicyException
 from sis_provisioner.models.group import Group, GroupMemberGroup
 from sis_provisioner.models.user import User
@@ -175,8 +174,7 @@ class LoginGroupDispatch(Dispatch):
 
     @staticmethod
     def _add_user(net_id):
-        person = get_person_by_netid(net_id)
-        return User.objects.add_user(person)
+        return User.objects.add_user_by_netid(net_id)
 
     @staticmethod
     def _valid_member(net_id):

@@ -9,9 +9,7 @@ from sis_provisioner.models import Import, ImportResource
 from sis_provisioner.models.course import Course
 from sis_provisioner.models.user import User
 from sis_provisioner.dao.term import is_active_term
-from sis_provisioner.dao.canvas import (
-    get_active_sis_enrollments_for_user, ENROLLMENT_ACTIVE,
-    INSTRUCTOR_ENROLLMENT)
+from sis_provisioner.dao.canvas import ENROLLMENT_ACTIVE, INSTRUCTOR_ENROLLMENT
 from sis_provisioner.exceptions import EmptyQueueException
 from datetime import datetime, timedelta
 from logging import getLogger
@@ -243,8 +241,7 @@ class InvalidEnrollmentManager(models.Manager):
         for user in User.objects.get_invalid_enrollment_check_users():
             # Verify that the check conditions still exist
             if user.has_student_affiliation_only():
-                for enr in get_active_sis_enrollments_for_user(
-                        user.reg_id, roles=check_roles):
+                for enr in user.get_active_sis_enrollments(roles=check_roles):
                     inv, created = InvalidEnrollment.objects.get_or_create(
                         user=user, role=enr.role, section_id=enr.sis_section_id
                     )
