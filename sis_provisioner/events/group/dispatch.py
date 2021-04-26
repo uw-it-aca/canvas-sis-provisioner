@@ -172,8 +172,7 @@ class LoginGroupDispatch(Dispatch):
         self._log.info('{} UPDATE membership for {}'.format(
             log_prefix, self.group()))
 
-    @staticmethod
-    def _add_user(net_id):
+    def _add_user(self, net_id):
         try:
             return User.objects.add_user_by_netid(net_id)
         except UserPolicyException as ex:
