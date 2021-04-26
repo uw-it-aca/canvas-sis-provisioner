@@ -7,6 +7,7 @@ from django.conf import settings
 from django.utils.timezone import utc, localtime
 from sis_provisioner.models import Import, ImportResource
 from sis_provisioner.models.course import Course
+from sis_provisioner.models.user import User
 from sis_provisioner.dao.term import is_active_term
 from sis_provisioner.dao.canvas import ENROLLMENT_ACTIVE, INSTRUCTOR_ENROLLMENT
 from sis_provisioner.exceptions import EmptyQueueException
@@ -199,3 +200,76 @@ class Enrollment(ImportResource):
 
     class Meta:
         unique_together = ("course_id", "reg_id", "role")
+
+
+class InvalidEnrollmentManager(models.Manager):
+    def queue_by_priority(self, priority=ImportResource.PRIORITY_DEFAULT):
+        filter_limit = settings.SIS_IMPORT_LIMIT['enrollment']['default']
+
+        grace_period_dt = datetime.utcnow().replace(tzinfo=utc) - timedelta(
+            days=getattr(settings, 'INVALID_ENROLLMENT_GRACE_DAYS', 90))
+
+        pks = super(InvalidEnrollmentManager, self).get_queryset().filter(
+            priority=priority, queue_id__isnull=True,
+            found_date__lt=grace_period_dt
+        ).values_list('pk', flat=True)[:filter_limit]
+
+        if not len(pks):
+            raise EmptyQueueException()
+
+        imp = Import(priority=priority, csv_type='invalid_enrollment')
+        imp.save()
+
+        super(InvalidEnrollmentManager, self).get_queryset().filter(
+            pk__in=list(pks)).update(queue_id=imp.pk)
+
+        return imp
+
+    def queued(self, queue_id):
+        return super(InvalidEnrollmentManager, self).get_queryset().filter(
+            queue_id=queue_id)
+
+    def dequeue(self, sis_import):
+        if sis_import.is_imported():
+            kwargs['queue_id'] = None
+            kwargs['deleted_date'] = sis_import.monitor_date
+            kwargs['priority'] = InvalidEnrollment.PRIORITY_NONE
+            self.queued(sis_import.pk).update(**kwargs)
+
+    def add_enrollments(self):
+        check_roles = getattr(settings, 'ENROLLMENT_TYPES_INVALID_CHECK')
+        for user in User.objects.get_invalid_enrollment_check_users():
+            # Verify that the check conditions still exist
+            if user.has_student_affiliation_only():
+                for enr in user.get_active_sis_enrollments(roles=check_roles):
+                    inv, created = InvalidEnrollment.objects.get_or_create(
+                        user=user, role=enr.role, section_id=enr.sis_section_id
+                    )
+                    if inv.priority == InvalidEnrollment.PRIORITY_NONE:
+                        inv.priority = InvalidEnrollment.PRIORITY_DEFAULT
+                        # reset found_date?
+                        inv.save()
+
+            # Clear check flag
+            user.invalid_enrollment_check_required = False
+            user.save()
+
+
+class InvalidEnrollment(ImportResource):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    role = models.CharField(max_length=32)
+    section_id = models.CharField(max_length=80)
+    found_date = models.DateTimeField(auto_now_add=True)
+    deleted_date = models.DateTimeField(null=True)
+    priority = models.SmallIntegerField(
+        default=ImportResource.PRIORITY_DEFAULT,
+        choices=ImportResource.PRIORITY_CHOICES)
+    queue_id = models.CharField(max_length=30, null=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'role', 'section_id'],
+                                    name='unique_enrollment')
+        ]
+
+    objects = InvalidEnrollmentManager()

@@ -9,6 +9,7 @@ from sis_provisioner.exceptions import (
     UserPolicyException, MissingLoginIdException)
 from uw_sws.models import Registration
 from uw_sws.exceptions import InvalidCanvasIndependentStudyCourse
+from uw_canvas.models import CanvasEnrollment
 from restclients_core.exceptions import DataFailureException
 from datetime import datetime, timedelta
 from django.conf import settings
@@ -124,3 +125,27 @@ class EnrollmentBuilder(Builder):
         now = datetime.utcnow().replace(tzinfo=utc)
         timeout = getattr(settings, 'MISSING_LOGIN_ID_RETRY_TIMEOUT', 48)
         self.retry_missing_id = now - timedelta(hours=timeout)
+
+
+class InvalidEnrollmentBuilder(Builder):
+    """
+    Generates import data for each of the passed InvalidEnrollment models.
+    """
+    def _process(self, inv_enrollment):
+        try:
+            # Verify that the check conditions still exist
+            if inv_enrollment.user.has_student_affiliation_only():
+                person = get_person_by_regid(inv_enrollment.user.reg_id)
+                if self.add_user_data_for_person(person):
+                    self.data.add(EnrollmentCSV(
+                        section_id=inv_enrollment.section_id,
+                        person=person,
+                        role=inv_enrollment.role,
+                        status=CanvasEnrollment.STATUS_DELETED))
+
+        except DataFailureException as err:
+            inv_enrollment.queue_id = None
+            inv_enrollment.priority = enrollment.PRIORITY_DEFAULT
+            inv_enrollment.save()
+            self.logger.info('Requeue invalid enrollment {} in {}: {}'.format(
+                inv_enrollment.reg_id, inv_enrollment.section_id, err))

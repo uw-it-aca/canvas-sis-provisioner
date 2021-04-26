@@ -5,8 +5,9 @@ from django.db import models
 from django.db.models import Q
 from django.conf import settings
 from django.utils.timezone import localtime
-from sis_provisioner.dao.user import get_person_by_netid
+from sis_provisioner.dao.user import get_person_by_netid, is_group_member
 from sis_provisioner.dao.group import get_sis_import_members
+from sis_provisioner.dao.canvas import get_active_sis_enrollments_for_user
 from sis_provisioner.models import Import, ImportResource
 from sis_provisioner.exceptions import (
     MissingLoginIdException, EmptyQueueException)
@@ -62,7 +63,7 @@ class UserManager(models.Manager):
             if (member.name not in existing_netids or
                     existing_netids[member.name] == User.PRIORITY_NONE):
                 try:
-                    user = self.add_user(get_person_by_netid(member.name))
+                    user = self.add_user_by_netid(member.name)
                     existing_netids[member.name] = user.priority
                 except Exception as err:
                     logger.info('User: SKIP {}, {}'.format(member.name, err))
@@ -118,6 +119,15 @@ class UserManager(models.Manager):
 
         return user
 
+    def add_user_by_netid(self, net_id, priority=ImportResource.PRIORITY_HIGH):
+        return self.add_user(get_person_by_netid(net_id), priority=priority)
+
+    def get_invalid_enrollment_check_users(self):
+        filter_limit = settings.SIS_IMPORT_LIMIT['user']['default']
+        return super(UserManager, self).get_queryset().filter(
+            invalid_enrollment_check_required=True,
+            provisioned_date__isnull=False)[:filter_limit]
+
 
 class User(ImportResource):
     """ Represents the provisioned state of a user.
@@ -126,8 +136,7 @@ class User(ImportResource):
     reg_id = models.CharField(max_length=32, unique=True)
     added_date = models.DateTimeField(auto_now_add=True)
     provisioned_date = models.DateTimeField(null=True)
-    invalid_enrollments_found_date = models.DateTimeField(null=True)
-    invalid_enrollments_deleted_date = models.DateTimeField(null=True)
+    invalid_enrollment_check_required = models.NullBooleanField()
     priority = models.SmallIntegerField(
         default=ImportResource.PRIORITY_DEFAULT,
         choices=ImportResource.PRIORITY_CHOICES)
@@ -143,12 +152,25 @@ class User(ImportResource):
             "provisioned_date": localtime(
                 self.provisioned_date).isoformat() if (
                     self.provisioned_date) else None,
-            "invalid_enrollments_found_date": localtime(
-                self.invalid_enrollments_found_date).isoformat() if (
-                    self.invalid_enrollments_found_date) else None,
-            "invalid_enrollments_deleted_date": localtime(
-                self.invalid_enrollments_deleted_date).isoformat() if (
-                    self.invalid_enrollments_deleted_date) else None,
             "priority": self.PRIORITY_CHOICES[self.priority][1],
             "queue_id": self.queue_id,
         }
+
+    def get_active_sis_enrollments(self, roles=[]):
+        return get_active_sis_enrollments_for_user(self.reg_id, roles=roles)
+
+    def is_student_user(self):
+        return is_group_member(
+            getattr(settings, 'ALLOWED_CANVAS_STUDENT_USERS'), self.net_id)
+
+    def is_affiliate_user(self):
+        return is_group_member(
+            getattr(settings, 'ALLOWED_CANVAS_AFFILIATE_USERS'), self.net_id)
+
+    def is_sponsored_user(self):
+        return is_group_member(
+            getattr(settings, 'ALLOWED_CANVAS_SPONSORED_USERS'), self.net_id)
+
+    def has_student_affiliation_only(self):
+        return (self.is_student_user() and not self.is_affiliate_user() and
+                not self.is_sponsored_user())
