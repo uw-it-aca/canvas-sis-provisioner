@@ -174,7 +174,11 @@ class LoginGroupDispatch(Dispatch):
 
     @staticmethod
     def _add_user(net_id):
-        return User.objects.add_user_by_netid(net_id)
+        try:
+            return User.objects.add_user_by_netid(net_id)
+        except UserPolicyException as ex:
+            self._log.info('{} IGNORE member {}: {}'.format(
+                log_prefix, net_id, ex))
 
     @staticmethod
     def _valid_member(net_id):
@@ -193,13 +197,14 @@ class AffiliateLoginGroupDispatch(LoginGroupDispatch):
         member_count = 0
         for el in message.findall('./add-members/add-member'):
             if self._valid_member(el.text):
-                user = self._add_user(el.text)
-                member_count += 1
+                if self._add_user(el.text):
+                    member_count += 1
 
         for el in message.findall('./delete-members/delete-member'):
             if self._valid_member(el.text):
                 user = self._add_user(el.text)
-                if user.is_student_user() and not user.is_sponsored_user():
+                if (user and user.is_student_user() and
+                        not user.is_sponsored_user()):
                     # Flag this user for invalid enrollment checks
                     self._flag_user(user)
                     member_count += 1
@@ -218,13 +223,14 @@ class SponsoredLoginGroupDispatch(LoginGroupDispatch):
         member_count = 0
         for el in message.findall('./add-members/add-member'):
             if self._valid_member(el.text):
-                user = self._add_user(el.text)
-                member_count += 1
+                if self._add_user(el.text):
+                    member_count += 1
 
         for el in message.findall('./delete-members/delete-member'):
             if self._valid_member(el.text):
                 user = self._add_user(el.text)
-                if user.is_student_user() and not user.is_affiliate_user():
+                if (user and user.is_student_user() and
+                        not user.is_affiliate_user()):
                     # Flag this user for invalid enrollment checks
                     self._flag_user(user)
                     member_count += 1
@@ -245,7 +251,7 @@ class StudentLoginGroupDispatch(LoginGroupDispatch):
             if self._valid_member(el.text):
                 user_exists = User.objects.filter(net_id=el.text).exists()
                 user = self._add_user(el.text)
-                if (user_exists and not user.is_affiliate_user() and
+                if (user_exists and user and not user.is_affiliate_user() and
                         not user.is_sponsored_user()):
                     # Flag this user for invalid enrollment checks
                     self._flag_user(user)
