@@ -6,6 +6,7 @@ from sis_provisioner.dao.user import valid_net_id, valid_gmail_id
 from sis_provisioner.exceptions import UserPolicyException
 from sis_provisioner.models.group import Group, GroupMemberGroup
 from sis_provisioner.models.user import User
+from restclients_core.exceptions import DataFailureException
 import xml.etree.ElementTree as ET
 from logging import getLogger
 import re
@@ -79,8 +80,9 @@ class UWGroupDispatch(Dispatch):
     Canvas Enrollment Group Event Dispatcher
     """
     def mine(self, group_id):
-        return (Group.objects.filter(group_id=group_id).count() or
-                GroupMemberGroup.objects.filter(group_id=group_id).count())
+        return (
+            Group.objects.get_active_by_group(group_id).exists() or
+            GroupMemberGroup.objects.get_active_by_group(group_id).exists())
 
     @staticmethod
     def _valid_member(login_id):
@@ -177,6 +179,9 @@ class LoginGroupDispatch(Dispatch):
             return User.objects.add_user_by_netid(net_id)
         except UserPolicyException as ex:
             self._log.info('{} IGNORE member {}: {}'.format(
+                log_prefix, net_id, ex))
+        except DataFailureException as ex:
+            self._log.info('{} ERROR adding member {}: {}'.format(
                 log_prefix, net_id, ex))
 
     @staticmethod
