@@ -7,8 +7,10 @@ from django.utils.timezone import utc
 from datetime import datetime
 from sis_provisioner.dao.course import get_section_by_id
 from sis_provisioner.models import Import
-from sis_provisioner.models.enrollment import Enrollment, EnrollmentManager
+from sis_provisioner.models.enrollment import (
+    Enrollment, EnrollmentManager, InvalidEnrollment)
 from sis_provisioner.models.course import Course
+from sis_provisioner.exceptions import EmptyQueueException
 from uw_sws.util import fdao_sws_override
 from uw_pws.util import fdao_pws_override
 import mock
@@ -135,5 +137,21 @@ class EnrollmentModelTest(TestCase):
         mock_datetime.utcnow.return_value = datetime(2013, 1, 4, 0, 0, 0)
         r = Enrollment.objects.purge_expired()
         mock_filter.assert_called_with(
-            priority=0,
+            priority=Enrollment.PRIORITY_NONE,
             last_modified__lt=datetime(2013, 1, 1, 0, 0, 0, tzinfo=utc))
+
+
+class InvalidEnrollmentModelTest(TestCase):
+    @mock.patch.object(QuerySet, 'filter')
+    @mock.patch('sis_provisioner.models.enrollment.datetime')
+    @override_settings(INVALID_ENROLLMENT_GRACE_DAYS=5)
+    def test_queue_by_priority(self, mock_datetime, mock_filter):
+        mock_datetime.utcnow.return_value = datetime(2013, 1, 6, 0, 0, 0)
+        try:
+            r = InvalidEnrollment.objects.queue_by_priority()
+        except EmptyQueueException:
+            pass
+        mock_filter.assert_called_with(
+            priority=InvalidEnrollment.PRIORITY_DEFAULT,
+            queue_id__isnull=True,
+            found_date__lt=datetime(2013, 1, 1, 0, 0, 0, tzinfo=utc))

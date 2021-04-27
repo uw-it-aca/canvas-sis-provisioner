@@ -4,7 +4,8 @@
 from sis_provisioner.events import SISProvisionerProcessor, ProcessorException
 from sis_provisioner.models.events import GroupLog
 from sis_provisioner.events.group.dispatch import (
-    ImportGroupDispatch, CourseGroupDispatch, UWGroupDispatch)
+    AffiliateLoginGroupDispatch, SponsoredLoginGroupDispatch,
+    StudentLoginGroupDispatch, UWGroupDispatch)
 from aws_message.crypto import aes128cbc, CryptoException
 from base64 import b64decode
 import json
@@ -42,7 +43,8 @@ class GroupProcessor(SISProvisionerProcessor):
         self._dispatch = None
 
         for dispatch_class in [
-                ImportGroupDispatch, CourseGroupDispatch, UWGroupDispatch]:
+                StudentLoginGroupDispatch, SponsoredLoginGroupDispatch,
+                AffiliateLoginGroupDispatch, UWGroupDispatch]:
             dispatch = dispatch_class(self.settings)
             if dispatch.mine(self._groupname):
                 self._dispatch = dispatch

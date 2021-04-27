@@ -53,6 +53,16 @@ class UserModelTest(TestCase):
         self.assertEquals(user.priority, User.PRIORITY_NONE)
         User.objects.all().delete()
 
+    def test_add_user_by_netid(self):
+        user = User.objects.add_user_by_netid('javerage')
+        self.assertEquals(user.net_id, 'javerage')
+        self.assertEquals(user.priority, User.PRIORITY_HIGH)
+
+        user = User.objects.add_user_by_netid('javerage',
+                                              priority=User.PRIORITY_NONE)
+        self.assertEquals(user.net_id, 'javerage')
+        self.assertEquals(user.priority, User.PRIORITY_NONE)
+
     def test_json_data(self):
         person = PWS().get_person_by_netid('javerage')
         user = User.objects.add_user(person)

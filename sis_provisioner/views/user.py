@@ -63,8 +63,8 @@ class UserView(RESTDispatch):
                 return self.error_response(409, "User already exists")
         except User.DoesNotExist:
             try:
-                user = User.objects.add_user(get_person_by_netid(net_id),
-                                             priority=User.PRIORITY_IMMEDIATE)
+                user = User.objects.add_user_by_netid(
+                    net_id, priority=User.PRIORITY_IMMEDIATE)
                 return self.json_response()
 
             except Exception as err:
