@@ -118,9 +118,8 @@ def get_user_by_sis_id(sis_user_id):
     return Users().get_user_by_sis_id(sis_user_id)
 
 
-def merge_all_users_for_person(person):
+def get_all_users_for_person(person):
     canvas = Users()
-
     all_users = [canvas.get_user_by_sis_id(person.uwregid)]
     for uwregid in person.prior_uwregids:
         try:
@@ -129,15 +128,20 @@ def merge_all_users_for_person(person):
             if ex.status != 404:
                 raise
 
+    return all_users
+
+
+def merge_all_users_for_person(person):
     destination_user = None
     users_to_merge = []
-    for user in all_users:
+    for user in get_all_users_for_person(person):
         if user.login_id == person.uwnetid:  # Current login_id
             destination_user = user
         else:
             users_to_merge.append(user)
 
-    if destination_user:
+    if destination_user and len(users_to_merge):
+        canvas = Users()
         for user in users_to_merge:
             canvas.merge_users(user, destination_user)
             logger.info('Merged user {} into {}'.format(
