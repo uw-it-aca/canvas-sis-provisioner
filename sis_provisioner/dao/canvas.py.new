@@ -118,34 +118,6 @@ def get_user_by_sis_id(sis_user_id):
     return Users().get_user_by_sis_id(sis_user_id)
 
 
-def merge_all_users_for_person(person):
-    canvas = Users()
-
-    all_users = [canvas.get_user_by_sis_id(person.uwregid)]
-    for uwregid in person.prior_uwregids:
-        try:
-            all_users.append(canvas.get_user_by_sis_id(uwregid))
-        except DataFailureException as ex:
-            if ex.status != 404:
-                raise
-
-    destination_user = None
-    users_to_merge = []
-    for user in all_users:
-        if user.login_id == person.uwnetid:  # Current login_id
-            destination_user = user
-        else:
-            users_to_merge.append(user)
-
-    if destination_user:
-        for user in users_to_merge:
-            canvas.merge_users(user, destination_user)
-            logger.info('Merged user {} into {}'.format(
-                user.user_id, destination_user.user_id))
-
-    return destination_user
-
-
 def create_user(person):
     return Users().create_user(person)
 
@@ -243,26 +215,9 @@ def get_sis_enrollments_for_user_in_course(user_sis_id, course_sis_id):
     return enrollments
 
 
-def get_active_sis_enrollments_for_user(user_sis_id, roles=[]):
-    canvas = Enrollments(per_page=100)
-
-    params = {'state': [ENROLLMENT_ACTIVE]}
-    if len(roles):
-        params['type'] = roles
-
-    enrollments = []
-    for enrollment in canvas.get_enrollments_for_regid(user_sis_id, params):
-        try:
-            valid_academic_section_sis_id(enrollment.sis_section_id)
-            enrollments.append(enrollment)
-        except CoursePolicyException:
-            continue
-    return enrollments
-
-
 def get_active_courses_for_term(term, account_id=None):
     if account_id is None:
-        account_id = getattr(settings, 'RESTCLIENTS_CANVAS_ACCOUNT_ID', None)
+        account_id = getattr(settings, 'RESTCLIENTS_CANVAS_ACCOUNT_ID')
     canvas_term = get_term_by_sis_id(term.canvas_sis_id())
     reports = Reports()
 
@@ -300,7 +255,7 @@ def get_active_courses_for_term(term, account_id=None):
 
 def get_unused_course_report_data(term_sis_id):
     term = Terms().get_term_by_sis_id(term_sis_id)
-    account_id = getattr(settings, 'RESTCLIENTS_CANVAS_ACCOUNT_ID', None)
+    account_id = getattr(settings, 'RESTCLIENTS_CANVAS_ACCOUNT_ID')
 
     reports = Reports()
     unused_course_report = reports.create_unused_courses_report(
@@ -310,6 +265,51 @@ def get_unused_course_report_data(term_sis_id):
 
     reports.delete_report(unused_course_report)
     return report_data
+
+
+def get_invalid_enrollments(term_sis_id):
+    """
+    Find users that have both a student enrollment and an enrollment in
+    roles_to_check.
+    """
+    account_id = getattr(settings, 'RESTCLIENTS_CANVAS_ACCOUNT_ID')
+    roles_to_check = getattr(settings, 'ENROLLMENT_TYPES_INVALID_CHECK', [])
+    term = Terms().get_term_by_sis_id(term_sis_id)
+
+    reports = Reports()
+    enrollment_report = reports.create_enrollments_sis_export_report(
+        account_id, term_id=term.term_id)
+    report_data = reports.get_report_data(enrollment_report)
+
+    students = set()
+    for row in reader(report_data):
+        sis_section_id = row[]
+        try:
+            valid_academic_section_sis_id(sis_section_id)
+            if row[] == STUDENT_ENROLLMENT:
+                students.add(row[]) # user_sis_id
+        except CoursePolicyException:
+            continue
+
+    enrollments = []
+    for row in reader(report_data):
+        sis_section_id = row[]
+        try:
+            valid_academic_section_sis_id(sis_section_id)
+            role = row[]
+            user_sis_id = row[]
+            if role in roles_to_check and user_sis_id in students:
+                sis_user_id = row[]
+                login_id = row[]
+                enrollments.append({'reg_id': user_sis_id,
+                                    'net_id': login_id,
+                                    'role': role,
+                                    'section_id': sis_section_id})
+        except CoursePolicyException:
+            continue
+
+    reports.delete_report(enrollment_report)
+    return enrollments
 
 
 def sis_import_by_path(csv_path, override_sis_stickiness=False):
