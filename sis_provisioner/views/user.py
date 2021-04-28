@@ -12,7 +12,8 @@ from uw_sws.enrollment import enrollment_search_url_prefix
 from uw_pws import PERSON_PREFIX
 from sis_provisioner.exceptions import UserPolicyException
 from sis_provisioner.dao.canvas import (
-    get_user_by_sis_id, create_user, merge_all_users_for_person)
+    get_user_by_sis_id, create_user,
+    get_all_users_for_person, merge_all_users_for_person)
 from sis_provisioner.dao.user import (
     get_person_by_netid, get_person_by_regid, get_person_by_gmail_id,
     can_access_canvas)

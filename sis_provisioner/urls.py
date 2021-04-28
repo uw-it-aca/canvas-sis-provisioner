@@ -57,7 +57,7 @@ urlpatterns = [
             CourseView.as_view()),
     re_path(r'api/v1/courses/?$', CourseListView.as_view()),
     re_path(r'api/v1/users/?$', UserView.as_view()),
-    re_path(r'api/v1/users/(?P<reg_id>)[a-fA-F0-9]{32}/merge$',
+    re_path(r'api/v1/users/(?P<reg_id>[a-fA-F0-9]{32})/merge$',
             UserMergeView.as_view()),
     re_path(r'api/v1/logins/?$', LoginValidationView.as_view()),
     re_path(r'api/v1/import/(?P<import_id>[0-9]+)?$', ImportView.as_view()),
