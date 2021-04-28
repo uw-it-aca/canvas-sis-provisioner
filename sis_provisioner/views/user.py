@@ -8,8 +8,11 @@ from logging import getLogger
 from restclients_core.exceptions import (
     InvalidNetID, InvalidRegID, DataFailureException)
 from uw_sws.models import Person
+from uw_sws.enrollment import enrollment_search_url_prefix
+from uw_pws import PERSON_PREFIX
 from sis_provisioner.exceptions import UserPolicyException
-from sis_provisioner.dao.canvas import get_user_by_sis_id, create_user
+from sis_provisioner.dao.canvas import (
+    get_user_by_sis_id, create_user, merge_all_users_for_person)
 from sis_provisioner.dao.user import (
     get_person_by_netid, get_person_by_regid, get_person_by_gmail_id,
     can_access_canvas)
@@ -90,12 +93,13 @@ class UserView(RESTDispatch):
         }
 
         if self.can_view_source_data(self.request):
-            response['person_url'] = '{path}/person/{uwregid}.json'.format(
-                path='/restclients/view/pws/identity/v1',
-                uwregid=person.uwregid)
+            response['person_url'] = (
+                '/restclients/view/pws/{api_path}/{uwregid}/full.json').format(
+                    api_path=PERSON_PREFIX,
+                    uwregid=person.uwregid)
             response['enrollment_url'] = (
-                '{path}/enrollment.json?reg_id={uwregid}').format(
-                    path='/restclients/view/sws/student/v5',
+                '/restclients/view/sws/{api_path}{uwregid}').format(
+                    api_path=enrollment_search_url_prefix,
                     uwregid=person.uwregid)
 
         try:
@@ -133,3 +137,13 @@ class UserView(RESTDispatch):
             response['can_access_canvas'] = False
 
         return self.json_response(response)
+
+
+class UserMergeView(RESTDispatch):
+    def put(self, request, *args, **kwargs):
+        reg_id = kwargs.get('reg_id')
+        try:
+            person = get_person_by_regid(reg_id)
+            user = merge_all_users_for_person(person)
+        except DataFailureException as ex:
+            return self.error_response(ex.status, message=ex.msg)
