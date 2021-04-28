@@ -94,11 +94,11 @@ class UserView(RESTDispatch):
 
         if self.can_view_source_data(self.request):
             response['person_url'] = (
-                '/restclients/view/pws/{api_path}/{uwregid}/full.json').format(
+                '/restclients/view/pws{api_path}/{uwregid}/full.json').format(
                     api_path=PERSON_PREFIX,
                     uwregid=person.uwregid)
             response['enrollment_url'] = (
-                '/restclients/view/sws/{api_path}{uwregid}').format(
+                '/restclients/view/sws{api_path}{uwregid}').format(
                     api_path=enrollment_search_url_prefix,
                     uwregid=person.uwregid)
 
@@ -140,6 +140,19 @@ class UserView(RESTDispatch):
 
 
 class UserMergeView(RESTDispatch):
+    def get(self, request, *args, **kwargs):
+        reg_id = kwargs.get('reg_id')
+        try:
+            person = get_person_by_regid(reg_id)
+            users = get_all_users_for_person()
+        except DataFailureException as ex:
+            return self.error_response(ex.status, message=ex.msg)
+
+        response = []
+        for user in users:
+            response.append(user.post_data())
+        return self.json_response(response)
+
     def put(self, request, *args, **kwargs):
         reg_id = kwargs.get('reg_id')
         try:
