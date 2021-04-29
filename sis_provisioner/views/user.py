@@ -48,7 +48,7 @@ class UserView(RESTDispatch):
         except DataFailureException as err:
             data = json.loads(err.msg)
             return self.error_response(
-                400, "{} {}".format(err.status, data["StatusDescription"]))
+                400, "{} {}".format(err.status, err.msg))
         except Exception as err:
             return self.error_response(400, err)
 
@@ -113,11 +113,8 @@ class UserView(RESTDispatch):
         except UserPolicyException:
             response['can_access_canvas'] = False
 
-        try:
-            for user in get_all_users_for_person(person):
-                response['canvas_users'].append(user.json_data())
-        except DataFailureException as ex:
-            raise
+        for user in get_all_users_for_person(person):
+            response['canvas_users'].append(user.json_data())
 
         return self.json_response(response)
 
