@@ -120,8 +120,11 @@ def get_user_by_sis_id(sis_user_id):
 
 def get_all_users_for_person(person):
     canvas = Users()
-    all_users = [canvas.get_user_by_sis_id(person.uwregid)]
-    for uwregid in person.prior_uwregids:
+    all_uwregids = [person.uwregid]
+    all_uwregids.extend(person.prior_uwregids)
+
+    all_users = []
+    for uwregid in all_uwregids:
         try:
             all_users.append(canvas.get_user_by_sis_id(uwregid))
         except DataFailureException as ex:
