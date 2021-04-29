@@ -28,12 +28,15 @@ has <strong>NOT</strong> been provisioned to Canvas. <button class="btn" type="b
     This UWNetID is currently <strong>NOT</strong> allowed to access Canvas.
     {{/if}}
     <br/>
-  {{#if person_url}}
-  <br /><a class="js-sws-person" href="{{person_url}}"><i class="fa fa-database"></i> View user details in the Person Web Service</a>
-  {{/if}}
-  {{#if enrollment_url}}
-  <br /><a class="js-sws-enrollment" href="{{enrollment_url}}"><i class="fa fa-database"></i> View user enrollments in the Student Web Service</a>
-  {{/if}}
+    {{#if person_url}}
+    <br /><a class="js-sws-person" href="{{person_url}}"><i class="fa fa-database"></i> View user details in the Person Web Service</a>
+    {{/if}}
+    {{#if enrollment_url}}
+    <br /><a class="js-sws-enrollment" href="{{enrollment_url}}"><i class="fa fa-database"></i> View user enrollments in the Student Web Service</a>
+    {{/if}}
+    {{#if canvas_users}}
+    <br/><br/>{{canvas_users}}
+    {{/if}}
   {{/if}}
 
 {{else}}

@@ -91,6 +91,7 @@ class UserView(RESTDispatch):
             'queue_id': None,
             'person_url': None,
             'enrollment_url': None,
+            'canvas_users': [],
         }
 
         if self.can_view_source_data(self.request):
@@ -111,6 +112,12 @@ class UserView(RESTDispatch):
             pass
         except UserPolicyException:
             response['can_access_canvas'] = False
+
+        try:
+            for user in get_all_users_for_person(person):
+                response['canvas_users'].append(user.json_data())
+        except DataFailureException as ex:
+            pass
 
         return self.json_response(response)
 
@@ -141,19 +148,6 @@ class UserView(RESTDispatch):
 
 
 class UserMergeView(RESTDispatch):
-    def get(self, request, *args, **kwargs):
-        reg_id = kwargs.get('reg_id')
-        try:
-            person = get_person_by_regid(reg_id)
-            canvas_users = get_all_users_for_person()
-        except DataFailureException as ex:
-            return self.error_response(ex.status, message=ex.msg)
-
-        response = []
-        for user in canvas_users:
-            response.append(user.json_data())
-        return self.json_response(response)
-
     def put(self, request, *args, **kwargs):
         reg_id = kwargs.get('reg_id')
         try:
