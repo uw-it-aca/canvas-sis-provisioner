@@ -117,7 +117,7 @@ class UserView(RESTDispatch):
             for user in get_all_users_for_person(person):
                 response['canvas_users'].append(user.json_data())
         except DataFailureException as ex:
-            pass
+            raise
 
         return self.json_response(response)
 
