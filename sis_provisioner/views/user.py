@@ -145,19 +145,19 @@ class UserMergeView(RESTDispatch):
         reg_id = kwargs.get('reg_id')
         try:
             person = get_person_by_regid(reg_id)
-            users = get_all_users_for_person()
+            canvas_users = get_all_users_for_person()
         except DataFailureException as ex:
             return self.error_response(ex.status, message=ex.msg)
 
         response = []
-        for user in users:
-            response.append(user.post_data())
+        for user in canvas_users:
+            response.append(user.json_data())
         return self.json_response(response)
 
     def put(self, request, *args, **kwargs):
         reg_id = kwargs.get('reg_id')
         try:
             person = get_person_by_regid(reg_id)
-            user = merge_all_users_for_person(person)
+            canvas_user = merge_all_users_for_person(person)
         except DataFailureException as ex:
             return self.error_response(ex.status, message=ex.msg)
