@@ -39,7 +39,7 @@ has <strong>NOT</strong> been provisioned to Canvas. <button class="btn" type="b
     Canvas info about this user:
     {{#each canvas_users}}
     <div>
-        <div>{{#if avatar_url}}<img src="{{avatar_url}}" title="Canvas Avatar"/> <span>{{name}}</span>&nbsp;&nbsp;<a class="js-sws-person" href="https://canvas.uw.edu/accounts/83919/users/{{id}}" target="_blank">Canvas Profile</a></div>
+        <div>{{#if avatar_url}}<img src="{{avatar_url}}" title="Canvas Avatar"/> {{/if}}<span>{{name}}</span>&nbsp;&nbsp;<a class="js-sws-person" href="https://canvas.uw.edu/accounts/83919/users/{{id}}" target="_blank">Canvas Profile</a></div>
         ID: {{id}}<br/>
         Login_ID: {{login_id}}<br/>
         SIS_ID: {{sis_user_id}}<br/>
