@@ -11,6 +11,7 @@ from sis_provisioner.models.user import User
 from sis_provisioner.dao.term import is_active_term
 from sis_provisioner.dao.canvas import ENROLLMENT_ACTIVE, INSTRUCTOR_ENROLLMENT
 from sis_provisioner.exceptions import EmptyQueueException
+from restclients_core.exceptions import DataFailureException
 from datetime import datetime, timedelta
 from logging import getLogger
 
@@ -241,13 +242,21 @@ class InvalidEnrollmentManager(models.Manager):
         for user in User.objects.get_invalid_enrollment_check_users():
             # Verify that the check conditions still exist
             if user.has_student_affiliation_only():
-                for enr in user.get_active_sis_enrollments(roles=check_roles):
+                try:
+                    enrs = user.get_active_sis_enrollments(roles=check_roles)
+                except DataFailureException as ex:
+                    if ex.status == 404:
+                        # Do not clear the check flag for 404s
+                        continue
+                    else:
+                        raise
+
+                for enr in enrs:
                     inv, created = InvalidEnrollment.objects.get_or_create(
                         user=user, role=enr.role, section_id=enr.sis_section_id
                     )
                     if inv.priority == InvalidEnrollment.PRIORITY_NONE:
                         inv.priority = InvalidEnrollment.PRIORITY_DEFAULT
-                        # reset found_date?
                         inv.save()
 
             # Clear check flag
