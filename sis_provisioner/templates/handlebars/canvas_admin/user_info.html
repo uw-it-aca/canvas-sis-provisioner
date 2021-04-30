@@ -30,20 +30,20 @@ has <strong>NOT</strong> been provisioned to Canvas. <button class="btn" type="b
     <table style="border: 0;">
     {{#each canvas_users}}
     <tr>
-      <td style="padding: 4px; vertical-align: top;">
+      <td style="padding: 8px; vertical-align: top;">
         <a href="https://canvas.uw.edu/accounts/83919/users/{{id}}" target="_blank" title="View the Canvas Profile page for this user"><img src="{{avatar_url}}" width="32" height="32"/></a>
       </td>
-      <td style="padding: 4px; vertical-align: top;">
-        <div><span>{{name}}</span>
-        {{#if can_access_canvas}}
-        <span style="color: darkgreen;">This UWNetID is allowed to access Canvas</span>
-        {{else}}
-        <span style="color: darkred;">This UWNetID is not allowed to access Canvas</span>
-        {{/if}}
-        </div>
+      <td style="padding: 8px; vertical-align: top;">
+        <div>Name: {{name}}</div>
         <div>Canvas ID: <a href="https://canvas.uw.edu/accounts/83919/users/{{id}}" class="js-sws-person" target="_blank" title="View the Canvas Profile page for this user">{{id}}</a></div>
-        <div>UWNetID: <strong>{{login_id}}</strong></div>
-        <div>UWRegID (SIS_ID): {{#if person_url}}<a class="js-sws-person" href="{{person_url}}" title="View user data in the Person Web Service">{{sis_user_id}}</a>{{else}}{{sis_user_id}}{{/if}}</div>
+        <div>UWNetID: <strong>{{login_id}}</strong>&nbsp;&nbsp;
+        ({{#if can_access_canvas}}
+        <span style="color: darkgreen;">This UWNetid is allowed to access Canvas</span>
+        {{else}}
+        <span style="color: darkred;">This UWNetid is not allowed to access Canvas</span>
+        {{/if}})
+        </div>
+        <div>UWRegID (SIS ID): {{#if person_url}}<a class="js-sws-person" href="{{person_url}}" target="_blank" title="View user data in the Person Web Service">{{sis_user_id}}</a>{{else}}{{sis_user_id}}{{/if}}</div>
         {{#if last_login}}<div>Last login: {{last_login}}</div>{{/if}}
       </td>
     </tr>
