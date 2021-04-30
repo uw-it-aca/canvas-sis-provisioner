@@ -78,6 +78,8 @@ class UserView(RESTDispatch):
             return self.error_response(400, err)
 
     def response_for_person(self, person):
+        can_view_source_data = self.can_view_source_data(self.request)
+
         response = {
             'is_valid': True,
             'display_name': person.full_name if (
@@ -94,11 +96,7 @@ class UserView(RESTDispatch):
             'canvas_users': [],
         }
 
-        if self.can_view_source_data(self.request):
-            response['person_url'] = (
-                '/restclients/view/pws{api_path}/{uwregid}/full.json').format(
-                    api_path=PERSON_PREFIX,
-                    uwregid=person.uwregid)
+        if can_view_source_data:
             response['enrollment_url'] = (
                 '/restclients/view/sws{api_path}{uwregid}').format(
                     api_path=enrollment_search_url_prefix,
@@ -119,6 +117,12 @@ class UserView(RESTDispatch):
                     user.login_id)
             except UserPolicyException:
                 user_data['can_access_canvas'] = False
+
+            if can_view_source_data and user.sis_user_id:
+                user_data['person_url'] = (
+                    '/restclients/view/pws{api_path}/{uwregid}/full.json'
+                ).format(api_path=PERSON_PREFIX, uwregid=user.sis_user_id)
+
             response['canvas_users'].append(user_data)
 
         return self.json_response(response)

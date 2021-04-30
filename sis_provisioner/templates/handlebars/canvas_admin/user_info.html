@@ -21,11 +21,8 @@ has <strong>NOT</strong> been provisioned to Canvas. <button class="btn" type="b
   {{/if}}
   <br/>
   {{#if net_id}}
-    {{#if person_url}}
-    <br /><a class="js-sws-person" href="{{person_url}}"><i class="fa fa-database"></i> View user details in the Person Web Service</a>
-    {{/if}}
     {{#if enrollment_url}}
-    <br /><a class="js-sws-enrollment" href="{{enrollment_url}}"><i class="fa fa-database"></i> View user enrollments in the Student Web Service</a>
+    <br /><a class="js-sws-enrollment" target="_blank" href="{{enrollment_url}}"><i class="fa fa-database"></i> View user enrollments in the Student Web Service</a>
     {{/if}}
     {{#if canvas_users}}
     <br/><br/>
@@ -34,20 +31,20 @@ has <strong>NOT</strong> been provisioned to Canvas. <button class="btn" type="b
     {{#each canvas_users}}
     <tr>
       <td style="padding: 4px; vertical-align: top;">
-        <img src="{{avatar_url}}" width="32" height="32"/>
+        <a href="https://canvas.uw.edu/accounts/83919/users/{{id}}" target="_blank" title="View the Canvas Profile page for this user"><img src="{{avatar_url}}" width="32" height="32"/></a>
       </td>
       <td style="padding: 4px; vertical-align: top;">
-        <span>{{name}}</span> <a class="js-sws-person" href="https://canvas.uw.edu/accounts/83919/users/{{id}}" target="_blank">Canvas Profile</a><br/>
-        Canvas ID: {{id}}<br/>
-        UWNetID: {{login_id}}<br/>
-        UWRegID (SIS_ID): {{sis_user_id}}<br/>
-        {{#if last_login}}<div>Last login: {{last_login}}<br/>{{/if}}
-        <br/>
+        <div><span>{{name}}</span>
         {{#if can_access_canvas}}
-        This UWNetID is currently allowed to access Canvas.
+        <span style="color: darkgreen;">This UWNetID is allowed to access Canvas</span>
         {{else}}
-        This UWNetID is currently <strong>NOT</strong> allowed to access Canvas.
-        {{/if}}</br/>
+        <span style="color: darkred;">This UWNetID is not allowed to access Canvas</span>
+        {{/if}}
+        </div>
+        <div>Canvas ID: <a href="https://canvas.uw.edu/accounts/83919/users/{{id}}" class="js-sws-person" target="_blank" title="View the Canvas Profile page for this user">{{id}}</a></div>
+        <div>UWNetID: <strong>{{login_id}}</strong></div>
+        <div>UWRegID (SIS_ID): {{#if person_url}}<a class="js-sws-person" href="{{person_url}}" title="View user data in the Person Web Service">{{sis_user_id}}</a>{{else}}{{sis_user_id}}{{/if}}</div>
+        {{#if last_login}}<div>Last login: {{last_login}}</div>{{/if}}
       </td>
     </tr>
     {{/each}}
