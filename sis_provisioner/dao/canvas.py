@@ -123,7 +123,7 @@ def get_all_users_for_person(person):
     all_uwregids = [person.uwregid]
     all_uwregids.extend(person.prior_uwregids)
 
-    params = {'include': ['last_login']}
+    params = {'include': 'last_login'}
 
     all_users = []
     for uwregid in all_uwregids:
