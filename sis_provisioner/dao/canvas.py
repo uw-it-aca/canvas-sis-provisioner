@@ -118,6 +118,41 @@ def get_user_by_sis_id(sis_user_id):
     return Users().get_user_by_sis_id(sis_user_id)
 
 
+def get_all_users_for_person(person):
+    canvas = Users()
+    all_uwregids = [person.uwregid]
+    all_uwregids.extend(person.prior_uwregids)
+
+    all_users = []
+    for uwregid in all_uwregids:
+        try:
+            all_users.append(canvas.get_user_by_sis_id(uwregid))
+        except DataFailureException as ex:
+            if ex.status != 404:
+                raise
+
+    return all_users
+
+
+def merge_all_users_for_person(person):
+    destination_user = None
+    users_to_merge = []
+    for user in get_all_users_for_person(person):
+        if user.login_id == person.uwnetid:  # Current login_id
+            destination_user = user
+        else:
+            users_to_merge.append(user)
+
+    if destination_user and len(users_to_merge):
+        canvas = Users()
+        for user in users_to_merge:
+            canvas.merge_users(user, destination_user)
+            logger.info('Merged user {} into {}'.format(
+                user.user_id, destination_user.user_id))
+
+    return destination_user
+
+
 def create_user(person):
     return Users().create_user(person)
 

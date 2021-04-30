@@ -318,7 +318,7 @@ LOGGING = {
         'sis_provisioner': {
             'handlers': ['stdout'],
             'level': 'INFO',
-            'propagate': True,
+            'propagate': False,
         },
         'restclients_core': {
             'handlers': ['restclients_timing'],

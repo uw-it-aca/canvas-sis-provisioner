@@ -21,19 +21,37 @@ has <strong>NOT</strong> been provisioned to Canvas. <button class="btn" type="b
   {{/if}}
   <br/>
   {{#if net_id}}
-    <br/>
-    {{#if can_access_canvas}}
-    This UWNetID is currently allowed to access Canvas.
-    {{else}}
-    This UWNetID is currently <strong>NOT</strong> allowed to access Canvas.
+    {{#if enrollment_url}}
+    <br /><a class="js-sws-enrollment" target="_blank" href="{{enrollment_url}}"><i class="fa fa-database"></i> View user enrollments in the Student Web Service</a>
     {{/if}}
-    <br/>
-  {{#if person_url}}
-  <br /><a class="js-sws-person" href="{{person_url}}"><i class="fa fa-database"></i> View user details in the Person Web Service</a>
-  {{/if}}
-  {{#if enrollment_url}}
-  <br /><a class="js-sws-enrollment" href="{{enrollment_url}}"><i class="fa fa-database"></i> View user enrollments in the Student Web Service</a>
-  {{/if}}
+    {{#if canvas_users}}
+    <br/><br/>
+    <strong>This user exists in Canvas:</strong>
+    <table style="border: 0;">
+    {{#each canvas_users}}
+    <tr>
+      <td style="padding: 8px; vertical-align: top;">
+        <a href="https://canvas.uw.edu/accounts/83919/users/{{id}}" target="_blank" title="View the Canvas Profile page for this user"><img src="{{avatar_url}}" width="32" height="32"/></a>
+      </td>
+      <td style="padding: 8px; vertical-align: top;">
+        <div>Name: {{name}}</div>
+        <div>Canvas ID: <a href="https://canvas.uw.edu/accounts/83919/users/{{id}}" class="js-sws-person" target="_blank" title="View the Canvas Profile page for this user">{{id}}</a></div>
+        <div>UWNetID: <strong>{{login_id}}</strong>&nbsp;&nbsp;
+        ({{#if can_access_canvas}}
+        <span style="color: darkgreen;">This UWNetid is allowed to access Canvas</span>
+        {{else}}
+        <span style="color: darkred;">This UWNetid is not allowed to access Canvas</span>
+        {{/if}})
+        </div>
+        <div>UWRegID (SIS ID): {{#if person_url}}<a class="js-sws-person" href="{{person_url}}" target="_blank" title="View user data in the Person Web Service">{{sis_user_id}}</a>{{else}}{{sis_user_id}}{{/if}}</div>
+        {{#if last_login}}<div>Last login: {{last_login}}</div>{{/if}}
+      </td>
+    </tr>
+    {{/each}}
+    </table>
+    {{else}}
+    <strong>This user does not exist in Canvas!</strong>
+    {{/if}}
   {{/if}}
 
 {{else}}
