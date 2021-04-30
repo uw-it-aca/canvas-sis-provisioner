@@ -106,7 +106,7 @@ class CanvasUsersTest(TestCase):
         person = PWS().get_person_by_netid('javerage')
         r = get_all_users_for_person(person)
         mock_method.assert_called_with('9136CCB8F66711D5BE060004AC494FF0',
-                                       params={'include': ['last_login']})
+                                       params={'include': 'last_login'})
 
     @mock.patch.object(Users, 'create_user')
     def test_create_user(self, mock_method):
