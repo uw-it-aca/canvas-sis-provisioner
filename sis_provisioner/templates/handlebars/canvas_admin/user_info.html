@@ -36,16 +36,21 @@ has <strong>NOT</strong> been provisioned to Canvas. <button class="btn" type="b
     {{/if}}
     {{#if canvas_users}}
     <br/><br/>
-    Canvas info about this user:
+    <strong>Canvas information about this user</strong>
+    <table style="border: 0;">
     {{#each canvas_users}}
-    <div>
-        <div>{{#if avatar_url}}<img src="{{avatar_url}}" title="Canvas Avatar"/> {{/if}}<span>{{name}}</span>&nbsp;&nbsp;<a class="js-sws-person" href="https://canvas.uw.edu/accounts/83919/users/{{id}}" target="_blank">Canvas Profile</a></div>
+    <tr>
+      <td><img src="{{avatar_url}}" width="32" height="32"/></td>
+      <td>
+        <span>{{name}}</span> <a class="js-sws-person" href="https://canvas.uw.edu/accounts/83919/users/{{id}}" target="_blank">Canvas Profile</a><br/>
         ID: {{id}}<br/>
         Login_ID: {{login_id}}<br/>
         SIS_ID: {{sis_user_id}}<br/>
-        Last login: {{last_login}}
-    </div><br/>
+        {{#if last_login}}<div>Last login: {{last_login}}<br/>{{/if}}
+      </td>
+    </tr>
     {{/each}}
+    </table>
     {{/if}}
   {{/if}}
 

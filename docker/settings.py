@@ -48,7 +48,6 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_DOMAIN = '.uw.edu'
 
-DEBUG = True  # XXX 
 if os.getenv('ENV', 'localdev') == 'localdev':
     DEBUG = True
     SIS_IMPORT_CSV_DEBUG = True
