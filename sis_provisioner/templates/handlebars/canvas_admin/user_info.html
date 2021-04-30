@@ -21,13 +21,6 @@ has <strong>NOT</strong> been provisioned to Canvas. <button class="btn" type="b
   {{/if}}
   <br/>
   {{#if net_id}}
-    <br/>
-    {{#if can_access_canvas}}
-    This UWNetID is currently allowed to access Canvas.
-    {{else}}
-    This UWNetID is currently <strong>NOT</strong> allowed to access Canvas.
-    {{/if}}
-    <br/>
     {{#if person_url}}
     <br /><a class="js-sws-person" href="{{person_url}}"><i class="fa fa-database"></i> View user details in the Person Web Service</a>
     {{/if}}
@@ -36,21 +29,31 @@ has <strong>NOT</strong> been provisioned to Canvas. <button class="btn" type="b
     {{/if}}
     {{#if canvas_users}}
     <br/><br/>
-    <strong>Canvas information about this user</strong>
+    <strong>This user exists in Canvas:</strong>
     <table style="border: 0;">
     {{#each canvas_users}}
     <tr>
-      <td><img src="{{avatar_url}}" width="32" height="32"/></td>
-      <td>
+      <td style="padding: 4px; vertical-align: top;">
+        <img src="{{avatar_url}}" width="32" height="32"/>
+      </td>
+      <td style="padding: 4px; vertical-align: top;">
         <span>{{name}}</span> <a class="js-sws-person" href="https://canvas.uw.edu/accounts/83919/users/{{id}}" target="_blank">Canvas Profile</a><br/>
-        ID: {{id}}<br/>
-        Login_ID: {{login_id}}<br/>
-        SIS_ID: {{sis_user_id}}<br/>
+        Canvas ID: {{id}}<br/>
+        UWNetID: {{login_id}}<br/>
+        UWRegID (SIS_ID): {{sis_user_id}}<br/>
         {{#if last_login}}<div>Last login: {{last_login}}<br/>{{/if}}
+        <br/>
+        {{#if can_access_canvas}}
+        This UWNetID is currently allowed to access Canvas.
+        {{else}}
+        This UWNetID is currently <strong>NOT</strong> allowed to access Canvas.
+        {{/if}}</br/>
       </td>
     </tr>
     {{/each}}
     </table>
+    {{else}}
+    <strong>This user does not exist in Canvas!</strong>
     {{/if}}
   {{/if}}
 

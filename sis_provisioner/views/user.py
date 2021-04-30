@@ -104,17 +104,22 @@ class UserView(RESTDispatch):
                     api_path=enrollment_search_url_prefix,
                     uwregid=person.uwregid)
 
+        # Add the provisioning information for this user
         try:
             user = User.objects.get(reg_id=person.uwregid)
             response.update(user.json_data())
-            response['can_access_canvas'] = can_access_canvas(person.uwnetid)
         except User.DoesNotExist:
             pass
-        except UserPolicyException:
-            response['can_access_canvas'] = False
 
+        # Get the Canvas data for this user
         for user in get_all_users_for_person(person):
-            response['canvas_users'].append(user.json_data())
+            user_data = user.json_data()
+            try:
+                user_data['can_access_canvas'] = can_access_canvas(
+                    user.login_id)
+            except UserPolicyException:
+                user_data['can_access_canvas'] = False
+            response['canvas_users'].append(user_data)
 
         return self.json_response(response)
 
