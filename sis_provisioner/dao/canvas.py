@@ -114,8 +114,8 @@ def get_account_role_data(account_id):
     return json.dumps(role_data, sort_keys=True)
 
 
-def get_user_by_sis_id(sis_user_id):
-    return Users().get_user_by_sis_id(sis_user_id)
+def get_user_by_sis_id(sis_user_id, params={}):
+    return Users().get_user_by_sis_id(sis_user_id, params=params)
 
 
 def get_all_users_for_person(person):
@@ -123,10 +123,12 @@ def get_all_users_for_person(person):
     all_uwregids = [person.uwregid]
     all_uwregids.extend(person.prior_uwregids)
 
+    params = {'include': ['last_login']}
+
     all_users = []
     for uwregid in all_uwregids:
         try:
-            all_users.append(canvas.get_user_by_sis_id(uwregid))
+            all_users.append(canvas.get_user_by_sis_id(uwregid, params))
         except DataFailureException as ex:
             if ex.status != 404:
                 raise
