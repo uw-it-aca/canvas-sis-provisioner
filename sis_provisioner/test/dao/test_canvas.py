@@ -4,6 +4,7 @@
 from django.test import TestCase, override_settings
 from sis_provisioner.dao.canvas import *
 from sis_provisioner.dao.course import get_section_by_label
+from uw_pws import PWS
 from uw_pws.util import fdao_pws_override
 from uw_sws.util import fdao_sws_override
 from uw_sws.models import Registration
@@ -93,11 +94,19 @@ class CanvasAdminsTest(TestCase):
         mock_method.assert_called_with('12345', 'javerage', 'accountadmin')
 
 
+@fdao_pws_override
 class CanvasUsersTest(TestCase):
     @mock.patch.object(Users, 'get_user_by_sis_id')
     def test_get_user_by_sis_id(self, mock_method):
         r = get_user_by_sis_id('abc')
-        mock_method.assert_called_with('abc')
+        mock_method.assert_called_with('abc', params={})
+
+    @mock.patch.object(Users, 'get_user_by_sis_id')
+    def test_get_all_users_for_person(self, mock_method):
+        person = PWS().get_person_by_netid('javerage')
+        r = get_all_users_for_person(person)
+        mock_method.assert_called_with('9136CCB8F66711D5BE060004AC494FF0',
+                                       params={'include': ['last_login']})
 
     @mock.patch.object(Users, 'create_user')
     def test_create_user(self, mock_method):
