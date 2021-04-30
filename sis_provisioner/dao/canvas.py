@@ -128,7 +128,7 @@ def get_all_users_for_person(person):
     all_users = []
     for uwregid in all_uwregids:
         try:
-            all_users.append(canvas.get_user_by_sis_id(uwregid, params))
+            all_users.append(canvas.get_user_by_sis_id(uwregid, params=params))
         except DataFailureException as ex:
             if ex.status != 404:
                 raise
