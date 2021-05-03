@@ -43,7 +43,7 @@ has <strong>NOT</strong> been provisioned to Canvas. <button class="btn" type="b
         </div>
         <div>UWRegID (SIS ID): {{#if person_url}}<a class="js-sws-person" href="{{person_url}}" target="_blank" title="View user data in the Person Web Service">{{sis_user_id}}</a>{{else}}{{sis_user_id}}{{/if}}</div>
         <div>Name: {{name}}</div>
-        <div>Last login: {{#if last_login}}{{last_login}}{{else}}Never{{/if}}</div>
+        <div>Last login: {{#if last_login}}{{format_relative_date last_login}}{{else}}Never{{/if}}</div>
       </td>
     </tr>
     {{/each}}
