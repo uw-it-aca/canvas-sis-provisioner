@@ -82,8 +82,7 @@ class UserView(RESTDispatch):
 
         response = {
             'is_valid': True,
-            'display_name': person.full_name if (
-                isinstance(person, Person)) else person.display_name,
+            'display_name': person.display_name,
             'net_id': person.uwnetid,
             'reg_id': person.uwregid,
             'gmail_id': None,
@@ -91,16 +90,11 @@ class UserView(RESTDispatch):
             'provisioned_date': None,
             'priority': 'normal',
             'queue_id': None,
-            'person_url': None,
-            'enrollment_url': None,
+            'enrollment_url': '/restclients/view/sws{}{}'.format(
+                enrollment_search_url_prefix, person.uwregid) if (
+                    can_view_source_data) else None,
             'canvas_users': [],
         }
-
-        if can_view_source_data:
-            response['enrollment_url'] = (
-                '/restclients/view/sws{api_path}{uwregid}').format(
-                    api_path=enrollment_search_url_prefix,
-                    uwregid=person.uwregid)
 
         # Add the provisioning information for this user
         try:
