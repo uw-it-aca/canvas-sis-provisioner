@@ -205,15 +205,11 @@ class Enrollment(ImportResource):
 
 class InvalidEnrollmentManager(models.Manager):
     def queue_by_priority(self, priority=ImportResource.PRIORITY_DEFAULT):
-        filter_limit = settings.SIS_IMPORT_LIMIT['enrollment']['default']
-
-        grace_period_dt = datetime.utcnow().replace(tzinfo=utc) - timedelta(
-            days=getattr(settings, 'INVALID_ENROLLMENT_GRACE_DAYS', 90))
+        filter_limit = settings.SIS_IMPORT_LIMIT['enrollment']['high']
 
         pks = super(InvalidEnrollmentManager, self).get_queryset().filter(
-            priority=priority, queue_id__isnull=True,
-            found_date__lt=grace_period_dt
-        ).values_list('pk', flat=True)[:filter_limit]
+            priority=priority, queue_id__isnull=True
+        ).order_by('pk').values_list('pk', flat=True)[:filter_limit]
 
         if not len(pks):
             raise EmptyQueueException()
@@ -232,16 +228,22 @@ class InvalidEnrollmentManager(models.Manager):
 
     def dequeue(self, sis_import):
         if sis_import.is_imported():
-            kwargs['queue_id'] = None
-            kwargs['deleted_date'] = sis_import.monitor_date
-            kwargs['priority'] = InvalidEnrollment.PRIORITY_NONE
-            self.queued(sis_import.pk).update(**kwargs)
+            self.queued(sis_import.pk).update(
+                queue_id=None, priority=InvalidEnrollment.PRIORITY_NONE)
 
     def add_enrollments(self):
         check_roles = getattr(settings, 'ENROLLMENT_TYPES_INVALID_CHECK')
         for user in User.objects.get_invalid_enrollment_check_users():
             # Verify that the check conditions still exist
-            if user.has_student_affiliation_only():
+            if user.is_affiliate_user() or user.is_sponsored_user():
+                # User is OK to have any of the check_roles, restore if needed
+                for inv in InvalidEnrollment.objects.filter(
+                        user=user, restored_date__isnull=True):
+                    inv.priority = InvalidEnrollment.PRIORITY_HIGH
+                    inv.save()
+
+            elif user.is_student_user():
+                # User is not OK to have any of the check_roles
                 try:
                     enrs = user.get_active_sis_enrollments(roles=check_roles)
                 except DataFailureException as ex:
@@ -270,6 +272,7 @@ class InvalidEnrollment(ImportResource):
     section_id = models.CharField(max_length=80)
     found_date = models.DateTimeField(auto_now_add=True)
     deleted_date = models.DateTimeField(null=True)
+    restored_date = models.DateTimeField(null=True)
     priority = models.SmallIntegerField(
         default=ImportResource.PRIORITY_DEFAULT,
         choices=ImportResource.PRIORITY_CHOICES)
