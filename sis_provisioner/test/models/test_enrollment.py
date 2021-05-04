@@ -143,15 +143,11 @@ class EnrollmentModelTest(TestCase):
 
 class InvalidEnrollmentModelTest(TestCase):
     @mock.patch.object(QuerySet, 'filter')
-    @mock.patch('sis_provisioner.models.enrollment.datetime')
-    @override_settings(INVALID_ENROLLMENT_GRACE_DAYS=5)
-    def test_queue_by_priority(self, mock_datetime, mock_filter):
-        mock_datetime.utcnow.return_value = datetime(2013, 1, 6, 0, 0, 0)
+    def test_queue_by_priority(self, mock_filter):
         try:
             r = InvalidEnrollment.objects.queue_by_priority()
         except EmptyQueueException:
             pass
         mock_filter.assert_called_with(
             priority=InvalidEnrollment.PRIORITY_DEFAULT,
-            queue_id__isnull=True,
-            found_date__lt=datetime(2013, 1, 1, 0, 0, 0, tzinfo=utc))
+            queue_id__isnull=True)
