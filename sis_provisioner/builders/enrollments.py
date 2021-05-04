@@ -132,20 +132,39 @@ class InvalidEnrollmentBuilder(Builder):
     Generates import data for each of the passed InvalidEnrollment models.
     """
     def _process(self, inv_enrollment):
+        now = datetime.utcnow().replace(tzinfo=utc)
+        status = None
+
         try:
             # Verify that the check conditions still exist
-            if inv_enrollment.user.has_student_affiliation_only():
+            if (inv_enrollment.user.is_affiliate_user() or
+                    inv_enrollment.user.is_sponsored_user()):
+                status = CanvasEnrollment.STATUS_ACTIVE
+                if inv_enrollment.deleted_date is not None:
+                    inv_enrollment.restored_date = now
+                    inv_enrollment.save()
+
+            elif user.is_student_user():
+                grace_dt = now - timedelta(days=getattr(
+                    settings, 'INVALID_ENROLLMENT_GRACE_DAYS', 90))
+
+                if inv_enrollment.found_date < grace_dt:
+                    status = CanvasEnrollment.STATUS_DELETED
+                    inv_enrollment.deleted_date = now
+                    inv_enrollment.restored_date = None
+                    inv_enrollment.save()
+
+            if status is not None:
                 person = get_person_by_regid(inv_enrollment.user.reg_id)
                 if self.add_user_data_for_person(person):
                     self.data.add(EnrollmentCSV(
                         section_id=inv_enrollment.section_id,
                         person=person,
                         role=inv_enrollment.role,
-                        status=CanvasEnrollment.STATUS_DELETED))
+                        status=status))
 
         except DataFailureException as err:
             inv_enrollment.queue_id = None
-            inv_enrollment.priority = enrollment.PRIORITY_DEFAULT
             inv_enrollment.save()
             self.logger.info('Requeue invalid enrollment {} in {}: {}'.format(
                 inv_enrollment.reg_id, inv_enrollment.section_id, err))
