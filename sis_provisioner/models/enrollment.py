@@ -9,7 +9,8 @@ from sis_provisioner.models import Import, ImportResource
 from sis_provisioner.models.course import Course
 from sis_provisioner.models.user import User
 from sis_provisioner.dao.term import is_active_term
-from sis_provisioner.dao.canvas import ENROLLMENT_ACTIVE, INSTRUCTOR_ENROLLMENT
+from sis_provisioner.dao.canvas import (
+    get_instructor_sis_import_role, ENROLLMENT_ACTIVE)
 from sis_provisioner.exceptions import EmptyQueueException
 from restclients_core.exceptions import DataFailureException
 from datetime import datetime, timedelta
@@ -181,7 +182,7 @@ class Enrollment(ImportResource):
         return self.status.lower() == ENROLLMENT_ACTIVE.lower()
 
     def is_instructor(self):
-        return self.role.lower() == INSTRUCTOR_ENROLLMENT.lower()
+        return self.role.lower() == get_instructor_sis_import_role()
 
     def json_data(self):
         return {
@@ -205,7 +206,7 @@ class Enrollment(ImportResource):
 
 class InvalidEnrollmentManager(models.Manager):
     def queue_by_priority(self, priority=ImportResource.PRIORITY_DEFAULT):
-        filter_limit = settings.SIS_IMPORT_LIMIT['enrollment']['high']
+        filter_limit = settings.SIS_IMPORT_LIMIT['enrollment']['default']
 
         pks = super(InvalidEnrollmentManager, self).get_queryset().filter(
             priority=priority, queue_id__isnull=True
@@ -239,27 +240,25 @@ class InvalidEnrollmentManager(models.Manager):
                 # User is OK to have any of the check_roles, restore if needed
                 for inv in InvalidEnrollment.objects.filter(
                         user=user, restored_date__isnull=True):
-                    inv.priority = InvalidEnrollment.PRIORITY_HIGH
+                    inv.priority = InvalidEnrollment.PRIORITY_DEFAULT
                     inv.save()
 
             elif user.is_student_user():
                 # User is not OK to have any of the check_roles
                 try:
-                    enrs = user.get_active_sis_enrollments(roles=check_roles)
-                except DataFailureException as ex:
-                    if ex.status == 404:
-                        # Do not clear the check flag for 404s
-                        continue
-                    else:
-                        raise
+                    for enr in user.get_active_sis_enrollments(
+                            roles=check_roles):
+                        inv, _ = InvalidEnrollment.objects.get_or_create(
+                            user=user, role=enr.role,
+                            section_id=enr.sis_section_id)
 
-                for enr in enrs:
-                    inv, created = InvalidEnrollment.objects.get_or_create(
-                        user=user, role=enr.role, section_id=enr.sis_section_id
-                    )
-                    if inv.priority == InvalidEnrollment.PRIORITY_NONE:
-                        inv.priority = InvalidEnrollment.PRIORITY_DEFAULT
-                        inv.save()
+                        if inv.priority == InvalidEnrollment.PRIORITY_NONE:
+                            inv.priority = InvalidEnrollment.PRIORITY_DEFAULT
+                            inv.save()
+
+                except DataFailureException as ex:
+                    if ex.status != 404:
+                        raise
 
             # Clear check flag
             user.invalid_enrollment_check_required = False

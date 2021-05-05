@@ -24,8 +24,8 @@ has <strong>NOT</strong> been provisioned to Canvas. <button class="btn" type="b
     {{#if enrollment_url}}
     <br /><a class="js-sws-enrollment" target="_blank" href="{{enrollment_url}}"><i class="fa fa-database"></i> View user enrollments in the Student Web Service</a>
     {{/if}}
-    {{#if canvas_users}}
     <br/><br/>
+    {{#if canvas_users}}
     <strong>This user exists in Canvas:</strong>
     <table style="border: 0;">
     {{#each canvas_users}}
@@ -49,7 +49,7 @@ has <strong>NOT</strong> been provisioned to Canvas. <button class="btn" type="b
     {{/each}}
     </table>
     {{else}}
-    <strong>This user does not exist in Canvas!</strong>
+    <strong>This user does not exist in Canvas.</strong>
     {{/if}}
   {{/if}}
 
