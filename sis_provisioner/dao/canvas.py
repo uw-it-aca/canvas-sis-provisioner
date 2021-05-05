@@ -30,8 +30,6 @@ import json
 
 logger = getLogger(__name__)
 
-INSTRUCTOR_ENROLLMENT = CanvasEnrollment.TEACHER.replace('Enrollment', '')
-STUDENT_ENROLLMENT = CanvasEnrollment.STUDENT.replace('Enrollment', '')
 AUDITOR_ENROLLMENT = 'Auditor'
 ENROLLMENT_ACTIVE = CanvasEnrollment.STATUS_ACTIVE
 ENROLLMENT_INACTIVE = CanvasEnrollment.STATUS_INACTIVE
@@ -204,6 +202,18 @@ def get_sis_sections_for_course(course_sis_id):
         if err.status != 404:
             raise
     return sis_sections
+
+
+def get_sis_import_role(role):
+    return CanvasEnrollment.sis_import_role(role)
+
+
+def get_student_sis_import_role():
+    return get_sis_import_role(CanvasEnrollment.STUDENT)
+
+
+def get_instructor_sis_import_role():
+    return get_sis_import_role(CanvasEnrollment.TEACHER)
 
 
 def valid_enrollment_status(status):

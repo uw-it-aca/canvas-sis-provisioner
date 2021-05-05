@@ -3,11 +3,12 @@
 
 from sis_provisioner.events import SISProvisionerProcessor
 from sis_provisioner.models.events import EnrollmentLog
+from sis_provisioner.dao.canvas import (
+    get_student_sis_import_role, ENROLLMENT_ACTIVE, ENROLLMENT_DELETED)
 from sis_provisioner.dao.user import valid_reg_id
 from sis_provisioner.exceptions import (
     InvalidLoginIdException, UnhandledActionCodeException)
 from uw_sws.models import Term, Section
-from uw_canvas.models import CanvasEnrollment
 from dateutil.parser import parse as date_parse
 
 log_prefix = 'ENROLLMENT:'
@@ -60,7 +61,7 @@ class EnrollmentProcessor(SISProvisionerProcessor):
                 valid_reg_id(event['Person']['UWRegID'])
                 data = {
                     'Section': section,
-                    'Role': CanvasEnrollment.STUDENT.replace('Enrollment', ''),
+                    'Role': get_student_sis_import_role(),
                     'UWRegID': event['Person']['UWRegID'],
                     'Status': self._enrollment_status(event, section),
                     'LastModified': date_parse(event['LastModified']),
@@ -97,16 +98,16 @@ class EnrollmentProcessor(SISProvisionerProcessor):
         action_code = event['Action']['Code'].upper()
 
         if action_code == 'A':
-            return CanvasEnrollment.STATUS_ACTIVE
+            return ENROLLMENT_ACTIVE
 
         if action_code == 'S':
             self.logger.debug('{} ADD standby {} to {}'.format(
                 log_prefix,
                 event['Person']['UWRegID'],
                 section.canvas_section_sis_id()))
-            return CanvasEnrollment.STATUS_ACTIVE
+            return ENROLLMENT_ACTIVE
 
         if action_code == 'D':
-            return CanvasEnrollment.STATUS_DELETED
+            return ENROLLMENT_DELETED
 
         raise UnhandledActionCodeException()
