@@ -9,7 +9,8 @@ from sis_provisioner.dao.course import (
 from sis_provisioner.dao.user import user_sis_id, user_email, user_fullname
 from sis_provisioner.dao.canvas import (
     valid_enrollment_status, enrollment_status_from_registration,
-    INSTRUCTOR_ENROLLMENT, STUDENT_ENROLLMENT)
+    get_student_sis_import_role, get_instructor_sis_import_role,
+    get_sis_import_role)
 from sis_provisioner.exceptions import EnrollmentPolicyException
 import csv
 import io
@@ -181,21 +182,21 @@ class EnrollmentCSV(CSVFormat):
             registration = kwargs.get('registration')
             person = registration.person
             section_id = registration.section.canvas_section_sis_id()
-            role = STUDENT_ENROLLMENT
+            role = get_student_sis_import_role()
             status = enrollment_status_from_registration(registration)
 
         elif kwargs.get('instructor'):
             section = kwargs.get('section')
             person = kwargs.get('instructor')
             section_id = section.canvas_section_sis_id()
-            role = INSTRUCTOR_ENROLLMENT
+            role = get_instructor_sis_import_role()
             status = kwargs.get('status')
 
         else:
             course_id = kwargs.get('course_id', None)
             section_id = kwargs.get('section_id', None)
             person = kwargs.get('person')
-            role = kwargs.get('role')
+            role = get_sis_import_role(kwargs.get('role'))
             status = kwargs.get('status')
 
         user_id = user_sis_id(person)
