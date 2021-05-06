@@ -196,7 +196,7 @@ class EnrollmentCSV(CSVFormat):
             course_id = kwargs.get('course_id', None)
             section_id = kwargs.get('section_id', None)
             person = kwargs.get('person')
-            role = get_sis_import_role(kwargs.get('role'))
+            role = get_sis_import_role(kwargs['role']) or kwargs['role']
             status = kwargs.get('status')
 
         user_id = user_sis_id(person)
