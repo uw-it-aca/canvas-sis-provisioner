@@ -188,6 +188,11 @@ class EnrollmentCSVTest(TestCase):
             str(EnrollmentCSV(**data)),
             'abc,,9136CCB8F66711D5BE060004AC494FFE,ta,,abc--,active,\n')
 
+        data['role'] = 'Custom'  # Custom role
+        self.assertEquals(
+            str(EnrollmentCSV(**data)),
+            'abc,,9136CCB8F66711D5BE060004AC494FFE,Custom,,abc--,active,\n')
+
     def test_student_enrollment_csv(self):
         section = get_section_by_label('2013,winter,DROP_T,100/B')
 
