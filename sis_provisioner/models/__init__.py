@@ -216,4 +216,5 @@ class Import(models.Model):
         return super(Import, self).delete(*args, **kwargs)
 
     def _process_warnings(self, warnings):
-        return [w for w in warnings if ('-MSIS-550-' not in w[-1])]
+        return [w for w in warnings if not re.search(
+            '-MSIS-(550|601)-', w[-1])]
