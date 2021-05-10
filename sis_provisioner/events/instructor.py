@@ -2,13 +2,14 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from sis_provisioner.events import SISProvisionerProcessor
+from sis_provisioner.dao.canvas import (
+    get_instructor_sis_import_role, ENROLLMENT_ACTIVE, ENROLLMENT_DELETED)
 from sis_provisioner.dao.course import is_time_schedule_construction
 from sis_provisioner.dao.term import (
     get_term_by_year_and_quarter, is_active_term)
 from sis_provisioner.models.events import InstructorLog
 from restclients_core.exceptions import DataFailureException
 from uw_sws.models import Section
-from uw_canvas.models import CanvasEnrollment
 from dateutil.parser import parse as date_parse
 
 log_prefix = 'INSTRUCTOR:'
@@ -101,7 +102,7 @@ class InstructorProcessor(SISProvisionerProcessor):
         enrollments = []
         enrollment_data = {
             'Section': section,
-            'Role': CanvasEnrollment.TEACHER.replace('Enrollment', ''),
+            'Role': get_instructor_sis_import_role(),
             'Status': status,
             'LastModified': self._last_modified,
             'InstructorUWRegID': None
@@ -159,8 +160,7 @@ class InstructorAddProcessor(InstructorProcessor):
     def load_instructors(self, section):
         add = [reg_id for reg_id in self._current_instructors
                if reg_id not in self._previous_instructors]
-        enrollments = self.enrollments(
-            add, CanvasEnrollment.STATUS_ACTIVE, section)
+        enrollments = self.enrollments(add, ENROLLMENT_ACTIVE, section)
         self.load_enrollments(enrollments)
 
     def _log_tsc_ignore(self, section_id):
@@ -184,8 +184,7 @@ class InstructorDropProcessor(InstructorProcessor):
     def load_instructors(self, section):
         drop = [reg_id for reg_id in self._previous_instructors
                 if reg_id not in self._current_instructors]
-        enrollments = self.enrollments(
-            drop, CanvasEnrollment.STATUS_DELETED, section)
+        enrollments = self.enrollments(drop, ENROLLMENT_DELETED, section)
         self.load_enrollments(enrollments)
 
     def _log_tsc_ignore(self, section_id):

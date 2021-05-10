@@ -159,12 +159,12 @@ class EnrollmentCSVTest(TestCase):
         data['status'] = 'active'
         self.assertEquals(
             str(EnrollmentCSV(**data)),
-            ',,9136CCB8F66711D5BE060004AC494FFE,Student,,abc,active,\n')
+            ',,9136CCB8F66711D5BE060004AC494FFE,student,,abc,active,\n')
 
         data['status'] = 'deleted'
         self.assertEquals(
             str(EnrollmentCSV(**data)),
-            ',,9136CCB8F66711D5BE060004AC494FFE,Student,,abc,deleted,\n')
+            ',,9136CCB8F66711D5BE060004AC494FFE,student,,abc,deleted,\n')
 
         data = {'status': 'active',
                 'role': 'Student',
@@ -176,12 +176,22 @@ class EnrollmentCSVTest(TestCase):
         data['course_id'] = 'abc'
         self.assertEquals(
             str(EnrollmentCSV(**data)),
-            'abc,,9136CCB8F66711D5BE060004AC494FFE,Student,,,active,\n')
+            'abc,,9136CCB8F66711D5BE060004AC494FFE,student,,,active,\n')
 
         data['section_id'] = 'abc--'
         self.assertEquals(
             str(EnrollmentCSV(**data)),
-            'abc,,9136CCB8F66711D5BE060004AC494FFE,Student,,abc--,active,\n')
+            'abc,,9136CCB8F66711D5BE060004AC494FFE,student,,abc--,active,\n')
+
+        data['role'] = 'TaEnrollment'
+        self.assertEquals(
+            str(EnrollmentCSV(**data)),
+            'abc,,9136CCB8F66711D5BE060004AC494FFE,ta,,abc--,active,\n')
+
+        data['role'] = 'Custom'  # Custom role
+        self.assertEquals(
+            str(EnrollmentCSV(**data)),
+            'abc,,9136CCB8F66711D5BE060004AC494FFE,Custom,,abc--,active,\n')
 
     def test_student_enrollment_csv(self):
         section = get_section_by_label('2013,winter,DROP_T,100/B')
@@ -195,11 +205,11 @@ class EnrollmentCSVTest(TestCase):
 
         self.assertEquals(
             str(EnrollmentCSV(registration=reg0)), (
-                ',,260A0DEC95CB11D78BAA000629C31437,Student,,'
+                ',,260A0DEC95CB11D78BAA000629C31437,student,,'
                 '2013-winter-DROP_T-100-B--,active,\n'))
         self.assertEquals(
             str(EnrollmentCSV(registration=reg1)), (
-                ',,9136CCB8F66711D5BE060004AC494FFE,Student,,'
+                ',,9136CCB8F66711D5BE060004AC494FFE,student,,'
                 '2013-winter-DROP_T-100-B--,active,\n'))
 
     def test_instructor_enrollment_csv(self):
@@ -209,7 +219,7 @@ class EnrollmentCSVTest(TestCase):
             self.assertEquals(
                 str(EnrollmentCSV(
                     section=section, instructor=user, status='active')),
-                ',,{},Teacher,,2013-spring-TRAIN-101-A--,active,\n'.format(
+                ',,{},teacher,,2013-spring-TRAIN-101-A--,active,\n'.format(
                     user.uwregid))
 
 

@@ -9,7 +9,8 @@ from sis_provisioner.models import Import, ImportResource
 from sis_provisioner.models.course import Course
 from sis_provisioner.models.user import User
 from sis_provisioner.dao.term import is_active_term
-from sis_provisioner.dao.canvas import ENROLLMENT_ACTIVE, INSTRUCTOR_ENROLLMENT
+from sis_provisioner.dao.canvas import (
+    get_instructor_sis_import_role, ENROLLMENT_ACTIVE)
 from sis_provisioner.exceptions import EmptyQueueException
 from restclients_core.exceptions import DataFailureException
 from datetime import datetime, timedelta
@@ -181,7 +182,7 @@ class Enrollment(ImportResource):
         return self.status.lower() == ENROLLMENT_ACTIVE.lower()
 
     def is_instructor(self):
-        return self.role.lower() == INSTRUCTOR_ENROLLMENT.lower()
+        return self.role.lower() == get_instructor_sis_import_role()
 
     def json_data(self):
         return {
@@ -207,13 +208,9 @@ class InvalidEnrollmentManager(models.Manager):
     def queue_by_priority(self, priority=ImportResource.PRIORITY_DEFAULT):
         filter_limit = settings.SIS_IMPORT_LIMIT['enrollment']['default']
 
-        grace_period_dt = datetime.utcnow().replace(tzinfo=utc) - timedelta(
-            days=getattr(settings, 'INVALID_ENROLLMENT_GRACE_DAYS', 90))
-
         pks = super(InvalidEnrollmentManager, self).get_queryset().filter(
-            priority=priority, queue_id__isnull=True,
-            found_date__lt=grace_period_dt
-        ).values_list('pk', flat=True)[:filter_limit]
+            priority=priority, queue_id__isnull=True
+        ).order_by('pk').values_list('pk', flat=True)[:filter_limit]
 
         if not len(pks):
             raise EmptyQueueException()
@@ -232,32 +229,36 @@ class InvalidEnrollmentManager(models.Manager):
 
     def dequeue(self, sis_import):
         if sis_import.is_imported():
-            kwargs['queue_id'] = None
-            kwargs['deleted_date'] = sis_import.monitor_date
-            kwargs['priority'] = InvalidEnrollment.PRIORITY_NONE
-            self.queued(sis_import.pk).update(**kwargs)
+            self.queued(sis_import.pk).update(
+                queue_id=None, priority=InvalidEnrollment.PRIORITY_NONE)
 
     def add_enrollments(self):
         check_roles = getattr(settings, 'ENROLLMENT_TYPES_INVALID_CHECK')
         for user in User.objects.get_invalid_enrollment_check_users():
             # Verify that the check conditions still exist
-            if user.has_student_affiliation_only():
-                try:
-                    enrs = user.get_active_sis_enrollments(roles=check_roles)
-                except DataFailureException as ex:
-                    if ex.status == 404:
-                        # Do not clear the check flag for 404s
-                        continue
-                    else:
-                        raise
+            if user.is_affiliate_user() or user.is_sponsored_user():
+                # User is OK to have any of the check_roles, restore if needed
+                for inv in InvalidEnrollment.objects.filter(
+                        user=user, restored_date__isnull=True):
+                    inv.priority = InvalidEnrollment.PRIORITY_DEFAULT
+                    inv.save()
 
-                for enr in enrs:
-                    inv, created = InvalidEnrollment.objects.get_or_create(
-                        user=user, role=enr.role, section_id=enr.sis_section_id
-                    )
-                    if inv.priority == InvalidEnrollment.PRIORITY_NONE:
-                        inv.priority = InvalidEnrollment.PRIORITY_DEFAULT
-                        inv.save()
+            elif user.is_student_user():
+                # User is not OK to have any of the check_roles
+                try:
+                    for enr in user.get_active_sis_enrollments(
+                            roles=check_roles):
+                        inv, _ = InvalidEnrollment.objects.get_or_create(
+                            user=user, role=enr.role,
+                            section_id=enr.sis_section_id)
+
+                        if inv.priority == InvalidEnrollment.PRIORITY_NONE:
+                            inv.priority = InvalidEnrollment.PRIORITY_DEFAULT
+                            inv.save()
+
+                except DataFailureException as ex:
+                    if ex.status != 404:
+                        raise
 
             # Clear check flag
             user.invalid_enrollment_check_required = False
@@ -270,6 +271,7 @@ class InvalidEnrollment(ImportResource):
     section_id = models.CharField(max_length=80)
     found_date = models.DateTimeField(auto_now_add=True)
     deleted_date = models.DateTimeField(null=True)
+    restored_date = models.DateTimeField(null=True)
     priority = models.SmallIntegerField(
         default=ImportResource.PRIORITY_DEFAULT,
         choices=ImportResource.PRIORITY_CHOICES)

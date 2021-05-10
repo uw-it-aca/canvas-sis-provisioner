@@ -3,7 +3,8 @@
 
 from django.core.management.base import BaseCommand
 from sis_provisioner.dao.user import get_person_by_netid
-from sis_provisioner.dao.canvas import INSTRUCTOR_ENROLLMENT, ENROLLMENT_ACTIVE
+from sis_provisioner.dao.canvas import (
+    get_instructor_sis_import_role, ENROLLMENT_ACTIVE)
 from sis_provisioner.exceptions import UserPolicyException
 from sis_provisioner.models import Import
 from sis_provisioner.models.course import Course
@@ -60,7 +61,8 @@ class Command(BaseCommand):
 
             csvdata.add(EnrollmentCSV(
                 course_id=course_sis_id, person=person,
-                role=INSTRUCTOR_ENROLLMENT, status=ENROLLMENT_ACTIVE))
+                role=get_instructor_sis_import_role(),
+                status=ENROLLMENT_ACTIVE))
 
         csv_path = csvdata.write_files()
 

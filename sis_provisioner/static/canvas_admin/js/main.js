@@ -49,6 +49,10 @@ $(document).ready(function () {
         return moment(dt).format("h:mm:ss a");
     }
 
+    Handlebars.registerHelper("format_relative_date", function(dt) {
+        return format_relative_date(dt);
+    });
+
     function initializeSearchForm() {
         var quarters = ['winter', 'spring', 'summer', 'autumn'],
             term_list = [],

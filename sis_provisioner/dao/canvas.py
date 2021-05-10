@@ -30,8 +30,6 @@ import json
 
 logger = getLogger(__name__)
 
-INSTRUCTOR_ENROLLMENT = CanvasEnrollment.TEACHER.replace('Enrollment', '')
-STUDENT_ENROLLMENT = CanvasEnrollment.STUDENT.replace('Enrollment', '')
 AUDITOR_ENROLLMENT = 'Auditor'
 ENROLLMENT_ACTIVE = CanvasEnrollment.STATUS_ACTIVE
 ENROLLMENT_INACTIVE = CanvasEnrollment.STATUS_INACTIVE
@@ -114,8 +112,8 @@ def get_account_role_data(account_id):
     return json.dumps(role_data, sort_keys=True)
 
 
-def get_user_by_sis_id(sis_user_id):
-    return Users().get_user_by_sis_id(sis_user_id)
+def get_user_by_sis_id(sis_user_id, params={}):
+    return Users().get_user_by_sis_id(sis_user_id, params=params)
 
 
 def get_all_users_for_person(person):
@@ -123,10 +121,12 @@ def get_all_users_for_person(person):
     all_uwregids = [person.uwregid]
     all_uwregids.extend(person.prior_uwregids)
 
+    params = {'include': 'last_login'}
+
     all_users = []
     for uwregid in all_uwregids:
         try:
-            all_users.append(canvas.get_user_by_sis_id(uwregid))
+            all_users.append(canvas.get_user_by_sis_id(uwregid, params=params))
         except DataFailureException as ex:
             if ex.status != 404:
                 raise
@@ -202,6 +202,18 @@ def get_sis_sections_for_course(course_sis_id):
         if err.status != 404:
             raise
     return sis_sections
+
+
+def get_sis_import_role(role):
+    return CanvasEnrollment.sis_import_role(role)
+
+
+def get_student_sis_import_role():
+    return get_sis_import_role(CanvasEnrollment.STUDENT)
+
+
+def get_instructor_sis_import_role():
+    return get_sis_import_role(CanvasEnrollment.TEACHER)
 
 
 def valid_enrollment_status(status):

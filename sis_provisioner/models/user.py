@@ -136,7 +136,7 @@ class User(ImportResource):
     reg_id = models.CharField(max_length=32, unique=True)
     added_date = models.DateTimeField(auto_now_add=True)
     provisioned_date = models.DateTimeField(null=True)
-    invalid_enrollment_check_required = models.NullBooleanField()
+    invalid_enrollment_check_required = models.BooleanField(default=False)
     priority = models.SmallIntegerField(
         default=ImportResource.PRIORITY_DEFAULT,
         choices=ImportResource.PRIORITY_CHOICES)
@@ -170,7 +170,3 @@ class User(ImportResource):
     def is_sponsored_user(self):
         return is_group_member(
             getattr(settings, 'ALLOWED_CANVAS_SPONSORED_USERS'), self.net_id)
-
-    def has_student_affiliation_only(self):
-        return (self.is_student_user() and not self.is_affiliate_user() and
-                not self.is_sponsored_user())
