@@ -92,6 +92,10 @@ cronjob:
       schedule: "15 14 * * *"
       command: ["/scripts/management_command.sh"]
       args: ["cleanup_sis_errors"]
+    - name: find-invalid-enrollments
+      schedule: "40 15-23 * * 1-5"
+      command: ["/scripts/management_command.sh"]
+      args: ["find_invalid_enrollments"]
     - name: import-accounts
       schedule: "10 9 * * 1-6"
       command: ["/scripts/management_command.sh"]
