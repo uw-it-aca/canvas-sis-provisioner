@@ -209,6 +209,10 @@ class EnrollmentCSV(CSVFormat):
                 'Missing course and section for {}: {}'.format(
                     user_id, status))
 
+        if not role:
+            raise EnrollmentPolicyException(
+                'Missing role for {}: {}'.format(user_id, role))
+
         self.key = '{}:{}:{}:{}:{}'.format(
             course_id, section_id, user_id, role, status)
         self.data = [course_id, None, user_id, role, None, section_id, status,
