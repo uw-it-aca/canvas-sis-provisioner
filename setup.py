@@ -24,7 +24,7 @@ setup(
         'Django~=2.2',
         'django-compressor',
         'django-user-agents',
-        'lxml~=4.2.5',
+        'lxml~=4.2',
         'python-dateutil',
         'django-pyscss>=2.0',
         'beautifulsoup4',
