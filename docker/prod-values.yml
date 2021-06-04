@@ -69,7 +69,7 @@ cronjob:
   enabled: true
   jobs:
     - name: load-users
-      schedule: "5 12,20 * * 1-6"
+      schedule: "30 10 * * 1-6"
       command: ["/scripts/management_command.sh"]
       args: ["load_users"]
     - name: load-courses
