@@ -183,12 +183,21 @@ class EnrollmentCSVTest(TestCase):
             str(EnrollmentCSV(**data)),
             'abc,,9136CCB8F66711D5BE060004AC494FFE,student,,abc--,active,\n')
 
+        # Missing role
+        data['role'] = ''
+        self.assertRaises(EnrollmentPolicyException, EnrollmentCSV, **data)
+
         data['role'] = 'TaEnrollment'
         self.assertEquals(
             str(EnrollmentCSV(**data)),
             'abc,,9136CCB8F66711D5BE060004AC494FFE,ta,,abc--,active,\n')
 
-        data['role'] = 'Custom'  # Custom role
+        data['role'] = 'Librarian'  # Known custom role
+        self.assertEquals(
+            str(EnrollmentCSV(**data)),
+            'abc,,9136CCB8F66711D5BE060004AC494FFE,Librarian,,abc--,active,\n')
+
+        data['role'] = 'Custom'  # Unknown custom role
         self.assertEquals(
             str(EnrollmentCSV(**data)),
             'abc,,9136CCB8F66711D5BE060004AC494FFE,Custom,,abc--,active,\n')
