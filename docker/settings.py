@@ -339,11 +339,6 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
-        'rc_django': {
-            'handlers': ['stdout'],
-            'level': 'INFO',
-            'propagate': False,
-        },
         '': {
             'handlers': ['stdout', 'stderr'],
             'level': 'INFO' if os.getenv('ENV', 'localdev') == 'prod' else 'DEBUG'
