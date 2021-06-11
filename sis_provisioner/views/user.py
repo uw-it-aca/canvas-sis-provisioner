@@ -60,20 +60,18 @@ class UserView(RESTDispatch):
                 gmail_id = rep.get('gmail_id', '').strip()
                 person = get_person_by_gmail_id(gmail_id)
                 user = create_user(person)
-                return self.json_response()
+                return self.response_for_google_person(person)
             else:
                 net_id = self.netid_from_request(rep)
-                user = User.objects.get(net_id=net_id)
-                return self.error_response(409, "User already exists")
-        except User.DoesNotExist:
-            try:
+                person = get_person_by_netid(net_id)
                 user = User.objects.add_user_by_netid(
-                    net_id, priority=User.PRIORITY_IMMEDIATE)
-                return self.json_response()
+                    person.uwnetid, priority=User.PRIORITY_IMMEDIATE)
+                return self.response_for_person(person)
 
-            except Exception as err:
-                return self.error_response(400, err)
-
+        except DataFailureException as err:
+            data = json.loads(err.msg)
+            return self.error_response(
+                400, "{} {}".format(err.status, err.msg))
         except Exception as err:
             return self.error_response(400, err)
 
@@ -94,11 +92,12 @@ class UserView(RESTDispatch):
                 enrollment_search_url_prefix, person.uwregid) if (
                     can_view_source_data) else None,
             'canvas_users': [],
+            'can_access_canvas': None,
         }
 
         # Add the provisioning information for this user
         try:
-            user = User.objects.get(reg_id=person.uwregid)
+            user = User.objects._find_existing(person.uwnetid, person.uwregid)
             response.update(user.json_data())
         except User.DoesNotExist:
             pass
@@ -118,6 +117,13 @@ class UserView(RESTDispatch):
                 ).format(api_path=PERSON_PREFIX, uwregid=user.sis_user_id)
 
             response['canvas_users'].append(user_data)
+
+        if not len(response['canvas_users']):
+            try:
+                response['can_access_canvas'] = can_access_canvas(
+                    person.uwnetid)
+            except UserPolicyException:
+                user_data['can_access_canvas'] = False
 
         return self.json_response(response)
 
