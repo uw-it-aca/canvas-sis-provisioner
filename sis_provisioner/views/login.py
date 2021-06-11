@@ -38,7 +38,7 @@ class LoginValidationView(APIView):
                         user['full_name'] = person.login_id
                     except UserPolicyException:
                         login = self.strip_domain(login)
-                        # can_access_canvas(login)
+                        can_access_canvas(login)
                         person = get_person_by_netid(login)
                         user['login'] = person.uwnetid
                         try:
