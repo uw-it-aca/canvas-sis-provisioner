@@ -126,7 +126,7 @@ def can_access_canvas(login_id):
 
     login_group_id = getattr(settings, 'ALLOWED_CANVAS_LOGIN_USERS')
     if not is_group_member(login_group_id, login_id):
-        raise UserPolicyException('Login not permitted')
+        raise UserPolicyException('UWNetID not permitted')
     return True
 
 
