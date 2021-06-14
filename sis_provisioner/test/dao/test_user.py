@@ -51,7 +51,7 @@ class UserPolicyTest(TestCase):
     def test_can_access_canvas(self):
         self.assertEqual(can_access_canvas('javerage'), True)
         self.assertEqual(can_access_canvas('joe@gmail.com'), True)
-        self.assertRaisesRegex(UserPolicyException, "Login not permitted$",
+        self.assertRaisesRegex(UserPolicyException, "UWNetID not permitted$",
                                can_access_canvas, 'baverage')
 
     def test_valid_canvas_user_id(self):
