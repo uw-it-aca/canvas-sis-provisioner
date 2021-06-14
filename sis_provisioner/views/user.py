@@ -96,11 +96,9 @@ class UserView(RESTDispatch):
         }
 
         # Add the provisioning information for this user
-        try:
-            user = User.objects._find_existing(person.uwnetid, person.uwregid)
+        user = User.objects._find_existing(person.uwnetid, person.uwregid)
+        if user:
             response.update(user.json_data())
-        except User.DoesNotExist:
-            pass
 
         # Get the Canvas data for this user
         for user in get_all_users_for_person(person):
