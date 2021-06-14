@@ -49,17 +49,12 @@ has <strong>NOT</strong> been provisioned to Canvas. <button class="btn" type="b
     {{/each}}
     </table>
     {{else}}
-      <strong>This user does not exist in Canvas.</strong>
-      {{#if can_access_canvas}}
-      <i class="fa fa-check-circle-o success" title="This UWNetid is allowed to access Canvas"></i>
-      {{else}}
-      <i class="fa fa-ban failure" title="This UWNetid is NOT allowed to access Canvas"></i>
-      {{/if}}
+      <strong>This user does NOT exist in Canvas, and {{net_id}} {{#if can_access_canvas}}is{{else}}is NOT{{/if}} allowed to access Canvas.</strong>
     {{/if}}
   {{/if}}
 
 {{else}}
-{{ net_id }} is not a valid user
+{{net_id}} is not a valid user
 {{/if}}
 <br/><br/><br/>
 </script>

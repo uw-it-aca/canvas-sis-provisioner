@@ -92,7 +92,6 @@ class UserView(RESTDispatch):
                 enrollment_search_url_prefix, person.uwregid) if (
                     can_view_source_data) else None,
             'canvas_users': [],
-            'can_access_canvas': None,
         }
 
         # Add the provisioning information for this user
@@ -121,7 +120,7 @@ class UserView(RESTDispatch):
                 response['can_access_canvas'] = can_access_canvas(
                     person.uwnetid)
             except UserPolicyException:
-                user_data['can_access_canvas'] = False
+                response['can_access_canvas'] = False
 
         return self.json_response(response)
 
