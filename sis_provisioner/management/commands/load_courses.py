@@ -16,9 +16,6 @@ class Command(SISProvisionerCommand):
         none.
         """
         for term in get_all_active_terms():
-            if term.canvas_sis_id() == "2022-winter":
-                continue
-
             if term.bterm_last_day_add is not None:
                 curr_last_date = term.bterm_last_day_add
             else:
