@@ -36,6 +36,7 @@ class LoginValidationView(APIView):
                         person = get_person_by_gmail_id(login)
                         user['login'] = person.login_id
                         user['full_name'] = person.login_id
+                        user['is_person'] = True
                     except UserPolicyException:
                         login = self.strip_domain(login)
                         person = get_person_by_netid(login)
@@ -43,8 +44,10 @@ class LoginValidationView(APIView):
                         try:
                             user['full_name'] = person.get_formatted_name(
                                 '{first} {last}')
+                            user['is_person'] = True
                         except AttributeError as ex:
                             user['full_name'] = person.display_name
+                            user['is_person'] = False  # UW entity
 
                     sis_id = user_sis_id(person)
                     if not any(u.get('sis_id') == sis_id for u in users):
