@@ -35,6 +35,8 @@ lifecycle:
     enabled: true
 readiness:
   enabled: true
+labels:
+  billing-code: "742"
 externalService:
   enabled: true
   name: canvas-db-service
