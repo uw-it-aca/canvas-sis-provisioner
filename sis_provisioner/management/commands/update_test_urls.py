@@ -15,7 +15,7 @@ import json
 class Command(SISProvisionerCommand):
     help = "Fixes the discovery and LTI URLs for uw.test and uw.beta"
 
-    HOSTS = {
+    BLTI_HOSTS = {
         'canvas': {
             'prod': 'https://apps.canvas.uw.edu',
             'test': 'https://test-apps.canvas.uw.edu'},
@@ -38,6 +38,7 @@ class Command(SISProvisionerCommand):
             'prod': 'https://infohub.canvas.uw.edu',
             'test': 'https://test-infohub.canvas.uw.edu'},
     }
+    LOGIN_TEST_HOST = 'https://test-login.canvas.uw.edu'
 
     def handle(self, *args, **options):
         self.update_canvas_test()
@@ -55,9 +56,9 @@ class Command(SISProvisionerCommand):
             Accounts().update_auth_settings(account_id, auth)
 
     def update_blti_urls(self):
-        for service in self.HOSTS:
-            prod_host = self.HOSTS.get(service).get('prod')
-            test_host = self.HOSTS.get(service).get('test')
+        for service in self.BLTI_HOSTS:
+            prod_host = self.BLTI_HOSTS.get(service).get('prod')
+            test_host = self.BLTI_HOSTS.get(service).get('test')
 
             for tool in ExternalTool.objects.get_by_hostname(prod_host):
                 new_config = tool.config.replace(prod_host, test_host)
@@ -73,13 +74,13 @@ class Command(SISProvisionerCommand):
     @override_settings(
         RESTCLIENTS_CANVAS_HOST="https://uw.beta.instructure.com")
     def update_canvas_beta(self):
-        self.update_discovery_url("{host}/wayf-beta".format(
-            host=self.HOSTS['canvas']['test']))
+        self.update_discovery_url(
+            "{host}/wayf-beta".format(host=LOGIN_TEST_HOST))
         self.update_blti_urls()
 
     @override_settings(
         RESTCLIENTS_CANVAS_HOST="https://uw.test.instructure.com")
     def update_canvas_test(self):
-        self.update_discovery_url("{host}/wayf-test".format(
-            host=self.HOSTS['canvas']['test']))
+        self.update_discovery_url(
+            "{host}/wayf-test".format(host=LOGIN_TEST_HOST))
         self.update_blti_urls()
