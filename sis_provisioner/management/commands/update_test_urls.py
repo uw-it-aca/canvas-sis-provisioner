@@ -75,12 +75,12 @@ class Command(SISProvisionerCommand):
         RESTCLIENTS_CANVAS_HOST="https://uw.beta.instructure.com")
     def update_canvas_beta(self):
         self.update_discovery_url(
-            "{host}/wayf-beta".format(host=LOGIN_TEST_HOST))
+            "{host}/wayf-beta".format(host=self.LOGIN_TEST_HOST))
         self.update_blti_urls()
 
     @override_settings(
         RESTCLIENTS_CANVAS_HOST="https://uw.test.instructure.com")
     def update_canvas_test(self):
         self.update_discovery_url(
-            "{host}/wayf-test".format(host=LOGIN_TEST_HOST))
+            "{host}/wayf-test".format(host=self.LOGIN_TEST_HOST))
         self.update_blti_urls()
