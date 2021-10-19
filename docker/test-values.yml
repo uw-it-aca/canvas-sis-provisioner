@@ -15,6 +15,8 @@ ingress:
     nginx.ingress.kubernetes.io/proxy-read-timeout: "180"
     nginx.ingress.kubernetes.io/client-body-buffer-size: "16K"
     nginx.ingress.kubernetes.io/ssl-ciphers: "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-SHA256"
+    nginx.ingress.kubernetes.io/server-snippet: |
+      rewrite ^/(wayf|wayf-test|wayf-beta|unknown-user|unauthorized-user)$ https://test-login.canvas.uw.edu/$1 permanent;
 lifecycle:
   enabled: true
   preStop:
@@ -25,6 +27,8 @@ readiness:
   enabled: true
 securityPolicy:
   enabled: false
+labels:
+  billing-code: "742"
 externalService:
   enabled: true
   name: canvas-db-service

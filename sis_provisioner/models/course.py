@@ -13,7 +13,7 @@ from sis_provisioner.dao.course import (
 from sis_provisioner.dao.canvas import get_active_courses_for_term
 from sis_provisioner.exceptions import (
     CoursePolicyException, EmptyQueueException)
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 class CourseManager(models.Manager):
@@ -139,7 +139,8 @@ class CourseManager(models.Manager):
         if delta.last_course_search_date is None:
             delta.courses_changed_since_date = datetime.fromtimestamp(0, utc)
         else:
-            delta.courses_changed_since_date = delta.last_course_search_date
+            delta.courses_changed_since_date = (
+                delta.last_course_search_date - timedelta(days=1))
 
         new_courses = []
         for section_data in get_new_sections_by_term(
