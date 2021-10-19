@@ -3,15 +3,9 @@ autoscaling:
   minReplicas: 2
   maxReplicas: 4
 targetAverageUtilization: 100
-resources:
-  limits:
-    cpu: 1.0
-    memory: 768Mi
-  requests:
-    cpu: 100m
-    memory: 700Mi
 affinity:
    podsSpanNodes: true
+
 ingress:
   enabled: true
   tls:
@@ -31,6 +25,7 @@ ingress:
     nginx.ingress.kubernetes.io/ssl-ciphers: "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-SHA256"
     nginx.ingress.kubernetes.io/server-snippet: |
       rewrite ^/(wayf|wayf-test|wayf-beta|unknown-user|unauthorized-user)$ https://login.canvas.uw.edu/$1 permanent;
+
 lifecycle:
   enabled: true
   preStop:
@@ -39,6 +34,7 @@ readiness:
   enabled: true
 labels:
   billing-code: "742"
+
 externalService:
   enabled: true
   name: canvas-db-service
@@ -50,11 +46,13 @@ database:
   name: sis_provisioner_prod
   hostname: canvas-db-service
   secretName: apps.canvas.uw.edu-sql-secrets
+
 repo: canvas
 instance: prod
 image:
   repository: gcr.io/uwit-mci-axdd/canvas
   tag: IMAGE_TAG
+
 memcached:
   enabled: true
   replicaCount: 2
@@ -67,9 +65,11 @@ memcached:
     - "-v"
   updateStrategy:
     type: RollingUpdate
+
 gcsCredentials:
   mounted: true
   secretName: apps.canvas.uw.edu-gcs-credentials
+
 cronjob:
   enabled: true
   jobs:
@@ -153,6 +153,7 @@ cronjob:
       schedule: "5,35 18-20 * * 0"
       command: ["/scripts/management_command.sh"]
       args: ["update_test_urls"]
+
 daemon:
   enabled: true
   daemons:
@@ -184,11 +185,13 @@ daemon:
       replicaCount: 1
       command: ["/scripts/management_daemon.sh"]
       args: ["--delay", "30", "process_group_events"]
+
 certs:
   mounted: true
   certPath: /certs/apps.canvas.uw.edu-uwca.cert
   keyPath: /certs/apps.canvas.uw.edu-uwca.key
   secretName: apps.canvas.uw.edu-uwca-certs
+
 environmentVariables:
   - name: ENV
     value: prod
@@ -324,6 +327,7 @@ externalSecrets:
       data:
         - name: uw-idp-cert
           property: cert
+
 environmentVariablesSecrets:
   djangoSecret:
     name: DJANGO_SECRET
