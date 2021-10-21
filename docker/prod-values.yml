@@ -2,6 +2,9 @@ autoscaling:
   enabled: true
   minReplicas: 2
   maxReplicas: 4
+resources:
+  requests:
+    cpu: 50m
 targetAverageUtilization: 100
 affinity:
    podsSpanNodes: true
