@@ -3,8 +3,12 @@ autoscaling:
   minReplicas: 2
   maxReplicas: 4
 resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
   requests:
     cpu: 50m
+    memory: 384Mi
 targetAverageUtilization: 100
 affinity:
    podsSpanNodes: true
