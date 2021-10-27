@@ -40,7 +40,7 @@ setup(
         'UW-RestClients-GWS~=2.3',
         'UW-RestClients-KWS~=1.1',
         'UW-RestClients-Canvas~=1.2',
-        'UW-RestClients-Django-Utils~=2.2',
+        'UW-RestClients-Django-Utils~=2.3',
         'Django-SupportTools~=3.5',
         'UW-Django-SAML2~=1.5',
         'prometheus-client>=0.7,<1.0',
