@@ -5,7 +5,7 @@ autoscaling:
 resources:
   limits:
     cpu: 500m
-    memory: 512Mi
+    memory: 768Mi
   requests:
     cpu: 50m
     memory: 384Mi
@@ -77,13 +77,6 @@ cronjob:
       schedule: "30 10 * * 1-6"
       command: ["/scripts/management_command.sh"]
       args: ["load_users"]
-      resources:
-        limits:
-          cpu: 500m
-          memory: 256Mi
-        requests:
-          cpu: 25m
-          memory: 64Mi
     - name: load-courses
       schedule: "30 12,21 * * 1-6"
       command: ["/scripts/management_command.sh"]
