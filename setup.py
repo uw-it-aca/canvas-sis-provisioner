@@ -30,7 +30,7 @@ setup(
         'beautifulsoup4',
         'suds-jurko==0.6',
         'django-blti~=2.2',
-        'django-aws-message~=1.5',
+        'aws-message-client~=1.5',
         'djangorestframework~=3.11',
         'django-storages[google]>=1.10',
         'uw-memcached-clients~=1.0',
