@@ -391,7 +391,7 @@ environmentVariables:
   - name: GWS_ENV
     value: PROD
   - name: GWS_TIMEOUT
-    value: "5"
+    value: "10"
 
   - name: KWS_ENV
     value: PROD
