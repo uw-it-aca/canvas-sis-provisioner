@@ -2,6 +2,13 @@ autoscaling:
   enabled: true
   minReplicas: 2
   maxReplicas: 4
+resources:
+  limits:
+    cpu: 500m
+    memory: 768Mi
+  requests:
+    cpu: 50m
+    memory: 384Mi
 targetAverageUtilization: 100
 affinity:
    podsSpanNodes: true
@@ -56,13 +63,6 @@ image:
 memcached:
   enabled: true
   replicaCount: 2
-  command:
-    - "memcached"
-    - "-m"
-    - "256"
-    - "-o"
-    - "modern"
-    - "-v"
   updateStrategy:
     type: RollingUpdate
 
@@ -81,78 +81,211 @@ cronjob:
       schedule: "30 12,21 * * 1-6"
       command: ["/scripts/management_command.sh"]
       args: ["load_courses"]
+      resources:
+        limits:
+          cpu: 500m
+          memory: 256Mi
+        requests:
+          cpu: 25m
+          memory: 64Mi
     - name: load-accounts
       schedule: "30 11 * * 1-6"
       command: ["/scripts/management_command.sh"]
       args: ["load_accounts"]
+      resources:
+        limits:
+          cpu: 500m
+          memory: 256Mi
+        requests:
+          cpu: 25m
+          memory: 64Mi
     - name: load-groups
       schedule: "15 12 * * 1-6"
       command: ["/scripts/management_command.sh"]
       args: ["load_groups"]
+      resources:
+        limits:
+          cpu: 500m
+          memory: 256Mi
+        requests:
+          cpu: 25m
+          memory: 64Mi
     - name: queue-active-courses
       schedule: "35 13 * * 1-6"
       command: ["/scripts/management_command.sh"]
       args: ["queue_active_courses"]
+      resources:
+        limits:
+          cpu: 500m
+          memory: 256Mi
+        requests:
+          cpu: 25m
+          memory: 64Mi
     - name: cleanup-sis-errors
       schedule: "15 14 * * *"
       command: ["/scripts/management_command.sh"]
       args: ["cleanup_sis_errors"]
+      resources:
+        limits:
+          cpu: 500m
+          memory: 256Mi
+        requests:
+          cpu: 25m
+          memory: 64Mi
     - name: find-invalid-enrollments
       schedule: "40 15-23 * * 1-5"
       command: ["/scripts/management_command.sh"]
       args: ["find_invalid_enrollments"]
+      resources:
+        limits:
+          cpu: 500m
+          memory: 256Mi
+        requests:
+          cpu: 25m
+          memory: 64Mi
     - name: import-accounts
       schedule: "10 9 * * 1-6"
       command: ["/scripts/management_command.sh"]
       args: ["import_accounts"]
+      resources:
+        limits:
+          cpu: 500m
+          memory: 256Mi
+        requests:
+          cpu: 25m
+          memory: 64Mi
     - name: import-enrollments
       schedule: "*/5 * * * *"
       command: ["/scripts/management_command.sh"]
       args: ["import_enrollments"]
+      resources:
+        limits:
+          cpu: 500m
+          memory: 256Mi
+        requests:
+          cpu: 25m
+          memory: 64Mi
     - name: import-admins
       schedule: "50 11-23 * * 1-6"
       command: ["/scripts/management_command.sh"]
       args: ["import_admins", "--commit"]
+      resources:
+        limits:
+          cpu: 500m
+          memory: 256Mi
+        requests:
+          cpu: 25m
+          memory: 64Mi
     - name: import-users
       schedule: "15,45 * * * 1-6"
       command: ["/scripts/management_command.sh"]
       args: ["import_users", "2"]
+      resources:
+        limits:
+          cpu: 500m
+          memory: 256Mi
+        requests:
+          cpu: 25m
+          memory: 64Mi
     - name: import-courses
       schedule: "10,25,40,55 * * * 1-6"
       command: ["/scripts/management_command.sh"]
       args: ["import_courses", "1"]
+      resources:
+        limits:
+          cpu: 500m
+          memory: 256Mi
+        requests:
+          cpu: 25m
+          memory: 64Mi
     - name: import-courses-high
       schedule: "*/10 * * * 1-6"
       command: ["/scripts/management_command.sh"]
       args: ["import_courses", "2"]
+      resources:
+        limits:
+          cpu: 500m
+          memory: 256Mi
+        requests:
+          cpu: 25m
+          memory: 128Mi
     - name: import-groups
       schedule: "*/15 12-23 * * 1-6"
       command: ["/scripts/management_command.sh"]
       args: ["import_groups", "2"]
+      resources:
+        limits:
+          cpu: 500m
+          memory: 256Mi
+        requests:
+          cpu: 25m
+          memory: 128Mi
     - name: remove-unauthorized-admins
       schedule: "25 18,23 * * *"
       command: ["/scripts/management_command.sh"]
       args: ["remove_unauthorized_admins", "--commit"]
+      resources:
+        limits:
+          cpu: 500m
+          memory: 256Mi
+        requests:
+          cpu: 25m
+          memory: 64Mi
     - name: check-role-permissions
       schedule: "35 22 * * *"
       command: ["/scripts/management_command.sh"]
       args: ["check_role_permissions"]
+      resources:
+        limits:
+          cpu: 500m
+          memory: 256Mi
+        requests:
+          cpu: 25m
+          memory: 128Mi
     - name: delete-unused-courses
       schedule: "30 11 * * 1-5"
       command: ["/scripts/management_command.sh"]
       args: ["delete_unused_courses"]
+      resources:
+        limits:
+          cpu: 500m
+          memory: 256Mi
+        requests:
+          cpu: 25m
+          memory: 128Mi
     - name: sync-external-tools
       schedule: "15 14 * * 1-6"
       command: ["/scripts/management_command.sh"]
       args: ["sync_external_tools"]
+      resources:
+        limits:
+          cpu: 500m
+          memory: 256Mi
+        requests:
+          cpu: 25m
+          memory: 64Mi
     - name: set-term-overrides
       schedule: "5 1 * * 1"
       command: ["/scripts/management_command.sh"]
       args: ["update_term_overrides"]
+      resources:
+        limits:
+          cpu: 500m
+          memory: 256Mi
+        requests:
+          cpu: 25m
+          memory: 64Mi
     - name: update-test-urls
       schedule: "5,35 18-20 * * 0"
       command: ["/scripts/management_command.sh"]
       args: ["update_test_urls"]
+      resources:
+        limits:
+          cpu: 500m
+          memory: 256Mi
+        requests:
+          cpu: 25m
+          memory: 64Mi
 
 daemon:
   enabled: true
@@ -161,30 +294,79 @@ daemon:
       replicaCount: 1
       command: ["/scripts/management_daemon.sh"]
       args: ["monitor_imports"]
+      resources:
+        limits:
+          cpu: 500m
+          memory: 256Mi
+        requests:
+          cpu: 25m
+          memory: 64Mi
     - name: import-courses-immediate
       replicaCount: 1
       command: ["/scripts/management_daemon.sh"]
       args: ["--delay", "30", "import_courses", "3"]
+      resources:
+        limits:
+          cpu: 500m
+          memory: 256Mi
+        requests:
+          cpu: 25m
+          memory: 64Mi
     - name: import-groups-immediate
       replicaCount: 1
       command: ["/scripts/management_daemon.sh"]
       args: ["--delay", "30", "import_groups", "3"]
+      resources:
+        limits:
+          cpu: 500m
+          memory: 256Mi
+        requests:
+          cpu: 25m
+          memory: 64Mi
     - name: process-enrollment-events
       replicaCount: 1
       command: ["/scripts/management_daemon.sh"]
       args: ["load_enrollments"]
+      resources:
+        limits:
+          cpu: 500m
+          memory: 256Mi
+        requests:
+          cpu: 25m
+          memory: 64Mi
     - name: process-instructor-events
       replicaCount: 1
       command: ["/scripts/management_daemon.sh"]
       args: ["load_instructors"]
+      resources:
+        limits:
+          cpu: 500m
+          memory: 256Mi
+        requests:
+          cpu: 25m
+          memory: 64Mi
     - name: process-person-events
       replicaCount: 1
       command: ["/scripts/management_daemon.sh"]
       args: ["--delay", "30", "load_person"]
+      resources:
+        limits:
+          cpu: 500m
+          memory: 256Mi
+        requests:
+          cpu: 25m
+          memory: 64Mi
     - name: process-group-events
       replicaCount: 1
       command: ["/scripts/management_daemon.sh"]
       args: ["--delay", "30", "process_group_events"]
+      resources:
+        limits:
+          cpu: 500m
+          memory: 256Mi
+        requests:
+          cpu: 25m
+          memory: 64Mi
 
 certs:
   mounted: true
@@ -209,7 +391,7 @@ environmentVariables:
   - name: GWS_ENV
     value: PROD
   - name: GWS_TIMEOUT
-    value: "5"
+    value: "10"
 
   - name: KWS_ENV
     value: PROD
