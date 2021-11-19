@@ -238,6 +238,7 @@ ASTRA_ADMIN_EXCEPTIONS = [
     'quizzes.next+api@instructure.invalid',
     'readygoadmin@cidilabs.com',
     'a_gradeit_canvas_int',
+    'a_atomic_canvas_int',
 ]
 
 LMS_OWNERSHIP_SUBACCOUNT = {
