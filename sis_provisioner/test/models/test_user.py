@@ -1,10 +1,11 @@
-# Copyright 2021 UW-IT, University of Washington
+# Copyright 2022 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
 from django.test import TestCase
 from django.db.models.query import QuerySet
 from uw_pws import PWS
 from uw_pws.util import fdao_pws_override
+from sis_provisioner.exceptions import UserPolicyException
 from sis_provisioner.models import Import
 from sis_provisioner.models.user import User
 from datetime import datetime
@@ -54,14 +55,18 @@ class UserModelTest(TestCase):
         User.objects.all().delete()
 
     def test_add_user_by_netid(self):
-        user = User.objects.add_user_by_netid('javerage')
-        self.assertEquals(user.net_id, 'javerage')
+        user = User.objects.add_user_by_netid('bill')
+        self.assertEquals(user.net_id, 'bill')
         self.assertEquals(user.priority, User.PRIORITY_HIGH)
 
-        user = User.objects.add_user_by_netid('javerage',
+        user = User.objects.add_user_by_netid('bill',
                                               priority=User.PRIORITY_NONE)
-        self.assertEquals(user.net_id, 'javerage')
+        self.assertEquals(user.net_id, 'bill')
         self.assertEquals(user.priority, User.PRIORITY_NONE)
+
+        # is_test_entity
+        self.assertRaises(UserPolicyException, User.objects.add_user_by_netid,
+                          'javerage')
 
     def test_json_data(self):
         person = PWS().get_person_by_netid('javerage')
