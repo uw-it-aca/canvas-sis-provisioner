@@ -143,6 +143,9 @@ def get_person_by_netid(netid):
         else:
             raise
 
+    if person.is_test_entity:
+        raise UserPolicyException('UWNetID not permitted')
+
     return person
 
 
@@ -158,6 +161,9 @@ def get_person_by_regid(regid):
             valid_nonpersonal_net_id(person.uwnetid)
         else:
             raise
+
+    if person.is_test_entity:
+        raise UserPolicyException('UWNetID not permitted')
 
     return person
 
