@@ -282,7 +282,7 @@ $(document).ready(function () {
 
     // submit course search form
     $('#admin_search_button').click(function () {
-        var url = 'api/v1/courses?',
+        var url = '/api/v1/courses?',
             terms = [],
             search_term = '',
             inputs = [{
@@ -307,7 +307,7 @@ $(document).ready(function () {
         if (form.attr('href') === '#search-tab-sisid') {
             course_id = $.trim($('#courseID').val());
             if (course_id !== '') {
-                url = 'api/v1/course/' + encodeURIComponent(course_id);
+                url = '/api/v1/course/' + encodeURIComponent(course_id);
                 search_term = 'course ID ' + course_id;
             }
         } else if (form.attr('href') === '#search-tab-canvasurl') {
@@ -315,7 +315,7 @@ $(document).ready(function () {
             canvas_id_match = canvas_url.match(/^https:\/\/[\w\W]+\/courses\/(\d+)([\/\?].*)?$/);
             if (canvas_id_match) {
                 canvas_id = canvas_id_match[1];
-                url = 'api/v1/canvas/course/' + canvas_id;
+                url = '/api/v1/canvas/course/' + canvas_id;
                 search_term = 'Canvas Course ID ' + canvas_id;
             }
         } else if (form.attr('href') === '#search-tab-instructor') {
@@ -357,7 +357,7 @@ $(document).ready(function () {
 
     $('#import_groups_button').click(function () {
         $.ajax({
-            url: 'api/v1/import/',
+            url: '/api/v1/import/',
             contentType: 'application/json',
             type: 'POST',
             processData: false,
@@ -454,7 +454,7 @@ $(document).ready(function () {
     });
 
     $('#user_search_button').click(function () {
-        var url = 'api/v1/users',
+        var url = '/api/v1/users',
             result_div = $('div#user_search_result div'),
             user_id = $('#userID').val(),
             which = $('#user_search_id').val();
@@ -527,7 +527,7 @@ $(document).ready(function () {
                     result_div.html('Adding ' + adding + ' ...');
 
                     $.ajax({
-                        url: 'api/v1/users/',
+                        url: '/api/v1/users/',
                         contentType: 'application/json',
                         type: 'POST',
                         processData: false,
@@ -566,7 +566,7 @@ $(document).ready(function () {
     // import status list
     function loadImportStatus() {
         $.ajax({
-            url: 'api/v1/imports',
+            url: '/api/v1/imports',
             dataType: 'json',
             success: function (data) {
                 var tpl = Handlebars.compile($('#import-list-item').html()),
@@ -684,7 +684,7 @@ $(document).ready(function () {
                     timer_id = setInterval(function () {
                         if ($('[data-bar-id="' + bar_id + '"][data-import-id="' + import_id + '"]').length) {
                             $.ajax({
-                                url: 'api/v1/import/' + import_id,
+                                url: '/api/v1/import/' + import_id,
                                 contentType: 'application/json',
                                 type: 'GET',
                                 success: function (data) {
@@ -722,7 +722,7 @@ $(document).ready(function () {
 
     function loadProvisionedErrors() {
         $.ajax({
-            url: 'api/v1/courses?provisioned_error=true',
+            url: '/api/v1/courses?provisioned_error=true',
             dataType: 'json',
             success: function (data) {
                 var tpl = Handlebars.compile($('#provision-error-list-item').html()),
@@ -780,12 +780,12 @@ $(document).ready(function () {
             // search by type
             switch ($a.attr('data-type').toLowerCase()) {
             case 'course':
-                doCourseSearch('api/v1/courses?queue_id=' +
+                doCourseSearch('/api/v1/courses?queue_id=' +
                     queue_id, { queue_id: queue_id },
                     $('.status-result-list'));
                 break;
             case 'enrollment':
-                doEnrollmentSearch('api/v1/enrollments?queue_id=' +
+                doEnrollmentSearch('/api/v1/enrollments?queue_id=' +
                     queue_id, { queue_id: queue_id },
                     $('.status-result-list'));
                 break;
@@ -808,7 +808,7 @@ $(document).ready(function () {
 
             if (confirm(msg)) {
                 $.ajax({
-                    url: 'api/v1/import/' + queue_id,
+                    url: '/api/v1/import/' + queue_id,
                     contentType: 'application/json',
                     type: 'DELETE',
                     beforeSend: stopImportMonitoring
@@ -880,7 +880,7 @@ $(document).ready(function () {
         }
 
         $.ajax({
-            url: 'api/v1/job/' + encodeURIComponent(input.attr('data-job-id')),
+            url: '/api/v1/job/' + encodeURIComponent(input.attr('data-job-id')),
             contentType: 'application/json',
             type: 'PUT',
             processData: false,
@@ -910,7 +910,7 @@ $(document).ready(function () {
             msg = 'Permanently delete this job?';
         if (confirm(msg)) {
             $.ajax({
-                url: 'api/v1/job/' + encodeURIComponent(btn.attr('data-job-id')),
+                url: '/api/v1/job/' + encodeURIComponent(btn.attr('data-job-id')),
                 contentType: 'application/json',
                 type: 'DELETE',
                 success: function () {
@@ -931,7 +931,7 @@ $(document).ready(function () {
 
     function loadJobs() {
         $.ajax({
-            url: 'api/v1/jobs',
+            url: '/api/v1/jobs',
             dataType: 'json',
             success: function (data) {
                 var tpl = Handlebars.compile($('#job-table-row').html()),
@@ -977,7 +977,7 @@ $(document).ready(function () {
 
     function reLoadJobs() {
         $.ajax({
-            url: 'api/v1/jobs',
+            url: '/api/v1/jobs',
             contentType: 'application/json',
             type: 'GET',
             success: function (data) {
@@ -1029,7 +1029,7 @@ $(document).ready(function () {
 
     function loadAdmins() {
         $.ajax({
-            url: 'api/v1/admins',
+            url: '/api/v1/admins',
             dataType: 'json',
             success: function (data) {
                 var tpl = Handlebars.compile($('#admin-table-row').html()),
@@ -1100,7 +1100,7 @@ $(document).ready(function () {
 
     function loadGroups() {
         $.ajax({
-            url: 'api/v1/groups',
+            url: '/api/v1/groups',
             dataType: 'json',
             success: function (data) {
                 var tpl = Handlebars.compile($('#group-table-row').html()),
@@ -1172,7 +1172,7 @@ $(document).ready(function () {
                     }
 
                     $.ajax({
-                        url: 'api/v1/canvas/course/' + course_id,
+                        url: '/api/v1/canvas/course/' + course_id,
                         dataType: 'json',
                         success: function (data) {
                             window.open(data.course_url);
@@ -1207,7 +1207,7 @@ $(document).ready(function () {
 
         if (link.length && link.attr('data-course-id')) {
             $.ajax({
-                url: 'api/v1/canvas/course/' + link.attr('data-course-id'),
+                url: '/api/v1/canvas/course/' + link.attr('data-course-id'),
                 dataType: 'json',
                 success: function (data) {
                     var state_node = $('.workflow_state', course_body),
@@ -1258,7 +1258,7 @@ $(document).ready(function () {
 
     function updateCourseListURL(a, course_sis_id) {
         $.ajax({
-            url: 'api/v1/canvas/course/' + course_sis_id,
+            url: '/api/v1/canvas/course/' + course_sis_id,
             dataType: 'json',
             success: function (data) {
                 a.attr('href', data.course_url);
@@ -1276,7 +1276,7 @@ $(document).ready(function () {
 
     function updateCourseListSubAccount(account_id, course_body) {
         $.ajax({
-            url: 'api/v1/canvas/account/' + account_id,
+            url: '/api/v1/canvas/account/' + account_id,
             dataType: 'json',
             success: function (data) {
                 $('li.canvas-subaccount', course_body).show();
@@ -1324,7 +1324,7 @@ $(document).ready(function () {
             button.attr('disabled', 'disabled');
 
             $.ajax({
-                url: 'api/v1/course/' + encodeURIComponent(button.attr('data-course-id')),
+                url: '/api/v1/course/' + encodeURIComponent(button.attr('data-course-id')),
                 contentType: 'application/json',
                 type: 'PUT',
                 processData: false,
@@ -1353,7 +1353,7 @@ $(document).ready(function () {
 
     function canvasStatusMonitor() {
         $.ajax({
-            url: 'api/v1/canvas',
+            url: '/api/v1/canvas',
             dataType: 'json',
             success: function (data) {
                 var tpl = Handlebars.compile($('#canvas-system-status').html());
@@ -1375,7 +1375,7 @@ $(document).ready(function () {
 
     function termDatesMonitor() {
         $.ajax({
-            url: 'api/v1/terms',
+            url: '/api/v1/terms',
             dataType: 'json',
             success: function (data) {
                 var now = moment(),
@@ -1426,7 +1426,7 @@ $(document).ready(function () {
 
     // event frequency chart
     function initializeStripAndGauge(event_types) {
-        var url_base = 'api/v1/events?type=' + event_types.join(',') + '&',
+        var url_base = '/api/v1/events?type=' + event_types.join(',') + '&',
             gauge = new Highcharts.Chart({
                 chart: {
                     renderTo: 'event-gauge',

@@ -44,7 +44,7 @@
     function save_external_tool() {
         var json_data = gather_form_data(),
             tool_id = json_data.external_tool.canvas_id,
-            url = 'lti_manager/api/v1/external_tool/',
+            url = '/api/v1/external_tool/',
             type = 'POST';
 
         if (tool_id.length) {
@@ -62,7 +62,7 @@
 
     function load_external_tool(tool_id, done_fn) {
         $.ajax({
-            url: 'lti_manager/api/v1/external_tool/' + tool_id,
+            url: '/api/v1/external_tool/' + tool_id,
             type: 'GET',
             dataType: 'json'
         }).done(done_fn).fail(draw_error);
@@ -73,7 +73,7 @@
         var tool_id = $(this).attr('data-tool-id');
         if (confirm('Really delete this external tool?')) {
             $.ajax({
-                url: 'lti_manager/api/v1/external_tool/' + tool_id,
+                url: '/api/v1/external_tool/' + tool_id,
                 type: 'DELETE',
                 dataType: 'json'
             }).done(draw_updated_tool).fail(draw_error);
@@ -167,7 +167,7 @@
 
     function load_external_tools() {
         $.ajax({
-            url: 'lti_manager/api/v1/external_tools',
+            url: '/api/v1/external_tools',
             type: 'GET',
             dataType: 'json'
         }).done(draw_external_tools).fail(draw_error);
