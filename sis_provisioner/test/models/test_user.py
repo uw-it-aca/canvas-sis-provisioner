@@ -66,7 +66,7 @@ class UserModelTest(TestCase):
 
         # is_test_entity
         self.assertRaises(UserPolicyException, User.objects.add_user_by_netid,
-            'javerage')
+                          'javerage')
 
     def test_json_data(self):
         person = PWS().get_person_by_netid('javerage')

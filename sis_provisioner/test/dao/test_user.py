@@ -202,7 +202,7 @@ class NetidPolicyTest(TestCase):
 class RegidPolicyTest(TestCase):
     @override_settings(NONPERSONAL_NETID_EXCEPTION_GROUP='u_acadev_unittest')
     def test_get_person_by_regid(self):
-        user = get_person_by_regid('FBB38FE46A7C11D5A4AE0004AC494FFE') # bill
+        user = get_person_by_regid('FBB38FE46A7C11D5A4AE0004AC494FFE')  # bill
         self.assertEquals(user.uwregid, 'FBB38FE46A7C11D5A4AE0004AC494FFE')
 
         self.assertRaises(
