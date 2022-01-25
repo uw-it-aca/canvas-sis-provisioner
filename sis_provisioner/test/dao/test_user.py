@@ -125,14 +125,16 @@ class UserPolicyTest(TestCase):
 class NetidPolicyTest(TestCase):
     @override_settings(NONPERSONAL_NETID_EXCEPTION_GROUP='u_acadev_unittest')
     def test_get_person_by_netid(self):
-        self.assertEquals(get_person_by_netid('bill').uwnetid, 'bill')
+        self.assertEquals(get_person_by_netid('javerage').uwnetid, 'javerage')
         self.assertRaises(
             DataFailureException, get_person_by_netid, 'a_canvas_application')
         self.assertRaises(
             InvalidLoginIdException, get_person_by_netid, 'canvas')
-        # is_test_entity
+
+    @override_settings(NONPERSONAL_NETID_EXCEPTION_GROUP=None)
+    def test_get_test_entity_by_netid(self):
         self.assertRaises(
-            UserPolicyException, get_person_by_netid, 'javerage')
+            InvalidLoginIdException, get_person_by_netid, 'javerage')
 
     def test_valid_netid(self):
         # Valid
@@ -202,14 +204,15 @@ class NetidPolicyTest(TestCase):
 class RegidPolicyTest(TestCase):
     @override_settings(NONPERSONAL_NETID_EXCEPTION_GROUP='u_acadev_unittest')
     def test_get_person_by_regid(self):
-        user = get_person_by_regid('FBB38FE46A7C11D5A4AE0004AC494FFE')  # bill
-        self.assertEquals(user.uwregid, 'FBB38FE46A7C11D5A4AE0004AC494FFE')
+        user = get_person_by_regid('9136CCB8F66711D5BE060004AC494FFE')
+        self.assertEquals(user.uwregid, '9136CCB8F66711D5BE060004AC494FFE')
 
         self.assertRaises(
             DataFailureException, get_person_by_regid,
             '9136CCB8F66711D5BE060004AC494FFF')
 
-        # is_test_entity
+    @override_settings(NONPERSONAL_NETID_EXCEPTION_GROUP=None)
+    def test_get_test_entity_by_regid(self):
         self.assertRaises(
             UserPolicyException, get_person_by_regid,
             '9136CCB8F66711D5BE060004AC494FFE')
