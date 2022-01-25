@@ -136,15 +136,15 @@ def get_person_by_netid(netid):
         valid_net_id(netid)
         person = pws.get_person_by_netid(netid)
 
+        if person.is_test_entity:
+            valid_nonpersonal_net_id(netid)
+
     except DataFailureException as err:
         if err.status == 404:  # Non-personal netid?
             valid_nonpersonal_net_id(netid)
             person = pws.get_entity_by_netid(netid)
         else:
             raise
-
-    if person.is_test_entity:
-        raise UserPolicyException('UWNetID not permitted')
 
     return person
 
@@ -155,15 +155,15 @@ def get_person_by_regid(regid):
         person = pws.get_person_by_regid(regid)
         valid_net_id(person.uwnetid)
 
+        if person.is_test_entity:
+            valid_nonpersonal_net_id(person.uwnetid)
+
     except DataFailureException as err:
         if err.status == 404:  # Non-personal regid?
             person = pws.get_entity_by_regid(regid)
             valid_nonpersonal_net_id(person.uwnetid)
         else:
             raise
-
-    if person.is_test_entity:
-        raise UserPolicyException('UWNetID not permitted')
 
     return person
 
