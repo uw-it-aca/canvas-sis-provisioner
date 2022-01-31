@@ -39,12 +39,18 @@ class ExternalToolManager(models.Manager):
         ExternalTool.objects.filter(queue_id=queue_id).delete()
 
     def import_tools_in_account(self, account_id, changed_by):
+        try:
+            account = Account.objects.get(canvas_id=account_id)
+        except Account.DoesNotExist:
+            account_data = get_account_by_id(account_id)
+            account = Account.objects.add_account(account_data)
+
         for config in get_external_tools(account_id):
             try:
                 tool = ExternalTool.objects.get(canvas_id=config.get('id'))
             except ExternalTool.DoesNotExist:
                 tool = ExternalTool(canvas_id=config.get('id'))
-                tool.account = Account.objects.get(canvas_id=account_id)
+                tool.account = account
 
             tool.config = json.dumps(config)
             tool.changed_by = changed_by
