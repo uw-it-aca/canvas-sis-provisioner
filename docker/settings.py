@@ -69,7 +69,6 @@ else:
     GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
         '/gcs/credentials.json')
 
-RESTCLIENTS_CA_BUNDLE = '/etc/ssl/certs/ca-certificates.crt'
 RESTCLIENTS_DISABLE_THREADING = True
 RESTCLIENTS_ADMIN_AUTH_MODULE = 'sis_provisioner.views.admin.can_view_source_data'
 SUPPORTTOOLS_PARENT_APP = 'Canvas LMS'
