@@ -14,8 +14,6 @@ ADD --chown=acait:acait docker/ /app/project/
 RUN /app/bin/pip install -r requirements.txt
 RUN /app/bin/pip install mysqlclient
 
-RUN . /app/bin/activate && python manage.py test
-
 RUN . /app/bin/activate && pip install nodeenv && nodeenv -p && \
   npm install -g npm && ./bin/npm install less -g
 
