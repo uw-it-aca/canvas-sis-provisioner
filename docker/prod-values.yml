@@ -370,9 +370,9 @@ daemon:
 
 certs:
   mounted: true
-  certPath: /certs/apps.canvas.uw.edu-uwca.cert
-  keyPath: /certs/apps.canvas.uw.edu-uwca.key
-  secretName: apps.canvas.uw.edu-uwca-certs
+  certPath: /certs/apps.canvas.uw.edu-ic.cert
+  keyPath: /certs/apps.canvas.uw.edu-ic.key
+  secretName: apps.canvas.uw.edu-ic-certs
 
 environmentVariables:
   - name: ENV
@@ -492,18 +492,13 @@ externalSecrets:
           property: username
         - name: password
           property: password
-    - name: apps.canvas.uw.edu-uwca-certs
-      externalKey: axdd/kv/data/canvas/prod/uwca-certs
-      data:
-        - name: apps.canvas.uw.edu-uwca.cert
-          property: apps.canvas.uw.edu-uwca.cert
-        - name: apps.canvas.uw.edu-uwca.key
-          property: apps.canvas.uw.edu-uwca.key
     - name: apps.canvas.uw.edu-ic-certs
       externalKey: axdd/kv/data/canvas/prod/ic-certs
       data:
         - name: apps.canvas.uw.edu-ic.cert
           property: apps.canvas.uw.edu-ic.cert
+        - name: apps.canvas.uw.edu-ic.key
+          property: apps.canvas.uw.edu-ic.key
     - name: apps.canvas.uw.edu-uw-idp-cert
       externalKey: axdd/kv/data/idp-cert
       data:
