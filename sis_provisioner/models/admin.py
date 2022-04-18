@@ -179,7 +179,7 @@ class Admin(ImportResource):
     added_date = models.DateTimeField(auto_now_add=True)
     provisioned_date = models.DateTimeField(null=True)
     deleted_date = models.DateTimeField(null=True)
-    is_deleted = models.NullBooleanField()
+    is_deleted = models.BooleanField(null=True)
     queue_id = models.CharField(max_length=30, null=True)
 
     objects = AdminManager()

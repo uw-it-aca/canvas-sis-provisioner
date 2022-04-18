@@ -25,7 +25,7 @@ class Job(models.Model):
     changed_by = models.CharField(max_length=32)
     changed_date = models.DateTimeField()
     last_run_date = models.DateTimeField(null=True)
-    is_active = models.NullBooleanField()
+    is_active = models.BooleanField(null=True)
     health_status = models.CharField(max_length=512, null=True)
     last_status_date = models.DateTimeField(null=True)
 
@@ -95,7 +95,7 @@ class Import(models.Model):
     priority = models.SmallIntegerField(
         default=ImportResource.PRIORITY_DEFAULT,
         choices=ImportResource.PRIORITY_CHOICES)
-    override_sis_stickiness = models.NullBooleanField()
+    override_sis_stickiness = models.BooleanField(null=True)
     post_status = models.SmallIntegerField(null=True)
     monitor_date = models.DateTimeField(null=True)
     monitor_status = models.SmallIntegerField(null=True)

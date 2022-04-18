@@ -21,10 +21,9 @@ setup(
     packages=['sis_provisioner'],
     include_package_data=True,
     install_requires = [
-        'Django~=2.2',
+        'Django~=3.2',
         'django-compressor',
         'django-user-agents',
-        'lxml~=4.2',
         'python-dateutil',
         'django-pyscss>=2.0',
         'beautifulsoup4',
@@ -58,6 +57,5 @@ setup(
         'License :: OSI Approved :: Apache Software License',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 3.6',
     ],
 )
