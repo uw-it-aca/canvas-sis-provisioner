@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='enrollment',
             name='is_auditor',
-            field=models.NullBooleanField(),
+            field=models.BooleanField(null=True),
             preserve_default=True,
         ),
         migrations.AddField(

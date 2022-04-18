@@ -26,7 +26,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='user',
             name='invalid_enrollment_check_required',
-            field=models.NullBooleanField(),
+            field=models.BooleanField(null=True),
         ),
         migrations.AlterField(
             model_name='import',

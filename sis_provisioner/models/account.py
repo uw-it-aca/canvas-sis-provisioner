@@ -112,8 +112,8 @@ class Account(models.Model):
     account_short_name = models.CharField(max_length=128)
     account_type = models.CharField(max_length=16, choices=TYPE_CHOICES)
     added_date = models.DateTimeField(auto_now_add=True)
-    is_deleted = models.NullBooleanField()
-    is_blessed_for_course_request = models.NullBooleanField()
+    is_deleted = models.BooleanField(null=True)
+    is_blessed_for_course_request = models.BooleanField(null=True)
     queue_id = models.CharField(max_length=30, null=True)
 
     objects = AccountManager()

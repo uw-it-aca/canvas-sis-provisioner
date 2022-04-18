@@ -194,7 +194,7 @@ class Course(ImportResource):
     xlist_id = models.CharField(max_length=80, null=True)
     added_date = models.DateTimeField(auto_now_add=True)
     provisioned_date = models.DateTimeField(null=True)
-    provisioned_error = models.NullBooleanField()
+    provisioned_error = models.BooleanField(null=True)
     provisioned_status = models.CharField(max_length=512, null=True)
     priority = models.SmallIntegerField(
         default=ImportResource.PRIORITY_DEFAULT,

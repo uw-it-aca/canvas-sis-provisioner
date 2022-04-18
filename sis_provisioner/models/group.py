@@ -144,7 +144,7 @@ class Group(ImportResource):
     role = models.CharField(max_length=80)
     added_by = models.CharField(max_length=20)
     added_date = models.DateTimeField(auto_now_add=True, null=True)
-    is_deleted = models.NullBooleanField()
+    is_deleted = models.BooleanField(null=True)
     deleted_by = models.CharField(max_length=20, null=True)
     deleted_date = models.DateTimeField(null=True)
     provisioned_date = models.DateTimeField(null=True)
@@ -207,7 +207,7 @@ class GroupMemberGroup(models.Model):
     """
     group_id = models.CharField(max_length=256)
     root_group_id = models.CharField(max_length=256)
-    is_deleted = models.NullBooleanField()
+    is_deleted = models.BooleanField(null=True)
 
     objects = GroupMemberGroupManager()
 
