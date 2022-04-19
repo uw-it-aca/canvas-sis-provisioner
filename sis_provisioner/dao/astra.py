@@ -31,7 +31,7 @@ class HTTPSConnectionClientCertV3(http.client.HTTPSConnection):
         if self._tunnel_host:
             self.sock = sock
             self._tunnel()
-            self.sock = ssl.wrap_socket(sock, self.key_file, self.cert_file)
+        self.sock = ssl.wrap_socket(sock, self.key_file, self.cert_file)
 
 
 class HTTPSClientAuthHandler(HTTPSHandler):
