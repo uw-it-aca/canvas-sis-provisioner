@@ -69,9 +69,9 @@ daemon:
       args: ["--delay", "30", "monitor_imports"]
 certs:
   mounted: true
-  certPath: /certs/test-apps.canvas.uw.edu-ic.cert
-  keyPath: /certs/test-apps.canvas.uw.edu-ic.key
-  secretName: test-apps.canvas.uw.edu-ic-certs
+  certPath: /certs/test-apps.canvas.uw.edu-uwca.cert
+  keyPath: /certs/test-apps.canvas.uw.edu-uwca.key
+  secretName: test-apps.canvas.uw.edu-uwca-certs
 environmentVariables:
   - name: ENV
     value: test
@@ -190,6 +190,13 @@ externalSecrets:
           property: username
         - name: password
           property: password
+    - name: test-apps.canvas.uw.edu-uwca-certs
+      externalKey: axdd/kv/data/canvas/test/uwca-certs
+      data:
+        - name: test-apps.canvas.uw.edu-uwca.cert
+          property: test-apps.canvas.uw.edu-uwca.cert
+        - name: test-apps.canvas.uw.edu-uwca.key
+          property: test-apps.canvas.uw.edu-uwca.key
     - name: test-apps.canvas.uw.edu-ic-certs
       externalKey: axdd/kv/data/canvas/test/ic-certs
       data:
