@@ -72,6 +72,11 @@ certs:
   certPath: /certs/test-apps.canvas.uw.edu-uwca.cert
   keyPath: /certs/test-apps.canvas.uw.edu-uwca.key
   secretName: test-apps.canvas.uw.edu-uwca-certs
+mountedSecrets:
+  enabled: true
+  mountPath: /ssl
+  secretName: test-apps.canvas.uw.edu-openssl-conf
+
 environmentVariables:
   - name: ENV
     value: test
@@ -114,6 +119,9 @@ environmentVariables:
     value: https://test-apps.canvas.uw.edu/saml2
   - name: CLUSTER_CNAME
     value: test-apps.canvas.uw.edu
+
+  - name: OPENSSL_CONF
+    value: /ssl/openssl.cnf
 
 externalSecrets:
   enabled: true
@@ -209,6 +217,11 @@ externalSecrets:
       data:
         - name: uw-idp-cert
           property: cert
+    - name: test-apps.canvas.uw.edu-openssl-conf
+      externalKey: axdd/kv/data/openssl-conf
+      data:
+        - name: openssl.cnf
+          property: openssl.cnf
 environmentVariablesSecrets:
   djangoSecret:
     name: DJANGO_SECRET
