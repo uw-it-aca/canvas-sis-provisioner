@@ -1,4 +1,4 @@
-# Copyright 2021 UW-IT, University of Washington
+# Copyright 2022 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
 from django.conf import settings
@@ -29,10 +29,10 @@ class RestClientsCache(RestclientPymemcacheClient):
             return ONE_HOUR
 
         if 'kws' == service:
-            if re.match(r'^{}'.format(
+            if re.search(r'{}'.format(
                     ENCRYPTION_KEY_URL.format(r'[\-\da-fA-F]{36}')), url):
                 return ONE_MONTH
-            if re.match(r'^{}'.format(
+            if re.search(r'{}'.format(
                     ENCRYPTION_CURRENT_KEY_URL.format(r'[\-\da-zA-Z]+')), url):
                 return ONE_WEEK
 

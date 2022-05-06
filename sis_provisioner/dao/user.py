@@ -1,4 +1,4 @@
-# Copyright 2021 UW-IT, University of Washington
+# Copyright 2022 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
 from django.conf import settings
@@ -136,6 +136,9 @@ def get_person_by_netid(netid):
         valid_net_id(netid)
         person = pws.get_person_by_netid(netid)
 
+        if person.is_test_entity:
+            valid_nonpersonal_net_id(netid)
+
     except DataFailureException as err:
         if err.status == 404:  # Non-personal netid?
             valid_nonpersonal_net_id(netid)
@@ -151,6 +154,9 @@ def get_person_by_regid(regid):
     try:
         person = pws.get_person_by_regid(regid)
         valid_net_id(person.uwnetid)
+
+        if person.is_test_entity:
+            valid_nonpersonal_net_id(person.uwnetid)
 
     except DataFailureException as err:
         if err.status == 404:  # Non-personal regid?

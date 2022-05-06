@@ -1,4 +1,4 @@
-# Copyright 2021 UW-IT, University of Washington
+# Copyright 2022 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
 from django.db import models
@@ -179,7 +179,7 @@ class Admin(ImportResource):
     added_date = models.DateTimeField(auto_now_add=True)
     provisioned_date = models.DateTimeField(null=True)
     deleted_date = models.DateTimeField(null=True)
-    is_deleted = models.NullBooleanField()
+    is_deleted = models.BooleanField(null=True)
     queue_id = models.CharField(max_length=30, null=True)
 
     objects = AdminManager()

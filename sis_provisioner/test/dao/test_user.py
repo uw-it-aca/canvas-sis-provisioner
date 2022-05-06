@@ -1,4 +1,4 @@
-# Copyright 2021 UW-IT, University of Washington
+# Copyright 2022 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
 from django.test import TestCase, override_settings
@@ -131,6 +131,11 @@ class NetidPolicyTest(TestCase):
         self.assertRaises(
             InvalidLoginIdException, get_person_by_netid, 'canvas')
 
+    @override_settings(NONPERSONAL_NETID_EXCEPTION_GROUP=None)
+    def test_get_test_entity_by_netid(self):
+        self.assertRaises(
+            InvalidLoginIdException, get_person_by_netid, 'javerage')
+
     def test_valid_netid(self):
         # Valid
         self.assertEquals(valid_net_id('javerage'), None)
@@ -205,6 +210,12 @@ class RegidPolicyTest(TestCase):
         self.assertRaises(
             DataFailureException, get_person_by_regid,
             '9136CCB8F66711D5BE060004AC494FFF')
+
+    @override_settings(NONPERSONAL_NETID_EXCEPTION_GROUP=None)
+    def test_get_test_entity_by_regid(self):
+        self.assertRaises(
+            UserPolicyException, get_person_by_regid,
+            '9136CCB8F66711D5BE060004AC494FFE')
 
     def test_valid_regid(self):
         # Valid

@@ -1,4 +1,4 @@
-# Copyright 2021 UW-IT, University of Washington
+# Copyright 2022 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
 from django.conf import settings
@@ -12,7 +12,10 @@ from sis_provisioner.models.admin import Admin
 from restclients_core.exceptions import DataFailureException
 from uw_saml.decorators import group_required
 from uw_saml.utils import get_user, is_member_of_group
+from logging import getLogger
 import json
+
+logger = getLogger(__name__)
 
 
 def can_view_source_data(request, service=None, url=None):
@@ -31,6 +34,7 @@ class AdminView(View):
             curr_year = term.year
             curr_quarter = term.quarter
         except DataFailureException as ex:
+            logger.info('GET active term failed: {}'.format(ex))
             curr_year = ''
             curr_quarter = ''
 

@@ -1,4 +1,4 @@
-# Copyright 2021 UW-IT, University of Washington
+# Copyright 2022 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
 from django.test import TestCase, override_settings
@@ -51,10 +51,10 @@ class BuilderTest(TestCase):
     def test_add_group_enrollment_data(self):
         builder = Builder()
         builder.add_group_enrollment_data(
-            'javerage', '2013-winter-AAA-BB-groups', 'student', 'active')
+            'bill', '2013-winter-AAA-BB-groups', 'student', 'active')
         self.assertEqual(
             str(builder.data.enrollments[0]), (
-                ',,9136CCB8F66711D5BE060004AC494FFE,student,'
+                ',,FBB38FE46A7C11D5A4AE0004AC494FFE,student,'
                 ',2013-winter-AAA-BB-groups,active,\n'))
 
         builder = Builder()
