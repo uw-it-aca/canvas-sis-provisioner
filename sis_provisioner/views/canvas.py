@@ -91,32 +91,31 @@ class CanvasStatus(RESTDispatch):
             page = urlopen(status_url)
             soup = BeautifulSoup(page, 'html.parser')
             components = []
-            for container in soup.body.find_all(
-                    'div', class_='child-components-container'):
-                for x in container.children:
-                    name = x.find('span', class_='name').get_text(strip=True)
-                    status = x.find(
-                        'span', class_='component-status').get_text(strip=True)
-                    state = 'status-unknown'
+            for x in soup.body.find_all(
+                    'div', class_='component-inner-container'):
+                name = x.find('span', class_='name').get_text(strip=True)
+                status = x.find('span', class_='component-status').get_text(
+                    strip=True)
+                state = 'status-unknown'
 
-                    for c in x['class']:
-                        if 'status-' in c:
-                            state = c
-                            break
+                for c in x['class']:
+                    if 'status-' in c:
+                        state = c
+                        break
 
-                    try:
-                        name = re.sub(r'Support:', '', name)
-                        name = re.sub(r'[^\/\w\s]', '', name)
-                        name = name.strip()
-                    except (TypeError, AttributeError):
-                        pass
+                try:
+                    name = re.sub(r'Support:', '', name)
+                    name = re.sub(r'[^\/\w\s]', '', name)
+                    name = name.strip()
+                except (TypeError, AttributeError):
+                    pass
 
-                    components.append({
-                        'url': status_url,
-                        'component': name,
-                        'status': status,
-                        'state': state
-                    })
+                components.append({
+                    'url': status_url,
+                    'component': name,
+                    'status': status,
+                    'state': state
+                })
 
         except Exception as err:
             components = [{
