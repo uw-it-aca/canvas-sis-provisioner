@@ -10,10 +10,10 @@ from sis_provisioner.models.group import Group
 from sis_provisioner.models.course import Course
 from sis_provisioner.views.admin import RESTDispatch
 from sis_provisioner.exceptions import CoursePolicyException
+from uw_saml.utils import get_user
 from logging import getLogger
 import json
 import re
-
 
 logger = getLogger(__name__)
 
@@ -39,9 +39,9 @@ class CourseView(RESTDispatch):
             return self.error_response(404, "Course not found")
 
     def put(self, request, *args, **kwargs):
+        course_id = self._normalize(kwargs['course_id'])
         try:
-            course = Course.objects.get(
-                course_id=self._normalize(kwargs['course_id']))
+            course = Course.objects.get(course_id=course_id)
         except Course.DoesNotExist:
             return self.error_response(404, "Course not found")
 
@@ -59,6 +59,9 @@ class CourseView(RESTDispatch):
             # only priority PUTable right now
             priority = new_values.get('priority', '').lower()
             course.update_priority(priority)
+
+            logger.info('{} set priority={} for course {}'.format(
+                get_user(request), priority, course_id))
 
             json_data = course.json_data(
                 include_sws_url=self.can_view_source_data(request))
