@@ -1294,6 +1294,31 @@ $(document).ready(function () {
         });
     }
 
+    function initializeUserSearchEvents() {
+        var container = $('#user-search');
+
+        container.on('click', 'button.terminate-sessions', function (e) {
+            var $button = $(this),
+                netid = $button.attr('data-net-id'),
+                canvas_user_d = $button.attr('data-user-id');
+
+            if (window.confirm("Really terminate " + netid + " Canvas' sessions?")) {
+                $.ajax({
+                    url: '/api/v1/users/' + canvas_user_id + '/sessions',
+                        contentType: 'application/json',
+                        type: 'DELETE',
+                        processData: false,
+                        success: function () {
+                            alert("User " + netid + " sessions have been terminated.");
+                        },
+                        error: function (xhr) {
+                            alert('Cannot terminate sessions: ' + xhr.responseText);
+                        }
+                    });
+            }
+        });
+    }
+
     function initializeCourseListEvents() {
         var container = $('.course-list, .status-result-list');
 
@@ -1846,6 +1871,7 @@ $(document).ready(function () {
         loadGroups();
     } else if ($('#user-search').length) {
         initializeStripAndGauge(['person']);
+        initializeUserSearchEvents();
     } else if ($('#admin-table').length) {
         loadAdmins();
     } else if ($('#jobs-table').length) {

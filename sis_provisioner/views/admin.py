@@ -50,6 +50,8 @@ class AdminView(View):
             'can_manage_jobs': self.can_manage_jobs(request),
             'can_manage_external_tools': self.can_manage_external_tools(
                 request),
+            'can_terminate_user_sessions': self.can_terminate_user_sessions(
+                request),
             'admin_group': settings.CANVAS_MANAGER_ADMIN_GROUP,
         }
 
@@ -69,6 +71,11 @@ class AdminView(View):
     @staticmethod
     def can_manage_external_tools(request):
         return Admin.objects.is_account_admin(get_user(request))
+
+    @staticmethod
+    def can_terminate_user_sessions(request):
+        return is_group_admin(
+            settings.CANVAS_MANAGER_ADMIN_GROUP, get_user(request))
 
 
 class ImportStatus(AdminView):

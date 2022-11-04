@@ -157,6 +157,10 @@ def create_user(person):
     return Users().create_user(person)
 
 
+def terminate_user_sessions(user_id):
+    return Users().terminate_user_sessions(user_id)
+
+
 def get_term_by_sis_id(term_sis_id):
     return Terms().get_term_by_sis_id(term_sis_id)
 

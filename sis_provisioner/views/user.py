@@ -12,7 +12,7 @@ from uw_sws.enrollment import enrollment_search_url_prefix
 from uw_pws import PERSON_PREFIX
 from sis_provisioner.exceptions import UserPolicyException
 from sis_provisioner.dao.canvas import (
-    get_user_by_sis_id, create_user,
+    get_user_by_sis_id, create_user, terminate_user_sessions,
     get_all_users_for_person, merge_all_users_for_person)
 from sis_provisioner.dao.user import (
     get_person_by_netid, get_person_by_regid, get_person_by_gmail_id,
@@ -156,5 +156,14 @@ class UserMergeView(RESTDispatch):
         try:
             person = get_person_by_regid(reg_id)
             canvas_user = merge_all_users_for_person(person)
+        except DataFailureException as ex:
+            return self.error_response(ex.status, message=ex.msg)
+
+
+class UserSessionsView(RESTDispatch):
+    def delete(self, request, *args, **kwargs):
+        user_id = kwargs.get('user_id')
+        try:
+            terminate_user_sessions(user_id)
         except DataFailureException as ex:
             return self.error_response(ex.status, message=ex.msg)
