@@ -483,7 +483,8 @@ $(document).ready(function () {
             url: url + user_id,
             dataType: 'json',
             success: function (data) {
-                var tpl = Handlebars.compile($('#user-info').html());
+                var tpl = Handlebars.compile($('#user-info').html()),
+                    privileged_actions = $('#user-privileged-actions');
 
                 if (data.added_date) {
                     data.added_date = format_long_date(data.added_date) +
@@ -501,6 +502,13 @@ $(document).ready(function () {
 
                 result_div.removeClass('waiting');
                 result_div.html(tpl(data));
+
+                if (privileged_actions.length) {
+                    var tpl = Handlebars.compile(privileged_actions.html());
+
+                    $(".privileged-actions", result_div).html(tpl(data));;
+                }
+
 
                 $('#user_add_button').click(function () {
                     var adding = '',
