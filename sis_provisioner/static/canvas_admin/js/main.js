@@ -1308,7 +1308,7 @@ $(document).ready(function () {
         container.on('click', 'button.terminate-sessions', function (e) {
             var $button = $(this),
                 netid = $button.attr('data-net-id'),
-                canvas_user_d = $button.attr('data-user-id');
+                canvas_user_id = $button.attr('data-user-id');
 
             if (window.confirm("Really terminate " + netid + " Canvas' sessions?")) {
                 $.ajax({
