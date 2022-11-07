@@ -173,3 +173,5 @@ class UserSessionsView(RESTDispatch):
             terminate_user_sessions(user_id)
         except DataFailureException as ex:
             return self.error_response(ex.status, message=ex.msg)
+
+        return self.json_response({'user_id': user_id})
