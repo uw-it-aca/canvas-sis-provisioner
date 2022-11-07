@@ -9,7 +9,8 @@ from sis_provisioner.views.admin import (
 from sis_provisioner.views.course import CourseView, CourseListView
 from sis_provisioner.views.enrollment import EnrollmentListView
 from sis_provisioner.views.group import GroupListView
-from sis_provisioner.views.user import UserView, UserMergeView
+from sis_provisioner.views.user import (
+    UserView, UserMergeView, UserSessionsView)
 from sis_provisioner.views.login import LoginValidationView
 from sis_provisioner.views.terms import TermListView
 from sis_provisioner.views.canvas import (
@@ -59,6 +60,8 @@ urlpatterns = [
     re_path(r'api/v1/users/?$', UserView.as_view()),
     re_path(r'api/v1/users/(?P<reg_id>[a-fA-F0-9]{32})/merge$',
             UserMergeView.as_view()),
+    re_path(r'api/v1/users/(?P<user_id>[0-9]+)/sessions$',
+            UserSessionsView.as_view()),
     re_path(r'api/v1/logins/?$', LoginValidationView.as_view()),
     re_path(r'api/v1/import/(?P<import_id>[0-9]+)?$', ImportView.as_view()),
     re_path(r'api/v1/imports/?$', ImportListView.as_view()),
