@@ -80,6 +80,7 @@ class UserView(RESTDispatch):
         can_view_source_data = self.can_view_source_data(self.request)
         can_terminate_user_sessions = self.can_terminate_user_sessions(
             self.request)
+
         response = {
             'is_valid': True,
             'display_name': person.display_name,
@@ -90,7 +91,6 @@ class UserView(RESTDispatch):
             'provisioned_date': None,
             'priority': 'normal',
             'queue_id': None,
-            'can_terminate_user_sessions': can_terminate_user_sessions,
             'can_merge_users': False,
             'enrollment_url': '/restclients/view/sws{}{}'.format(
                 enrollment_search_url_prefix, person.uwregid) if (
@@ -116,6 +116,11 @@ class UserView(RESTDispatch):
                 user_data['person_url'] = (
                     '/restclients/view/pws{api_path}/{uwregid}/full.json'
                 ).format(api_path=PERSON_PREFIX, uwregid=user.sis_user_id)
+
+            user_data['can_terminate_user_sessions'] = (
+                user_data['can_access_canvas'] and
+                user_data['last_login'] is not None and
+                can_terminate_user_sessions)
 
             response['canvas_users'].append(user_data)
 
