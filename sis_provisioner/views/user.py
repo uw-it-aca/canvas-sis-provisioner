@@ -1,18 +1,19 @@
 # Copyright 2022 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
-import re
 import json
 import datetime
 from logging import getLogger
+from django.conf import settings
+from django.utils.decorators import method_decorator
 from restclients_core.exceptions import (
     InvalidNetID, InvalidRegID, DataFailureException)
-from uw_sws.models import Person
 from uw_sws.enrollment import enrollment_search_url_prefix
 from uw_pws import PERSON_PREFIX
+from uw_saml.decorators import group_required
 from sis_provisioner.exceptions import UserPolicyException
 from sis_provisioner.dao.canvas import (
-    get_user_by_sis_id, create_user,
+    get_user_by_sis_id, create_user, terminate_user_sessions,
     get_all_users_for_person, merge_all_users_for_person)
 from sis_provisioner.dao.user import (
     get_person_by_netid, get_person_by_regid, get_person_by_gmail_id,
@@ -77,6 +78,8 @@ class UserView(RESTDispatch):
 
     def response_for_person(self, person):
         can_view_source_data = self.can_view_source_data(self.request)
+        can_terminate_user_sessions = self.can_terminate_user_sessions(
+            self.request)
 
         response = {
             'is_valid': True,
@@ -88,6 +91,7 @@ class UserView(RESTDispatch):
             'provisioned_date': None,
             'priority': 'normal',
             'queue_id': None,
+            'can_terminate_user_sessions': can_terminate_user_sessions,
             'enrollment_url': '/restclients/view/sws{}{}'.format(
                 enrollment_search_url_prefix, person.uwregid) if (
                     can_view_source_data) else None,
@@ -158,3 +162,16 @@ class UserMergeView(RESTDispatch):
             canvas_user = merge_all_users_for_person(person)
         except DataFailureException as ex:
             return self.error_response(ex.status, message=ex.msg)
+
+
+@method_decorator(group_required(settings.CANVAS_MANAGER_ADMIN_GROUP),
+                  name='dispatch')
+class UserSessionsView(RESTDispatch):
+    def delete(self, request, *args, **kwargs):
+        user_id = kwargs.get('user_id')
+        try:
+            terminate_user_sessions(user_id)
+        except DataFailureException as ex:
+            return self.error_response(ex.status, message=ex.msg)
+
+        return self.json_response({'user_id': user_id})

@@ -483,7 +483,8 @@ $(document).ready(function () {
             url: url + user_id,
             dataType: 'json',
             success: function (data) {
-                var tpl = Handlebars.compile($('#user-info').html());
+                var tpl = Handlebars.compile($('#user-info').html()),
+                    privileged_actions = $('#user-privileged-actions');
 
                 if (data.added_date) {
                     data.added_date = format_long_date(data.added_date) +
@@ -501,6 +502,13 @@ $(document).ready(function () {
 
                 result_div.removeClass('waiting');
                 result_div.html(tpl(data));
+
+                if (privileged_actions.length) {
+                    var tpl = Handlebars.compile(privileged_actions.html());
+
+                    $(".privileged-actions", result_div).html(tpl(data));;
+                }
+
 
                 $('#user_add_button').click(function () {
                     var adding = '',
@@ -1294,6 +1302,31 @@ $(document).ready(function () {
         });
     }
 
+    function initializeUserSearchEvents() {
+        var container = $('#user-search');
+
+        container.on('click', 'button.terminate-sessions', function (e) {
+            var $button = $(this),
+                netid = $button.attr('data-net-id'),
+                canvas_user_id = $button.attr('data-user-id');
+
+            if (window.confirm("Really terminate " + netid + " Canvas' sessions?")) {
+                $.ajax({
+                    url: '/api/v1/users/' + canvas_user_id + '/sessions',
+                        contentType: 'application/json',
+                        type: 'DELETE',
+                        processData: false,
+                        success: function () {
+                            alert("User " + netid + " sessions have been terminated.");
+                        },
+                        error: function (xhr) {
+                            alert('Cannot terminate sessions: ' + xhr.responseText);
+                        }
+                    });
+            }
+        });
+    }
+
     function initializeCourseListEvents() {
         var container = $('.course-list, .status-result-list');
 
@@ -1846,6 +1879,7 @@ $(document).ready(function () {
         loadGroups();
     } else if ($('#user-search').length) {
         initializeStripAndGauge(['person']);
+        initializeUserSearchEvents();
     } else if ($('#admin-table').length) {
         loadAdmins();
     } else if ($('#jobs-table').length) {
