@@ -136,7 +136,6 @@ def get_all_users_for_person(person):
 
 def merge_all_users_for_person(person):
     destination_user = None
-    current_login = None
     users_to_merge = []
     for user in get_all_users_for_person(person):
         if user.login_id == person.uwnetid:  # Current login_id/uwnetid
@@ -148,9 +147,11 @@ def merge_all_users_for_person(person):
         canvas = Users()
         for user in users_to_merge:
             canvas.merge_users(user, destination_user)
-            logger.info('Merged user {} into {}'.format(
-                user.user_id, destination_user.user_id))
+            logger.info('Merged user {} ({}) into {} ({})'.format(
+                user.user_id, user.login_id, destination_user.user_id,
+                destination_user.login_id))
 
+        current_login = None
         for login in canvas.get_user_logins(destination_user.user_id):
             if login.unique_id == person.uwnetid:  # Current login_id/uwnetid
                 current_login = login
@@ -162,9 +163,12 @@ def merge_all_users_for_person(person):
                 logger.info('Deleted login {}, with sis_id {}'.format(
                     login.unique_id, login.sis_user_id))
 
-        # Update the login.sis_id for the current login
-        current_login.sis_user_id = person.uwregid
-        canvas.update_user_login(current_login)
+        if current_login.sis_user_id != person.uwregid:
+            # Update the login.sis_id to the current uwregid
+            current_login.sis_user_id = person.uwregid
+            canvas.update_user_login(current_login)
+            logger.info('Updated login {} to sis_id {}'.format(
+                current_login.unique_id, current_login.sis_user_id))
 
     return destination_user
 
