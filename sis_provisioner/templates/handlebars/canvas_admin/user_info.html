@@ -43,16 +43,17 @@ has <strong>NOT</strong> been provisioned to Canvas. <button class="btn" type="b
         </div>
         <div>UWRegID (SIS ID): {{#if person_url}}<a class="js-sws-person" href="{{person_url}}" target="_blank" title="View user data in the Person Web Service">{{sis_user_id}}</a>{{else}}{{sis_user_id}}{{/if}}</div>
         <div>Name: {{name}}</div>
-        <div>Last login: {{#if last_login}}{{format_relative_date last_login}}{{else}}Never{{/if}}</div>
-        {{#if ../can_terminate_user_sessions}}
-        <div><button class="btn btn-xs btn-warning terminate-sessions" data-net-id="{{net_id}}" data-user-id="{{id}}" ref="javascript:void(0);">Terminate Sessions</button></div>
-        {{/if}}
+        <div>Last login: {{#if last_login}}{{format_relative_date last_login}}{{else}}Never{{/if}}
+          {{#if can_terminate_user_sessions}
+          &nbsp;&nbsp;&nbsp;<button class="btn btn-xs btn-warning terminate-sessions" data-net-id="{{net_id}}" data-user-id="{{id}}" ref="javascript:void(0);">Terminate Sessions</button>
+          {{/if}}
+        </div>
       </td>
     </tr>
     {{/each}}
     </table>
     {{#if can_merge_users}}
-    <div><button class="btn btn-xs btn-warning merge-users" data-reg-id="{{reg_id}}" ref="javascript:void(0);">Merge Canvas Users</button></div>
+    <br/><div><button class="btn btn-xs btn-secondary merge-users" data-reg-id="{{reg_id}}" ref="javascript:void(0);">Merge Canvas Users</button></div>
     {{/if}}
     {{else}}
       <strong>This user does NOT exist in Canvas, and {{net_id}} {{#if can_access_canvas}}is{{else}}is NOT{{/if}} allowed to access Canvas.</strong>
