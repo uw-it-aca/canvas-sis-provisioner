@@ -80,7 +80,6 @@ class UserView(RESTDispatch):
         can_view_source_data = self.can_view_source_data(self.request)
         can_terminate_user_sessions = self.can_terminate_user_sessions(
             self.request)
-
         response = {
             'is_valid': True,
             'display_name': person.display_name,
@@ -92,6 +91,7 @@ class UserView(RESTDispatch):
             'priority': 'normal',
             'queue_id': None,
             'can_terminate_user_sessions': can_terminate_user_sessions,
+            'can_merge_users': False,
             'enrollment_url': '/restclients/view/sws{}{}'.format(
                 enrollment_search_url_prefix, person.uwregid) if (
                     can_view_source_data) else None,
@@ -125,6 +125,8 @@ class UserView(RESTDispatch):
                     person.uwnetid)
             except UserPolicyException:
                 response['can_access_canvas'] = False
+        elif len(response['canvas_users']) > 1:
+            response['can_merge_users'] = self.can_merge_users(self.request)
 
         return self.json_response(response)
 
@@ -154,7 +156,7 @@ class UserView(RESTDispatch):
         return self.json_response(response)
 
 
-class UserMergeView(RESTDispatch):
+class UserMergeView(UserView):
     def put(self, request, *args, **kwargs):
         reg_id = kwargs.get('reg_id')
         try:
@@ -163,10 +165,10 @@ class UserMergeView(RESTDispatch):
         except DataFailureException as ex:
             return self.error_response(ex.status, message=ex.msg)
 
+        return self.response_for_person(person)
 
-@method_decorator(group_required(settings.CANVAS_MANAGER_ADMIN_GROUP),
-                  name='dispatch')
-class UserSessionsView(RESTDispatch):
+
+class UserSessionsView(UserView):
     def delete(self, request, *args, **kwargs):
         user_id = kwargs.get('user_id')
         try:

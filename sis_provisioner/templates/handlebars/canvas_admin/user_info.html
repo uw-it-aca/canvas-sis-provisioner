@@ -51,6 +51,9 @@ has <strong>NOT</strong> been provisioned to Canvas. <button class="btn" type="b
     </tr>
     {{/each}}
     </table>
+    {{#if can_merge_users}}
+    <div><button class="btn btn-xs btn-warning merge-users" data-reg-id="{{reg_id}}" ref="javascript:void(0);">Merge Canvas Users</button></div>
+    {{/if}}
     {{else}}
       <strong>This user does NOT exist in Canvas, and {{net_id}} {{#if can_access_canvas}}is{{else}}is NOT{{/if}} allowed to access Canvas.</strong>
     {{/if}}

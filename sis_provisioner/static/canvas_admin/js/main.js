@@ -440,6 +440,25 @@ $(document).ready(function () {
         });
     }
 
+    function renderUserInfo(data) {
+        var tpl = Handlebars.compile($('#user-info').html());
+
+        if (data.added_date) {
+            data.added_date = format_long_date(data.added_date) +
+                ' (' + format_relative_date(data.added_date) + ')';
+        } else {
+            data.added_date = false;
+        }
+
+        if (data.provisioned_date) {
+            data.provisioned_date = format_long_date(data.provisioned_date) +
+                ' (' + format_relative_date(data.provisioned_date) + ')';
+        } else {
+            data.provisioned_date = false;
+        }
+        $('div#user_search_result div').removeClass('waiting').html(tpl(data));
+    }
+
     // user search
     $('#user_search_id').change(function (e) {
         var o_user_id = $('#userID'),
@@ -483,32 +502,14 @@ $(document).ready(function () {
             url: url + user_id,
             dataType: 'json',
             success: function (data) {
-                var tpl = Handlebars.compile($('#user-info').html()),
-                    privileged_actions = $('#user-privileged-actions');
+                var privileged_actions = $('#user-privileged-actions');
 
-                if (data.added_date) {
-                    data.added_date = format_long_date(data.added_date) +
-                        ' (' + format_relative_date(data.added_date) + ')';
-                } else {
-                    data.added_date = false;
-                }
-
-                if (data.provisioned_date) {
-                    data.provisioned_date = format_long_date(data.provisioned_date) +
-                        ' (' + format_relative_date(data.provisioned_date) + ')';
-                } else {
-                    data.provisioned_date = false;
-                }
-
-                result_div.removeClass('waiting');
-                result_div.html(tpl(data));
+                renderUserInfo(data);
 
                 if (privileged_actions.length) {
                     var tpl = Handlebars.compile(privileged_actions.html());
-
-                    $(".privileged-actions", result_div).html(tpl(data));;
+                    $(".privileged-actions", result_div).html(tpl(data));
                 }
-
 
                 $('#user_add_button').click(function () {
                     var adding = '',
@@ -1313,16 +1314,35 @@ $(document).ready(function () {
             if (window.confirm("Really terminate " + netid + " Canvas' sessions?")) {
                 $.ajax({
                     url: '/api/v1/users/' + canvas_user_id + '/sessions',
-                        contentType: 'application/json',
-                        type: 'DELETE',
-                        processData: false,
-                        success: function () {
-                            alert("User " + netid + " sessions have been terminated.");
-                        },
-                        error: function (xhr) {
-                            alert('Cannot terminate sessions: ' + xhr.responseText);
-                        }
-                    });
+                    contentType: 'application/json',
+                    type: 'DELETE',
+                    processData: false,
+                    success: function () {
+                        alert("User " + netid + " sessions have been terminated.");
+                    },
+                    error: function (xhr) {
+                        alert('Cannot terminate sessions: ' + xhr.responseText);
+                    }
+                });
+            }
+        });
+
+        container.on('click', 'button.merge-users', function (e) {
+            var $button = $(this),
+                regid = $button.attr('data-reg-id');
+
+            if (window.confirm("These Canvas users will be merged. Proceed?")) {
+                $.ajax({
+                    url: '/api/v1/users/' + regid + '/merge',
+                    type: 'PUT',
+                    processData: false,
+                    success: function (data) {
+                        renderUserInfo(data);
+                    },
+                    error: function (xhr) {
+                        alert('Merge failed: ' + xhr.responseText);
+                    }
+                });
             }
         });
     }
