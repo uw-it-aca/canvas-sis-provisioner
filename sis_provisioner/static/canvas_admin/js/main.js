@@ -1329,9 +1329,13 @@ $(document).ready(function () {
 
         container.on('click', 'button.merge-users', function (e) {
             var $button = $(this),
-                regid = $button.attr('data-reg-id');
+                regid = $button.attr('data-reg-id'),
+                is_sis_update = $button.attr('data-sis-update'),
+                confirmation = (is_sis_update) ?
+                    'The SIS ID for this user will be updated to the current UWRegID.' :
+                    'These Canvas users will be merged. Proceed?';
 
-            if (window.confirm("These Canvas users will be merged. Proceed?")) {
+            if (window.confirm(confirmation)) {
                 $.ajax({
                     url: '/api/v1/users/' + regid + '/merge',
                     type: 'PUT',
@@ -1340,7 +1344,11 @@ $(document).ready(function () {
                         renderUserInfo(data);
                     },
                     error: function (xhr) {
-                        alert('Merge failed: ' + xhr.responseText);
+                        if (is_sis_update) {
+                            alert('Update failed: ' + xhr.responseText);
+                        } else {
+                            alert('Merge failed: ' + xhr.responseText);
+                        }
                     }
                 });
             }
