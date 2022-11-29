@@ -41,7 +41,8 @@ has <strong>NOT</strong> been provisioned to Canvas. <button class="btn" type="b
         <i class="fa fa-ban failure" title="This UWNetid is NOT allowed to access Canvas"></i>
         {{/if}}
         </div>
-        <div>UWRegID (SIS ID): {{#if person_url}}<a class="js-sws-person" href="{{person_url}}" target="_blank" title="View user data in the Person Web Service">{{sis_user_id}}</a>{{else}}{{sis_user_id}}{{/if}}</div>
+        <div>UWRegID (SIS ID): {{#if person_url}}<a class="js-sws-person" href="{{person_url}}" target="_blank" title="View user data in the Person Web Service">{{sis_user_id}}</a>
+        {{#if can_update_sis_id}}&nbsp;&nbsp;&nbsp;<button class="btn btn-xs btn-danger update-sis-id" data-reg-id="{{sis_user_id}}" ref="javascript:void(0);" title="SIS ID is not current for this user">Update SIS ID</button>{{/if}}{{else}}{{sis_user_id}}{{/if}}</div>
         <div>Name: {{name}}</div>
         <div>Last login: {{#if last_login}}{{format_relative_date last_login}}{{else}}Never{{/if}}
           {{#if can_terminate_user_sessions}}

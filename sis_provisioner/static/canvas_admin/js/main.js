@@ -1345,6 +1345,23 @@ $(document).ready(function () {
                 });
             }
         });
+
+        container.on('click', 'button.update-sis-id', function (e) {
+            var $button = $(this),
+                regid = $button.attr('data-reg-id');
+
+            $.ajax({
+                url: '/api/v1/users/' + regid + '/merge',
+                type: 'PUT',
+                processData: false,
+                success: function (data) {
+                    renderUserInfo(data);
+                },
+                error: function (xhr) {
+                    alert('Update failed: ' + xhr.responseText);
+                }
+            });
+        });
     }
 
     function initializeCourseListEvents() {
