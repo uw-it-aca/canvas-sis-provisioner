@@ -77,6 +77,11 @@ class AdminView(View):
         return is_group_admin(
             settings.CANVAS_MANAGER_ADMIN_GROUP, get_user(request))
 
+    @staticmethod
+    def can_merge_users(request):
+        return is_group_admin(
+            settings.CANVAS_MANAGER_ADMIN_GROUP, get_user(request))
+
 
 class ImportStatus(AdminView):
     template_name = 'canvas_admin/status.html'

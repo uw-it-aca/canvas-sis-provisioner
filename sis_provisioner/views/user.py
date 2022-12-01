@@ -91,7 +91,7 @@ class UserView(RESTDispatch):
             'provisioned_date': None,
             'priority': 'normal',
             'queue_id': None,
-            'can_terminate_user_sessions': can_terminate_user_sessions,
+            'can_merge_users': False,
             'enrollment_url': '/restclients/view/sws{}{}'.format(
                 enrollment_search_url_prefix, person.uwregid) if (
                     can_view_source_data) else None,
@@ -117,6 +117,12 @@ class UserView(RESTDispatch):
                     '/restclients/view/pws{api_path}/{uwregid}/full.json'
                 ).format(api_path=PERSON_PREFIX, uwregid=user.sis_user_id)
 
+            user_data['can_update_sis_id'] = False
+            user_data['can_terminate_user_sessions'] = (
+                user_data['can_access_canvas'] and
+                user_data['last_login'] is not None and
+                can_terminate_user_sessions)
+
             response['canvas_users'].append(user_data)
 
         if not len(response['canvas_users']):
@@ -125,6 +131,12 @@ class UserView(RESTDispatch):
                     person.uwnetid)
             except UserPolicyException:
                 response['can_access_canvas'] = False
+        elif len(response['canvas_users']) == 1:
+            if (response['canvas_users'][0]['sis_user_id'] != person.uwregid and  # noqa
+                    self.can_merge_users(self.request)):
+                response['canvas_users'][0]['can_update_sis_id'] = True
+        else:
+            response['can_merge_users'] = self.can_merge_users(self.request)
 
         return self.json_response(response)
 
@@ -154,19 +166,19 @@ class UserView(RESTDispatch):
         return self.json_response(response)
 
 
-class UserMergeView(RESTDispatch):
+class UserMergeView(UserView):
     def put(self, request, *args, **kwargs):
         reg_id = kwargs.get('reg_id')
         try:
             person = get_person_by_regid(reg_id)
-            canvas_user = merge_all_users_for_person(person)
+            merge_all_users_for_person(person)
         except DataFailureException as ex:
             return self.error_response(ex.status, message=ex.msg)
 
+        return self.response_for_person(person)
 
-@method_decorator(group_required(settings.CANVAS_MANAGER_ADMIN_GROUP),
-                  name='dispatch')
-class UserSessionsView(RESTDispatch):
+
+class UserSessionsView(UserView):
     def delete(self, request, *args, **kwargs):
         user_id = kwargs.get('user_id')
         try:
