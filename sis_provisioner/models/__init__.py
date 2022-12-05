@@ -5,7 +5,7 @@ from django.db import models
 from django.db.models import Q
 from django.utils.timezone import utc, localtime
 from sis_provisioner.dao.canvas import (
-    sis_import_by_path, get_sis_import_status)
+    sis_import_by_path, get_sis_import_status, delete_sis_import)
 from sis_provisioner.exceptions import MissingImportPathException
 from restclients_core.exceptions import DataFailureException
 from importlib import import_module
@@ -213,6 +213,11 @@ class Import(models.Model):
 
     def delete(self, *args, **kwargs):
         self.dequeue_dependent_models()
+        if not self.is_completed():
+            try:
+                delete_sis_import(self.canvas_id)
+            except DataFailureException as ex:
+                logger.info('PUT sis_import failed: {}'.format(ex))
         return super(Import, self).delete(*args, **kwargs)
 
     def _process_warnings(self, warnings):

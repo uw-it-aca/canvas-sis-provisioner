@@ -379,3 +379,7 @@ def sis_import_by_path(csv_path, override_sis_stickiness=False):
 def get_sis_import_status(import_id):
     return SISImport().get_import_status(
         SISImportModel(import_id=str(import_id)))
+
+
+def delete_sis_import(import_id):
+    return SISImport().delete_import(SISImportModel(import_id=str(import_id)))
