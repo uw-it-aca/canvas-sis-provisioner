@@ -239,3 +239,9 @@ class CanvasSISImportsTest(TestCase):
     def test_get_sis_import_status(self, mock_method, mock_model):
         r = get_sis_import_status('123')
         mock_model.assert_called_with(import_id='123')
+
+    @mock.patch('sis_provisioner.dao.canvas.SISImportModel')
+    @mock.patch.object(SISImport, 'delete_import')
+    def test_delete_sis_import(self, mock_method, mock_model):
+        r = delete_sis_import('123')
+        mock_model.assert_called_with(import_id='123')

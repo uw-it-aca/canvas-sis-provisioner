@@ -3,6 +3,7 @@
 
 from django.test import TestCase
 from sis_provisioner.models import Import, ImportResource
+import mock
 
 
 class ImportModelTest(TestCase):
@@ -87,3 +88,21 @@ class ImportModelTest(TestCase):
         self.assertEqual(imp._process_warnings(empty_warning), empty_warning)
         self.assertEqual(imp._process_warnings(one_warning), one_warning)
         self.assertEqual(imp._process_warnings(two_warnings), one_warning)
+
+    @mock.patch('sis_provisioner.models.delete_sis_import')
+    @mock.patch.object(Import, 'dequeue_dependent_models')
+    def test_delete(self, mock_dequeue, mock_delete):
+        imp = Import(canvas_id=123, post_status=200, canvas_progress=10)
+        imp.save()
+        imp.delete()
+        mock_dequeue.assert_called_once()
+        mock_delete.assert_called_with(imp.canvas_id)
+
+        mock_dequeue.reset_mock()
+        mock_delete.reset_mock()
+
+        imp = Import(canvas_id=456, post_status=200, canvas_progress=100)
+        imp.save()
+        imp.delete()
+        mock_dequeue.assert_called_once()
+        mock_delete.assert_not_called()
