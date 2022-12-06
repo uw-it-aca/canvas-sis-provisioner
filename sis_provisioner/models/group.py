@@ -5,12 +5,16 @@ from django.db import models
 from django.db.models import F
 from django.conf import settings
 from django.utils.timezone import utc, localtime
+from restclients_core.exceptions import DataFailureException
 from sis_provisioner.dao.group import is_modified_group
 from sis_provisioner.models import Import, ImportResource
 from sis_provisioner.models.user import User
 from sis_provisioner.exceptions import (
     EmptyQueueException, GroupNotFoundException)
 from datetime import datetime
+from logging import getLogger
+
+logger = getLogger(__name__)
 
 
 class GroupManager(models.Manager):
@@ -60,6 +64,10 @@ class GroupManager(models.Manager):
                 except GroupNotFoundException:
                     is_mod = True
                     self.delete_group_not_found(group.group_id)
+                except DataFailureException as err:
+                    is_mod = False
+                    logger.info('Group: SKIP {}, {}'.format(
+                        group.group_id, err))
 
                 if is_mod:
                     group.update_priority(group.PRIORITY_HIGH)
@@ -77,6 +85,10 @@ class GroupManager(models.Manager):
                             except GroupNotFoundException:
                                 is_mod = True
                                 self.delete_group_not_found(mgroup.group_id)
+                            except DataFailureException as err:
+                                is_mod = False
+                                logger.info('Group: SKIP {}, {}'.format(
+                                    group.group_id, err))
 
                             if is_mod:
                                 group.update_priority(group.PRIORITY_HIGH)
