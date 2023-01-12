@@ -1,5 +1,6 @@
-# Copyright 2022 UW-IT, University of Washington
+# Copyright 2023 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
+
 
 from sis_provisioner.builders import Builder
 from sis_provisioner.models.account import Curriculum
