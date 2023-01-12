@@ -113,8 +113,10 @@ def is_active_section(section):
 
 
 def is_time_schedule_construction(section):
-    return section.term.time_schedule_construction.get(
-        section.course_campus.lower(), False)
+    campus = section.course_campus.lower()
+    if campus == 'bothell':
+        return not section.term.time_schedule_published.get(campus)
+    return section.term.time_schedule_construction.get(campus, False)
 
 
 def section_short_name(section):

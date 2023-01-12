@@ -339,10 +339,13 @@ class RegistrationsBySectionTest(TestCase):
 class TimeScheduleConstructionTest(TestCase):
     def test_by_campus(self):
         time_schedule_constructions = {
-            'seattle': False, 'tacoma': False, 'bothell': True}
+            'seattle': False, 'tacoma': False, 'bothell': False}
+        time_schedule_published = {
+            'seattle': False, 'tacoma': False, 'bothell': False}
 
         term = Term(year=2013, quarter='summer')
         term.time_schedule_construction = time_schedule_constructions
+        term.time_schedule_published = time_schedule_published
         section = Section(term=term)
 
         for campus in ['Seattle', 'Tacoma', 'Bothell', 'PCE', '']:
