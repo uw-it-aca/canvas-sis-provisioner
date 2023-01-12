@@ -1,5 +1,6 @@
-# Copyright 2022 UW-IT, University of Washington
+# Copyright 2023 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
+
 
 from django.test import TestCase, override_settings
 from uw_sws.models import Term, Section
@@ -339,10 +340,13 @@ class RegistrationsBySectionTest(TestCase):
 class TimeScheduleConstructionTest(TestCase):
     def test_by_campus(self):
         time_schedule_constructions = {
-            'seattle': False, 'tacoma': False, 'bothell': True}
+            'seattle': False, 'tacoma': False, 'bothell': False}
+        time_schedule_published = {
+            'seattle': False, 'tacoma': False, 'bothell': False}
 
         term = Term(year=2013, quarter='summer')
         term.time_schedule_construction = time_schedule_constructions
+        term.time_schedule_published = time_schedule_published
         section = Section(term=term)
 
         for campus in ['Seattle', 'Tacoma', 'Bothell', 'PCE', '']:

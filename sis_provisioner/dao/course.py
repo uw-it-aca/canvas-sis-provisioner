@@ -1,5 +1,6 @@
-# Copyright 2022 UW-IT, University of Washington
+# Copyright 2023 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
+
 
 from django.conf import settings
 from uw_sws.section import (
@@ -113,8 +114,10 @@ def is_active_section(section):
 
 
 def is_time_schedule_construction(section):
-    return section.term.time_schedule_construction.get(
-        section.course_campus.lower(), False)
+    campus = section.course_campus.lower()
+    if campus == 'bothell':
+        return not section.term.time_schedule_published.get(campus)
+    return section.term.time_schedule_construction.get(campus, False)
 
 
 def section_short_name(section):
