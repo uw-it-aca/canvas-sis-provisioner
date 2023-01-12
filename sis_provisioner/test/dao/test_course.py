@@ -340,7 +340,7 @@ class RegistrationsBySectionTest(TestCase):
 class TimeScheduleConstructionTest(TestCase):
     def test_by_campus(self):
         time_schedule_constructions = {
-            'seattle': False, 'tacoma': False, 'bothell': False}
+            'seattle': False, 'tacoma': True, 'bothell': False}
         time_schedule_published = {
             'seattle': False, 'tacoma': False, 'bothell': False}
 
@@ -349,9 +349,14 @@ class TimeScheduleConstructionTest(TestCase):
         term.time_schedule_published = time_schedule_published
         section = Section(term=term)
 
-        for campus in ['Seattle', 'Tacoma', 'Bothell', 'PCE', '']:
-            section.course_campus = campus
-            self.assertEquals(
-                is_time_schedule_construction(section),
-                True if campus == 'Bothell' else False,
-                'Campus: {}'.format(section.course_campus))
+        section.course_campus = 'Seattle'
+        self.assertTrue(is_time_schedule_ready(section), 'Seattle')
+
+        section.course_campus = 'Tacoma'
+        self.assertFalse(is_time_schedule_ready(section), 'Tacoma')
+
+        section.course_campus = 'Bothell'
+        self.assertFalse(is_time_schedule_ready(section), 'Bothell')
+
+        section.course_campus = 'PCE'
+        self.assertTrue(is_time_schedule_ready(section), 'PCE')
