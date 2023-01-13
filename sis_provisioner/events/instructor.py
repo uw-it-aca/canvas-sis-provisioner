@@ -1,10 +1,11 @@
-# Copyright 2022 UW-IT, University of Washington
+# Copyright 2023 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
+
 
 from sis_provisioner.events import SISProvisionerProcessor
 from sis_provisioner.dao.canvas import (
     get_instructor_sis_import_role, ENROLLMENT_ACTIVE, ENROLLMENT_DELETED)
-from sis_provisioner.dao.course import is_time_schedule_construction
+from sis_provisioner.dao.course import is_time_schedule_ready
 from sis_provisioner.dao.term import (
     get_term_by_year_and_quarter, is_active_term)
 from sis_provisioner.models.events import InstructorLog
@@ -56,7 +57,7 @@ class InstructorProcessor(SISProvisionerProcessor):
             section_id=section_data['SectionID'],
             is_independent_study=section_data['IndependentStudy'])
 
-        if is_time_schedule_construction(section):
+        if not is_time_schedule_ready(section):
             self._log_tsc_ignore(section.canvas_section_sis_id())
             return
 
@@ -164,7 +165,7 @@ class InstructorAddProcessor(InstructorProcessor):
         self.load_enrollments(enrollments)
 
     def _log_tsc_ignore(self, section_id):
-        self.logger.info('{} IGNORE add: TSC on for {}'.format(
+        self.logger.info('{} IGNORE add: TS not ready for {}'.format(
             log_prefix, section_id))
 
 
@@ -188,5 +189,5 @@ class InstructorDropProcessor(InstructorProcessor):
         self.load_enrollments(enrollments)
 
     def _log_tsc_ignore(self, section_id):
-        self.logger.info("{} IGNORE drop: TSC on for {}".format(
+        self.logger.info("{} IGNORE drop: TS not ready for {}".format(
             log_prefix, section_id))
