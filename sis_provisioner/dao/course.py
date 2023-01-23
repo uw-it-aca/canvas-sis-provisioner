@@ -1,5 +1,6 @@
-# Copyright 2022 UW-IT, University of Washington
+# Copyright 2023 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
+
 
 from django.conf import settings
 from uw_sws.section import (
@@ -112,9 +113,11 @@ def is_active_section(section):
         return False
 
 
-def is_time_schedule_construction(section):
-    return section.term.time_schedule_construction.get(
-        section.course_campus.lower(), False)
+def is_time_schedule_ready(section):
+    campus = section.course_campus.lower()
+    if campus == 'bothell':
+        return section.term.time_schedule_published.get(campus)
+    return not section.term.time_schedule_construction.get(campus, False)
 
 
 def section_short_name(section):
@@ -183,8 +186,8 @@ def get_new_sections_by_term(changed_since_date, term, existing={}):
             try:
                 label = section_ref.section_label()
                 section = get_section_by_label(label)
-                if is_time_schedule_construction(section):
-                    logger.info('Course: SKIP {}, TSC on'.format(label))
+                if not is_time_schedule_ready(section):
+                    logger.info('Course: SKIP {}, TS not ready'.format(label))
                     continue
             except DataFailureException as err:
                 logger.info('Course: SKIP {}, {}'.format(label, err))

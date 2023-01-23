@@ -105,8 +105,8 @@ cronjob:
       args: ["load_groups"]
       resources:
         limits:
-          cpu: 500m
-          memory: 256Mi
+          cpu: 800m
+          memory: 512Mi
         requests:
           cpu: 25m
           memory: 64Mi

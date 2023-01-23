@@ -1,5 +1,6 @@
-# Copyright 2022 UW-IT, University of Washington
+# Copyright 2023 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
+
 
 from django.conf import settings
 from memcached_clients import RestclientPymemcacheClient
@@ -20,8 +21,10 @@ class RestClientsCache(RestclientPymemcacheClient):
         if 'sws' == service:
             if re.match(r'^/student/v\d/course/', url):
                 return ONE_MINUTE * 5
+            if re.match(r'^/student/v\d/term/', url):
+                return ONE_HOUR * 4
             if re.match(
-                r'^/student/v\d/(?:campus|college|department|curriculum|term)',
+                r'^/student/v\d/(?:campus|college|department|curriculum)',
                     url):
                 return ONE_DAY
 
