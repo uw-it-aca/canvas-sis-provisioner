@@ -209,7 +209,7 @@ class CourseListView(RESTDispatch):
                 logger.error('Section search fail: {}'.format(err))
                 return self.error_response(400, err)
 
-        retentions = CourseRetention.objects.get_by_course_list()
+        retentions = CourseRetention.objects.get_by_course_list(course_list)
         include_sws_url = self.can_view_source_data(request)
         for course in course_list:
             if 'valid' in locals() and course.course_id not in valid:
