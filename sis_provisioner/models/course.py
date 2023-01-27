@@ -259,3 +259,36 @@ class Course(ImportResource):
             "sws_url": self.sws_url() if (
                 include_sws_url and self.is_sdb()) else None,
         }
+
+
+class CourseRetentionManager(models.Manager):
+    def get_by_course_list(self, course_list):
+        return {}  # TODO
+
+
+class CourseRetention(models.Model):
+    canvas_course_id = models.IntegerField(unique=True)
+    sis_course_id = models.CharField(max_length=80, null=True)
+    creation_date = models.DateTimeField()
+    expiration_date = models.DateTimeField()
+    deletion_date = models.DateTimeField(null=True)
+    exception_granted_date = models.DateTimeField(null=True)
+    exception_granted_by = models.CharField(max_length=32, null=True)
+    exception_desc = models.CharField(max_length=200, null=True)
+
+    objects = CourseRetentionManager()
+
+    def json_data(self):
+        return {
+            "id": self.pk,
+            "canvas_course_id": self.canvas_course_id,
+            "sis_course_id": self.sis_course_id,
+            "creation_date": self.creation_date.isoformat(),
+            "expiration_date": self.expiration_date.isoformat(),
+            "deletion_date": self.deletion_date.isoformat() if (
+                self.deletion_date is not None) else None,
+            "exception_granted_by": self.exception_granted_by,
+            "exception_granted_date": self.exception_granted_date.isoformat(
+                ) if (self.exception_granted_date is not None) else None,
+            "exception_desc": self.exception_desc,
+        }

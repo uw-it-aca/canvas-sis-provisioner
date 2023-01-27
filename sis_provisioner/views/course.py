@@ -8,7 +8,7 @@ from sis_provisioner.dao.course import (
 from sis_provisioner.dao.term import get_term_by_year_and_quarter
 from sis_provisioner.dao.user import get_person_by_netid, get_person_by_regid
 from sis_provisioner.models.group import Group
-from sis_provisioner.models.course import Course
+from sis_provisioner.models.course import Course, CourseRetention
 from sis_provisioner.views.admin import RESTDispatch
 from sis_provisioner.exceptions import CoursePolicyException
 from uw_saml.utils import get_user
@@ -29,15 +29,21 @@ class CourseView(RESTDispatch):
         PUT returns 200 and updates the Course information.
     """
     def get(self, request, *args, **kwargs):
+        course_id = self._normalize(kwargs['course_id'])
         try:
-            course = Course.objects.get(
-                course_id=self._normalize(kwargs['course_id']))
+            course = Course.objects.get(course_id=course_id)
             json_data = course.json_data(
                 include_sws_url=self.can_view_source_data(request))
-            return self.json_response(json_data)
+
+            retention = CourseRetention.objects.get(sis_course_id=course_id)
+            json_data['retention'] = retention.json_data()
 
         except Course.DoesNotExist:
             return self.error_response(404, "Course not found")
+        except CourseRetention.DoesNotExist:
+            json_data['retention'] = {}
+
+        return self.json_response(json_data)
 
     def put(self, request, *args, **kwargs):
         course_id = self._normalize(kwargs['course_id'])
@@ -203,12 +209,18 @@ class CourseListView(RESTDispatch):
                 logger.error('Section search fail: {}'.format(err))
                 return self.error_response(400, err)
 
+        retentions = CourseRetention.objects.get_by_course_list()
         include_sws_url = self.can_view_source_data(request)
         for course in course_list:
             if 'valid' in locals() and course.course_id not in valid:
                 continue
 
             json_data = course.json_data(include_sws_url)
+            if retentions.get(course.course_id):
+                json_data['retention'] = retentions.get(
+                    course.course_id).json_data()
+            else:
+                json_data['retention'] = {}
             json_rep['courses'].append(json_data)
 
         return self.json_response(json_rep)
