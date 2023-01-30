@@ -84,10 +84,10 @@ cronjob:
       resources:
         limits:
           cpu: 500m
-          memory: 256Mi
+          memory: 512Mi
         requests:
           cpu: 25m
-          memory: 64Mi
+          memory: 128Mi
     - name: load-accounts
       schedule: "30 11 * * 1-6"
       command: ["/scripts/management_command.sh"]
