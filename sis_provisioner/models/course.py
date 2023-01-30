@@ -188,15 +188,23 @@ class Course(ImportResource):
     ADHOC_TYPE = 'adhoc'
     TYPE_CHOICES = ((SDB_TYPE, 'SDB'), (ADHOC_TYPE, 'Ad Hoc'))
 
-    course_id = models.CharField(max_length=80, unique=True)
+    course_id = models.CharField(max_length=80, null=True)  # sis_course_id
+    canvas_course_id = models.CharField(max_length=10, null=True)
     course_type = models.CharField(max_length=16, choices=TYPE_CHOICES)
     term_id = models.CharField(max_length=20, db_index=True)
     primary_id = models.CharField(max_length=80, null=True)
     xlist_id = models.CharField(max_length=80, null=True)
     added_date = models.DateTimeField(auto_now_add=True)
+    created_date = models.DateTimeField(null=True)
     provisioned_date = models.DateTimeField(null=True)
     provisioned_error = models.BooleanField(null=True)
     provisioned_status = models.CharField(max_length=512, null=True)
+    expiration_date = models.DateTimeField(null=True)
+    expiration_exc_granted_date = models.DateTimeField(null=True)
+    expiration_exc_granted_by = models.ForeignKey(User, null=True,
+                                                  on_delete=models.SET_NULL)
+    expiration_exc_desc = models.CharField(max_length=200, null=True)
+    deleted_date = models.DateTimeField(null=True)
     priority = models.SmallIntegerField(
         default=ImportResource.PRIORITY_DEFAULT,
         choices=ImportResource.PRIORITY_CHOICES)
@@ -243,6 +251,7 @@ class Course(ImportResource):
 
         return {
             "course_id": self.course_id,
+            "canvas_course_id": self.canvas_course_id,
             "term_id": self.term_id,
             "xlist_id": self.xlist_id,
             "is_sdb_type": self.is_sdb(),
@@ -251,6 +260,19 @@ class Course(ImportResource):
             "provisioned_date": localtime(
                 self.provisioned_date).isoformat() if (
                     self.provisioned_date is not None) else None,
+            "created_date": localtime(self.created_date).isoformat() if (
+                self.created_date is not None) else None,
+            "deleted_date": localtime(self.deleted_date).isoformat() if (
+                self.deleted_date is not None) else None,
+            "expiration_date": localtime(self.expiration_date).isoformat() if (
+                self.expiration_date is not None) else None,
+            "expiration_exc_granted_date": localtime(
+                self.expiration_exc_granted_date).isoformat() if (
+                    self.expiration_exc_granted_date is not None) else None,
+            "expiration_exc_granted_by": (
+                self.expiration_exc_granted_by.net_id if (
+                    self.expiration_exc_granted_by is not None) else None),
+            "expiration_exc_desc": self.expiration_exc_desc,
             "priority": self.PRIORITY_CHOICES[self.priority][1],
             "provisioned_error": self.provisioned_error,
             "provisioned_status": self.provisioned_status,
