@@ -4,13 +4,16 @@
 
 from django.core.management.base import BaseCommand, CommandError
 from django.core.files.storage import default_storage
+from django.db.utils import IntegrityError
 from django.utils.timezone import utc
-from sis_provisioner.dao.canvas import (
-    adhoc_course_sis_id, update_course_sis_id)
+from sis_provisioner.dao.canvas import update_course_sis_id
+from sis_provisioner.dao.course import adhoc_course_sis_id
 from sis_provisioner.models.course import Course
 from uw_canvas.terms import Terms
 from dateutil.parser import parse
+from dateutil.parser._parser import ParserError
 from logging import getLogger
+import codecs
 import csv
 
 logger = getLogger(__name__)
@@ -26,9 +29,7 @@ class Command(BaseCommand):
     def get_all_terms(self):
         terms = {}
         for term in Terms().get_all_terms():
-            # print('Term id: "{}", sis_id: "{}", name: "{}"'.format(
-            #     term.term_id, term.sis_term_id, term.name))
-            terms[term.term_id] = term.sis_term_id or 'default'
+            terms[str(term.term_id)] = term.sis_term_id or 'default'
         return terms
 
     def handle(self, *args, **options):
@@ -36,14 +37,17 @@ class Command(BaseCommand):
         terms = self.get_all_terms()
 
         with default_storage.open(course_file, mode='r') as csvfile:
-            reader = csv.reader(csvfile)
+            reader = csv.reader(codecs.iterdecode(csvfile, 'utf-8'))
+            next(reader)
+
             for row in reader:
                 canvas_id = row[1]
                 term_id = row[4]
-                created_at = parse(row[8]).replace(tzinfo=utc)
-                sis_source_id = row[13]
-                workflow_state = row[14]
-                term_sis_id = terms.get(term_id)
+                sis_source_id = row[12]
+                try:
+                    created_at = parse(row[8]).replace(tzinfo=utc)
+                except ParserError as ex:
+                    pass
 
                 if not sis_source_id:
                     sis_source_id = adhoc_course_sis_id(canvas_id)
