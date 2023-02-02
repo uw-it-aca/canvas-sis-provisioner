@@ -191,7 +191,7 @@ class Course(ImportResource):
     course_id = models.CharField(max_length=80, null=True)  # sis_course_id
     canvas_course_id = models.CharField(max_length=10, null=True)
     course_type = models.CharField(max_length=16, choices=TYPE_CHOICES)
-    term_id = models.CharField(max_length=20, db_index=True)
+    term_id = models.CharField(max_length=30, db_index=True)
     primary_id = models.CharField(max_length=80, null=True)
     xlist_id = models.CharField(max_length=80, null=True)
     added_date = models.DateTimeField(auto_now_add=True)

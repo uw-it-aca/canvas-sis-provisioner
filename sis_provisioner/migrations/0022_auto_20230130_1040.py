@@ -51,4 +51,8 @@ class Migration(migrations.Migration):
             name='course_id',
             field=models.CharField(max_length=80, null=True),
         ),
+        migrations.AlterField(
+            model_name='course',
+            name='term_id',
+            field=models.CharField(max_length=30, db_index=True),
     ]
