@@ -1,3 +1,7 @@
+# Copyright 2023 UW-IT, University of Washington
+# SPDX-License-Identifier: Apache-2.0
+
+
 from django.core.management.base import BaseCommand, CommandError
 from django.core.files.storage import default_storage
 from django.utils.timezone import utc
