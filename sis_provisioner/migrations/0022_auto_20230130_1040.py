@@ -55,4 +55,5 @@ class Migration(migrations.Migration):
             model_name='course',
             name='term_id',
             field=models.CharField(max_length=30, db_index=True),
+        ),
     ]
