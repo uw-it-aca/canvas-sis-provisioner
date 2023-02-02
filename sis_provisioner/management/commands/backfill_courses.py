@@ -5,10 +5,15 @@
 from django.core.management.base import BaseCommand, CommandError
 from django.core.files.storage import default_storage
 from django.utils.timezone import utc
+from sis_provisioner.dao.canvas import (
+    adhoc_course_sis_id, update_course_sis_id)
 from sis_provisioner.models.course import Course
 from uw_canvas.terms import Terms
 from dateutil.parser import parse
+from logging import getLogger
 import csv
+
+logger = getLogger(__name__)
 
 
 class Command(BaseCommand):
@@ -40,15 +45,19 @@ class Command(BaseCommand):
                 workflow_state = row[14]
                 term_sis_id = terms.get(term_id)
 
-                course = None
-                if sis_source_id:
+                if not sis_source_id:
+                    sis_source_id = adhoc_course_sis_id(canvas_id)
                     try:
-                        course = Course.objects.get(course_id=sis_source_id)
-                        course.created_date = created_at
-                    except Course.DoesNotExist:
-                        pass
+                        update_course_sis_id(canvas_id, sis_source_id)
+                    except DataFailureException as ex:
+                        logger.info('Add sis_id for course {}: {}'.format(
+                            canvas_id, ex))
+                        continue
 
-                if course is None:
+                try:
+                    course = Course.objects.get(course_id=sis_source_id)
+                    course.created_date = created_at
+                except Course.DoesNotExist:
                     course = Course(
                         course_id=sis_source_id,
                         canvas_course_id=canvas_id,

@@ -188,7 +188,7 @@ class Course(ImportResource):
     ADHOC_TYPE = 'adhoc'
     TYPE_CHOICES = ((SDB_TYPE, 'SDB'), (ADHOC_TYPE, 'Ad Hoc'))
 
-    course_id = models.CharField(max_length=80, null=True)  # sis_course_id
+    course_id = models.CharField(max_length=80, unique=True)  # sis_course_id
     canvas_course_id = models.CharField(max_length=10, null=True)
     course_type = models.CharField(max_length=16, choices=TYPE_CHOICES)
     term_id = models.CharField(max_length=30, db_index=True)
