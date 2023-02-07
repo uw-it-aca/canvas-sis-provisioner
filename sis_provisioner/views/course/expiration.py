@@ -33,15 +33,19 @@ class CourseExpirationView(View):
                     expiration_date).isoformat() if (
                         expiration_date is not None) else None})
 
+        except CoursePolicyException as ex:
+            return self.error_response(404, "{}".format(ex))
         except Course.DoesNotExist:
             return self.error_response(404, "Course not found")
 
+    @staticmethod
     def error_response(status, message='', content={}):
         content['error'] = '{}'.format(message)
         return HttpResponse(json.dumps(content),
                             status=status,
                             content_type='application/json')
 
+    @staticmethod
     def json_response(content='', status=200):
         return HttpResponse(json.dumps(content, sort_keys=True),
                             status=status,
