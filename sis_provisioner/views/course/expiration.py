@@ -6,18 +6,16 @@ from sis_provisioner.dao.course import (
     valid_academic_course_sis_id, valid_adhoc_course_sis_id,
     valid_canvas_course_id)
 from sis_provisioner.models.course import Course
+from sis_provisioner.views.admin import OpenRESTDispatch
 from sis_provisioner.exceptions import CoursePolicyException
-from django.views import View
 from django.utils.timezone import localtime
-from django.http import HttpResponse
 from logging import getLogger
-import json
 
 
 logger = getLogger(__name__)
 
 
-class CourseExpirationView(View):
+class CourseExpirationView(OpenRESTDispatch):
     """ Open API to return Course expiration_date at 
             /api/v1/course/<course id>/expiration.
         GET returns 200 with Course expiration date.
@@ -37,19 +35,6 @@ class CourseExpirationView(View):
             return self.error_response(404, "{}".format(ex))
         except Course.DoesNotExist:
             return self.error_response(404, "Course not found")
-
-    @staticmethod
-    def error_response(status, message='', content={}):
-        content['error'] = '{}'.format(message)
-        return HttpResponse(json.dumps(content),
-                            status=status,
-                            content_type='application/json')
-
-    @staticmethod
-    def json_response(content='', status=200):
-        return HttpResponse(json.dumps(content, sort_keys=True),
-                            status=status,
-                            content_type='application/json')
 
     def _normalize(self, course):
         """ normalize course id case
