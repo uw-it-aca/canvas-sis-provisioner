@@ -241,6 +241,12 @@ class Course(ImportResource):
 
         raise CoursePolicyException("Invalid priority: '{}'".format(priority))
 
+    def get_expiration_date(self):
+        return self.expiration_date if (
+            self.expiration_date) else (
+                self.created_date + timedelta(years=5)) if (
+                    self.created_date) else None
+
     def json_data(self, include_sws_url=False):
         try:
             group_models = Group.objects.filter(course_id=self.course_id,
