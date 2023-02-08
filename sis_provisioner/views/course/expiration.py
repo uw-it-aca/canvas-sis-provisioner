@@ -28,7 +28,7 @@ class CourseExpirationView(OpenRESTDispatch):
             expiration_date = course.get_expiration_date()
 
             return self.json_response({
-                "course": course_id,
+                "course_id": course_id,
                 "expiration_date": localtime(
                     expiration_date).isoformat() if (
                         expiration_date is not None) else None})
