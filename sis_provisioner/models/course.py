@@ -241,18 +241,18 @@ class Course(ImportResource):
 
         raise CoursePolicyException("Invalid priority: '{}'".format(priority))
 
-    def get_expiration_date(self):
-        if self.expiration_date:
-            return self.expiration_date
-
-        expiration = datetime(1970, 6, 30, 12)
+    @property
+    def default_expiration_date(self):
+        now = datetime.now()
+        expiration = datetime(now.year + 5, 6, 30, 12).replace(tzinfo=utc)
         try:
             (year, quarter, c, n, s) = self.course_id.split('-')
             year = int(year) + (6 if (
                 quarter.lower() in ['summer', 'autumn']) else 5)
             return expiration.replace(year=year)
         except ValueError:
-            return expiration.replace(year=self.created_date.year + 5)
+            return expiration.replace(year=self.created_date.year + 5) if (
+                self.created_date) else expiration
 
     def json_data(self, include_sws_url=False):
         try:

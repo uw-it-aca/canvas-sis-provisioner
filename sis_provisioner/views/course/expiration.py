@@ -25,7 +25,8 @@ class CourseExpirationView(OpenRESTDispatch):
             course_id = kwargs['course_id']
             course_ref = self._normalize(course_id)
             course = Course.objects.get(**course_ref)
-            expiration_date = course.get_expiration_date()
+            expiration_date = course.expiration_date if (
+                course.expiration_date) else course.default_expiration_date
 
             return self.json_response({
                 "course_id": course_id,
