@@ -111,6 +111,22 @@ class CourseModelTest(TestCase):
 
         self.assertRaises(CoursePolicyException, course.update_priority, '')
 
+    def test_default_expiration_date(self):
+        course = Course(course_type=Course.SDB_TYPE,
+                        course_id='2013-summer-TRAIN-101-A')
+
+        self.assertEqual(course.default_expiration_date.year, 2019)
+
+        course = Course(course_type=Course.SDB_TYPE,
+                        course_id='2014-winter-TRAIN-101-A')
+        self.assertEqual(course.default_expiration_date.year, 2019)
+
+        now = datetime.now().replace(tzinfo=utc)
+        course = Course(course_type=Course.SDB_TYPE,
+                        course_id='course_54321',
+                        created_date=now)
+        self.assertEqual(course.default_expiration_date.year, now.year + 5)
+
     @mock.patch.object(QuerySet, 'update')
     def test_dequeue(self, mock_update):
         dt = datetime.now()
