@@ -16,7 +16,7 @@ logger = getLogger(__name__)
 
 
 class CourseExpirationView(OpenRESTDispatch):
-    """ Open API to return Course expiration_date at 
+    """ Open API to return Course expiration_date at
             /api/v1/course/<course id>/expiration.
         GET returns 200 with Course expiration date.
     """
@@ -54,5 +54,3 @@ class CourseExpirationView(OpenRESTDispatch):
                 course_key = 'canvas_course_id'
 
         return {course_key: course}
-
-
