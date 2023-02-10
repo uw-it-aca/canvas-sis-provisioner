@@ -6,6 +6,7 @@ INSTALLED_APPS += [
     'compressor',
     'django.contrib.humanize',
     'django_user_agents',
+    'corsheaders',
     'supporttools',
     'rc_django',
     'rest_framework.authtoken',
@@ -15,6 +16,7 @@ INSTALLED_APPS += [
 MIDDLEWARE += [
     'userservice.user.UserServiceMiddleware',
     'django_user_agents.middleware.UserAgentMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 TEMPLATES[0]['OPTIONS']['context_processors'].extend([
@@ -47,6 +49,12 @@ COMPRESS_OFFLINE = True
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_DOMAIN = '.uw.edu'
+
+CORS_ORIGIN_ALLOW_ALL = False
+CORS_ALLOWED_ORIGINS = [
+    'https://uw.test.instructure.com',
+    'https://canvas.uw.edu',
+]
 
 if os.getenv('ENV', 'localdev') == 'localdev':
     DEBUG = True

@@ -29,6 +29,7 @@ setup(
         'beautifulsoup4',
         'suds-jurko==0.6',
         'django-blti~=2.2',
+        'django-cors-headers',
         'aws-message-client~=1.5',
         'djangorestframework~=3.11',
         'django-storages[google]>=1.10',
