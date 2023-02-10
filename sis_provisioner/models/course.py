@@ -18,6 +18,15 @@ from datetime import datetime, timedelta
 
 
 class CourseManager(models.Manager):
+    def find_course(self, canvas_course_id, sis_course_id):
+        try:
+            course = Course.objects.get(canvas_course_id=canvas_course_id)
+        except Course.DoesNotExist:
+            if not sis_course_id:
+                raise
+            course = Course.objects.get(course_id=sis_course_id)
+        return course
+
     def get_linked_course_ids(self, course_id):
         return super(CourseManager, self).get_queryset().filter(
             primary_id=course_id).values_list('course_id', flat=True)
@@ -191,7 +200,7 @@ class Course(ImportResource):
     RETENTION_EXPIRE_DAY = 1
     RETENTION_LIFE_SPAN = 5
 
-    course_id = models.CharField(max_length=80, unique=True)  # sis_course_id
+    course_id = models.CharField(max_length=80, null=True)  # sis_course_id
     canvas_course_id = models.CharField(max_length=10, null=True)
     course_type = models.CharField(max_length=16, choices=TYPE_CHOICES)
     term_id = models.CharField(max_length=30, db_index=True)
