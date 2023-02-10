@@ -187,6 +187,9 @@ class Course(ImportResource):
     SDB_TYPE = 'sdb'
     ADHOC_TYPE = 'adhoc'
     TYPE_CHOICES = ((SDB_TYPE, 'SDB'), (ADHOC_TYPE, 'Ad Hoc'))
+    RETENTION_EXPIRE_MONTH = 12
+    RETENTION_EXPIRE_DAY = 1
+    RETENTION_LIFE_SPAN = 5
 
     course_id = models.CharField(max_length=80, unique=True)  # sis_course_id
     canvas_course_id = models.CharField(max_length=10, null=True)
@@ -240,6 +243,22 @@ class Course(ImportResource):
                 return
 
         raise CoursePolicyException("Invalid priority: '{}'".format(priority))
+
+    @property
+    def default_expiration_date(self):
+        now = datetime.now()
+        expiration = datetime(
+            now.year + self.RETENTION_LIFE_SPAN, self.RETENTION_EXPIRE_MONTH,
+            self.RETENTION_EXPIRE_DAY, 12).replace(tzinfo=utc)
+        try:
+            (year, quarter, c, n, s) = self.course_id.split('-')
+            year = int(year) + self.RETENTION_LIFE_SPAN + (1 if (
+                quarter.lower() in ['summer', 'autumn']) else 0)
+            return expiration.replace(year=year)
+        except ValueError:
+            return expiration.replace(
+                year=self.created_date.year + self.RETENTION_LIFE_SPAN) if (
+                    self.created_date) else expiration
 
     def json_data(self, include_sws_url=False):
         try:
