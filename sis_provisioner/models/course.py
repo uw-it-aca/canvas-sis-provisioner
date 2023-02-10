@@ -263,11 +263,16 @@ class Course(ImportResource):
             (year, quarter, c, n, s) = self.course_id.split('-')
             year = int(year) + self.RETENTION_LIFE_SPAN + (1 if (
                 quarter.lower() in ['summer', 'autumn']) else 0)
-            return expiration.replace(year=year)
+            expiration = expiration.replace(year=year)
         except ValueError:
-            return expiration.replace(
+            expiration = expiration.replace(
                 year=self.created_date.year + self.RETENTION_LIFE_SPAN) if (
                     self.created_date) else expiration
+
+        if expiration.year < now.year:
+            expiration = expiration.replace(year=now.year)
+
+        return expiration
 
     def json_data(self, include_sws_url=False):
         try:

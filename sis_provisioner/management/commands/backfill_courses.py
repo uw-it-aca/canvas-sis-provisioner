@@ -58,7 +58,7 @@ class Command(BaseCommand):
                         course.canvas_course_id = canvas_id
                         course.created_date = created_at
                         course.expiration_date = \
-                            course.default_expiration_date()
+                            course.default_expiration_date
                         course.save()
 
                 except Course.DoesNotExist:
@@ -69,5 +69,5 @@ class Command(BaseCommand):
                         term_id=terms.get(term_id),
                         created_date=created_at,
                         priority=Course.PRIORITY_NONE)
-                    course.expiration_date = course.default_expiration_date()
+                    course.expiration_date = course.default_expiration_date
                     course.save()
