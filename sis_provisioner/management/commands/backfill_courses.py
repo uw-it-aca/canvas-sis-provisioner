@@ -42,7 +42,7 @@ class Command(BaseCommand):
 
             for row in reader:
                 canvas_id = row[1]
-                term_id = row[4]
+                term_id = row[4].lstrip('1').lstrip('0')
                 sis_source_id = row[12]
                 try:
                     created_at = parse(row[8]).replace(tzinfo=utc)
