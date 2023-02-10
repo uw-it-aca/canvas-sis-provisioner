@@ -49,18 +49,18 @@ class Command(BaseCommand):
                 except ParserError as ex:
                     pass
 
-                if not sis_source_id:
-                    sis_source_id = adhoc_course_sis_id(canvas_id)
-                    try:
-                        update_course_sis_id(canvas_id, sis_source_id)
-                    except DataFailureException as ex:
-                        logger.info('Add sis_id for course {}: {}'.format(
-                            canvas_id, ex))
-                        continue
-
                 try:
-                    course = Course.objects.get(course_id=sis_source_id)
-                    course.created_date = created_at
+                    course = Course.objects.find_course(
+                        canvas_id, sis_source_id)
+                    if course.expiration_date is None:
+                        # Backfill sis course with new attrs
+                        course.course_id = sis_source_id
+                        course.canvas_course_id = canvas_id
+                        course.created_date = created_at
+                        course.expiration_date = \
+                            course.default_expiration_date()
+                        course.save()
+
                 except Course.DoesNotExist:
                     course = Course(
                         course_id=sis_source_id,
@@ -69,5 +69,5 @@ class Command(BaseCommand):
                         term_id=terms.get(term_id),
                         created_date=created_at,
                         priority=Course.PRIORITY_NONE)
-
-                course.save()
+                    course.expiration_date = course.default_expiration_date()
+                    course.save()
