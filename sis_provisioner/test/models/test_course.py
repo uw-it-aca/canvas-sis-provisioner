@@ -127,7 +127,7 @@ class CourseModelTest(TestCase):
         course = Course(course_type=Course.SDB_TYPE,
                         course_id='course_54321',
                         created_date=now)
-        self.assertEqual(course.default_expiration_date.year, 
+        self.assertEqual(course.default_expiration_date.year,
                          now.year + course.RETENTION_LIFE_SPAN)
 
     @mock.patch.object(QuerySet, 'update')
