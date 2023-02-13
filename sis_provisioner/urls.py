@@ -8,6 +8,7 @@ from sis_provisioner.views.admin import (
     ImportStatus, ManageUsers, ManageCourses, ManageGroups, ManageAdmins,
     ManageJobs, ManageExternalTools)
 from sis_provisioner.views.course import CourseView, CourseListView
+from sis_provisioner.views.course.expiration import CourseExpirationView
 from sis_provisioner.views.enrollment import EnrollmentListView
 from sis_provisioner.views.group import GroupListView
 from sis_provisioner.views.user import (
@@ -57,6 +58,8 @@ urlpatterns = [
             CanvasAccountView.as_view()),
     re_path(r'api/v1/course/(?P<course_id>[a-zA-Z0-9\-_ &]+)$',
             CourseView.as_view()),
+    re_path(r'api/v1/course/(?P<course_id>[a-zA-Z0-9\-_ &]+)/expiration$',
+            CourseExpirationView.as_view()),
     re_path(r'api/v1/courses/?$', CourseListView.as_view()),
     re_path(r'api/v1/users/?$', UserView.as_view()),
     re_path(r'api/v1/users/(?P<reg_id>[a-fA-F0-9]{32})/merge$',
