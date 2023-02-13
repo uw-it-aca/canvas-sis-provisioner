@@ -197,7 +197,7 @@ class Course(ImportResource):
     ADHOC_TYPE = 'adhoc'
     TYPE_CHOICES = ((SDB_TYPE, 'SDB'), (ADHOC_TYPE, 'Ad Hoc'))
     RETENTION_EXPIRE_MONTH = 12
-    RETENTION_EXPIRE_DAY = 1
+    RETENTION_EXPIRE_DAY = 18
     RETENTION_LIFE_SPAN = 5
 
     course_id = models.CharField(max_length=80, null=True)  # sis_course_id
