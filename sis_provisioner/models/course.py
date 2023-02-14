@@ -288,6 +288,7 @@ class Course(ImportResource):
             "course_id": self.course_id,
             "canvas_course_id": self.canvas_course_id,
             "term_id": self.term_id,
+            "primary_id": self.primary_id,
             "xlist_id": self.xlist_id,
             "is_sdb_type": self.is_sdb(),
             "added_date": localtime(self.added_date).isoformat() if (
