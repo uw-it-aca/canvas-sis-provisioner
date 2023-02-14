@@ -10,9 +10,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.DeleteModel(
-            name='CourseMember',
-        ),
         migrations.AlterField(
             model_name='course',
             name='canvas_course_id',
