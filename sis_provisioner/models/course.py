@@ -20,11 +20,14 @@ from datetime import datetime, timedelta
 class CourseManager(models.Manager):
     def find_course(self, canvas_course_id, sis_course_id):
         try:
-            course = Course.objects.get(canvas_course_id=canvas_course_id)
+            course = Course.objects.get(
+                canvas_course_id__isnull=False,
+                canvas_course_id=canvas_course_id)
         except Course.DoesNotExist:
             if not sis_course_id:
                 raise
-            course = Course.objects.get(course_id=sis_course_id)
+            course = Course.objects.get(
+                course_id__isnull=False, course_id=sis_course_id)
         return course
 
     def get_linked_course_ids(self, course_id):
