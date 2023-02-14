@@ -209,7 +209,9 @@ $(document).ready(function () {
         }
 
         return {
+            canvas_course_id: course.canvas_course_id,
             course_id: course.course_id,
+            primary_id: course.primary_id,
             sws_url: course.sws_url,
             xlist_id: course.xlist_id,
             is_sdb_type: course.is_sdb_type,
@@ -222,7 +224,9 @@ $(document).ready(function () {
             added_date: format_long_date(course.added_date),
             added_date_relative: format_relative_date(course.added_date),
             provisioned_date: format_long_date(course.provisioned_date),
-            provisioned_date_relative: format_relative_date(course.provisioned_date)
+            provisioned_date_relative: format_relative_date(course.provisioned_date),
+            expiration_date: format_long_date(course.expiration_date),
+            expiration_date_relative: format_relative_date(course.expiration_date)
         };
     }
 
