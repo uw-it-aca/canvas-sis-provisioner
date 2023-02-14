@@ -18,4 +18,9 @@ class Migration(migrations.Migration):
             name='canvas_course_id',
             field=models.CharField(db_index=True, max_length=10, null=True),
         ),
+        migrations.AlterField(
+            model_name='course',
+            name='course_id',
+            field=models.CharField(db_index=True, max_length=80, null=True),
+        ),
     ]
