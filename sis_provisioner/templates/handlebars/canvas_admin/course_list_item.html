@@ -63,8 +63,11 @@
               <li><i class="fa fa-plus"></i>Added for provisioning on {{ this.added_date }} ({{ this.added_date_relative }})</li>
             {{/if}}
             <li><i class="fa fa-cloud-upload course-available"></i>Last provisioned to Canvas on {{ this.provisioned_date }}</li>
+            {{#if this.expiration_date}}
+              <li><i class="fa fa-trash"></i>Expires on {{ this.expiration_date }} ({{ this.expiration_date_relative }})</li>
+            {{/if}}
             <li><i class="fa fa-spinner fa-spin"></i>This course <span class="workflow_state">state is being queried</span> in Canvas</li>
-            <li><a class="canvas-course-link" data-course-id="{{this.course_id}}" href="javascript:void(0);" title="View {{this.course_id}} in Canvas" target="_blank"><i class="fa fa-external-link"></i>View {{this.course_id}} in Canvas</a></li>
+            <li><a class="canvas-course-link" data-course-id="{{#if this.primary_id}}{{this.primary_id}}{{else}}{{this.course_id}}{{/if}}" href="javascript:void(0);" title="View {{this.course_id}} in Canvas" target="_blank"><i class="fa fa-external-link"></i>View {{this.course_id}} in Canvas</a></li>
             <li class="canvas-subaccount"><a href="javascript:void(0);" title="View subaccount in Canvas" target="_blank"><i class="fa fa-briefcase"></i>Provisioned to &quot;<span>some</span>&quot; sub account</a></li>
           {{else}}
             {{#if this.provisioned_status}}
@@ -82,7 +85,7 @@
             {{/if}}
           {{/if}}
           {{#if this.sws_url}}
-          <li><a class="js-sws-course" href="{{this.sws_url}}" title="View {{this.course_id}} in SWS"><i class="fa fa-database"></i>View course details in the Student Web Service</a></li>
+          <li><a class="js-sws-course" href="{{this.sws_url}}" title="View {{this.course_id}} in SWS"><i class="fa fa-database"></i>View section details in the Student Web Service</a></li>
           {{/if}}
           {{#if this.xlist_id}}
           <li><i class="fa fa-exchange course-emphasis"></i>Cross-listed with <a class="sis-course-link" data-course-id="{{this.xlist_id}}" href="javascript:void(0);" title="View {{this.xlist_id}} in Canvas" target="_blank">{{this.xlist_id}}</a></li>
