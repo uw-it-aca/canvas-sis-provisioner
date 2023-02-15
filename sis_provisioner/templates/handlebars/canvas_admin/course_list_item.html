@@ -31,17 +31,20 @@
   {{#if this.provisioned_error}}
         <button class="btn btn-xs btn-danger pull-right provision-course" data-course-id="{{this.course_id}}" disabled="disabled" href="javascript:void(0);"><i class="fa fa-minus-circle"></i><span>Error</span></button>
   {{else}}
-    {{#if this.is_provisioned}}
-        <button class="btn btn-xs btn-success pull-right provision-course" data-course-id="{{this.course_id}}" href="javascript:void(0);" label="Click to re-provision"><i class="fa fa-check-circle"></i><span>Ready</span></button>
+    {{#if this.is_expired}}
     {{else}}
-      {{#if this.is_sdb_type}}
-        {{#if this.provisioned_status}}
-        {{else}}
-        <button class="btn btn-xs btn-default pull-right provision-course" data-course-id="{{this.course_id}}" href="javascript:void(0);" label="Click to provision"><i class="fa fa-plus-circle"></i><span>Provision Now</span></button>
-        {{/if}}
+      {{#if this.is_provisioned}}
+        <button class="btn btn-xs btn-success pull-right provision-course" data-course-id="{{this.course_id}}" href="javascript:void(0);" label="Click to re-provision"><i class="fa fa-check-circle"></i><span>Ready</span></button>
       {{else}}
-        {{#if this.group_count}}
-          <button class="btn btn-xs btn-success pull-right provision-course" data-course-id="{{this.course_id}}" href="javascript:void(0);" label="Click to re-provision"><i class="icon-ok-sign icon-white"></i><span>Ready</span></button>
+        {{#if this.is_sdb_type}}
+          {{#if this.provisioned_status}}
+          {{else}}
+            <button class="btn btn-xs btn-default pull-right provision-course" data-course-id="{{this.course_id}}" href="javascript:void(0);" label="Click to provision"><i class="fa fa-plus-circle"></i><span>Provision Now</span></button>
+          {{/if}}
+        {{else}}
+          {{#if this.group_count}}
+            <button class="btn btn-xs btn-success pull-right provision-course" data-course-id="{{this.course_id}}" href="javascript:void(0);" label="Click to re-provision"><i class="icon-ok-sign icon-white"></i><span>Ready</span></button>
+          {{/if}}
         {{/if}}
       {{/if}}
     {{/if}}
@@ -63,12 +66,12 @@
               <li><i class="fa fa-plus"></i>Added for provisioning on {{ this.added_date }} ({{ this.added_date_relative }})</li>
             {{/if}}
             <li><i class="fa fa-cloud-upload course-available"></i>Last provisioned to Canvas on {{ this.provisioned_date }}</li>
-            {{#if this.expiration_date}}
-              <li><i class="fa fa-trash"></i>Expires on {{ this.expiration_date }} ({{ this.expiration_date_relative }})</li>
-            {{/if}}
+            {{#if this.deleted_date}}
+            {{else}}
             <li><i class="fa fa-spinner fa-spin"></i>This course <span class="workflow_state">state is being queried</span> in Canvas</li>
             <li><a class="canvas-course-link" data-course-id="{{#if this.primary_id}}{{this.primary_id}}{{else}}{{this.course_id}}{{/if}}" href="javascript:void(0);" title="View {{this.course_id}} in Canvas" target="_blank"><i class="fa fa-external-link"></i>View {{this.course_id}} in Canvas</a></li>
             <li class="canvas-subaccount"><a href="javascript:void(0);" title="View subaccount in Canvas" target="_blank"><i class="fa fa-briefcase"></i>Provisioned to &quot;<span>some</span>&quot; sub account</a></li>
+            {{/if}}
           {{else}}
             {{#if this.provisioned_status}}
               {{#if this.added_date}}
@@ -92,6 +95,21 @@
           {{/if}}
           {{#if this.group_count}}
           <li><i class="fa fa-users"></i>Course has {{this.group_count}} UW group{{this.group_plural}} attached</li>
+          {{/if}}
+          {{#if this.canvas_course_id}}
+            {{#if this.deleted_date}}
+              <li><i class="fa fa-trash"></i>Deleted on {{ this.deleted_date }} ({{ this.deleted_date_relative }})</li>
+            {{else}}
+              {{#if this.expiration_date}}
+                <li><i class="fa fa-trash"></i>This course expires on {{ this.expiration_date }} ({{ this.expiration_date_relative }})
+                {{#if this.expiration_exc_granted_date}}
+                  <span>Excepton granted by : {{ this.expiration_exc_desc }}</span> <a href="javascript:void(0);" title="Remove the exception">Remove exception</a>
+                {{else}}
+                  <a href="javascript:void(0);" title="Add exception for this course">Add exception</a>
+                {{/if}}
+                </li>
+              {{/if}}
+            {{/if}}
           {{/if}}
         </ul>
       </div>

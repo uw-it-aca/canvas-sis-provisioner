@@ -66,6 +66,10 @@ class AdminView(View):
             settings.CANVAS_MANAGER_ADMIN_GROUP, get_user(request))
 
     @staticmethod
+    def can_manage_course_expirations(request):
+        return Admin.objects.is_account_admin(get_user(request))
+
+    @staticmethod
     def can_manage_jobs(request):
         return Admin.objects.is_account_admin(get_user(request))
 

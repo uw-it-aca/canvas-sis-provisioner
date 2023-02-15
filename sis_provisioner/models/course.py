@@ -196,8 +196,8 @@ class Course(ImportResource):
     SDB_TYPE = 'sdb'
     ADHOC_TYPE = 'adhoc'
     TYPE_CHOICES = ((SDB_TYPE, 'SDB'), (ADHOC_TYPE, 'Ad Hoc'))
-    RETENTION_EXPIRE_MONTH = 12
-    RETENTION_EXPIRE_DAY = 18
+    RETENTION_EXPIRE_MONTH = 6
+    RETENTION_EXPIRE_DAY = 30
     RETENTION_LIFE_SPAN = 5
 
     # sis_course_id
@@ -276,6 +276,11 @@ class Course(ImportResource):
 
         return expiration
 
+    def is_expired(self):
+        if self.expiration_date is not None:
+            return self.expiration_date < datetime.utcnow().replace(tzinfo=utc)
+        return False
+
     def json_data(self, include_sws_url=False):
         try:
             group_models = Group.objects.filter(course_id=self.course_id,
@@ -300,6 +305,7 @@ class Course(ImportResource):
                 self.created_date is not None) else None,
             "deleted_date": localtime(self.deleted_date).isoformat() if (
                 self.deleted_date is not None) else None,
+            "is_expired": self.is_expired(),
             "expiration_date": localtime(self.expiration_date).isoformat() if (
                 self.expiration_date is not None) else None,
             "expiration_exc_granted_date": localtime(
