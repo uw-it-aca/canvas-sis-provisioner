@@ -196,8 +196,8 @@ class Course(ImportResource):
     SDB_TYPE = 'sdb'
     ADHOC_TYPE = 'adhoc'
     TYPE_CHOICES = ((SDB_TYPE, 'SDB'), (ADHOC_TYPE, 'Ad Hoc'))
-    RETENTION_EXPIRE_MONTH = 12
-    RETENTION_EXPIRE_DAY = 18
+    RETENTION_EXPIRE_MONTH = 6
+    RETENTION_EXPIRE_DAY = 30
     RETENTION_LIFE_SPAN = 5
 
     # sis_course_id
