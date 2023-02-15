@@ -226,7 +226,13 @@ $(document).ready(function () {
             provisioned_date: format_long_date(course.provisioned_date),
             provisioned_date_relative: format_relative_date(course.provisioned_date),
             expiration_date: format_long_date(course.expiration_date),
-            expiration_date_relative: format_relative_date(course.expiration_date)
+            expiration_date_relative: format_relative_date(course.expiration_date),
+            deleted_date: format_long_date(course.deleted_date),
+            deleted_date_relative: format_relative_date(course.deleted_date),
+            expiration_exc_granted_date: format_long_date(course.expiration_exc_granted_date),
+            expiration_exc_granted_by: course.expiration_exc_granted_by,
+            expiration_exc_desc: course.expiration_exc_desc,
+            is_expired: course.is_expired
         };
     }
 
