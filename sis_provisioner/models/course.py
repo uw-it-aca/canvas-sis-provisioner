@@ -256,12 +256,6 @@ class Course(ImportResource):
         raise CoursePolicyException("Invalid priority: '{}'".format(priority))
 
     @property
-    def is_expired(self):
-        if self.expiration_date is not None:
-            return self.expiration_date < datetime.now()
-        return False
-
-    @property
     def default_expiration_date(self):
         now = datetime.now()
         expiration = datetime(
@@ -281,6 +275,11 @@ class Course(ImportResource):
             expiration = expiration.replace(year=now.year)
 
         return expiration
+
+    def is_expired(self):
+        if self.expiration_date is not None:
+            return self.expiration_date < datetime.utcnow().replace(tzinfo=utc)
+        return False
 
     def json_data(self, include_sws_url=False):
         try:
@@ -306,7 +305,7 @@ class Course(ImportResource):
                 self.created_date is not None) else None,
             "deleted_date": localtime(self.deleted_date).isoformat() if (
                 self.deleted_date is not None) else None,
-            "is_expired": self.is_expired,
+            "is_expired": self.is_expired(),
             "expiration_date": localtime(self.expiration_date).isoformat() if (
                 self.expiration_date is not None) else None,
             "expiration_exc_granted_date": localtime(
