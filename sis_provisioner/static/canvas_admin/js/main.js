@@ -340,7 +340,7 @@ $(document).ready(function () {
             term_year = $('#courseTermYear option:selected').val();
             term_qtr = $('#courseTermQuarter option:selected').val();
             terms.push('year=' + encodeURIComponent(term_year));
-            terms.push('quarter=' + encodeURIComponent(term_qtr);
+            terms.push('quarter=' + encodeURIComponent(term_qtr));
             search_term = term_year + '-' + term_qtr;
 
             $.each(inputs, function () {
