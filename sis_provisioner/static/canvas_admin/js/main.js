@@ -57,7 +57,8 @@ $(document).ready(function () {
         var quarters = ['winter', 'spring', 'summer', 'autumn'],
             min_year = 2011,
             max_year = window.canvas_manager.current_term.year + 1,
-            years = [];
+            years = [],
+            y;
 
         for (y = max_year; y >= min_year; y -= 1) {
             years.push(y);
