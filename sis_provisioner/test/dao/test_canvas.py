@@ -119,12 +119,18 @@ class CanvasCoursesTest(TestCase):
     @mock.patch.object(Courses, 'get_course')
     def test_get_course_by_id(self, mock_method):
         r = get_course_by_id('abc')
-        mock_method.assert_called_with('abc')
+        mock_method.assert_called_with('abc', {})
+
+        r = get_course_by_id('abc', {'a': 'test'})
+        mock_method.assert_called_with('abc', {'a': 'test'})
 
     @mock.patch.object(Courses, 'get_course_by_sis_id')
     def test_get_course_by_sis_id(self, mock_method):
         r = get_course_by_sis_id('abc')
-        mock_method.assert_called_with('abc')
+        mock_method.assert_called_with('abc', {})
+
+        r = get_course_by_sis_id('abc', {'d': 123})
+        mock_method.assert_called_with('abc', {'d': 123})
 
     @mock.patch.object(Courses, 'update_sis_id')
     def test_update_course_sis_id(self, mock_method):
