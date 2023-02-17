@@ -1248,6 +1248,11 @@ $(document).ready(function () {
                         state_node.html('is completed');
                         icon_node.addClass('course-emphasis');
                         break;
+                    case 'deleted':
+                        state_node.html('is deleted');
+                        icon_node.addClass('course-emphasis');
+                        link.removeAttr('href');
+                        break;
                     default:
                         state_node.html('is NOT yet published');
                         icon_node.addClass('course-pending');
