@@ -55,32 +55,29 @@ $(document).ready(function () {
 
     function initializeSearchForm() {
         var quarters = ['winter', 'spring', 'summer', 'autumn'],
-            term_list = [],
-            year = window.canvas_manager.current_term.year,
-            i,
-            j,
-            s;
+            min_year = 2011,
+            max_year = window.canvas_manager.current_term.year + 1,
+            years = [],
+            y;
 
-        for (i = 0; i < 4; i += 1) {
-            if (quarters[i] === window.canvas_manager.current_term.quarter.toLowerCase()) {
-                for (j = 0; j < 4; j += 1) {
-                    s = quarters[i];
-                    term_list.push([s + '-' + year,
-                                    s.charAt(0).toUpperCase() + s.slice(1) + ' ' + year]);
-                    if (++i > 3) {
-                        i = 0;
-                        year += 1;
-                    }
-                }
-
-                break;
-            }
+        for (y = max_year; y >= min_year; y -= 1) {
+            years.push(y);
         }
 
-        $('#courseTerm,#instructorTerm').each(function () {
+        $('#courseTermYear,#instructorTermYear').each(function () {
             var me = $(this);
-            $.each(term_list, function (i) {
-                me.append(new Option(this[1], this[0], (i === 0), (i === 0)));
+            $.each(years, function (i) {
+                var selected = (this === window.canvas_manager.current_term.year);
+                me.append(new Option(this, this, selected, selected));
+            });
+        });
+
+        $('#courseTermQuarter,#instructorTermQuarter').each(function () {
+            var me = $(this);
+            $.each(quarters, function (i) {
+                var selected = (this === window.canvas_manager.current_term.quarter.toLowerCase()),
+                    name = this.charAt(0).toUpperCase() + this.slice(1);
+                me.append(new Option(name, this, selected, selected));
             });
         });
     }
@@ -311,6 +308,8 @@ $(document).ready(function () {
             instructor_id,
             canvas_id,
             canvas_id_match,
+            term_year,
+            term_qtr,
             val;
 
         // collect form values
@@ -332,16 +331,18 @@ $(document).ready(function () {
             instructor_id = $.trim($('#instructorID').val());
             if (instructor_id !== '') {
                 terms.push([$('#netregid option:selected').val(), instructor_id].join('='));
-                val = $('#instructorTerm option:selected').val().split('-');
-                terms.push('year=' + encodeURIComponent(val[1]));
-                terms.push('quarter=' + encodeURIComponent(val[0]));
-                search_term = val[1] + '-' + val[0];
+                term_year = $('#instructorTermYear option:selected').val();
+                term_qtr = $('#instructorTermQuarter option:selected').val();
+                terms.push('year=' + encodeURIComponent(term_year));
+                terms.push('quarter=' + encodeURIComponent(term_qtr));
+                search_term = term_year + '-' + term_qtr;
             }
         } else {
-            val = $('#courseTerm option:selected').val().split('-');
-            terms.push('year=' + encodeURIComponent(val[1]));
-            terms.push('quarter=' + encodeURIComponent(val[0]));
-            search_term = val[1] + '-' + val[0];
+            term_year = $('#courseTermYear option:selected').val();
+            term_qtr = $('#courseTermQuarter option:selected').val();
+            terms.push('year=' + encodeURIComponent(term_year));
+            terms.push('quarter=' + encodeURIComponent(term_qtr));
+            search_term = term_year + '-' + term_qtr;
 
             $.each(inputs, function () {
                 var el = form.find(this.id);
