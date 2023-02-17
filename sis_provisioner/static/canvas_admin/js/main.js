@@ -77,7 +77,7 @@ $(document).ready(function () {
             $.each(quarters, function (i) {
                 var selected = (this === window.canvas_manager.current_term.quarter.toLowerCase()),
                     name = this.charAt(0).toUpperCase() + this.slice(1);
-                me.append(new Option(this, name, selected, selected));
+                me.append(new Option(name, this, selected, selected));
             });
         });
     }
