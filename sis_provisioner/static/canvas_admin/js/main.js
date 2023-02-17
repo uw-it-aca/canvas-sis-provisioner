@@ -67,17 +67,19 @@ $(document).ready(function () {
         $('#courseTermYear,#instructorTermYear').each(function () {
             var me = $(this);
             $.each(years, function (i) {
-                var selected = (this[i] === window.canvas_manager.current_term.year);
-                me.append(new Option(this[i], this[i], selected, selected));
+                var year = this[i],
+                    selected = (year === window.canvas_manager.current_term.year);
+                me.append(new Option(year, year, selected, selected));
             });
         });
 
         $('#courseTermQuarter,#instructorTermQuarter').each(function () {
             var me = $(this);
             $.each(quarters, function (i) {
-                var selected = (this[i] === window.canvas_manager.current_term.quarter.toLowerCase()),
-                    name = this[i].charAt(0).toUpperCase() + this[i].slice(1);
-                me.append(new Option(this[i], name, selected, selected));
+                var qtr = this[i],
+                    selected = (qtr === window.canvas_manager.current_term.quarter.toLowerCase()),
+                    name = qtr.charAt(0).toUpperCase() + qtr.slice(1);
+                me.append(new Option(qtr, name, selected, selected));
             });
         });
     }
