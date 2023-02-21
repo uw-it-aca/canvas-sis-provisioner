@@ -1233,7 +1233,7 @@ $(document).ready(function () {
                     var state_node = $('.workflow_state', course_body),
                         icon_node = state_node.prev('i');
 
-                    link.attr('href', data.course_url);
+                    link.attr('href', data.course_url).parent().show;
 
                     if (icon_node.hasClass('fa-spinner')) {
                         icon_node.removeClass('fa-spinner fa-spin').addClass('fa-newspaper-o');
@@ -1248,12 +1248,17 @@ $(document).ready(function () {
                         state_node.html('is completed');
                         icon_node.addClass('course-emphasis');
                         break;
-                    default:
+                    case 'deleted':
+                        state_node.html('is deleted');
+                        icon_node.addClass('course-emphasis');
+                        link.parent().hide();
+                        break;
+                    default:  /* 'unpublished' */
                         state_node.html('is NOT yet published');
                         icon_node.addClass('course-pending');
                         break;
                     }
-
+                    $('.canvas-subaccount').show();
                     updateCourseListSubAccount(data.account_id, course_body);
                 },
                 error: function (xhr) {
@@ -1267,10 +1272,18 @@ $(document).ready(function () {
 
                     try {
                         json = $.parseJSON(xhr.responseText);
-                        alert('Unable to load Canvas course data: ' + json.error);
                     } catch (e) {
-                        alert('Unable to load Canvas course data');
+                        json = {error: xhr.responseText};
                     }
+                    if (xhr.status === 404) {
+                        icon_node.removeClass('fa-question').addClass('fa-trash');
+                        state_node.html('is deleted');
+                    } else {
+                        state_node.html('cannot be found');
+                        console.log('Unable to load Canvas course data: ' + json.error)
+                    }
+                    $('.canvas-course-link').parent().hide();
+                    $('.canvas-subaccount').hide();
                 }
             });
         }

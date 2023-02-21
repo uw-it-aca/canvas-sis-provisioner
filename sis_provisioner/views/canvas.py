@@ -6,7 +6,8 @@ from django.conf import settings
 from sis_provisioner.models.course import Course
 from sis_provisioner.views.admin import RESTDispatch
 from sis_provisioner.dao.canvas import (
-    get_account_by_id, get_course_by_id, get_course_by_sis_id)
+    valid_canvas_id, get_account_by_id, get_course_by_id, get_course_by_sis_id)
+from restclients_core.exceptions import DataFailureException
 from logging import getLogger
 from bs4 import BeautifulSoup
 from urllib.request import urlopen
@@ -21,13 +22,13 @@ class CanvasCourseView(RESTDispatch):
         GET returns 200 with Canvas Course model
     """
     def get(self, request, *args, **kwargs):
+        course_id = kwargs.get('sis_id')
+        params = {'state': ['all']}
         try:
-            sis_id = kwargs.get('sis_id')
-            canvas_id = re.match(r'^\d+$', sis_id)
-            if canvas_id:
-                course = get_course_by_id(canvas_id.group(0))
+            if valid_canvas_id(course_id):
+                course = get_course_by_id(course_id, params)
             else:
-                course = get_course_by_sis_id(sis_id)
+                course = get_course_by_sis_id(course_id, params)
 
             course_rep = {
                 'course_id': course.course_id,
@@ -57,9 +58,12 @@ class CanvasCourseView(RESTDispatch):
                     pass
 
             return self.json_response(course_rep)
-        except Exception as e:
+        except DataFailureException as ex:
+            if ex.status == 404:
+                return self.error_response(
+                    404, "Course not found in Canvas: {}".format(ex.msg))
             return self.error_response(
-                400, "Unable to retrieve course data: {}".format(e))
+                400, "Unable to retrieve course data: {}".format(ex.msg))
 
 
 class CanvasAccountView(RESTDispatch):
