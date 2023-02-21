@@ -23,8 +23,7 @@ class CanvasCourseView(RESTDispatch):
     """
     def get(self, request, *args, **kwargs):
         course_id = kwargs.get('sis_id')
-        params = {'state': [
-            'unpublished', 'available', 'completed', 'deleted']}
+        params = {'state': ['all']}
         try:
             if valid_canvas_id(course_id):
                 course = get_course_by_id(course_id, params)
