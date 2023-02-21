@@ -1253,7 +1253,7 @@ $(document).ready(function () {
                         icon_node.addClass('course-emphasis');
                         link.removeAttr('href');
                         break;
-                    default:
+                    default:  /* 'unpublished' */
                         state_node.html('is NOT yet published');
                         icon_node.addClass('course-pending');
                         break;
@@ -1269,12 +1269,14 @@ $(document).ready(function () {
                     if (icon_node.hasClass('fa-spinner')) {
                         icon_node.removeClass('fa-spinner fa-spin').addClass('fa-question');
                     }
+                    state_node.html('cannot be found');
+                    link.removeAttr('href');
 
                     try {
                         json = $.parseJSON(xhr.responseText);
-                        alert('Unable to load Canvas course data: ' + json.error);
+                        link.html('Unable to load Canvas course data: ' + json.error);
                     } catch (e) {
-                        alert('Unable to load Canvas course data');
+                        link.html('Unable to load Canvas course data');
                     }
                 }
             });
