@@ -101,11 +101,14 @@
               <li><i class="fa fa-trash"></i>Deleted on {{ this.deleted_date }} ({{ this.deleted_date_relative }})</li>
             {{else}}
               {{#if this.expiration_date}}
-                <li><i class="fa fa-trash"></i>This course expires on {{ this.expiration_date }} ({{ this.expiration_date_relative }})
-                {{#if this.expiration_exc_granted_date}}
-                  <span>Excepton granted by : {{ this.expiration_exc_desc }}</span> <a href="javascript:void(0);" title="Remove the exception">Remove exception</a>
+                <li><i class="fa fa-trash"></i>This course {{#if this.is_expired}}expired{{else}}expires{{/if}} on {{ this.expiration_date }} ({{ this.expiration_date_relative }})
+                {{#if this.is_expired}}
                 {{else}}
-                  <a href="javascript:void(0);" title="Add exception for this course">Add exception</a>
+                  {{#if this.expiration_exc_granted_date}}
+                    <span>Excepton granted by: {{ this.expiration_exc_desc }}</span> <a href="javascript:void(0);" title="Remove the exception">Remove exception</a>
+                  {{else}}
+                    <a href="javascript:void(0);" title="Add exception for this course">Add exception</a>
+                  {{/if}}
                 {{/if}}
                 </li>
               {{/if}}

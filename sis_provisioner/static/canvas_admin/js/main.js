@@ -1254,7 +1254,7 @@ $(document).ready(function () {
                         link.parent().hide();
                         break;
                     default:  /* 'unpublished' */
-                        state_node.html('is NOT yet published');
+                        state_node.html('is NOT published');
                         icon_node.addClass('course-pending');
                         break;
                     }
