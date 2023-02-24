@@ -1222,6 +1222,16 @@ $(document).ready(function () {
         });
     }
 
+    function openCourseExpirationEditor() {
+        /*jshint validthis: true */
+        $('#course-expiration-editor').modal({
+            backdrop: 'static',
+            show: true
+        });
+        $('#ce-canvas-course-id').val($(this).attr('data-canvas-course-id'));
+        $('#ce-expiration_exc_desc').val($(this).attr('data-expiration_exc_desc'));
+    }
+
     function updateCourseListCanvasLinks(course_body) {
         var link = $('a.canvas-course-link', course_body);
 
@@ -1395,7 +1405,6 @@ $(document).ready(function () {
             event.preventDefault();
         }).on('click', 'a.sis-course-link', function (e) {
             var a = $(e.target).closest('a');
-
             updateCourseListURL(a, a.attr('data-course-id'));
         }).on('click', 'button.provision-course', function (e) {
             var button = $(e.target).closest('button'),
@@ -1433,7 +1442,7 @@ $(document).ready(function () {
                     }
                 }
             });
-        });
+        }).on('click', 'a.course-expiration-link', openCourseExpirationEditor);
     }
 
     function canvasStatusMonitor() {
