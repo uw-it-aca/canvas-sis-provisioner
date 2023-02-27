@@ -12,6 +12,7 @@ from uw_saml.utils import get_user
 from django.utils.timezone import utc, localtime
 from django.conf import settings
 from logging import getLogger
+import json
 
 logger = getLogger(__name__)
 
