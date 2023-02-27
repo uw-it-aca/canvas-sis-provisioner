@@ -1238,6 +1238,7 @@ $(document).ready(function () {
             processData: false,
             data: JSON.stringify({'expiration_exc_desc': reason}),
             success: function (data) {
+                $('#course-expiration-editor').modal('hide');
             },
             error: function (xhr) {
                 var json;
