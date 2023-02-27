@@ -66,14 +66,15 @@
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal">&times;</button>
-                <h4 id="ce-modal-title" class="modal-title">Manage course expiration</h4>
+                <h4 id="ce-modal-title" class="modal-title">Add exception for course <span id="ce-canvas-title"></span></h4>
             </div>
             <div class="modal-body">
                 <form>
+                    <span>Expiration will be extended for one year.</span>
                     <div class="form-group">
                         <label for="ce-expiration_exc_desc">Reason for exception:</label>
                         <div>
-                            <textarea id="ce-expiration_exc_desc" style="width: 300px; height: 100px;"></textarea>
+                            <textarea id="ce-expiration_exc_desc" style="height: 100px;"></textarea>
                         </div>
                     </div>
                     <input id="ce-canvas-course-id" type="hidden" value=""/>
