@@ -1222,12 +1222,67 @@ $(document).ready(function () {
         });
     }
 
+    function updateCourseExpiration() {
+        var canvas_course_id = $('#ce-canvas-course-id').val(),
+            reason = $('#ce-expiration_exc_desc').val();
+
+        if (reason === '') {
+            alert('Missing reason.');
+            return;
+        }
+
+        $.ajax({
+            url: '/api/v1/course/' + encodeURIComponent(canvas_course_id) + '/expiration',
+            contentType: 'application/json',
+            type: 'PUT',
+            processData: false,
+            data: JSON.stringify({'expiration_exc_desc': reason}),
+            success: function (data) {
+            },
+            error: function (xhr) {
+                var json;
+                try {
+                    json = $.parseJSON(xhr.responseText);
+                    console.log('Course exception PUT error:' + json.error);
+                } catch (e) {
+                    console.log('Course exception PUT error');
+                }
+            }
+        });
+    }
+
+    function resetCourseExpiration() {
+        /*jshint validthis: true */
+        var canvas_course_id = $(this).attr('data-canvas-course-id');
+
+        if (confirm('Remove this exception?')) {
+            $.ajax({
+                url: '/api/v1/course/' + encodeURIComponent(canvas_course_id) + '/expiration',
+                contentType: 'application/json',
+                type: 'DELETE',
+                success: function (data) {
+                },
+                error: function (xhr) {
+                    var json;
+                    try {
+                        json = $.parseJSON(xhr.responseText);
+                        console.log('Course exception DELETE error:' + json.error);
+                    } catch (e) {
+                        console.log('Course exception DELETE error');
+                    }
+                }
+            });
+        }
+    }
+
     function openCourseExpirationEditor() {
         /*jshint validthis: true */
         $('#course-expiration-editor').modal({
             backdrop: 'static',
             show: true
-        });
+        }).find('button.save-btn').click(updateCourseException);
+
+        $('#ce-course-title').html($(this).attr('data-canvas-course-id'));
         $('#ce-canvas-course-id').val($(this).attr('data-canvas-course-id'));
         $('#ce-expiration_exc_desc').val($(this).attr('data-expiration_exc_desc'));
     }
@@ -1442,7 +1497,8 @@ $(document).ready(function () {
                     }
                 }
             });
-        }).on('click', 'a.course-expiration-link', openCourseExpirationEditor);
+        }).on('click', 'a.course-expiration-edit', openCourseExpirationEditor
+            ).on('click', 'a.course-expiration-reset', resetCourseExpiration);
     }
 
     function canvasStatusMonitor() {
