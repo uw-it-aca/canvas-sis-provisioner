@@ -1280,7 +1280,7 @@ $(document).ready(function () {
         $('#course-expiration-editor').modal({
             backdrop: 'static',
             show: true
-        }).find('button.save-btn').click(updateCourseException);
+        }).find('button.save-btn').click(updateCourseExpiration);
 
         $('#ce-course-title').html($(this).attr('data-canvas-course-id'));
         $('#ce-canvas-course-id').val($(this).attr('data-canvas-course-id'));
