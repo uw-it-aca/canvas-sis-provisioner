@@ -247,6 +247,7 @@ $(document).ready(function () {
                         course_count: 0,
                         courses: []
                     };
+                Handlebars.registerPartial('course_exception', $('#course-item-exception').html());
 
                 if (data.hasOwnProperty('courses')) {
                     context.header = 'Courses' + ((search.term) ? ' matching &quot;' + search.term + '&quot;' : '');
@@ -1227,7 +1228,7 @@ $(document).ready(function () {
             reason = $('#ce-expiration_exc_desc').val();
 
         if (reason === '') {
-            alert('Missing reason.');
+            alert('Missing reason');
             return;
         }
 
@@ -1238,6 +1239,9 @@ $(document).ready(function () {
             processData: false,
             data: JSON.stringify({'expiration_exc_desc': reason}),
             success: function (data) {
+                var tpl = Handlebars.compile($('#course-item-exception').html()),
+                    content_id = '#course-exception-' + data.canvas_course_id;
+                $(content_id).html(tpl(courseDataFromJSON(data)));
                 $('#course-expiration-editor').modal('hide');
             },
             error: function (xhr) {
@@ -1262,6 +1266,9 @@ $(document).ready(function () {
                 contentType: 'application/json',
                 type: 'DELETE',
                 success: function (data) {
+                    var tpl = Handlebars.compile($('#course-item-exception').html()),
+                        content_id = '#course-exception-' + data.canvas_course_id;
+                    $(content_id).html(tpl(courseDataFromJSON(data)));
                 },
                 error: function (xhr) {
                     var json;
@@ -1281,7 +1288,7 @@ $(document).ready(function () {
         $('#course-expiration-editor').modal({
             backdrop: 'static',
             show: true
-        }).find('button.save-btn').click(updateCourseExpiration);
+        }).find('button.save-btn').off('click').click(updateCourseExpiration);
 
         $('#ce-course-title').html($(this).attr('data-canvas-course-id'));
         $('#ce-canvas-course-id').val($(this).attr('data-canvas-course-id'));
