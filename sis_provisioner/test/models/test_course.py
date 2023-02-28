@@ -136,12 +136,12 @@ class CourseModelTest(TestCase):
 
     def test_expiration_date(self):
         now = datetime.utcnow().replace(tzinfo=utc)
-        expiration_date = now.replace(day=now.day + 1)
+        expiration_date = now.replace(year=now.year + 1)
         course = Course(expiration_date=expiration_date)
         self.assertFalse(course.is_expired())
 
         now = datetime.utcnow().replace(tzinfo=utc)
-        expiration_date = now.replace(day=now.day - 1)
+        expiration_date = now.replace(year=now.year - 1)
         course = Course(expiration_date=expiration_date)
         self.assertTrue(course.is_expired())
 
