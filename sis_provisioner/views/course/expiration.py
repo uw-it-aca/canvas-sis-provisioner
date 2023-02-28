@@ -72,13 +72,17 @@ class CourseExpirationView(OpenRESTDispatch):
             return self.error_response(400, "Unable to parse JSON: {}".format(
                 ex))
 
-        exp = course.default_expiration_date
-        course.expiration_date = exp.replace(year=exp.year + 1)
-        course.expiration_exc_granted_date = datetime.utcnow().replace(
-            tzinfo=utc)
-        course.expiration_exc_granted_by = user
-        course.expiration_exc_desc = put_data.get('expiration_exc_desc')
-        course.save()
+        try:
+            exp = course.default_expiration_date
+            course.expiration_date = exp.replace(year=exp.year + 1)
+            course.expiration_exc_granted_date = datetime.utcnow().replace(
+                tzinfo=utc)
+            course.expiration_exc_granted_by = user
+            course.expiration_exc_desc = put_data.get('expiration_exc_desc')
+            course.save()
+        except Exception as ex:
+            logger.error('Error saving course: {}'.format(ex))
+            raise
 
         logger.info('Course {} exception granted by {}'.format(
             course_id, login_name))
