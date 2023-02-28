@@ -6,6 +6,7 @@ from sis_provisioner.dao.course import (
     valid_academic_course_sis_id, valid_adhoc_course_sis_id,
     valid_canvas_course_id)
 from sis_provisioner.models.course import Course
+from sis_provisioner.models.user import User
 from sis_provisioner.views.admin import OpenRESTDispatch, AdminView
 from sis_provisioner.exceptions import CoursePolicyException
 from uw_saml.utils import get_user
@@ -56,10 +57,14 @@ class CourseExpirationView(OpenRESTDispatch):
             if course.primary_id:
                 raise CoursePolicyException('Section expiration not permitted')
 
+            user = User.objects.get(net_id=login_name)
+
         except CoursePolicyException as ex:
             return self.error_response(400, "{}".format(ex))
         except Course.DoesNotExist:
             return self.error_response(404, "Course not found")
+        except User.DoesNotExist:
+            return self.error_response(404, "User not found")
 
         try:
             put_data = json.loads(request.read())
@@ -71,7 +76,7 @@ class CourseExpirationView(OpenRESTDispatch):
         course.expiration_date = exp.replace(year=exp.year + 1)
         course.expiration_exc_granted_date = datetime.utcnow().replace(
             tzinfo=utc)
-        course.expiration_exc_granted_by = login_name
+        course.expiration_exc_granted_by = user
         course.expiration_exc_desc = put_data.get('expiration_exc_desc')
         course.save()
 
