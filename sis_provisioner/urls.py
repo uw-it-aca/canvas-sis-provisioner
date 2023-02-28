@@ -59,7 +59,7 @@ urlpatterns = [
     re_path(r'api/v1/course/(?P<course_id>[a-zA-Z0-9\-_ &]+)$',
             CourseView.as_view()),
     re_path(r'api/v1/course/(?P<course_id>[a-zA-Z0-9\-_ &]+)/expiration$',
-            CourseExpirationView.as_view()),
+            CourseExpirationView.as_view(), name='CourseExpiration'),
     re_path(r'api/v1/courses/?$', CourseListView.as_view()),
     re_path(r'api/v1/users/?$', UserView.as_view()),
     re_path(r'api/v1/users/(?P<reg_id>[a-fA-F0-9]{32})/merge$',

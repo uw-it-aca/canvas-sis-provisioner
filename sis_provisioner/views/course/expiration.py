@@ -12,6 +12,7 @@ from sis_provisioner.exceptions import CoursePolicyException
 from uw_saml.utils import get_user
 from django.utils.timezone import utc, localtime
 from django.conf import settings
+from datetime import datetime
 from logging import getLogger
 import json
 
@@ -72,24 +73,20 @@ class CourseExpirationView(OpenRESTDispatch):
             return self.error_response(400, "Unable to parse JSON: {}".format(
                 ex))
 
-        try:
-            exp = course.default_expiration_date
-            course.expiration_date = exp.replace(year=exp.year + 1)
-            course.expiration_exc_granted_date = datetime.utcnow().replace(
-                tzinfo=utc)
-            course.expiration_exc_granted_by = user
-            course.expiration_exc_desc = put_data.get('expiration_exc_desc')
-            course.save()
-        except Exception as ex:
-            logger.info('Error saving course {}: {}'.format(
-                canvas_course_id, ex))
+        exp = course.default_expiration_date
+        course.expiration_date = exp.replace(year=exp.year + 1)
+        course.expiration_exc_granted_date = datetime.utcnow().replace(
+            tzinfo=utc)
+        course.expiration_exc_granted_by = user
+        course.expiration_exc_desc = put_data.get('expiration_exc_desc')
+        course.save()
 
         logger.info('Course {} exception granted by {}'.format(
-            canvas_course_id, login_name))
+            course_id, login_name))
 
-        json_data = course.json_data(
-            include_sws_url=AdminView.can_view_source_data(request))
-        return self.json_response(json_data)
+        return self.json_response({
+            'course_id': course_id,
+            'expiration_date': localtime(course.expiration_date).isoformat()})
 
     def delete(self, request, *args, **kwargs):
         login_name = get_user(request)
@@ -118,9 +115,9 @@ class CourseExpirationView(OpenRESTDispatch):
         logger.info('Course {} exception cleared by {}'.format(
             course_id, login_name))
 
-        json_data = course.json_data(
-            include_sws_url=AdminView.can_view_source_data(request))
-        return self.json_response(json_data)
+        return self.json_response({
+            'course_id': course_id,
+            'expiration_date': localtime(course.expiration_date).isoformat()})
 
     def _normalize(self, course):
         """ normalize course id case
