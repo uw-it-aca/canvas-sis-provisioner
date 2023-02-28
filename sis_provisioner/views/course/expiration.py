@@ -84,9 +84,7 @@ class CourseExpirationView(OpenRESTDispatch):
         logger.info('Course {} exception granted by {}'.format(
             course_id, login_name))
 
-        return self.json_response({
-            'course_id': course_id,
-            'expiration_date': localtime(course.expiration_date).isoformat()})
+        return self.json_response(course.json_data())
 
     def delete(self, request, *args, **kwargs):
         login_name = get_user(request)
@@ -115,9 +113,7 @@ class CourseExpirationView(OpenRESTDispatch):
         logger.info('Course {} exception cleared by {}'.format(
             course_id, login_name))
 
-        return self.json_response({
-            'course_id': course_id,
-            'expiration_date': localtime(course.expiration_date).isoformat()})
+        return self.json_response(course.json_data())
 
     def _normalize(self, course):
         """ normalize course id case
