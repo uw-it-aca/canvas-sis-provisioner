@@ -67,7 +67,7 @@ class CourseExpirationView(OpenRESTDispatch):
             return self.error_response(404, "User not found")
 
         try:
-            put_data = json.loads(request.read())
+            put_data = json.loads(request.body)
         except Exception as ex:
             return self.error_response(400, "Unable to parse JSON: {}".format(
                 ex))
@@ -81,11 +81,11 @@ class CourseExpirationView(OpenRESTDispatch):
             course.expiration_exc_desc = put_data.get('expiration_exc_desc')
             course.save()
         except Exception as ex:
-            logger.error('Error saving course: {}'.format(ex))
-            raise
+            logger.info('Error saving course {}: {}'.format(
+                canvas_course_id, ex))
 
         logger.info('Course {} exception granted by {}'.format(
-            course_id, login_name))
+            canvas_course_id, login_name))
 
         json_data = course.json_data(
             include_sws_url=AdminView.can_view_source_data(request))
