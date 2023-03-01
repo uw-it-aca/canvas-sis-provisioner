@@ -1307,8 +1307,9 @@ $(document).ready(function () {
                         icon_node = state_node.prev('i');
 
                     link.attr('href', data.course_url).parent().show;
-                    if (data.xlist.url):
+                    if (data.xlist.url) {
                         $('a.xlist-course-link', course_body).attr('href', data.xlist.url);
+                    }
 
                     if (icon_node.hasClass('fa-spinner')) {
                         icon_node.removeClass('fa-spinner fa-spin').addClass('fa-newspaper-o');
