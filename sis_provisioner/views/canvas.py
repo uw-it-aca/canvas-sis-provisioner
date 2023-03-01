@@ -52,9 +52,9 @@ class CanvasCourseView(RESTDispatch):
                     model = Course.objects.get(course_id=course.sis_course_id)
                     course_rep.update(model.json_data(
                         include_sws_url=self.can_view_source_data(request)))
-                    if model.xlist.id:
+                    if model.xlist_id:
                         course_rep['xlist_url'] = self.course_url(
-                            'sis_course_id:{}'.format(model.xlist.id))
+                            'sis_course_id:{}'.format(model.xlist_id))
                 except Course.DoesNotExist:
                     pass
 
