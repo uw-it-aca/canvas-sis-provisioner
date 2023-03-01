@@ -91,7 +91,7 @@
           <li><a class="js-sws-course" href="{{this.sws_url}}" title="View {{this.course_id}} in SWS"><i class="fa fa-database"></i>View section details in the Student Web Service</a></li>
           {{/if}}
           {{#if this.xlist_id}}
-          <li><i class="fa fa-exchange course-emphasis"></i>Cross-listed with <a class="sis-course-link" data-course-id="{{this.xlist_id}}" href="javascript:void(0);" title="View {{this.xlist_id}} in Canvas" target="_blank">{{this.xlist_id}}</a></li>
+          <li><i class="fa fa-exchange course-emphasis"></i>Cross-listed with <a class="xlist-course-link" data-course-id="{{this.xlist_id}}" href="javascript:void(0);" title="View {{this.xlist_id}} in Canvas" target="_blank">{{this.xlist_id}}</a></li>
           {{/if}}
           {{#if this.group_count}}
           <li><i class="fa fa-users"></i>Course has {{this.group_count}} UW group{{this.group_plural}} attached</li>
