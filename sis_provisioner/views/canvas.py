@@ -41,9 +41,7 @@ class CanvasCourseView(RESTDispatch):
                     'name': course.term.name
                 },
                 'course_name': course.name,
-                'course_url': "{host}/courses/{course_id}".format(
-                    host=getattr(settings, 'RESTCLIENTS_CANVAS_HOST', ''),
-                    course_id=course.course_id),
+                'course_url': self.course_url(course.course_id),
                 'workflow_state': course.workflow_state,
                 'public_syllabus': course.public_syllabus,
                 'syllabus_body': course.syllabus_body
@@ -54,6 +52,9 @@ class CanvasCourseView(RESTDispatch):
                     model = Course.objects.get(course_id=course.sis_course_id)
                     course_rep.update(model.json_data(
                         include_sws_url=self.can_view_source_data(request)))
+                    if model.xlist_id:
+                        course_rep['xlist_url'] = self.course_url(
+                            'sis_course_id:{}'.format(model.xlist_id))
                 except Course.DoesNotExist:
                     pass
 
@@ -64,6 +65,11 @@ class CanvasCourseView(RESTDispatch):
                     404, "Course not found in Canvas: {}".format(ex.msg))
             return self.error_response(
                 400, "Unable to retrieve course data: {}".format(ex.msg))
+
+    def course_url(self, course_id):
+        return '{host}/courses/{course_id}'.format(
+            host=getattr(settings, 'RESTCLIENTS_CANVAS_HOST', ''),
+            course_id=course_id)
 
 
 class CanvasAccountView(RESTDispatch):

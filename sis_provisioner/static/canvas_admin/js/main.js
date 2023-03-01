@@ -1307,6 +1307,9 @@ $(document).ready(function () {
                         icon_node = state_node.prev('i');
 
                     link.attr('href', data.course_url).parent().show;
+                    if (data.xlist_url) {
+                        $('a.xlist-course-link', course_body).attr('href', data.xlist_url);
+                    }
 
                     if (icon_node.hasClass('fa-spinner')) {
                         icon_node.removeClass('fa-spinner fa-spin').addClass('fa-newspaper-o');
@@ -1360,24 +1363,6 @@ $(document).ready(function () {
                 }
             });
         }
-    }
-
-    function updateCourseListURL(a, course_sis_id) {
-        $.ajax({
-            url: '/api/v1/canvas/course/' + course_sis_id,
-            dataType: 'json',
-            success: function (data) {
-                a.attr('href', data.course_url);
-            },
-            error: function (xhr) {
-                try {
-                    var json = $.parseJSON(xhr.responseText);
-                    alert('Unable to view Canvas course: ' + json.error);
-                } catch (e) {
-                    alert('Unable to view Canvas course');
-                }
-            }
-        });
     }
 
     function updateCourseListSubAccount(account_id, course_body) {
@@ -1466,9 +1451,6 @@ $(document).ready(function () {
             $(e.target).prev().find('.accordion-toggle i').toggleClass('fa-chevron-down fa-chevron-right');
         }).on('click', '.accordion-toggle', function (event) {
             event.preventDefault();
-        }).on('click', 'a.sis-course-link', function (e) {
-            var a = $(e.target).closest('a');
-            updateCourseListURL(a, a.attr('data-course-id'));
         }).on('click', 'button.provision-course', function (e) {
             var button = $(e.target).closest('button'),
                 button_updating = function (b) {
