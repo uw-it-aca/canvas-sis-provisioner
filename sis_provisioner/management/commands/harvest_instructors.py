@@ -49,7 +49,7 @@ class Command(BaseCommand):
                 options['end'] >= 0) else max(total + options['end'], 0)
         start = 0 if (options['start'] is None) else (
             min(max(0, options['start']), end)) if (
-                options['start'] >=0) else max(end + options['start'], 0)
+                options['start'] >= 0) else max(end + options['start'], 0)
 
         # dump currently employed teachers for each course
         seen = set()
@@ -80,7 +80,8 @@ class Command(BaseCommand):
         except DataFailureException as ex:
             if ex.status == 404:
                 print('enrollment: unknown course {} ({})'.format(
-                    course.course_id, course.canvas_course_id), file=sys.stderr)
+                    course.course_id, course.canvas_course_id),
+                      file=sys.stderr)
             else:
                 print('enrollment: exception referencing {} ({}): {}'.format(
                     course.course_id, ex), file=sys.stderr)
