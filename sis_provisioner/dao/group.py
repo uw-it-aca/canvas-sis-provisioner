@@ -128,7 +128,6 @@ def get_effective_members(group_id, act_as=None):
         except RecursionError as err:
             logger.info("Error: {}, Group: {}, Member groups: {}".format(
                 err, group_id, member_group_ids))
-            raise
 
         return (valid_members, invalid_members, member_group_ids)
 
