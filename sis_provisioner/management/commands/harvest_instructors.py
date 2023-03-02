@@ -26,7 +26,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            'expiration_year', help='Expiration year for harvest')
+            'expiration_year', type=int, help='Expiration year for harvest')
         parser.add_argument(
             '--start', nargs='?', type=int, const=0,
             help='index of first id sorted list of course to evaluate')
@@ -36,9 +36,8 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         # fetch course queryset
-        expiration_year = int(options['expiration_year'])
         course_filter = {
-            'expiration_date__year': expiration_year
+            'expiration_date__year': options['expiration_year']
         }
 
         courses = Course.objects.filter(**course_filter).order_by('id')
