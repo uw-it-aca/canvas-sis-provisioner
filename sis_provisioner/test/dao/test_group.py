@@ -10,6 +10,7 @@ from sis_provisioner.exceptions import (
     GroupPolicyException, GroupNotFoundException)
 from datetime import datetime, timedelta
 from uw_gws.utilities import fdao_gws_override
+from uw_gws.models import GroupEntity
 from uw_pws.util import fdao_pws_override
 import mock
 
@@ -115,3 +116,17 @@ class EffectiveMemberTest(TestCase):
 
         self.assertRaises(
             GroupNotFoundException, get_effective_members, 'u_acadev_fake')
+
+    @mock.patch.object(GWS, 'get_members')
+    def test_effective_member_recursion(self, mock_method):
+        group_id = 'u_acadev_unittest'
+        mock_method.return_value = [
+            GroupEntity(name=group_id, type=GroupEntity.GROUP_TYPE),
+            GroupEntity(name='javerage', type=GroupEntity.UWNETID_TYPE)]
+
+        valid_members, invalid_members, member_groups = get_effective_members(
+            group_id)
+
+        self.assertEquals(len(valid_members), 1)
+        self.assertEquals(len(invalid_members), 0)
+        self.assertEquals(len(member_groups), 1)
