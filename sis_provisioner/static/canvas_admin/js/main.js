@@ -325,7 +325,7 @@ $(document).ready(function () {
             canvas_id_match = canvas_url.match(/^https:\/\/[\w\W]+\/courses\/(\d+)([\/\?].*)?$/);
             if (canvas_id_match) {
                 canvas_id = canvas_id_match[1];
-                url = '/api/v1/canvas/course/' + canvas_id;
+                url = '/api/v1/course/' + encodeURIComponent(canvas_id);
                 search_term = 'Canvas Course ID ' + canvas_id;
             }
         } else if (form.attr('href') === '#search-tab-instructor') {
