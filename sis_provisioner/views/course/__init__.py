@@ -48,7 +48,10 @@ class CourseView(RESTDispatch):
         except Course.DoesNotExist:
             return self.error_response(404, "Course not found")
 
-        if course.queue_id is not None:
+        if course.course_id is None:
+            return self.error_response(
+                400, "This course cannot be provisioned")
+        elif course.queue_id is not None:
             return self.error_response(409, "Course already being provisioned")
 
         body = request.read()
