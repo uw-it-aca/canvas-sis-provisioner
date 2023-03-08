@@ -69,5 +69,11 @@ class Command(BaseCommand):
                         term_id=terms.get(term_id),
                         created_date=created_at,
                         priority=Course.PRIORITY_NONE)
-                    course.expiration_date = course.default_expiration_date
+                    expiration_date = course.default_expiration_date
+
+                    # Temporary logic for first round of expirations
+                    if expiration_date.year == 2023:
+                        expiration_date = expiration_date.replace(
+                            month=12, day=18)
+
                     course.save()
