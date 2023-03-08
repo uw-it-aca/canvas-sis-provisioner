@@ -197,8 +197,7 @@ $(document).ready(function () {
                 course.provisioned_status.length)),
             in_process = false;
 
-        if (is_provisioned === false && course.is_sdb_type === false &&
-                course.created_date && course.created_date.length) {
+        if (!course.is_sdb_type && course.created_date && course.created_date.length) {
             is_provisioned = true;
         }
 
