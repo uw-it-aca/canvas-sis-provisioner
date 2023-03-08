@@ -22,7 +22,7 @@ class CanvasCourseView(RESTDispatch):
         GET returns 200 with Canvas Course model
     """
     def get(self, request, *args, **kwargs):
-        course_id = kwargs.get('sis_id')
+        course_id = kwargs.get('course_id')
         params = {'state': ['all']}
         try:
             if valid_canvas_id(course_id):
@@ -47,16 +47,15 @@ class CanvasCourseView(RESTDispatch):
                 'syllabus_body': course.syllabus_body
             }
 
-            if course.sis_course_id is not None:
-                try:
-                    model = Course.objects.get(course_id=course.sis_course_id)
-                    course_rep.update(model.json_data(
-                        include_sws_url=self.can_view_source_data(request)))
-                    if model.xlist_id:
-                        course_rep['xlist_url'] = self.course_url(
-                            'sis_course_id:{}'.format(model.xlist_id))
-                except Course.DoesNotExist:
-                    pass
+            try:
+                model = Course.objects.get(canvas_course_id=course.course_id)
+                course_rep.update(model.json_data(
+                    include_sws_url=self.can_view_source_data(request)))
+                if model.xlist_id:
+                    course_rep['xlist_url'] = self.course_url(
+                        'sis_course_id:{}'.format(model.xlist_id))
+            except Course.DoesNotExist:
+                pass
 
             return self.json_response(course_rep)
         except DataFailureException as ex:

@@ -52,8 +52,8 @@ urlpatterns = [
 
     # Admin API urls
     re_path(r'api/v1/canvas$', CanvasStatus.as_view()),
-    re_path(r'api/v1/canvas/course/(?P<sis_id>[a-zA-Z0-9 &-]+)$',
-            CanvasCourseView.as_view()),
+    re_path(r'api/v1/canvas/course/(?P<course_id>[a-zA-Z0-9\-_ &]+)$',
+            CanvasCourseView.as_view(), name='CanvasCourse'),
     re_path(r'api/v1/canvas/account/(?P<account_id>[0-9]+)$',
             CanvasAccountView.as_view()),
     re_path(r'api/v1/course/(?P<course_id>[a-zA-Z0-9\-_ &]+)$',
