@@ -43,7 +43,7 @@ class Command(BaseCommand):
             for row in reader:
                 canvas_id = row[1]
                 term_id = row[4].lstrip('1').lstrip('0')
-                sis_source_id = row[12]
+                sis_source_id = None if (row[12] == "\\N") else row[12]
                 try:
                     created_at = parse(row[8]).replace(tzinfo=utc)
                 except ParserError as ex:
@@ -69,5 +69,11 @@ class Command(BaseCommand):
                         term_id=terms.get(term_id),
                         created_date=created_at,
                         priority=Course.PRIORITY_NONE)
-                    course.expiration_date = course.default_expiration_date
+                    expiration_date = course.default_expiration_date
+
+                    # Temporary logic for first round of expirations
+                    if expiration_date.year == 2023:
+                        expiration_date = expiration_date.replace(
+                            month=12, day=18)
+
                     course.save()
