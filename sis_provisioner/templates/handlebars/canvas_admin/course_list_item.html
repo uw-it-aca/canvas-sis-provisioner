@@ -6,7 +6,7 @@
   <div class="panel panel-default">
     <div class="panel-heading">
       <h5 class="panel-title">
-        <a href="#" class="accordion-toggle" data-toggle="collapse" data-target="#collapse_{{this.random}}" data-parent="#course-accordion"><i class="fa fa-chevron-right"></i><span class="course-name">{{{#if this.course_id}}{this.course_id}}{{else}}Course {this.canvas_course_id}}{{/if}}</span></a>
+        <a href="#" class="accordion-toggle" data-toggle="collapse" data-target="#collapse_{{this.random}}" data-parent="#course-accordion"><i class="fa fa-chevron-right"></i><span class="course-name">{{#if this.course_id}}{this.course_id}}{{else}}Course {this.canvas_course_id}}{{/if}}</span></a>
 {{#if this.is_provisioned}}
   <span class="provisioned-icon" data-toggle="popover" data-placement="right" data-content="Provisioned {{this.provisioned_date_relative}}"><i class="fa fa-cloud-upload course-available"></i></span>
   {{else}}
