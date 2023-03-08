@@ -81,6 +81,7 @@ def get_sis_import_members():
 
 def get_effective_members(group_id, act_as=None):
     gws = GWS(act_as=act_as)
+    seen_group_ids = set()  # Prevent duplicate group processing
 
     def _get_members(group_id):
         valid_members = {}
@@ -89,6 +90,13 @@ def get_effective_members(group_id, act_as=None):
 
         try:
             valid_group_id(group_id)
+
+            if group_id in seen_group_ids:
+                logger.info("Duplicate group: {}, Processed groups: {}".format(
+                    group_id, list(seen_group_ids)))
+                return (valid_members, invalid_members, member_group_ids)
+            seen_group_ids.add(group_id)
+
             for member in gws.get_members(group_id):
                 try:
                     if member.is_uwnetid():
@@ -123,11 +131,6 @@ def get_effective_members(group_id, act_as=None):
                 raise
 
         except GroupPolicyException as err:
-            raise
-
-        except RecursionError as err:
-            logger.info("Error: {}, Group: {}, Member groups: {}".format(
-                err, group_id, member_group_ids))
             raise
 
         return (valid_members, invalid_members, member_group_ids)

@@ -15,7 +15,9 @@
     <div class="tab-content">
         <div id="search-tab-course" class="control-group validate-group form-inline tab-pane active">
 
-            <p><label for="courseTerm">Term:</label> <select id="courseTerm" class="valid-require form-control"></select></p>
+            <p><label for="courseTermYear">Year:</label> <select id="courseTermYear" class="valid-require form-control"></select>&nbsp;&nbsp;
+               <label for="courseTermQuarter">Quarter:</label> <select id="courseTermQuarter" class="valid-require form-control"></select>
+            </p>
 
             <p><label for="courseCurriculum">Curriculum:</label> <input class="input-small validate valid-require valid-nonnull form-control" id="courseCurriculum" placeholder="MATH" size="6" type="text" autofocus />&nbsp;&nbsp;
 
@@ -25,7 +27,9 @@
 
         </div>
         <div id="search-tab-instructor" class="control-group validate-group form-inline tab-pane">
-            <p><label for="instructorTerm">Term:</label> <select id="instructorTerm" class="form-control"></select></p>
+            <p><label for="instructorTermYear">Year:</label> <select id="instructorTermYear" class="form-control"></select>&nbsp;&nbsp;
+               <label for="instructorTermQuarter">Quarter:</label> <select id="instructorTermQuarter" class="form-control"></select>
+            </p>
 
             <p><select id="netregid" class="form-control">
                 <option value="net_id">Instructor NetId:</option>
@@ -57,6 +61,33 @@
     </div>
 </div>
 
-{% include "handlebars/canvas_admin/course_list_item.html" %}    
+<div id="course-expiration-editor" class="modal fade" role="dialog">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 id="ce-modal-title" class="modal-title">Add exception for course <span id="ce-canvas-title"></span></h4>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <span>Expiration will be extended for one year.</span>
+                    <div class="form-group">
+                        <label for="ce-expiration_exc_desc">Reason for exception:</label>
+                        <div>
+                            <textarea id="ce-expiration_exc_desc" style="width: 260px; height: 100px;"></textarea>
+                        </div>
+                    </div>
+                    <input id="ce-canvas-course-id" type="hidden" value=""/>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary save-btn" title="Save"><span class="glyphicon" aria-hidden="true"></span>Save</button>
+                <button type="button" class="btn btn-default cancel-btn" title="Cancel" data-dismiss="modal"><span class="glyphicon" aria-hidden="true"></span>Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% include "handlebars/canvas_admin/course_list_item.html" %}
 {% include "handlebars/canvas_admin/waiting.html" %}
 {% endblock %}

@@ -6,7 +6,8 @@ from django.conf import settings
 from sis_provisioner.models.course import Course
 from sis_provisioner.views.admin import RESTDispatch
 from sis_provisioner.dao.canvas import (
-    get_account_by_id, get_course_by_id, get_course_by_sis_id)
+    valid_canvas_id, get_account_by_id, get_course_by_id, get_course_by_sis_id)
+from restclients_core.exceptions import DataFailureException
 from logging import getLogger
 from bs4 import BeautifulSoup
 from urllib.request import urlopen
@@ -21,13 +22,13 @@ class CanvasCourseView(RESTDispatch):
         GET returns 200 with Canvas Course model
     """
     def get(self, request, *args, **kwargs):
+        course_id = kwargs.get('course_id')
+        params = {'state': ['all']}
         try:
-            sis_id = kwargs.get('sis_id')
-            canvas_id = re.match(r'^\d+$', sis_id)
-            if canvas_id:
-                course = get_course_by_id(canvas_id.group(0))
+            if valid_canvas_id(course_id):
+                course = get_course_by_id(course_id, params)
             else:
-                course = get_course_by_sis_id(sis_id)
+                course = get_course_by_sis_id(course_id, params)
 
             course_rep = {
                 'course_id': course.course_id,
@@ -40,26 +41,34 @@ class CanvasCourseView(RESTDispatch):
                     'name': course.term.name
                 },
                 'course_name': course.name,
-                'course_url': "{host}/courses/{course_id}".format(
-                    host=getattr(settings, 'RESTCLIENTS_CANVAS_HOST', ''),
-                    course_id=course.course_id),
+                'course_url': self.course_url(course.course_id),
                 'workflow_state': course.workflow_state,
                 'public_syllabus': course.public_syllabus,
                 'syllabus_body': course.syllabus_body
             }
 
-            if course.sis_course_id is not None:
-                try:
-                    model = Course.objects.get(course_id=course.sis_course_id)
-                    course_rep.update(model.json_data(
-                        include_sws_url=self.can_view_source_data(request)))
-                except Course.DoesNotExist:
-                    pass
+            try:
+                model = Course.objects.get(canvas_course_id=course.course_id)
+                course_rep.update(model.json_data(
+                    include_sws_url=self.can_view_source_data(request)))
+                if model.xlist_id:
+                    course_rep['xlist_url'] = self.course_url(
+                        'sis_course_id:{}'.format(model.xlist_id))
+            except Course.DoesNotExist:
+                pass
 
             return self.json_response(course_rep)
-        except Exception as e:
+        except DataFailureException as ex:
+            if ex.status == 404:
+                return self.error_response(
+                    404, "Course not found in Canvas: {}".format(ex.msg))
             return self.error_response(
-                400, "Unable to retrieve course data: {}".format(e))
+                400, "Unable to retrieve course data: {}".format(ex.msg))
+
+    def course_url(self, course_id):
+        return '{host}/courses/{course_id}'.format(
+            host=getattr(settings, 'RESTCLIENTS_CANVAS_HOST', ''),
+            course_id=course_id)
 
 
 class CanvasAccountView(RESTDispatch):

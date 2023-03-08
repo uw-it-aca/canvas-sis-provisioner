@@ -55,32 +55,29 @@ $(document).ready(function () {
 
     function initializeSearchForm() {
         var quarters = ['winter', 'spring', 'summer', 'autumn'],
-            term_list = [],
-            year = window.canvas_manager.current_term.year,
-            i,
-            j,
-            s;
+            min_year = 2011,
+            max_year = window.canvas_manager.current_term.year + 1,
+            years = [],
+            y;
 
-        for (i = 0; i < 4; i += 1) {
-            if (quarters[i] === window.canvas_manager.current_term.quarter.toLowerCase()) {
-                for (j = 0; j < 4; j += 1) {
-                    s = quarters[i];
-                    term_list.push([s + '-' + year,
-                                    s.charAt(0).toUpperCase() + s.slice(1) + ' ' + year]);
-                    if (++i > 3) {
-                        i = 0;
-                        year += 1;
-                    }
-                }
-
-                break;
-            }
+        for (y = max_year; y >= min_year; y -= 1) {
+            years.push(y);
         }
 
-        $('#courseTerm,#instructorTerm').each(function () {
+        $('#courseTermYear,#instructorTermYear').each(function () {
             var me = $(this);
-            $.each(term_list, function (i) {
-                me.append(new Option(this[1], this[0], (i === 0), (i === 0)));
+            $.each(years, function (i) {
+                var selected = (this === window.canvas_manager.current_term.year);
+                me.append(new Option(this, this, selected, selected));
+            });
+        });
+
+        $('#courseTermQuarter,#instructorTermQuarter').each(function () {
+            var me = $(this);
+            $.each(quarters, function (i) {
+                var selected = (this === window.canvas_manager.current_term.quarter.toLowerCase()),
+                    name = this.charAt(0).toUpperCase() + this.slice(1);
+                me.append(new Option(name, this, selected, selected));
             });
         });
     }
@@ -195,10 +192,15 @@ $(document).ready(function () {
     });
 
     function courseDataFromJSON(course) {
-        var is_provisioned = (course.provisioned_date &&
-                course.provisioned_date.length && !(course.provisioned_status &&
-                course.provisioned_status.length)),
+        var is_provisioned = false,
             in_process = false;
+
+        if (course.is_sdb_type) {
+            is_provisioned = (course.provisioned_date && course.provisioned_date.length &&
+                !(course.provisioned_status && course.provisioned_status.length));
+        } else {
+            is_provisioned = (course.created_date && course.created_date.length);
+        }
 
         if (course.queue_id && course.queue_id.length) {
             in_process = true;
@@ -209,7 +211,9 @@ $(document).ready(function () {
         }
 
         return {
+            canvas_course_id: course.canvas_course_id,
             course_id: course.course_id,
+            primary_id: course.primary_id,
             sws_url: course.sws_url,
             xlist_id: course.xlist_id,
             is_sdb_type: course.is_sdb_type,
@@ -222,7 +226,16 @@ $(document).ready(function () {
             added_date: format_long_date(course.added_date),
             added_date_relative: format_relative_date(course.added_date),
             provisioned_date: format_long_date(course.provisioned_date),
-            provisioned_date_relative: format_relative_date(course.provisioned_date)
+            provisioned_date_relative: format_relative_date(course.provisioned_date),
+            expiration_date: format_long_date(course.expiration_date),
+            expiration_date_relative: format_relative_date(course.expiration_date),
+            created_date: format_long_date(course.created_date),
+            deleted_date: format_long_date(course.deleted_date),
+            deleted_date_relative: format_relative_date(course.deleted_date),
+            expiration_exc_granted_date: format_long_date(course.expiration_exc_granted_date),
+            expiration_exc_granted_by: course.expiration_exc_granted_by,
+            expiration_exc_desc: course.expiration_exc_desc,
+            is_expired: course.is_expired
         };
     }
 
@@ -240,6 +253,7 @@ $(document).ready(function () {
                         course_count: 0,
                         courses: []
                     };
+                Handlebars.registerPartial('course_exception', $('#course-item-exception').html());
 
                 if (data.hasOwnProperty('courses')) {
                     context.header = 'Courses' + ((search.term) ? ' matching &quot;' + search.term + '&quot;' : '');
@@ -301,6 +315,8 @@ $(document).ready(function () {
             instructor_id,
             canvas_id,
             canvas_id_match,
+            term_year,
+            term_qtr,
             val;
 
         // collect form values
@@ -315,23 +331,25 @@ $(document).ready(function () {
             canvas_id_match = canvas_url.match(/^https:\/\/[\w\W]+\/courses\/(\d+)([\/\?].*)?$/);
             if (canvas_id_match) {
                 canvas_id = canvas_id_match[1];
-                url = '/api/v1/canvas/course/' + canvas_id;
+                url = '/api/v1/course/' + encodeURIComponent(canvas_id);
                 search_term = 'Canvas Course ID ' + canvas_id;
             }
         } else if (form.attr('href') === '#search-tab-instructor') {
             instructor_id = $.trim($('#instructorID').val());
             if (instructor_id !== '') {
                 terms.push([$('#netregid option:selected').val(), instructor_id].join('='));
-                val = $('#instructorTerm option:selected').val().split('-');
-                terms.push('year=' + encodeURIComponent(val[1]));
-                terms.push('quarter=' + encodeURIComponent(val[0]));
-                search_term = val[1] + '-' + val[0];
+                term_year = $('#instructorTermYear option:selected').val();
+                term_qtr = $('#instructorTermQuarter option:selected').val();
+                terms.push('year=' + encodeURIComponent(term_year));
+                terms.push('quarter=' + encodeURIComponent(term_qtr));
+                search_term = term_year + '-' + term_qtr;
             }
         } else {
-            val = $('#courseTerm option:selected').val().split('-');
-            terms.push('year=' + encodeURIComponent(val[1]));
-            terms.push('quarter=' + encodeURIComponent(val[0]));
-            search_term = val[1] + '-' + val[0];
+            term_year = $('#courseTermYear option:selected').val();
+            term_qtr = $('#courseTermQuarter option:selected').val();
+            terms.push('year=' + encodeURIComponent(term_year));
+            terms.push('quarter=' + encodeURIComponent(term_qtr));
+            search_term = term_year + '-' + term_qtr;
 
             $.each(inputs, function () {
                 var el = form.find(this.id);
@@ -1211,6 +1229,78 @@ $(document).ready(function () {
         });
     }
 
+    function updateCourseExpiration() {
+        var canvas_course_id = $('#ce-canvas-course-id').val(),
+            reason = $('#ce-expiration_exc_desc').val();
+
+        if (reason === '') {
+            alert('Missing reason');
+            return;
+        }
+
+        $.ajax({
+            url: '/api/v1/course/' + encodeURIComponent(canvas_course_id) + '/expiration',
+            contentType: 'application/json',
+            type: 'PUT',
+            processData: false,
+            data: JSON.stringify({'expiration_exc_desc': reason}),
+            success: function (data) {
+                var tpl = Handlebars.compile($('#course-item-exception').html()),
+                    content_id = '#course-exception-' + data.canvas_course_id;
+                $(content_id).html(tpl(courseDataFromJSON(data)));
+                $('#course-expiration-editor').modal('hide');
+            },
+            error: function (xhr) {
+                var json;
+                try {
+                    json = $.parseJSON(xhr.responseText);
+                    console.log('Course exception PUT error:' + json.error);
+                } catch (e) {
+                    console.log('Course exception PUT error');
+                }
+            }
+        });
+    }
+
+    function resetCourseExpiration() {
+        /*jshint validthis: true */
+        var canvas_course_id = $(this).attr('data-canvas-course-id');
+
+        if (confirm('Remove this exception?')) {
+            $.ajax({
+                url: '/api/v1/course/' + encodeURIComponent(canvas_course_id) + '/expiration',
+                contentType: 'application/json',
+                type: 'DELETE',
+                success: function (data) {
+                    var tpl = Handlebars.compile($('#course-item-exception').html()),
+                        content_id = '#course-exception-' + data.canvas_course_id;
+                    $(content_id).html(tpl(courseDataFromJSON(data)));
+                },
+                error: function (xhr) {
+                    var json;
+                    try {
+                        json = $.parseJSON(xhr.responseText);
+                        console.log('Course exception DELETE error:' + json.error);
+                    } catch (e) {
+                        console.log('Course exception DELETE error');
+                    }
+                }
+            });
+        }
+    }
+
+    function openCourseExpirationEditor() {
+        /*jshint validthis: true */
+        $('#course-expiration-editor').modal({
+            backdrop: 'static',
+            show: true
+        }).find('button.save-btn').off('click').click(updateCourseExpiration);
+
+        $('#ce-course-title').html($(this).attr('data-canvas-course-id'));
+        $('#ce-canvas-course-id').val($(this).attr('data-canvas-course-id'));
+        $('#ce-expiration_exc_desc').val($(this).attr('data-expiration_exc_desc'));
+    }
+
     function updateCourseListCanvasLinks(course_body) {
         var link = $('a.canvas-course-link', course_body);
 
@@ -1222,7 +1312,10 @@ $(document).ready(function () {
                     var state_node = $('.workflow_state', course_body),
                         icon_node = state_node.prev('i');
 
-                    link.attr('href', data.course_url);
+                    link.attr('href', data.course_url).parent().show;
+                    if (data.xlist_url) {
+                        $('a.xlist-course-link', course_body).attr('href', data.xlist_url);
+                    }
 
                     if (icon_node.hasClass('fa-spinner')) {
                         icon_node.removeClass('fa-spinner fa-spin').addClass('fa-newspaper-o');
@@ -1237,12 +1330,17 @@ $(document).ready(function () {
                         state_node.html('is completed');
                         icon_node.addClass('course-emphasis');
                         break;
-                    default:
-                        state_node.html('is NOT yet published');
+                    case 'deleted':
+                        state_node.html('is deleted');
+                        icon_node.addClass('course-emphasis');
+                        link.parent().hide();
+                        break;
+                    default:  /* 'unpublished' */
+                        state_node.html('is NOT published');
                         icon_node.addClass('course-pending');
                         break;
                     }
-
+                    $('.canvas-subaccount').show();
                     updateCourseListSubAccount(data.account_id, course_body);
                 },
                 error: function (xhr) {
@@ -1256,31 +1354,21 @@ $(document).ready(function () {
 
                     try {
                         json = $.parseJSON(xhr.responseText);
-                        alert('Unable to load Canvas course data: ' + json.error);
                     } catch (e) {
-                        alert('Unable to load Canvas course data');
+                        json = {error: xhr.responseText};
                     }
+                    if (xhr.status === 404) {
+                        icon_node.removeClass('fa-question').addClass('fa-trash');
+                        state_node.html('is deleted');
+                    } else {
+                        state_node.html('cannot be found');
+                        console.log('Unable to load Canvas course data: ' + json.error)
+                    }
+                    $('.canvas-course-link').parent().hide();
+                    $('.canvas-subaccount').hide();
                 }
             });
         }
-    }
-
-    function updateCourseListURL(a, course_sis_id) {
-        $.ajax({
-            url: '/api/v1/canvas/course/' + course_sis_id,
-            dataType: 'json',
-            success: function (data) {
-                a.attr('href', data.course_url);
-            },
-            error: function (xhr) {
-                try {
-                    var json = $.parseJSON(xhr.responseText);
-                    alert('Unable to view Canvas course: ' + json.error);
-                } catch (e) {
-                    alert('Unable to view Canvas course');
-                }
-            }
-        });
     }
 
     function updateCourseListSubAccount(account_id, course_body) {
@@ -1369,10 +1457,6 @@ $(document).ready(function () {
             $(e.target).prev().find('.accordion-toggle i').toggleClass('fa-chevron-down fa-chevron-right');
         }).on('click', '.accordion-toggle', function (event) {
             event.preventDefault();
-        }).on('click', 'a.sis-course-link', function (e) {
-            var a = $(e.target).closest('a');
-
-            updateCourseListURL(a, a.attr('data-course-id'));
         }).on('click', 'button.provision-course', function (e) {
             var button = $(e.target).closest('button'),
                 button_updating = function (b) {
@@ -1409,7 +1493,8 @@ $(document).ready(function () {
                     }
                 }
             });
-        });
+        }).on('click', 'a.course-expiration-edit', openCourseExpirationEditor
+            ).on('click', 'a.course-expiration-reset', resetCourseExpiration);
     }
 
     function canvasStatusMonitor() {

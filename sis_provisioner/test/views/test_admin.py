@@ -1,7 +1,7 @@
 # Copyright 2023 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
-
+from django.conf import settings
 from django.test import TestCase, RequestFactory, override_settings
 from django.urls import reverse
 from django.contrib.sessions.middleware import SessionMiddleware
@@ -55,6 +55,9 @@ class AdminViewTest(TestCase):
 
     def test_can_manage_external_tools(self):
         self.assertTrue(AdminView.can_manage_external_tools(self.request))
+
+    def test_can_manage_course_expirations(self):
+        self.assertTrue(AdminView.can_manage_course_expirations(self.request))
 
 
 class RestDispatchTest(TestCase):

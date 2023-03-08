@@ -4,7 +4,7 @@
 
 from sis_provisioner.dao.course import (
     get_sections_by_instructor_and_term, valid_academic_course_sis_id,
-    valid_adhoc_course_sis_id)
+    valid_adhoc_course_sis_id, valid_canvas_course_id)
 from sis_provisioner.dao.term import get_term_by_year_and_quarter
 from sis_provisioner.dao.user import get_person_by_netid, get_person_by_regid
 from sis_provisioner.models.group import Group
@@ -29,9 +29,10 @@ class CourseView(RESTDispatch):
         PUT returns 200 and updates the Course information.
     """
     def get(self, request, *args, **kwargs):
+        course_id = kwargs['course_id']
+        course_ref = self._normalize(course_id)
         try:
-            course = Course.objects.get(
-                course_id=self._normalize(kwargs['course_id']))
+            course = Course.objects.get(**course_ref)
             json_data = course.json_data(
                 include_sws_url=self.can_view_source_data(request))
             return self.json_response(json_data)
@@ -40,13 +41,17 @@ class CourseView(RESTDispatch):
             return self.error_response(404, "Course not found")
 
     def put(self, request, *args, **kwargs):
-        course_id = self._normalize(kwargs['course_id'])
+        course_id = kwargs['course_id']
+        course_ref = self._normalize(course_id)
         try:
-            course = Course.objects.get(course_id=course_id)
+            course = Course.objects.get(**course_ref)
         except Course.DoesNotExist:
             return self.error_response(404, "Course not found")
 
-        if course.queue_id is not None:
+        if course.course_id is None:
+            return self.error_response(
+                400, "This course cannot be provisioned")
+        elif course.queue_id is not None:
             return self.error_response(409, "Course already being provisioned")
 
         body = request.read()
@@ -70,20 +75,22 @@ class CourseView(RESTDispatch):
         except CoursePolicyException as err:
             return self.error_response(400, err)
 
-    def _normalize(self, course):
+    def _normalize(self, course_id):
         """ normalize course id case
         """
-        course = course.strip()
+        course_key = 'course_id'
+        course_id = course_id.strip()
         try:
-            valid_academic_course_sis_id(course)
+            valid_academic_course_sis_id(course_id)
         except CoursePolicyException:
+            course_id = course_id.lower()
             try:
-                valid_adhoc_course_sis_id(course.lower())
-                return course.lower()
+                valid_adhoc_course_sis_id(course_id)
             except CoursePolicyException:
-                pass
+                valid_canvas_course_id(course_id)
+                course_key = 'canvas_course_id'
 
-        return course
+        return {course_key: course_id}
 
 
 class CourseListView(RESTDispatch):

@@ -134,6 +134,20 @@ class CourseModelTest(TestCase):
         course = Course(course_type=Course.SDB_TYPE, course_id=sis_id)
         self.assertEqual(course.default_expiration_date.year, now.year)
 
+    def test_expiration_date(self):
+        now = datetime.utcnow().replace(tzinfo=utc)
+        expiration_date = now.replace(year=now.year + 1)
+        course = Course(expiration_date=expiration_date)
+        self.assertFalse(course.is_expired())
+
+        now = datetime.utcnow().replace(tzinfo=utc)
+        expiration_date = now.replace(year=now.year - 1)
+        course = Course(expiration_date=expiration_date)
+        self.assertTrue(course.is_expired())
+
+        course = Course()
+        self.assertFalse(course.is_expired())
+
     @mock.patch.object(QuerySet, 'update')
     def test_dequeue(self, mock_update):
         dt = datetime.now()

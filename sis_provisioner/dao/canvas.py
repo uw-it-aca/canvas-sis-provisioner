@@ -186,12 +186,12 @@ def get_term_by_sis_id(term_sis_id):
     return Terms().get_term_by_sis_id(term_sis_id)
 
 
-def get_course_by_id(course_id):
-    return Courses().get_course(course_id)
+def get_course_by_id(course_id, params={}):
+    return Courses().get_course(course_id, params)
 
 
-def get_course_by_sis_id(course_sis_id):
-    return Courses().get_course_by_sis_id(course_sis_id)
+def get_course_by_sis_id(course_sis_id, params={}):
+    return Courses().get_course_by_sis_id(course_sis_id, params)
 
 
 def update_course_sis_id(course_id, course_sis_id):

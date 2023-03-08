@@ -196,12 +196,14 @@ class Course(ImportResource):
     SDB_TYPE = 'sdb'
     ADHOC_TYPE = 'adhoc'
     TYPE_CHOICES = ((SDB_TYPE, 'SDB'), (ADHOC_TYPE, 'Ad Hoc'))
-    RETENTION_EXPIRE_MONTH = 12
-    RETENTION_EXPIRE_DAY = 18
+    RETENTION_EXPIRE_MONTH = 6
+    RETENTION_EXPIRE_DAY = 30
     RETENTION_LIFE_SPAN = 5
 
-    course_id = models.CharField(max_length=80, null=True)  # sis_course_id
-    canvas_course_id = models.CharField(max_length=10, null=True)
+    # sis_course_id
+    course_id = models.CharField(max_length=80, null=True, db_index=True)
+    canvas_course_id = models.CharField(max_length=10, null=True,
+                                        db_index=True)
     course_type = models.CharField(max_length=16, choices=TYPE_CHOICES)
     term_id = models.CharField(max_length=30, db_index=True)
     primary_id = models.CharField(max_length=80, null=True)
@@ -264,7 +266,7 @@ class Course(ImportResource):
             year = int(year) + self.RETENTION_LIFE_SPAN + (1 if (
                 quarter.lower() in ['summer', 'autumn']) else 0)
             expiration = expiration.replace(year=year)
-        except ValueError:
+        except (AttributeError, ValueError):
             expiration = expiration.replace(
                 year=self.created_date.year + self.RETENTION_LIFE_SPAN) if (
                     self.created_date) else expiration
@@ -273,6 +275,11 @@ class Course(ImportResource):
             expiration = expiration.replace(year=now.year)
 
         return expiration
+
+    def is_expired(self):
+        if self.expiration_date is not None:
+            return self.expiration_date < datetime.utcnow().replace(tzinfo=utc)
+        return False
 
     def json_data(self, include_sws_url=False):
         try:
@@ -286,6 +293,7 @@ class Course(ImportResource):
             "course_id": self.course_id,
             "canvas_course_id": self.canvas_course_id,
             "term_id": self.term_id,
+            "primary_id": self.primary_id,
             "xlist_id": self.xlist_id,
             "is_sdb_type": self.is_sdb(),
             "added_date": localtime(self.added_date).isoformat() if (
@@ -297,6 +305,7 @@ class Course(ImportResource):
                 self.created_date is not None) else None,
             "deleted_date": localtime(self.deleted_date).isoformat() if (
                 self.deleted_date is not None) else None,
+            "is_expired": self.is_expired(),
             "expiration_date": localtime(self.expiration_date).isoformat() if (
                 self.expiration_date is not None) else None,
             "expiration_exc_granted_date": localtime(
