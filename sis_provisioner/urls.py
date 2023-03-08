@@ -57,7 +57,7 @@ urlpatterns = [
     re_path(r'api/v1/canvas/account/(?P<account_id>[0-9]+)$',
             CanvasAccountView.as_view()),
     re_path(r'api/v1/course/(?P<course_id>[a-zA-Z0-9\-_ &]+)$',
-            CourseView.as_view()),
+            CourseView.as_view(), name='CourseInfo'),
     re_path(r'api/v1/course/(?P<course_id>[a-zA-Z0-9\-_ &]+)/expiration$',
             CourseExpirationView.as_view(), name='CourseExpiration'),
     re_path(r'api/v1/courses/?$', CourseListView.as_view()),

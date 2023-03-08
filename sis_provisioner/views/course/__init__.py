@@ -4,7 +4,7 @@
 
 from sis_provisioner.dao.course import (
     get_sections_by_instructor_and_term, valid_academic_course_sis_id,
-    valid_adhoc_course_sis_id)
+    valid_adhoc_course_sis_id, valid_canvas_course_id)
 from sis_provisioner.dao.term import get_term_by_year_and_quarter
 from sis_provisioner.dao.user import get_person_by_netid, get_person_by_regid
 from sis_provisioner.models.group import Group
@@ -41,7 +41,7 @@ class CourseView(RESTDispatch):
             return self.error_response(404, "Course not found")
 
     def put(self, request, *args, **kwargs):
-        course_id = self._normalize(kwargs['course_id'])
+        course_id = kwargs['course_id']
         course_ref = self._normalize(course_id)
         try:
             course = Course.objects.get(**course_ref)
