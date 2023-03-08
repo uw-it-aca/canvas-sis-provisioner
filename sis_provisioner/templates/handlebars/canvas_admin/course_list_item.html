@@ -6,20 +6,20 @@
   <div class="panel panel-default">
     <div class="panel-heading">
       <h5 class="panel-title">
-        <a href="#" class="accordion-toggle" data-toggle="collapse" data-target="#collapse_{{this.random}}" data-parent="#course-accordion"><i class="fa fa-chevron-right"></i><span class="course-name">{{#if this.course_id}}{this.course_id}}{{else}}Course {this.canvas_course_id}}{{/if}}</span></a>
+        <a href="#" class="accordion-toggle" data-toggle="collapse" data-target="#collapse_{{this.random}}" data-parent="#course-accordion"><i class="fa fa-chevron-right"></i><span class="course-name">{{#if this.course_id}}{{this.course_id}}{{else}}Course {{this.canvas_course_id}}{{/if}}</span></a>
 {{#if this.is_provisioned}}
-  <span class="provisioned-icon" data-toggle="popover" data-placement="right" data-content="Provisioned {{this.provisioned_date_relative}}"><i class="fa fa-cloud-upload course-available"></i></span>
+  {{#if this.is_sdb_type}}
+    <span class="provisioned-icon" data-toggle="popover" data-placement="right" data-content="Provisioned {{this.provisioned_date_relative}}"><i class="fa fa-cloud-upload course-available"></i></span>
   {{else}}
-    {{#if this.is_sdb_type}}
-      {{#if this.provisioned_status}}
-        <span class="provisioned-icon fa-stack" data-toggle="popover" data-placement="right" data-content="Not in Canvas - {{this.provisioned_status}}"><i class="fa fa-cloud-upload fa-stack-1x"></i><i class="fa fa-ban fa-stack-2x text-danger"></i></span>
-      {{else}}
-        <span class="provisioned-icon" data-toggle="popover" data-placement="right" data-content="Added {{this.added_date_relative}}"><i class="fa fa-cloud-upload course-pending"></i></span>
-      {{/if}}
-    {{else}}
-      <span class="provisioned-icon" data-toggle="popover" data-placement="right" data-content="Created {{this.created_date}}"><i class="fa fa-cloud-upload"></i></span>
-    {{/if}}
+    <span class="provisioned-icon" data-toggle="popover" data-placement="right" data-content="Created {{this.created_date}}"><i class="fa fa-cloud-upload"></i></span>
   {{/if}}
+{{else}}
+  {{#if this.provisioned_status}}
+    <span class="provisioned-icon fa-stack" data-toggle="popover" data-placement="right" data-content="Not in Canvas - {{this.provisioned_status}}"><i class="fa fa-cloud-upload fa-stack-1x"></i><i class="fa fa-ban fa-stack-2x text-danger"></i></span>
+  {{else}}
+    <span class="provisioned-icon" data-toggle="popover" data-placement="right" data-content="Added {{this.added_date_relative}}"><i class="fa fa-cloud-upload course-pending"></i></span>
+  {{/if}}
+{{/if}}
 {{#if this.xlist_id}}
   <span class="xlist-icon" data-toggle="popover" data-placement="right" data-content="Cross-listed with {{this.xlist_id}}"><i class="fa fa-exchange course-emphasis"></i></span>
 {{/if}}

@@ -266,7 +266,7 @@ class Course(ImportResource):
             year = int(year) + self.RETENTION_LIFE_SPAN + (1 if (
                 quarter.lower() in ['summer', 'autumn']) else 0)
             expiration = expiration.replace(year=year)
-        except ValueError:
+        except (AttributeError, ValueError):
             expiration = expiration.replace(
                 year=self.created_date.year + self.RETENTION_LIFE_SPAN) if (
                     self.created_date) else expiration
