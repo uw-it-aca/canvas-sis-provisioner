@@ -197,6 +197,11 @@ $(document).ready(function () {
                 course.provisioned_status.length)),
             in_process = false;
 
+        if (is_provisioned === false && course.is_sdb_type === false &&
+                course.created_date && course.created_date.length) {
+            is_provisioned = true;
+        }
+
         if (course.queue_id && course.queue_id.length) {
             in_process = true;
         }
@@ -224,6 +229,7 @@ $(document).ready(function () {
             provisioned_date_relative: format_relative_date(course.provisioned_date),
             expiration_date: format_long_date(course.expiration_date),
             expiration_date_relative: format_relative_date(course.expiration_date),
+            created_date: format_long_date(course.created_date),
             deleted_date: format_long_date(course.deleted_date),
             deleted_date_relative: format_relative_date(course.deleted_date),
             expiration_exc_granted_date: format_long_date(course.expiration_exc_granted_date),
