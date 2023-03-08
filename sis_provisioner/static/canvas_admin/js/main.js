@@ -192,13 +192,14 @@ $(document).ready(function () {
     });
 
     function courseDataFromJSON(course) {
-        var is_provisioned = (course.provisioned_date &&
-                course.provisioned_date.length && !(course.provisioned_status &&
-                course.provisioned_status.length)),
+        var is_provisioned = false,
             in_process = false;
 
-        if (!course.is_sdb_type && course.created_date && course.created_date.length) {
-            is_provisioned = true;
+        if (course.is_sdb_type) {
+            is_provisioned = (course.provisioned_date && course.provisioned_date.length &&
+                !(course.provisioned_status && course.provisioned_status.length));
+        } else {
+            is_provisioned = (course.created_date && course.created_date.length);
         }
 
         if (course.queue_id && course.queue_id.length) {
