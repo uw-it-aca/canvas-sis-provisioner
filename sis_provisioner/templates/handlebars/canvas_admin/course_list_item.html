@@ -65,11 +65,11 @@
             <li><i class="fa fa-minus-circle error course-emphasis"></i>Blocked for provisioning: <span class="blocked_state">{{this.provisioned_status}}</span></li>
           {{/if}}
           {{#if this.is_provisioned}}
-            {{#if this.added_date}}
-              <li><i class="fa fa-plus"></i>Added for provisioning on {{ this.added_date }} ({{ this.added_date_relative }})</li>
-            {{/if}}
-            {{#if this.course_id}}
-              <li><i class="fa fa-cloud-upload course-available"></i>Last provisioned to Canvas on {{ this.provisioned_date }}</li>
+            {{#if this.is_sdb_type}}
+                <li><i class="fa fa-plus"></i>Added for provisioning on {{this.added_date}} ({{this.added_date_relative}})</li>
+               <li><i class="fa fa-cloud-upload course-available"></i>Last provisioned to Canvas on {{this.provisioned_date}}</li>
+            {{else}}
+              <li><i class="fa fa-cloud-upload course-available"></i>Created in Canvas on {{this.created_date}}</li>
             {{/if}}
             {{#if this.deleted_date}}
             {{else}}
