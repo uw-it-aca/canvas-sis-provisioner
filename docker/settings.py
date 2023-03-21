@@ -99,7 +99,7 @@ AWS_SQS = {
         'MESSAGE_GATHER_SIZE': 10,
         'VALIDATE_SNS_SIGNATURE': True,
         'EVENT_COUNT_PRUNE_AFTER_DAY': 2,
-        'VALIDATE_BODY_SIGNATURE': True,
+        'VALIDATE_BODY_SIGNATURE': False,
     },
     'INSTRUCTOR_ADD': {
         'QUEUE_ARN': os.getenv('SQS_INSTRUCTOR_ADD_QUEUE_ARN', ''),
