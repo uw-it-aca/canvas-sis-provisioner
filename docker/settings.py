@@ -274,11 +274,11 @@ LOGGING = {
     'filters': {
         'stdout_stream': {
             '()': 'django.utils.log.CallbackFilter',
-            'callback': lambda record: record.levelno < logging.WARNING
+            'callback': lambda record: record.levelno < logging.WARN
         },
         'stderr_stream': {
             '()': 'django.utils.log.CallbackFilter',
-            'callback': lambda record: record.levelno > logging.ERROR
+            'callback': lambda record: record.levelno > logging.INFO
         }
     },
     'formatters': {
@@ -321,12 +321,12 @@ LOGGING = {
             'propagate': False,
         },
         'django.request': {
-            'handlers': ['stderr'],
+            'handlers': ['stdout', 'stderr'],
             'level': 'ERROR',
             'propagate': True,
         },
         'sis_provisioner': {
-            'handlers': ['stdout'],
+            'handlers': ['stdout', 'stderr'],
             'level': 'INFO',
             'propagate': False,
         },
@@ -336,16 +336,16 @@ LOGGING = {
             'propagate': False,
         },
         'aws_message': {
-            'handlers': ['stdout'],
+            'handlers': ['stdout', 'stderr'],
             'level': 'DEBUG',
             'propagate': False,
         },
         'groups': {
-            'handlers': ['stdout'],
+            'handlers': ['stdout', 'stderr'],
             'level': 'DEBUG',
         },
         'blti': {
-            'handlers': ['stdout'],
+            'handlers': ['stdout', 'stderr'],
             'level': 'INFO',
             'propagate': False,
         },
