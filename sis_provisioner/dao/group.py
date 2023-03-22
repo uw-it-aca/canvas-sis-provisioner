@@ -7,7 +7,7 @@ from django.utils.timezone import utc
 from uw_gws import GWS
 from uw_gws.exceptions import InvalidGroupID
 from restclients_core.exceptions import DataFailureException
-from sis_provisioner.dao.user import valid_net_id, valid_gmail_id
+from sis_provisioner.dao.user import valid_net_id
 from sis_provisioner.exceptions import (
     UserPolicyException, GroupPolicyException, GroupNotFoundException,
     GroupUnauthorizedException)
@@ -104,8 +104,7 @@ def get_effective_members(group_id, act_as=None):
                         valid_members[member.name] = member
 
                     elif member.is_eppn():
-                        valid_gmail_id(member.name)
-                        valid_members[member.name] = member
+                        invalid_members[member.name] = member
 
                     elif member.is_group():
                         (valid_sub, invalid_sub,
