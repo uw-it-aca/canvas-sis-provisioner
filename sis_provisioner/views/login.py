@@ -8,8 +8,7 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from sis_provisioner.views.admin import RESTDispatch
 from sis_provisioner.dao.user import (
-    get_person_by_netid, get_person_by_gmail_id, can_access_canvas,
-    user_sis_id, user_email)
+    get_person_by_netid, can_access_canvas, user_sis_id, user_email)
 from sis_provisioner.exceptions import UserPolicyException
 from restclients_core.exceptions import DataFailureException
 from logging import getLogger
@@ -33,22 +32,16 @@ class LoginValidationView(APIView):
             if not any(u.get('login') == login for u in users):
                 try:
                     user = {}
+                    login = self.strip_domain(login)
+                    person = get_person_by_netid(login)
+                    user['login'] = person.uwnetid
                     try:
-                        person = get_person_by_gmail_id(login)
-                        user['login'] = person.login_id
-                        user['full_name'] = person.login_id
+                        user['full_name'] = person.get_formatted_name(
+                            '{first} {last}')
                         user['is_person'] = True
-                    except UserPolicyException:
-                        login = self.strip_domain(login)
-                        person = get_person_by_netid(login)
-                        user['login'] = person.uwnetid
-                        try:
-                            user['full_name'] = person.get_formatted_name(
-                                '{first} {last}')
-                            user['is_person'] = True
-                        except AttributeError as ex:
-                            user['full_name'] = person.display_name
-                            user['is_person'] = False  # UW entity
+                    except AttributeError as ex:
+                        user['full_name'] = person.display_name
+                        user['is_person'] = False  # UW entity
 
                     sis_id = user_sis_id(person)
                     if not any(u.get('sis_id') == sis_id for u in users):

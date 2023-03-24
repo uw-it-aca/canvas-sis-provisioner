@@ -6,8 +6,7 @@ from sis_provisioner.models.course import Course
 from sis_provisioner.models.user import User
 from sis_provisioner.csv.data import Collector
 from sis_provisioner.csv.format import UserCSV, EnrollmentCSV
-from sis_provisioner.dao.user import (
-    valid_net_id, get_person_by_netid, get_person_by_gmail_id)
+from sis_provisioner.dao.user import valid_net_id, get_person_by_netid
 from sis_provisioner.dao.course import (
     get_section_by_id, get_registrations_by_section)
 from sis_provisioner.dao.canvas import ENROLLMENT_ACTIVE
@@ -92,18 +91,9 @@ class Builder(object):
                     section_id=section_id, person=person, role=role,
                     status=status))
 
-        except InvalidLoginIdException:
-            try:
-                person = get_person_by_gmail_id(login_id)
-                if status == ENROLLMENT_ACTIVE:
-                    self.data.add(UserCSV(person))
-
-                self.data.add(EnrollmentCSV(
-                    section_id=section_id, person=person, role=role,
-                    status=status))
-            except InvalidLoginIdException as ex:
-                self.logger.info("Skip group member {}: {}".format(
-                    login_id, ex))
+        except InvalidLoginIdException as ex:
+            self.logger.info("Skip group member {}: {}".format(
+                login_id, ex))
 
     def add_registrations_by_section(self, section):
         try:
