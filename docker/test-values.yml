@@ -27,8 +27,6 @@ readiness:
   enabled: true
 securityPolicy:
   enabled: false
-labels:
-  billing-code: "742"
 externalService:
   enabled: true
   name: canvas-db-service
