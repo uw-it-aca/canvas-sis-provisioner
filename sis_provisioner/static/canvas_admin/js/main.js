@@ -477,24 +477,9 @@ $(document).ready(function () {
         $('div#user_search_result div').removeClass('waiting').html(tpl(data));
     }
 
-    // user search
-    $('#user_search_id').change(function (e) {
-        var o_user_id = $('#userID'),
-            which;
-
-        if (!o_user_id.val().length) {
-            which = $(e.target).val();
-            o_user_id.attr('placeholder', (which === 'gmail_id') ?
-                'user@gmail.com' : (which === 'reg_id') ?
-                '9136CCB8F66711D5BE060004AC494FFE' : 'javerage');
-        }
-    });
-
     $('#user_search_button').click(function () {
-        var url = '/api/v1/users',
-            result_div = $('div#user_search_result div'),
-            user_id = $('#userID').val(),
-            which = $('#user_search_id').val();
+        var result_div = $('div#user_search_result div'),
+            user_id = $.trim($('#userID').val());
 
         if (user_id.length) {
             $('div#user_search_result').show();
@@ -506,18 +491,8 @@ $(document).ready(function () {
         result_div.addClass('waiting');
         result_div.html('&nbsp;');
 
-        if (which === 'gmail_id') {
-            url += '?gmail_id=';
-        } else if (which === 'net_id') {
-            url += '?net_id=';
-        } else if (which === 'reg_id') {
-            url += '?reg_id=';
-        } else {
-            return;
-        }
-
         $.ajax({
-            url: url + user_id,
+            url: '/api/v1/users?user_id=' + encodeURIComponent(user_id),
             dataType: 'json',
             success: function (data) {
                 var privileged_actions = $('#user-privileged-actions');
@@ -530,37 +505,18 @@ $(document).ready(function () {
                 }
 
                 $('#user_add_button').click(function () {
-                    var adding = '',
-                        json = {};
+                    var net_id = data.net_id;
 
-                    switch ($('#user_search_id :selected').val()) {
-                    case 'gmail_id':
-                        json.gmail_id = data.gmail_id;
-                        adding = 'Gmail user ' + data.gmail_id;
-                        break;
-                    case 'net_id':
-                        json.net_id = data.net_id;
-                        adding = 'UW NetId ' + data.net_id;
-                        break;
-                    case 'reg_id':
-                        json.reg_id = data.reg_id;
-                        adding = 'UW RegId ' + data.reg_id;
-                        break;
-                    default:
-                        console.log('unknown user type');
-                        break;
-                    }
-
-                    result_div.html('Adding ' + adding + ' ...');
+                    result_div.html('Adding UW NetId ' + net_id + ' ...');
 
                     $.ajax({
                         url: '/api/v1/users/',
                         contentType: 'application/json',
                         type: 'POST',
                         processData: false,
-                        data: JSON.stringify(json),
+                        data: JSON.stringify({'net_id': net_id}),
                         success: function () {
-                            result_div.html(adding + ' has been provisioned to UW Canvas.');
+                            result_div.html(net_id + ' has been provisioned to UW Canvas.');
                         },
                         error: function (xhr) {
                             var response_json;
@@ -587,7 +543,6 @@ $(document).ready(function () {
                 }
             }
         });
-
     });
 
     // import status list

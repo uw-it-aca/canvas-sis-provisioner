@@ -12,13 +12,13 @@ from restclients_core.exceptions import (
 from uw_sws.enrollment import enrollment_search_url_prefix
 from uw_pws import PERSON_PREFIX
 from uw_saml.decorators import group_required
-from sis_provisioner.exceptions import UserPolicyException
+from sis_provisioner.exceptions import (
+    UserPolicyException, InvalidLoginIdException)
 from sis_provisioner.dao.canvas import (
     get_user_by_sis_id, create_user, terminate_user_sessions,
     get_all_users_for_person, merge_all_users_for_person)
 from sis_provisioner.dao.user import (
-    get_person_by_netid, get_person_by_regid, get_person_by_gmail_id,
-    can_access_canvas)
+    get_person_by_netid, get_person_by_regid, valid_reg_id, can_access_canvas)
 from sis_provisioner.models.user import User
 from sis_provisioner.views.admin import RESTDispatch
 
@@ -31,21 +31,21 @@ class UserView(RESTDispatch):
         PUT returns 200 and updates User model
     """
     def get(self, request, *args, **kwargs):
+        user_id = ''
+        if 'user_id' in request.GET:
+            user_id = request.GET.get('user_id', '').strip()
+
+        if not len(user_id):
+            return self.error_response(400, "Missing User ID")
+
         try:
-            if 'gmail_id' in request.GET:
-                gmail_id = request.GET.get('gmail_id', '').strip()
-                person = get_person_by_gmail_id(gmail_id)
-                return self.response_for_google_person(person)
-            elif 'net_id' in request.GET:
-                net_id = self.netid_from_request(request.GET)
-                person = get_person_by_netid(net_id)
-                return self.response_for_person(person)
-            elif 'reg_id' in request.GET:
-                reg_id = self.regid_from_request(request.GET)
-                person = get_person_by_regid(reg_id)
-                return self.response_for_person(person)
-            else:
-                return self.error_response(400, "Unrecognized user ID")
+            try:
+                valid_reg_id(user_id.upper())
+                person = get_person_by_regid(user_id.upper())
+            except InvalidLoginIdException:
+                person = get_person_by_netid(user_id.lower())
+
+            return self.response_for_person(person)
 
         except DataFailureException as err:
             data = json.loads(err.msg)
@@ -57,18 +57,11 @@ class UserView(RESTDispatch):
     def post(self, request, *args, **kwargs):
         try:
             rep = json.loads(request.read())
-
-            if 'gmail_id' in rep:
-                gmail_id = rep.get('gmail_id', '').strip()
-                person = get_person_by_gmail_id(gmail_id)
-                user = create_user(person)
-                return self.response_for_google_person(person)
-            else:
-                net_id = self.netid_from_request(rep)
-                person = get_person_by_netid(net_id)
-                user = User.objects.add_user_by_netid(
-                    person.uwnetid, priority=User.PRIORITY_IMMEDIATE)
-                return self.response_for_person(person)
+            net_id = self.netid_from_request(rep)
+            person = get_person_by_netid(net_id)
+            user = User.objects.add_user_by_netid(
+                person.uwnetid, priority=User.PRIORITY_IMMEDIATE)
+            return self.response_for_person(person)
 
         except DataFailureException as err:
             data = json.loads(err.msg)
@@ -87,7 +80,6 @@ class UserView(RESTDispatch):
             'display_name': person.display_name,
             'net_id': person.uwnetid,
             'reg_id': person.uwregid,
-            'gmail_id': None,
             'added_date': None,
             'provisioned_date': None,
             'priority': 'normal',
@@ -138,31 +130,6 @@ class UserView(RESTDispatch):
                 response['canvas_users'][0]['can_update_sis_id'] = True
         else:
             response['can_merge_users'] = self.can_merge_users(self.request)
-
-        return self.json_response(response)
-
-    def response_for_google_person(self, person):
-        response = {
-            'is_valid': True,
-            'display_name': '',
-            'net_id': None,
-            'reg_id': None,
-            'gmail_id': person.login_id,
-            'added_date': None,
-            'provisioned_date': None,
-            'priority': 'normal',
-            'queue_id': None,
-        }
-
-        try:
-            user = get_user_by_sis_id(person.sis_user_id)
-            response['provisioned_date'] = datetime.datetime.now().isoformat()
-            response['display_name'] = user.name
-            response['can_access_canvas'] = can_access_canvas(person.login_id)
-        except DataFailureException:
-            pass
-        except UserPolicyException:
-            response['can_access_canvas'] = False
 
         return self.json_response(response)
 

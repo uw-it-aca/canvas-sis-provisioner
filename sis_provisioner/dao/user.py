@@ -119,12 +119,6 @@ def user_fullname(user):
 
 
 def can_access_canvas(login_id):
-    try:
-        valid_gmail_id(login_id)
-        return True
-    except InvalidLoginIdException:
-        pass
-
     login_group_id = getattr(settings, 'ALLOWED_CANVAS_LOGIN_USERS')
     if not is_group_member(login_group_id, login_id):
         raise UserPolicyException('UWNetID not permitted')

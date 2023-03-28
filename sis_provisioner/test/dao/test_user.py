@@ -51,7 +51,8 @@ class UserPolicyTest(TestCase):
     @override_settings(ALLOWED_CANVAS_LOGIN_USERS='u_acadev_unittest')
     def test_can_access_canvas(self):
         self.assertEqual(can_access_canvas('javerage'), True)
-        self.assertEqual(can_access_canvas('joe@gmail.com'), True)
+        self.assertRaisesRegex(UserPolicyException, "UWNetID not permitted$",
+                               can_access_canvas, 'joe@gmail.com')
         self.assertRaisesRegex(UserPolicyException, "UWNetID not permitted$",
                                can_access_canvas, 'baverage')
 
@@ -64,16 +65,14 @@ class UserPolicyTest(TestCase):
         self.assertRaises(UserPolicyException, valid_canvas_user_id, 'abc')
         self.assertRaises(UserPolicyException, valid_canvas_user_id, '1234z')
 
-    @override_settings(ALLOWED_LOGIN_DOMAINS=['gmail.com'])
     def test_user_sis_id(self):
         user = PWS().get_person_by_netid('javerage')
         self.assertEquals(
             user_sis_id(user), '9136CCB8F66711D5BE060004AC494FFE')
 
-        user = get_person_by_gmail_id('john.smith@gmail.com')
-        self.assertEquals(user_sis_id(user), 'johnsmith@gmail.com')
+        self.assertRaises(InvalidLoginIdException, get_person_by_gmail_id,
+                          'john.smith@gmail.com')
 
-    @override_settings(ALLOWED_LOGIN_DOMAINS=['gmail.com'])
     def test_user_email(self):
         user = PWS().get_person_by_netid('javerage')
         self.assertEquals(user_email(user), 'javerage@uw.edu')
@@ -82,8 +81,8 @@ class UserPolicyTest(TestCase):
         user = PWS().get_entity_by_netid('somalt')
         self.assertEquals(user_email(user), 'somalt@uw.edu')
 
-        user = get_person_by_gmail_id('john.smith@gmail.com')
-        self.assertEquals(user_email(user), 'john.smith@gmail.com')
+        self.assertRaises(InvalidLoginIdException, get_person_by_gmail_id,
+                          'john.smith@gmail.com')
 
         user = PWS().get_entity_by_netid('somalt')
         user.uwnetid = None
@@ -92,7 +91,6 @@ class UserPolicyTest(TestCase):
         user = InvalidPerson()
         self.assertRaises(UserPolicyException, user_email, user)
 
-    @override_settings(ALLOWED_LOGIN_DOMAINS=['gmail.com'])
     def test_user_fullname(self):
         user = PWS().get_person_by_netid('javerage')
         name = user_fullname(user)
@@ -112,10 +110,8 @@ class UserPolicyTest(TestCase):
         self.assertEquals(len(name), 1)
         self.assertEquals(name[0], user.display_name)
 
-        user = get_person_by_gmail_id('john.smith@gmail.com')
-        name = user_fullname(user)
-        self.assertEquals(len(name), 1)
-        self.assertEquals(name[0], 'john.smith')
+        self.assertRaises(InvalidLoginIdException, get_person_by_gmail_id,
+                          'john.smith@gmail.com')
 
         user = InvalidPerson()
         self.assertRaises(UserPolicyException, user_fullname, user)
@@ -232,77 +228,3 @@ class RegidPolicyTest(TestCase):
             '9136CCB8F66711D5BE060004AC494FFEE')
         self.assertRaises(InvalidLoginIdException, valid_reg_id, 'javerage')
         self.assertRaises(UserPolicyException, valid_reg_id, 'javerage')
-
-
-@fdao_pws_override
-@fdao_gws_override
-class GmailPolicyTest(TestCase):
-    valid_domains = ['gmail.com', 'google.com', 'googlemail.com']
-    valid_users = [
-        "JohnSmith@gmail.com",
-        "johnsmith@GMail.com",
-        "john.smith@gmail.com",
-        "john.smith+canvas@gmail.com",
-        "john.smith+abc+canvas+@gmail.com",
-        ".john.smith@gmail.com",
-    ]
-
-    invalid_users = [
-        "john@smith@gmail.com",
-        "+johnsmith@gmail.com",
-        "+@gmail.com",
-        ".@gmail.com",
-        "@gmail.com",
-    ]
-
-    @override_settings(ALLOWED_LOGIN_DOMAINS=valid_domains)
-    def test_get_person_by_gmail_id(self):
-        default_user = "johnsmith@gmail.com"
-
-        for user in self.valid_users:
-            self.assertEquals(
-                get_person_by_gmail_id(user).sis_user_id, default_user)
-
-        for user in self.invalid_users:
-            self.assertRaises(
-                UserPolicyException, get_person_by_gmail_id, user)
-
-    @override_settings(ALLOWED_LOGIN_DOMAINS=valid_domains)
-    def test_valid_domains(self):
-        default_user = "johnsmith"
-
-        invalid_domains = [
-            "abc.com"
-            "",
-        ]
-
-        for domain in self.valid_domains:
-            user = "%s@%s" % (default_user, domain)
-            self.assertEquals(
-                valid_gmail_id(user), user, "Valid user: {}".format(user))
-
-        for domain in invalid_domains:
-            user = "%s@%s" % (default_user, domain)
-            self.assertRaises(
-                InvalidLoginIdException, valid_gmail_id, user)
-
-    @override_settings(ALLOWED_LOGIN_DOMAINS=valid_domains)
-    def test_valid_user(self):
-        default_user = "johnsmith@gmail.com"
-
-        self.assertEquals(
-            valid_gmail_id(default_user), default_user,
-            "Default user is not changed")
-
-        for user in self.valid_users:
-            self.assertEquals(
-                valid_gmail_id(user), default_user,
-                "Valid user: {}".format(user))
-
-        for user in self.invalid_users:
-            self.assertRaises(UserPolicyException, valid_gmail_id, user)
-
-    @override_settings(ALLOWED_LOGIN_DOMAINS=[])
-    def test_valid_user_no_domains(self):
-        for user in self.valid_users:
-            self.assertRaises(UserPolicyException, valid_gmail_id, user)
