@@ -77,6 +77,11 @@ class EnrollmentProcessor(SISProvisionerProcessor):
                 if 'RequestDate' in event:
                     data['RequestDate'] = date_parse(event['RequestDate'])
 
+                self.logger.info('{} LOAD {} for {} at {}'.format(
+                    log_prefix,
+                    event['Action']['Code'],
+                    event['Person']['UWRegID'],
+                    event['LastModified']))
                 enrollments.append(data)
             except UnhandledActionCodeException:
                 self.logger.warning('{} UNKNOWN {} for {} at {}'.format(
