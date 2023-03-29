@@ -9,7 +9,6 @@ from uw_sws.util import fdao_sws_override
 from sis_provisioner.models.account import Curriculum
 from sis_provisioner.dao.course import (
     get_section_by_label, get_registrations_by_section)
-from sis_provisioner.dao.user import get_person_by_gmail_id
 from sis_provisioner.exceptions import (
     CoursePolicyException, EnrollmentPolicyException, AccountPolicyException)
 from sis_provisioner.csv.format import *

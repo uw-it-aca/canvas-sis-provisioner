@@ -7,7 +7,6 @@ from uw_pws import PWS
 from uw_gws import GWS
 from uw_gws.models import GroupEntity
 from uw_gws.exceptions import InvalidGroupID
-from uw_canvas.models import CanvasUser
 from restclients_core.exceptions import DataFailureException
 from sis_provisioner.exceptions import (
     UserPolicyException, MissingLoginIdException, TemporaryNetidException,
@@ -82,7 +81,7 @@ def valid_gmail_id(login_id):
     except Exception:
         raise InvalidLoginIdException("Invalid username: {}".format(login_id))
 
-    if domain not in getattr(settings, 'ALLOWED_LOGIN_DOMAINS', []):
+    if domain not in ['gmail.com', 'google.com', 'googlemail.com']:
         raise InvalidLoginIdException("Invalid domain: {}".format(login_id))
 
     return "{}@{}".format(username, domain)
@@ -161,9 +160,3 @@ def get_person_by_regid(regid):
             raise
 
     return person
-
-
-def get_person_by_gmail_id(gmail_id):
-    return CanvasUser(sis_user_id=valid_gmail_id(gmail_id),
-                      login_id=gmail_id.lower(),
-                      email=gmail_id)
