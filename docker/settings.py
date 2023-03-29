@@ -336,12 +336,8 @@ LOGGING = {
         },
         'aws_message': {
             'handlers': ['stdout', 'stderr'],
-            'level': 'DEBUG',
+            'level': 'INFO',
             'propagate': False,
-        },
-        'groups': {
-            'handlers': ['stdout', 'stderr'],
-            'level': 'DEBUG',
         },
         'blti': {
             'handlers': ['stdout', 'stderr'],
