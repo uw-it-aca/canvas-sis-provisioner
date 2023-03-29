@@ -70,9 +70,6 @@ class UserPolicyTest(TestCase):
         self.assertEquals(
             user_sis_id(user), '9136CCB8F66711D5BE060004AC494FFE')
 
-        self.assertRaises(InvalidLoginIdException, get_person_by_gmail_id,
-                          'john.smith@gmail.com')
-
     def test_user_email(self):
         user = PWS().get_person_by_netid('javerage')
         self.assertEquals(user_email(user), 'javerage@uw.edu')
@@ -80,9 +77,6 @@ class UserPolicyTest(TestCase):
         # non-personal netid
         user = PWS().get_entity_by_netid('somalt')
         self.assertEquals(user_email(user), 'somalt@uw.edu')
-
-        self.assertRaises(InvalidLoginIdException, get_person_by_gmail_id,
-                          'john.smith@gmail.com')
 
         user = PWS().get_entity_by_netid('somalt')
         user.uwnetid = None
@@ -109,9 +103,6 @@ class UserPolicyTest(TestCase):
         name = user_fullname(user)
         self.assertEquals(len(name), 1)
         self.assertEquals(name[0], user.display_name)
-
-        self.assertRaises(InvalidLoginIdException, get_person_by_gmail_id,
-                          'john.smith@gmail.com')
 
         user = InvalidPerson()
         self.assertRaises(UserPolicyException, user_fullname, user)
@@ -228,3 +219,37 @@ class RegidPolicyTest(TestCase):
             '9136CCB8F66711D5BE060004AC494FFEE')
         self.assertRaises(InvalidLoginIdException, valid_reg_id, 'javerage')
         self.assertRaises(UserPolicyException, valid_reg_id, 'javerage')
+
+
+class GmailPolicyTest(TestCase):
+    default_user = "johnsmith@gmail.com"
+    valid_users = [
+        "JohnSmith@gmail.com",
+        "johnsmith@GMail.com",
+        "john.smith@gmail.com",
+        "john.smith+canvas@gmail.com",
+        "john.smith+abc+canvas+@gmail.com",
+        ".john.smith@gmail.com",
+    ]
+
+    invalid_users = [
+        "john@smith@gmail.com",
+        "+johnsmith@gmail.com",
+        "+@gmail.com",
+        ".@gmail.com",
+        "@gmail.com",
+        "johnsmith@hotmail.com",
+    ]
+
+    def test_valid_gmail_id(self):
+        self.assertEquals(
+            valid_gmail_id(self.default_user), self.default_user,
+            "Default user is not changed")
+
+        for user in self.valid_users:
+            self.assertEquals(
+                valid_gmail_id(user), self.default_user,
+                "Valid user: {}".format(user))
+
+        for user in self.invalid_users:
+            self.assertRaises(InvalidLoginIdException, valid_gmail_id, user)
