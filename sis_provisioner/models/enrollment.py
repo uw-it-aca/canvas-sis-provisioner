@@ -95,9 +95,9 @@ class EnrollmentManager(models.Manager):
                 enrollment = Enrollment.objects.get(course_id=course_id,
                                                     reg_id=reg_id,
                                                     role=role)
-                if (last_modified > enrollment.last_modified or (
-                        last_modified == enrollment.last_modified and
-                        status == ENROLLMENT_ACTIVE)):
+                if ((last_modified > enrollment.last_modified) or (
+                        status == ENROLLMENT_ACTIVE and
+                        (enrollment.last_modified - last_modified).seconds == 0)):  # noqa
                     enrollment.status = status
                     enrollment.last_modified = last_modified
                     enrollment.request_date = request_date
