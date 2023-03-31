@@ -212,7 +212,6 @@ ALLOWED_CANVAS_AFFILIATE_USERS = 'u_subman_s-canvas-affiliate'
 ALLOWED_CANVAS_SPONSORED_USERS = 'u_subman_s-canvas-sponsored'
 ALLOWED_CANVAS_STUDENT_USERS = 'u_subman_s-canvas-student'
 
-ALLOWED_LOGIN_DOMAINS = ['gmail.com', 'google.com', 'googlemail.com']
 ALLOWED_ADD_USER_DOMAINS = [
     'uw.edu', 'washington.edu', 'u.washington.edu', 'cac.washington.edu']
 
@@ -337,12 +336,8 @@ LOGGING = {
         },
         'aws_message': {
             'handlers': ['stdout', 'stderr'],
-            'level': 'DEBUG',
+            'level': 'INFO',
             'propagate': False,
-        },
-        'groups': {
-            'handlers': ['stdout', 'stderr'],
-            'level': 'DEBUG',
         },
         'blti': {
             'handlers': ['stdout', 'stderr'],

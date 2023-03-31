@@ -3,7 +3,7 @@
 
 
 from django.conf import settings
-from sis_provisioner.dao.user import valid_net_id, valid_gmail_id
+from sis_provisioner.dao.user import valid_net_id
 from sis_provisioner.exceptions import UserPolicyException
 from sis_provisioner.models.group import Group, GroupMemberGroup
 from sis_provisioner.models.user import User
@@ -91,11 +91,7 @@ class UWGroupDispatch(Dispatch):
             valid_net_id(login_id)
             return 1
         except UserPolicyException:
-            try:
-                valid_gmail_id(login_id)
-                return 1
-            except UserPolicyException:
-                pass
+            pass
         return 0
 
     def update_members(self, group_id, message):

@@ -48,7 +48,6 @@ class BuilderTest(TestCase):
             '2013-winter-DROP_T-100-B')
         self.assertEqual(builder.add_registrations_by_section(section), None)
 
-    @override_settings(ALLOWED_LOGIN_DOMAINS=['gmail.com'])
     def test_add_group_enrollment_data(self):
         builder = Builder()
         builder.add_group_enrollment_data(
@@ -61,7 +60,4 @@ class BuilderTest(TestCase):
         builder = Builder()
         builder.add_group_enrollment_data(
             'jav.erage@gmail.com', '2013-winter-AAA-BB-groups', 'ta', 'active')
-        self.assertEqual(
-            str(builder.data.enrollments[0]), (
-                ',,javerage@gmail.com,ta,'
-                ',2013-winter-AAA-BB-groups,active,\n'))
+        self.assertEqual(len(builder.data.enrollments), 0)

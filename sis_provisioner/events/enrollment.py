@@ -77,7 +77,7 @@ class EnrollmentProcessor(SISProvisionerProcessor):
                 if 'RequestDate' in event:
                     data['RequestDate'] = date_parse(event['RequestDate'])
 
-                self.logger.info('{} LOAD {} for {} at {}'.format(
+                self.logger.debug('{} LOAD {} for {} at {}'.format(
                     log_prefix,
                     event['Action']['Code'],
                     event['Person']['UWRegID'],

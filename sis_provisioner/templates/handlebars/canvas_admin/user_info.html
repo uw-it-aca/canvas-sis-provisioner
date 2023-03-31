@@ -1,11 +1,7 @@
 {% verbatim %}
 <script id="user-info" type="text/x-handlebars-template">
 {{#if is_valid}}
-  {{#if net_id}}
-    {{ display_name }} (<span id="user_net_id">{{ net_id }}</span>)
-  {{else}}
-    &quot;{{ gmail_id }}&quot;
-  {{/if}}
+  {{ display_name }} (<span id="user_net_id">{{ net_id }}</span>)
   {{#if provisioned_date}}
     {{#if net_id}}
       was provisioned on {{ provisioned_date }}
