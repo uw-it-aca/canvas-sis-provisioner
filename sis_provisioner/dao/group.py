@@ -103,15 +103,15 @@ def get_effective_members(group_id, act_as=None):
                         valid_net_id(member.name)
                         valid_members[member.name] = member
 
-                    elif member.is_eppn():
-                        invalid_members[member.name] = member
-
                     elif member.is_group():
                         (valid_sub, invalid_sub,
                             member_subgroups) = _get_members(member.name)
                         valid_members.update(valid_sub)
                         invalid_members.update(invalid_sub)
                         member_group_ids += [member.name] + member_subgroups
+
+                    else:
+                        raise UserPolicyException('Member not permitted')
 
                 except (UserPolicyException, GroupPolicyException) as err:
                     member.error = err
