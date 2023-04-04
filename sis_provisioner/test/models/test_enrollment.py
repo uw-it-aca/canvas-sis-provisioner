@@ -66,6 +66,7 @@ class EnrollmentModelTest(TestCase):
             'Role': 'Student',
             'Status': 'Active',
             'LastModified': now_dt,
+            'DuplicateCode': 'A',
             'InstructorUWRegID': None}
 
         # Section not in course table
@@ -81,7 +82,7 @@ class EnrollmentModelTest(TestCase):
         Enrollment.objects.add_enrollment(student_data)
         mock_logger.info.assert_called_with(
             'ENROLLMENT: IGNORE Unprovisioned course 2013-summer-TRAIN-101-A, '
-            'BCDEF1234567890ABCDEF1234567890, Student')
+            'BCDEF1234567890ABCDEF1234567890, Student, active')
 
         # Course model with a provisioned_date
         course.provisioned_date = now_dt
@@ -100,12 +101,21 @@ class EnrollmentModelTest(TestCase):
             '2013-01-01 00:00:00+00:00')
 
         # Enrollment added again with deleted status
+        student_data['DuplicateCode'] = ''
         student_data['Status'] = 'Deleted'
         Enrollment.objects.add_enrollment(student_data)
         mock_logger.info.assert_called_with(
             'ENROLLMENT: IGNORE 2013-summer-TRAIN-101-A, '
-            'BCDEF1234567890ABCDEF1234567890, '
-            '2013-01-01 00:00:00+00:00 before 2013-01-01 00:00:00+00:00')
+            'BCDEF1234567890ABCDEF1234567890, Student, deleted, '
+            '2013-01-01 00:00:00+00:00 BEFORE 2013-01-01 00:00:00+00:00')
+
+        student_data['DuplicateCode'] = 'A'
+        student_data['Status'] = 'Deleted'
+        Enrollment.objects.add_enrollment(student_data)
+        mock_logger.info.assert_called_with(
+            'ENROLLMENT: UPDATE 2013-summer-TRAIN-101-A, '
+            'BCDEF1234567890ABCDEF1234567890, Student, deleted, '
+            '2013-01-01 00:00:00+00:00')
 
         Course.objects.all().delete()
         Enrollment.objects.all().delete()

@@ -73,6 +73,7 @@ class EnrollmentManager(models.Manager):
         status = enrollment_data.get('Status').lower()
         last_modified = enrollment_data.get('LastModified').replace(tzinfo=utc)
         request_date = enrollment_data.get('RequestDate')
+        duplicate_code = enrollment_data.get('DuplicateCode', '')
         instructor_reg_id = enrollment_data.get('InstructorUWRegID', None)
 
         course_id = '-'.join([section.term.canvas_sis_id(),
@@ -95,41 +96,46 @@ class EnrollmentManager(models.Manager):
                 enrollment = Enrollment.objects.get(course_id=course_id,
                                                     reg_id=reg_id,
                                                     role=role)
-                if ((last_modified > enrollment.last_modified) or (
-                        status == ENROLLMENT_ACTIVE and
-                        (enrollment.last_modified - last_modified).seconds == 0)):  # noqa
+                if ((duplicate_code > enrollment.duplicate_code) or
+                    (duplicate_code == enrollment.duplicate_code and
+                        last_modified >= enrollment.last_modified)):
                     enrollment.status = status
                     enrollment.last_modified = last_modified
                     enrollment.request_date = request_date
                     enrollment.primary_course_id = primary_course_id
                     enrollment.instructor_reg_id = instructor_reg_id
+                    enrollment.duplicate_code = duplicate_code
 
                     if enrollment.queue_id is None:
                         enrollment.priority = enrollment.PRIORITY_DEFAULT
                     else:
                         enrollment.priority = enrollment.PRIORITY_HIGH
-                        logger.info('{} IN QUEUE {}, {}, {}, {}'.format(
+                        logger.info('{} IN QUEUE {}, {}, {}, {}, {}'.format(
                             enrollment_log_prefix, full_course_id, reg_id,
-                            role, enrollment.queue_id))
+                            role, status, enrollment.queue_id))
 
                     enrollment.save()
                     logger.info('{} UPDATE {}, {}, {}, {}, {}'.format(
                         enrollment_log_prefix, full_course_id, reg_id, role,
                         status, last_modified))
                 else:
-                    logger.info('{} IGNORE {}, {}, {} before {}'.format(
-                        enrollment_log_prefix, full_course_id, reg_id,
-                        last_modified, enrollment.last_modified))
-
+                    logger.info(
+                        '{} IGNORE {}, {}, {}, {}, {} BEFORE {}'.format(
+                            enrollment_log_prefix, full_course_id, reg_id,
+                            role, status, last_modified,
+                            enrollment.last_modified))
             else:
-                logger.info('{} IGNORE Unprovisioned course {}, {}, {}'.format(
-                    enrollment_log_prefix, full_course_id, reg_id, role))
+                logger.info(
+                    '{} IGNORE Unprovisioned course {}, {}, {}, {}'.format(
+                        enrollment_log_prefix, full_course_id, reg_id, role,
+                        status))
                 course.priority = course.PRIORITY_HIGH
                 course.save()
 
         except Enrollment.DoesNotExist:
             enrollment = Enrollment(course_id=course_id, reg_id=reg_id,
                                     role=role, status=status,
+                                    duplicate_code=duplicate_code,
                                     last_modified=last_modified,
                                     primary_course_id=primary_course_id,
                                     instructor_reg_id=instructor_reg_id)
@@ -168,6 +174,7 @@ class Enrollment(ImportResource):
     status = models.CharField(max_length=16)
     role = models.CharField(max_length=32)
     course_id = models.CharField(max_length=80)
+    duplicate_code = models.CharField(max_length=2, default='')
     last_modified = models.DateTimeField()
     request_date = models.DateTimeField(null=True)
     primary_course_id = models.CharField(max_length=80, null=True)
