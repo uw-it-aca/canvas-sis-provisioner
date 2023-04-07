@@ -147,9 +147,9 @@ class InstructorProcessor(SISProvisionerProcessor):
                 log_prefix,
                 outcome,
                 self._eventMessageType,
-                reg_id,
                 self._section.canvas_section_sis_id() if (
                     self._section is not None) else '',
+                reg_id,
                 self._last_modified,
                 self._event_id))
 
