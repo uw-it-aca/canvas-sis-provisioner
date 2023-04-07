@@ -46,6 +46,7 @@ class InstructorProcessor(SISProvisionerProcessor):
             course_number=course_data['CourseNumber'],
             section_id=section_data['SectionID'],
             is_independent_study=section_data['IndependentStudy'])
+        section.linked_section_urls = []
         self._section = section
 
         if not is_active_term(term):
@@ -82,6 +83,7 @@ class InstructorProcessor(SISProvisionerProcessor):
                             is_primary_section=False,
                             is_independent_study=section_data[
                                 'IndependentStudy'])
+                        section.linked_section_urls = []
                         self._set_primary_section(section, primary_section)
                         sections.append(section)
             else:
