@@ -24,7 +24,6 @@ class InstructorProcessor(SISProvisionerProcessor):
     def process_message_body(self, json_data):
         self._last_modified = date_parse(json_data['EventDate'])
         self._event_id = json_data.get('EventID')
-        self._section = None
 
         section_data = json_data['Current']
         if not section_data:
@@ -36,7 +35,7 @@ class InstructorProcessor(SISProvisionerProcessor):
             term = get_term_by_year_and_quarter(
                 section_data['Term']['Year'], section_data['Term']['Quarter'])
         except DataFailureException as err:
-            self._log('ERROR Term ({})'.format(err))
+            self._log('ERROR Term ({})'.format(err), None)
             return
 
         section = Section(
@@ -47,14 +46,13 @@ class InstructorProcessor(SISProvisionerProcessor):
             section_id=section_data['SectionID'],
             is_independent_study=section_data['IndependentStudy'])
         section.linked_section_urls = []
-        self._section = section
 
         if not is_active_term(term):
-            self._log('IGNORE (Inactive section)')
+            self._log('IGNORE (Inactive section)', section)
             return
 
         if not is_time_schedule_ready(section):
-            self._log('IGNORE (TS not ready)')
+            self._log('IGNORE (TS not ready)', section)
             return
 
         self._previous_instructors = self._instructors_from_section_json(
@@ -118,12 +116,12 @@ class InstructorProcessor(SISProvisionerProcessor):
 
             enrollments.append(enrollment_data)
 
-            self._log('ACCEPT', reg_id=reg_id)
+            self._log('ACCEPT', section, reg_id=reg_id)
 
         return enrollments
 
     def load_instructors(self, section):
-        raise Exception('No load_instructors method')
+        raise Exception('Not Implemented!')
 
     def _instructors_from_section_json(self, section):
         instructors = {}
@@ -138,19 +136,18 @@ class InstructorProcessor(SISProvisionerProcessor):
                             person.append('[{}] = "{}"'.format(k, v))
 
                         self._log('IGNORE (Missing regid for {})'.format(
-                            ', '.join(person)))
+                            ', '.join(person)), section)
 
         return instructors.keys()
 
-    def _log(self, outcome, reg_id=''):
+    def _log(self, outcome, section, reg_id=''):
         self.logger.info((
             '{} {} type: {}, section: {}, regid: {}, last_modified: {}, '
             'event_id: {}').format(
                 log_prefix,
                 outcome,
                 self._eventMessageType,
-                self._section.canvas_section_sis_id() if (
-                    self._section is not None) else '',
+                section.section_label() if (section is not None) else '',
                 reg_id,
                 self._last_modified,
                 self._event_id))
