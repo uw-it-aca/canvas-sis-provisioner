@@ -140,7 +140,7 @@ class EnrollmentManager(models.Manager):
             else:
                 _log('IGNORE (Unprovisioned course)', status, full_course_id,
                      reg_id, duplicate_code, role, last_modified)
-                course.priority = course.PRIORITY_HIGH
+                course.priority = course.PRIORITY_IMMEDIATE
                 course.save()
 
         except Enrollment.DoesNotExist:
@@ -157,13 +157,13 @@ class EnrollmentManager(models.Manager):
             except IntegrityError:
                 self.add_enrollment(enrollment_data)  # Try again
         except Course.DoesNotExist:
-            if is_active_term(section.term):
+            if is_active_term(section.term):  # current, next, after_next
                 # Initial course provisioning effectively picks up event
                 course = Course(course_id=full_course_id,
                                 course_type=Course.SDB_TYPE,
                                 term_id=section.term.canvas_sis_id(),
                                 primary_id=primary_course_id,
-                                priority=Course.PRIORITY_HIGH)
+                                priority=Course.PRIORITY_IMMEDIATE)
                 try:
                     course.save()
                     _log('IGNORE (Unprovisioned course)', status,
