@@ -273,7 +273,7 @@ LOGGING = {
     'filters': {
         'stdout_stream': {
             '()': 'django.utils.log.CallbackFilter',
-            'callback': lambda record: record.levelno < logging.WARN
+            'callback': lambda record: record.levelno < logging.WARNING
         },
         'stderr_stream': {
             '()': 'django.utils.log.CallbackFilter',
