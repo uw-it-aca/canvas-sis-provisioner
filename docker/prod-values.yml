@@ -109,7 +109,7 @@ cronjob:
           cpu: 25m
           memory: 64Mi
     - name: queue-active-courses
-      schedule: "35 13 * * 1-6"
+      schedule: "35 13 * * *"
       command: ["/scripts/management_command.sh"]
       args: ["queue_active_courses"]
       resources:

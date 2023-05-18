@@ -310,35 +310,21 @@ def get_active_courses_for_term(term, account_id=None):
     canvas_term = get_term_by_sis_id(term.canvas_sis_id())
     reports = Reports()
 
-    # Canvas report of "unused" courses for the term
-    unused_course_report = reports.create_unused_courses_report(
-        account_id, canvas_term.term_id)
-
-    unused_courses = {}
-    for row in reader(reports.get_report_data(unused_course_report)):
-        try:
-            sis_course_id = row[1]
-            valid_academic_course_sis_id(sis_course_id)
-            unused_courses[sis_course_id] = True
-        except (IndexError, CoursePolicyException):
-            pass
-
-    # Canvas report of all courses for the term
-    all_course_report = reports.create_course_provisioning_report(
+    course_report = reports.create_course_provisioning_report(
         account_id, canvas_term.term_id)
 
     active_courses = []
-    for row in reader(reports.get_report_data(all_course_report)):
+    for row in reader(reports.get_report_data(course_report)):
         try:
             sis_course_id = row[1]
+            status = row[9]
             valid_academic_course_sis_id(sis_course_id)
-            if sis_course_id not in unused_courses:
+            if status == 'active':
                 active_courses.append(sis_course_id)
         except (IndexError, CoursePolicyException):
             pass
 
-    reports.delete_report(unused_course_report)
-    reports.delete_report(all_course_report)
+    reports.delete_report(course_report)
     return active_courses
 
 
