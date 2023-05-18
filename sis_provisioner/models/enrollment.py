@@ -140,8 +140,9 @@ class EnrollmentManager(models.Manager):
             else:
                 _log('IGNORE (Unprovisioned course)', status, full_course_id,
                      reg_id, duplicate_code, role, last_modified)
-                course.priority = course.PRIORITY_IMMEDIATE
-                course.save()
+                if course.priority < course.PRIORITY_IMMEDIATE:
+                    course.priority = course.PRIORITY_IMMEDIATE
+                    course.save()
 
         except Enrollment.DoesNotExist:
             enrollment = Enrollment(course_id=course_id, reg_id=reg_id,
