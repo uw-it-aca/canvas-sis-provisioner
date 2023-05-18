@@ -14,6 +14,8 @@ from dateutil.parser import parse as date_parse
 
 log_prefix = 'ENROLLMENT:'
 QUEUE_SETTINGS_NAME = 'ENROLLMENT_V2'
+STATUS_CODES = {
+    'A': ENROLLMENT_ACTIVE, 'D': ENROLLMENT_DELETED, 'S': ENROLLMENT_ACTIVE}
 
 
 class EnrollmentProcessor(SISProvisionerProcessor):
@@ -64,8 +66,9 @@ class EnrollmentProcessor(SISProvisionerProcessor):
                     'Section': section,
                     'Role': get_student_sis_import_role(),
                     'UWRegID': event['Person']['UWRegID'],
-                    'Status': self._enrollment_status(event, section),
+                    'Status': self._enrollment_status(event),
                     'LastModified': date_parse(event['LastModified']),
+                    'DuplicateCode': event['DuplicateEnrollmentCode'],
                     'InstructorUWRegID': event['Instructor']['UWRegID'] if (
                         'Instructor' in event and event['Instructor'] and
                         'UWRegID' in event['Instructor']) else None
@@ -78,37 +81,31 @@ class EnrollmentProcessor(SISProvisionerProcessor):
                     data['RequestDate'] = date_parse(event['RequestDate'])
 
                 enrollments.append(data)
+                outcome = 'ACCEPT'
             except UnhandledActionCodeException:
-                self.logger.warning('{} UNKNOWN {} for {} at {}'.format(
-                    log_prefix,
-                    event['Action']['Code'],
-                    event['Person']['UWRegID'],
-                    event['LastModified']))
-                pass
+                outcome = 'IGNORE CODE'
             except InvalidLoginIdException:
-                self.logger.warning('{} INVALID UWRegID {}, Href: {}'.format(
-                    log_prefix, event['Person']['UWRegID'],
-                    event['Person']['Href']))
+                outcome = 'INVALID REGID'
+
+            self._log(event, section, outcome)
 
         self.load_enrollments(enrollments)
 
-    def _enrollment_status(self, event, section):
-        # Canvas "active" corresponds to Action codes:
-        #   "A" == ADDED and
-        #   "S" == STANDBY (EO only status)
+    def _enrollment_status(self, event):
         action_code = event['Action']['Code'].upper()
+        if action_code not in STATUS_CODES:
+            raise UnhandledActionCodeException()
+        return STATUS_CODES[action_code]
 
-        if action_code == 'A':
-            return ENROLLMENT_ACTIVE
-
-        if action_code == 'S':
-            self.logger.debug('{} ADD standby {} to {}'.format(
+    def _log(self, event, section, outcome):
+        self.logger.info((
+            '{} {} code: {}, regid: {}, section: {}, duplicate_code: {}, '
+            'last_modified: {}, event_id: {}').format(
                 log_prefix,
+                outcome,
+                event['Action']['Code'],
                 event['Person']['UWRegID'],
-                section.canvas_section_sis_id()))
-            return ENROLLMENT_ACTIVE
-
-        if action_code == 'D':
-            return ENROLLMENT_DELETED
-
-        raise UnhandledActionCodeException()
+                section.canvas_section_sis_id(),
+                event['DuplicateEnrollmentCode'],
+                event['LastModified'],
+                event['EventID']))

@@ -22,11 +22,8 @@ class InstructorProcessor(SISProvisionerProcessor):
     _logModel = InstructorLog
 
     def process_message_body(self, json_data):
-        self._previous_instructors = self._instructors_from_section_json(
-            json_data['Previous'])
-        self._current_instructors = self._instructors_from_section_json(
-            json_data['Current'])
         self._last_modified = date_parse(json_data['EventDate'])
+        self._event_id = json_data.get('EventID')
 
         section_data = json_data['Current']
         if not section_data:
@@ -38,15 +35,7 @@ class InstructorProcessor(SISProvisionerProcessor):
             term = get_term_by_year_and_quarter(
                 section_data['Term']['Year'], section_data['Term']['Quarter'])
         except DataFailureException as err:
-            self.logger.info('{} ERROR get term: {}'.format(log_prefix, err))
-            return
-
-        if not is_active_term(term):
-            self.logger.info(
-                '{} IGNORE Inactive section {}-{}-{}-{}'.format(
-                    log_prefix, term.canvas_sis_id(),
-                    course_data['CurriculumAbbreviation'],
-                    course_data['CourseNumber'], section_data['SectionID']))
+            self._log('ERROR Term ({})'.format(err), None)
             return
 
         section = Section(
@@ -56,10 +45,20 @@ class InstructorProcessor(SISProvisionerProcessor):
             course_number=course_data['CourseNumber'],
             section_id=section_data['SectionID'],
             is_independent_study=section_data['IndependentStudy'])
+        section.linked_section_urls = []
+
+        if not is_active_term(term):
+            self._log('IGNORE (Inactive section)', section)
+            return
 
         if not is_time_schedule_ready(section):
-            self._log_tsc_ignore(section.canvas_section_sis_id())
+            self._log('IGNORE (TS not ready)', section)
             return
+
+        self._previous_instructors = self._instructors_from_section_json(
+            json_data['Previous'])
+        self._current_instructors = self._instructors_from_section_json(
+            json_data['Current'])
 
         sections = []
         primary_section = section_data["PrimarySection"]
@@ -82,6 +81,7 @@ class InstructorProcessor(SISProvisionerProcessor):
                             is_primary_section=False,
                             is_independent_study=section_data[
                                 'IndependentStudy'])
+                        section.linked_section_urls = []
                         self._set_primary_section(section, primary_section)
                         sections.append(section)
             else:
@@ -116,10 +116,12 @@ class InstructorProcessor(SISProvisionerProcessor):
 
             enrollments.append(enrollment_data)
 
+            self._log('ACCEPT', section, reg_id=reg_id)
+
         return enrollments
 
     def load_instructors(self, section):
-        raise Exception('No load_instructors method')
+        raise Exception('Not Implemented!')
 
     def _instructors_from_section_json(self, section):
         instructors = {}
@@ -133,16 +135,22 @@ class InstructorProcessor(SISProvisionerProcessor):
                         for k, v in instructor['Person'].items():
                             person.append('[{}] = "{}"'.format(k, v))
 
-                        course_data = section['Course']
-                        self.logger.info(
-                            '{} IGNORE missing regid for {}-{}-{}: {}'.format(
-                                log_prefix,
-                                course_data['CurriculumAbbreviation'],
-                                course_data['CourseNumber'],
-                                section['SectionID'],
-                                ', '.join(person)))
+                        self._log('IGNORE (Missing regid for {})'.format(
+                            ', '.join(person)), section)
 
         return instructors.keys()
+
+    def _log(self, outcome, section, reg_id=''):
+        self.logger.info((
+            '{} {} type: {}, section: {}, regid: {}, last_modified: {}, '
+            'event_id: {}').format(
+                log_prefix,
+                outcome,
+                self._eventMessageType,
+                section.section_label() if (section is not None) else '',
+                reg_id,
+                self._last_modified,
+                self._event_id))
 
 
 class InstructorAddProcessor(InstructorProcessor):
@@ -164,10 +172,6 @@ class InstructorAddProcessor(InstructorProcessor):
         enrollments = self.enrollments(add, ENROLLMENT_ACTIVE, section)
         self.load_enrollments(enrollments)
 
-    def _log_tsc_ignore(self, section_id):
-        self.logger.info('{} IGNORE add: TS not ready for {}'.format(
-            log_prefix, section_id))
-
 
 class InstructorDropProcessor(InstructorProcessor):
     """
@@ -187,7 +191,3 @@ class InstructorDropProcessor(InstructorProcessor):
                 if reg_id not in self._current_instructors]
         enrollments = self.enrollments(drop, ENROLLMENT_DELETED, section)
         self.load_enrollments(enrollments)
-
-    def _log_tsc_ignore(self, section_id):
-        self.logger.info("{} IGNORE drop: TS not ready for {}".format(
-            log_prefix, section_id))

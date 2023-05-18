@@ -58,7 +58,69 @@ class EnrollmentModelTest(TestCase):
     @mock.patch('sis_provisioner.models.enrollment.is_active_term',
                 return_value=False)
     @mock.patch('sis_provisioner.models.enrollment.logger')
-    def test_add_enrollment(self, mock_logger, mock_is_active_term):
+    def test_add_teacher_enrollment(self, mock_logger, mock_is_active_term):
+        now_dt = datetime(2013, 1, 1).replace(tzinfo=utc)
+        teacher_data = {
+            'Section': get_section_by_id('2013-summer-TRAIN-101-A'),
+            'UWRegID': 'BCDEF1234567890ABCDEF1234567890',
+            'Role': 'Teacher',
+            'Status': 'Active',
+            'LastModified': now_dt,
+            'InstructorUWRegID': None}
+
+        # Section not in course table
+        Enrollment.objects.add_enrollment(teacher_data)
+        mock_logger.info.assert_called_with(
+            'ADD ENROLLMENT: IGNORE (Inactive section) status: active, '
+            'regid: BCDEF1234567890ABCDEF1234567890, section: 2013-summer-'
+            'TRAIN-101-A, duplicate_code: , role: Teacher, last_modified '
+            '2013-01-01 00:00:00+00:00, queue_id: ')
+
+        course, created = Course.objects.get_or_create(
+            course_id='2013-summer-TRAIN-101-A')
+
+        # Course model without a provisioned_date
+        Enrollment.objects.add_enrollment(teacher_data)
+        mock_logger.info.assert_called_with(
+            'ADD ENROLLMENT: IGNORE (Unprovisioned course) status: active, '
+            'regid: BCDEF1234567890ABCDEF1234567890, section: 2013-summer-'
+            'TRAIN-101-A, duplicate_code: , role: Teacher, last_modified '
+            '2013-01-01 00:00:00+00:00, queue_id: ')
+
+        # Course model with a provisioned_date
+        course.provisioned_date = now_dt
+        course.save()
+        Enrollment.objects.add_enrollment(teacher_data)
+        mock_logger.info.assert_called_with(
+            'ADD ENROLLMENT: ADD status: active, regid: BCDEF1234567890ABCD'
+            'EF1234567890, section: 2013-summer-TRAIN-101-A, duplicate_code: '
+            ', role: Teacher, last_modified 2013-01-01 00:00:00+00:00, '
+            'queue_id: ')
+
+        # Enrollment added again
+        Enrollment.objects.add_enrollment(teacher_data)
+        mock_logger.info.assert_called_with(
+            'ADD ENROLLMENT: UPDATE EXISTING status: active, regid: BCDEF123'
+            '4567890ABCDEF1234567890, section: 2013-summer-TRAIN-101-A, '
+            'duplicate_code: , role: Teacher, last_modified 2013-01-01 '
+            '00:00:00+00:00, queue_id: ')
+
+        # Deleted
+        teacher_data['Status'] = 'Deleted'
+        Enrollment.objects.add_enrollment(teacher_data)
+        mock_logger.info.assert_called_with(
+            'ADD ENROLLMENT: UPDATE EXISTING status: deleted, regid: BCDEF123'
+            '4567890ABCDEF1234567890, section: 2013-summer-TRAIN-101-A, '
+            'duplicate_code: , role: Teacher, last_modified 2013-01-01 '
+            '00:00:00+00:00, queue_id: ')
+
+        Course.objects.all().delete()
+        Enrollment.objects.all().delete()
+
+    @mock.patch('sis_provisioner.models.enrollment.is_active_term',
+                return_value=False)
+    @mock.patch('sis_provisioner.models.enrollment.logger')
+    def test_add_student_enrollment(self, mock_logger, mock_is_active_term):
         now_dt = datetime(2013, 1, 1).replace(tzinfo=utc)
         student_data = {
             'Section': get_section_by_id('2013-summer-TRAIN-101-A'),
@@ -66,13 +128,16 @@ class EnrollmentModelTest(TestCase):
             'Role': 'Student',
             'Status': 'Active',
             'LastModified': now_dt,
+            'DuplicateCode': 'A',
             'InstructorUWRegID': None}
 
         # Section not in course table
         Enrollment.objects.add_enrollment(student_data)
         mock_logger.info.assert_called_with(
-            'ENROLLMENT: IGNORE Inactive section 2013-summer-TRAIN-101-A, '
-            'BCDEF1234567890ABCDEF1234567890, Student')
+            'ADD ENROLLMENT: IGNORE (Inactive section) status: active, '
+            'regid: BCDEF1234567890ABCDEF1234567890, section: 2013-summer-'
+            'TRAIN-101-A, duplicate_code: A, role: Student, last_modified '
+            '2013-01-01 00:00:00+00:00, queue_id: ')
 
         course, created = Course.objects.get_or_create(
             course_id='2013-summer-TRAIN-101-A')
@@ -80,32 +145,47 @@ class EnrollmentModelTest(TestCase):
         # Course model without a provisioned_date
         Enrollment.objects.add_enrollment(student_data)
         mock_logger.info.assert_called_with(
-            'ENROLLMENT: IGNORE Unprovisioned course 2013-summer-TRAIN-101-A, '
-            'BCDEF1234567890ABCDEF1234567890, Student')
+            'ADD ENROLLMENT: IGNORE (Unprovisioned course) status: active, '
+            'regid: BCDEF1234567890ABCDEF1234567890, section: 2013-summer-'
+            'TRAIN-101-A, duplicate_code: A, role: Student, last_modified '
+            '2013-01-01 00:00:00+00:00, queue_id: ')
 
         # Course model with a provisioned_date
         course.provisioned_date = now_dt
         course.save()
         Enrollment.objects.add_enrollment(student_data)
         mock_logger.info.assert_called_with(
-            'ENROLLMENT: ADD 2013-summer-TRAIN-101-A, '
-            'BCDEF1234567890ABCDEF1234567890, Student, active, '
-            '2013-01-01 00:00:00+00:00')
+            'ADD ENROLLMENT: ADD status: active, regid: BCDEF1234567890ABCD'
+            'EF1234567890, section: 2013-summer-TRAIN-101-A, duplicate_code: '
+            'A, role: Student, last_modified 2013-01-01 00:00:00+00:00, '
+            'queue_id: ')
 
         # Enrollment added again
         Enrollment.objects.add_enrollment(student_data)
         mock_logger.info.assert_called_with(
-            'ENROLLMENT: UPDATE 2013-summer-TRAIN-101-A, '
-            'BCDEF1234567890ABCDEF1234567890, Student, active, '
-            '2013-01-01 00:00:00+00:00')
+            'ADD ENROLLMENT: UPDATE EXISTING status: active, regid: BCDEF123'
+            '4567890ABCDEF1234567890, section: 2013-summer-TRAIN-101-A, '
+            'duplicate_code: A, role: Student, last_modified 2013-01-01 '
+            '00:00:00+00:00, queue_id: ')
 
         # Enrollment added again with deleted status
+        student_data['DuplicateCode'] = ''
         student_data['Status'] = 'Deleted'
         Enrollment.objects.add_enrollment(student_data)
         mock_logger.info.assert_called_with(
-            'ENROLLMENT: IGNORE 2013-summer-TRAIN-101-A, '
-            'BCDEF1234567890ABCDEF1234567890, '
-            '2013-01-01 00:00:00+00:00 before 2013-01-01 00:00:00+00:00')
+            'ADD ENROLLMENT: IGNORE (Out of order: 2013-01-01 00:00:00+00:00) '
+            'status: deleted, regid: BCDEF1234567890ABCDEF1234567890, '
+            'section: 2013-summer-TRAIN-101-A, duplicate_code: , role: '
+            'Student, last_modified 2013-01-01 00:00:00+00:00, queue_id: ')
+
+        student_data['DuplicateCode'] = 'A'
+        student_data['Status'] = 'Deleted'
+        Enrollment.objects.add_enrollment(student_data)
+        mock_logger.info.assert_called_with(
+            'ADD ENROLLMENT: UPDATE EXISTING status: deleted, regid: BCDEF123'
+            '4567890ABCDEF1234567890, section: 2013-summer-TRAIN-101-A, '
+            'duplicate_code: A, role: Student, last_modified 2013-01-01 '
+            '00:00:00+00:00, queue_id: ')
 
         Course.objects.all().delete()
         Enrollment.objects.all().delete()

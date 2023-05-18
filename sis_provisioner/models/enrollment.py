@@ -18,7 +18,7 @@ from datetime import datetime, timedelta
 from logging import getLogger
 
 logger = getLogger(__name__)
-enrollment_log_prefix = 'ENROLLMENT:'
+enrollment_log_prefix = 'ADD ENROLLMENT:'
 
 
 class EnrollmentManager(models.Manager):
@@ -67,12 +67,29 @@ class EnrollmentManager(models.Manager):
             last_modified__lt=retention_dt).delete()
 
     def add_enrollment(self, enrollment_data):
+        def _log(outcome, status, full_course_id, reg_id, duplicate_code, role,
+                 last_modified, queue_id=''):
+            logger.info((
+                '{} {} status: {}, regid: {}, section: {}, '
+                'duplicate_code: {}, role: {}, last_modified {}, '
+                'queue_id: {}').format(
+                    enrollment_log_prefix,
+                    outcome,
+                    status,
+                    reg_id,
+                    full_course_id,
+                    duplicate_code,
+                    role,
+                    last_modified,
+                    queue_id))
+
         section = enrollment_data.get('Section')
         reg_id = enrollment_data.get('UWRegID')
         role = enrollment_data.get('Role')
         status = enrollment_data.get('Status').lower()
         last_modified = enrollment_data.get('LastModified').replace(tzinfo=utc)
         request_date = enrollment_data.get('RequestDate')
+        duplicate_code = enrollment_data.get('DuplicateCode', '')
         instructor_reg_id = enrollment_data.get('InstructorUWRegID', None)
 
         course_id = '-'.join([section.term.canvas_sis_id(),
@@ -95,70 +112,69 @@ class EnrollmentManager(models.Manager):
                 enrollment = Enrollment.objects.get(course_id=course_id,
                                                     reg_id=reg_id,
                                                     role=role)
-                if (last_modified > enrollment.last_modified or (
-                        last_modified == enrollment.last_modified and
-                        status == ENROLLMENT_ACTIVE)):
+                if ((duplicate_code > enrollment.duplicate_code) or
+                    (duplicate_code == enrollment.duplicate_code and
+                        last_modified >= enrollment.last_modified)):
                     enrollment.status = status
                     enrollment.last_modified = last_modified
                     enrollment.request_date = request_date
                     enrollment.primary_course_id = primary_course_id
                     enrollment.instructor_reg_id = instructor_reg_id
+                    enrollment.duplicate_code = duplicate_code
 
                     if enrollment.queue_id is None:
                         enrollment.priority = enrollment.PRIORITY_DEFAULT
                     else:
                         enrollment.priority = enrollment.PRIORITY_HIGH
-                        logger.info('{} IN QUEUE {}, {}, {}, {}'.format(
-                            enrollment_log_prefix, full_course_id, reg_id,
-                            role, enrollment.queue_id))
+                        _log('IN QUEUE', status, full_course_id, reg_id,
+                             duplicate_code, role, last_modified,
+                             queue_id=enrollment.queue_id)
 
                     enrollment.save()
-                    logger.info('{} UPDATE {}, {}, {}, {}, {}'.format(
-                        enrollment_log_prefix, full_course_id, reg_id, role,
-                        status, last_modified))
+                    _log('UPDATE EXISTING', status, full_course_id, reg_id,
+                         duplicate_code, role, last_modified)
                 else:
-                    logger.info('{} IGNORE {}, {}, {} before {}'.format(
-                        enrollment_log_prefix, full_course_id, reg_id,
-                        last_modified, enrollment.last_modified))
-
+                    _log('IGNORE (Out of order: {})'.format(
+                         enrollment.last_modified), status, full_course_id,
+                         reg_id, duplicate_code, role, last_modified)
             else:
-                logger.info('{} IGNORE Unprovisioned course {}, {}, {}'.format(
-                    enrollment_log_prefix, full_course_id, reg_id, role))
-                course.priority = course.PRIORITY_HIGH
-                course.save()
+                _log('IGNORE (Unprovisioned course)', status, full_course_id,
+                     reg_id, duplicate_code, role, last_modified)
+                if course.priority < course.PRIORITY_IMMEDIATE:
+                    course.priority = course.PRIORITY_IMMEDIATE
+                    course.save()
 
         except Enrollment.DoesNotExist:
             enrollment = Enrollment(course_id=course_id, reg_id=reg_id,
                                     role=role, status=status,
+                                    duplicate_code=duplicate_code,
                                     last_modified=last_modified,
                                     primary_course_id=primary_course_id,
                                     instructor_reg_id=instructor_reg_id)
             try:
                 enrollment.save()
-                logger.info('{} ADD {}, {}, {}, {}, {}'.format(
-                    enrollment_log_prefix, full_course_id, reg_id, role,
-                    status, last_modified))
+                _log('ADD', status, full_course_id, reg_id, duplicate_code,
+                     role, last_modified)
             except IntegrityError:
                 self.add_enrollment(enrollment_data)  # Try again
         except Course.DoesNotExist:
-            if is_active_term(section.term):
+            if is_active_term(section.term):  # current, next, after_next
                 # Initial course provisioning effectively picks up event
                 course = Course(course_id=full_course_id,
                                 course_type=Course.SDB_TYPE,
                                 term_id=section.term.canvas_sis_id(),
                                 primary_id=primary_course_id,
-                                priority=Course.PRIORITY_HIGH)
+                                priority=Course.PRIORITY_IMMEDIATE)
                 try:
                     course.save()
-                    logger.info(
-                        '{} IGNORE Unprovisioned course {}, {}, {}'.format(
-                            enrollment_log_prefix, full_course_id, reg_id,
-                            role))
+                    _log('IGNORE (Unprovisioned course)', status,
+                         full_course_id, reg_id, duplicate_code, role,
+                         last_modified)
                 except IntegrityError:
                     self.add_enrollment(enrollment_data)  # Try again
             else:
-                logger.info('{} IGNORE Inactive section {}, {}, {}'.format(
-                    enrollment_log_prefix, full_course_id, reg_id, role))
+                _log('IGNORE (Inactive section)', status, full_course_id,
+                     reg_id, duplicate_code, role, last_modified)
 
 
 class Enrollment(ImportResource):
@@ -168,6 +184,7 @@ class Enrollment(ImportResource):
     status = models.CharField(max_length=16)
     role = models.CharField(max_length=32)
     course_id = models.CharField(max_length=80)
+    duplicate_code = models.CharField(max_length=2, default='')
     last_modified = models.DateTimeField()
     request_date = models.DateTimeField(null=True)
     primary_course_id = models.CharField(max_length=80, null=True)

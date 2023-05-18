@@ -99,7 +99,7 @@ AWS_SQS = {
         'MESSAGE_GATHER_SIZE': 10,
         'VALIDATE_SNS_SIGNATURE': True,
         'EVENT_COUNT_PRUNE_AFTER_DAY': 2,
-        'VALIDATE_BODY_SIGNATURE': True,
+        'VALIDATE_BODY_SIGNATURE': False,
     },
     'INSTRUCTOR_ADD': {
         'QUEUE_ARN': os.getenv('SQS_INSTRUCTOR_ADD_QUEUE_ARN', ''),
@@ -212,7 +212,6 @@ ALLOWED_CANVAS_AFFILIATE_USERS = 'u_subman_s-canvas-affiliate'
 ALLOWED_CANVAS_SPONSORED_USERS = 'u_subman_s-canvas-sponsored'
 ALLOWED_CANVAS_STUDENT_USERS = 'u_subman_s-canvas-student'
 
-ALLOWED_LOGIN_DOMAINS = ['gmail.com', 'google.com', 'googlemail.com']
 ALLOWED_ADD_USER_DOMAINS = [
     'uw.edu', 'washington.edu', 'u.washington.edu', 'cac.washington.edu']
 
@@ -278,7 +277,7 @@ LOGGING = {
         },
         'stderr_stream': {
             '()': 'django.utils.log.CallbackFilter',
-            'callback': lambda record: record.levelno > logging.ERROR
+            'callback': lambda record: record.levelno > logging.INFO
         }
     },
     'formatters': {
@@ -321,12 +320,12 @@ LOGGING = {
             'propagate': False,
         },
         'django.request': {
-            'handlers': ['stderr'],
+            'handlers': ['stdout', 'stderr'],
             'level': 'ERROR',
             'propagate': True,
         },
         'sis_provisioner': {
-            'handlers': ['stdout'],
+            'handlers': ['stdout', 'stderr'],
             'level': 'INFO',
             'propagate': False,
         },
@@ -336,16 +335,12 @@ LOGGING = {
             'propagate': False,
         },
         'aws_message': {
-            'handlers': ['stdout'],
-            'level': 'DEBUG',
+            'handlers': ['stdout', 'stderr'],
+            'level': 'INFO',
             'propagate': False,
         },
-        'groups': {
-            'handlers': ['stdout'],
-            'level': 'DEBUG',
-        },
         'blti': {
-            'handlers': ['stdout'],
+            'handlers': ['stdout', 'stderr'],
             'level': 'INFO',
             'propagate': False,
         },
