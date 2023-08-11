@@ -1356,7 +1356,7 @@ $(document).ready(function () {
         }
 
         $.ajax({
-            url: '/api/v1/users/' + encodeURIComponent(net_id) + '/course',
+            url: '/api/v1/users/' + encodeURIComponent(net_id) + '/courses',
             contentType: 'application/json',
             type: 'POST',
             processData: false,
