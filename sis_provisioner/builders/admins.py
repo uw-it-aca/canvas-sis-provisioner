@@ -33,16 +33,17 @@ class AdminBuilder(Builder):
         except UserPolicyException as err:
             logger.info(
                 'SKIP ADMIN "{}", account: "{}", role: "{}", {}'.format(
-                    admin.net_id, account_id, role, err))
+                    person.uwnetid, account_id, role, err))
             return
 
         if str(admin.canvas_id) == settings.RESTCLIENTS_CANVAS_ACCOUNT_ID:
             account_id = ''
 
-        self.data.add(AdminCSV(admin.reg_id, account_id, role, status=status))
+        self.data.add(AdminCSV(
+            person.uwregid, account_id, role, status=status))
 
         logger.info('{} ADMIN "{}", account: "{}", role: "{}"'.format(
-            action, admin.net_id, account_id, role))
+            action, person.uwnetid, account_id, role))
 
         if admin.role in settings.ANCILLARY_CANVAS_ROLES:
             ancillary_role = settings.ANCILLARY_CANVAS_ROLES.get(
@@ -54,8 +55,8 @@ class AdminBuilder(Builder):
                 ancillary_account_id = account_id
 
             self.data.add(AdminCSV(
-                admin.reg_id, ancillary_account_id, ancillary_role,
+                person.uwregid, ancillary_account_id, ancillary_role,
                 status=status))
 
             logger.info('{} ADMIN "{}", account: "{}", role "{}"'.format(
-                action, admin.net_id, ancillary_account_id, ancillary_role))
+                action, person.uwnetid, ancillary_account_id, ancillary_role))
