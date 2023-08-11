@@ -1346,9 +1346,63 @@ $(document).ready(function () {
         });
     }
 
+    function createUserCourse() {
+        var course_name = $('#cc-course-name').val(),
+            net_id = $('#cc-user-login-id').val();
+
+        if (course_name === '') {
+            alert('Missing course name');
+            return;
+        }
+
+        $.ajax({
+            url: '/api/v1/users/' + encodeURIComponent(net_id) + '/course',
+            contentType: 'application/json',
+            type: 'POST',
+            processData: false,
+            data: JSON.stringify({'course_name': course_name}),
+            success: function (data) {
+                $('#cc-form-body').hide();
+                $('#cc-course-info').html(data).show();
+                // $('#course-create-form').modal('hide');
+            },
+            error: function (xhr) {
+                var json;
+                try {
+                    json = $.parseJSON(xhr.responseText);
+                    console.log('Course creation POST error:' + json.error);
+                } catch (e) {
+                    console.log('Course creation POST error');
+                }
+            }
+        });
+    }
+
+    function openCreateUserCourse() {
+        /*jshint validthis: true */
+        var net_id = $(this).attr('data-net-id'),
+            course_name;
+
+        course_name = net_id + ' ' +
+            window.canvas_manager.current_term.quarter.slice(0, 2) + '-' +
+            String(window.canvas_manager.current_term.year).slice(0, 2) +
+            ' Course';
+
+        $('#course-create-form').modal({
+            backdrop: 'static',
+            show: true
+        }).find('button.save-btn').off('click').click(createUserCourse);
+
+        $('#cc-course-info').hide();
+        $('#cc-form-body').show();
+        $('#cc-course-name').val(course_name);
+        $('#cc-user-login-id').val(net_id);
+    }
+
     function initializeUserSearchEvents() {
         var container = $('#user-search');
 
+        container.on('click', 'button.create-course', openCreateUserCourse);
         container.on('click', 'button.terminate-sessions', function (e) {
             var $button = $(this),
                 netid = $button.attr('data-net-id'),

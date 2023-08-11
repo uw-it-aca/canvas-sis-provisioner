@@ -20,7 +20,7 @@ from uw_canvas.models import CanvasEnrollment, SISImport as SISImportModel
 from restclients_core.exceptions import DataFailureException
 from sis_provisioner.dao.course import (
     valid_academic_course_sis_id, valid_academic_section_sis_id,
-    group_section_sis_id)
+    adhoc_course_sis_id, group_section_sis_id)
 from sis_provisioner.exceptions import CoursePolicyException
 from urllib3.exceptions import SSLError
 from logging import getLogger
@@ -196,6 +196,24 @@ def get_course_by_sis_id(course_sis_id, params={}):
 
 def update_course_sis_id(course_id, course_sis_id):
     return Courses().update_sis_id(course_id, course_sis_id)
+
+
+def create_course(sis_user_id, account_id, sis_term_id, course_name):
+    user = get_user_by_sis_id(sis_user_id)
+    term = get_term_by_sis_id(sis_term_id)
+
+    courses = Courses()
+    course = courses.create_course(
+        account_id, course_name, term_id=term.term_id)
+
+    # Add the sis_id
+    courses.update_sis_id(course.course_id,
+                          adhoc_course_sis_id(course.course_id))
+
+    # Enroll user as teacher role
+    Enrollments().enroll_user_in_course(
+        course.course_id, user.user_id, CanvasEnrollment.TEACHER)
+    return course
 
 
 def update_term_overrides(term_sis_id, override_dates):

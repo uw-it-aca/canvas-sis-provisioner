@@ -131,6 +131,8 @@ externalSecrets:
           property: canvas-account-id
         - name: continuum-account-id
           property: continuum-account-id
+        - name: adhoc-course-account-id
+          property: adhoc-course-account-id
         - name: canvas-api-token
           property: canvas-api-token
         - name: lti-consumers
@@ -237,6 +239,10 @@ environmentVariablesSecrets:
     name: CONTINUUM_ACCOUNT_ID
     secretName: test-apps.canvas.uw.edu-shared-secrets
     secretKey: continuum-account-id
+  adhocCourseAccountID:
+    name: ADHOC_COURSE_DEFAULT_ACCOUNT_ID
+    secretName: test-apps.canvas.uw.edu-shared-secrets
+    secretKey: adhoc-course-account-id
   supportGroup:
     name: SUPPORT_GROUP
     secretName: test-apps.canvas.uw.edu-shared-secrets
