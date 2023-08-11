@@ -1381,12 +1381,13 @@ $(document).ready(function () {
     function openCreateUserCourse() {
         /*jshint validthis: true */
         var net_id = $(this).attr('data-net-id'),
-            course_name;
+            course_name,
+            year = String(window.canvas_manager.current_term.year),
+            qtr = window.canvas_manager.current_term.quarter.toLowerCase();
 
         course_name = net_id + ' ' +
-            window.canvas_manager.current_term.quarter.slice(0, 2) + '-' +
-            String(window.canvas_manager.current_term.year).slice(0, 2) +
-            ' Course';
+            qtr.charAt(0).toUpperCase() + qtr.slice(1, 2) + ' ' +
+            year.slice(0, 2) + ' Course';
 
         $('#course-create-form').modal({
             backdrop: 'static',
