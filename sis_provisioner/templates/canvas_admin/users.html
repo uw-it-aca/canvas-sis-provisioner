@@ -39,11 +39,15 @@
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal">&times;</button>
-        <h4 id="cc-modal-title" class="modal-title">Create a course for this user <span id="cc-canvas-title"></span></h4>
+        <h4 id="cc-modal-title" class="modal-title">Create a course for this user</h4>
       </div>
       <div class="modal-body">
         <form id="cc-form-body">
           <div class="form-group">
+            <div>
+              <label for="cc-course-instructor">Instructor:</label>
+              <span id="cc-course-instructor"></span>
+            </div>
             <label for="cc-course-name">Course name:</label>
             <div>
               <input type="text" id="cc-course-name" size="30" value=""/>

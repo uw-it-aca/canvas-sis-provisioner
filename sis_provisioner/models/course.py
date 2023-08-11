@@ -32,7 +32,7 @@ class CourseManager(models.Manager):
     def create_user_course(self, sis_user_id, name, account_id=None,
                            sis_term_id=None):
         if not account_id:
-            account_id = settings.get('ADHOC_COURSE_DEFAULT_ACCOUNT_ID')
+            account_id = getattr(settings, 'ADHOC_COURSE_DEFAULT_ACCOUNT_ID')
         if not sis_term_id:
             term = get_current_active_term()
             sis_term_id = term.canvas_sis_id()
