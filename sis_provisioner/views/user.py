@@ -179,8 +179,7 @@ class UserCourseView(UserView):
             return self.error_response(401, 'Unauthorized')
 
         login_id = kwargs.get('net_id')
-        data = json.loads(request.body).get('course', {})
-        name = data.get('course_name')
+        name = json.loads(request.body).get('course_name')
 
         try:
             can_access_canvas(login_id)
