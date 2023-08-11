@@ -1395,9 +1395,10 @@ $(document).ready(function () {
         }).find('button.save-btn').off('click').click(createUserCourse);
 
         $('#cc-course-info').hide();
-        $('#cc-form-body').show();
         $('#cc-course-name').val(course_name);
         $('#cc-user-login-id').val(net_id);
+        $('#cc-course-instructor').html(net_id)
+        $('#cc-form-body').show();
     }
 
     function initializeUserSearchEvents() {
