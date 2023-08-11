@@ -79,13 +79,15 @@ class AdminView(View):
 
     @staticmethod
     def can_terminate_user_sessions(request):
-        return is_group_admin(
-            settings.CANVAS_MANAGER_ADMIN_GROUP, get_user(request))
+        return is_member_of_group(request, settings.RESTCLIENTS_ADMIN_GROUP)
 
     @staticmethod
     def can_merge_users(request):
-        return is_group_admin(
-            settings.CANVAS_MANAGER_ADMIN_GROUP, get_user(request))
+        return is_member_of_group(request, settings.RESTCLIENTS_ADMIN_GROUP)
+
+    @staticmethod
+    def can_create_user_course(request):
+        return is_member_of_group(request, settings.RESTCLIENTS_ADMIN_GROUP)
 
 
 class ImportStatus(AdminView):
