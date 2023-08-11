@@ -5,7 +5,7 @@
 from django.conf import settings
 from sis_provisioner.builders import Builder
 from sis_provisioner.csv.format import AdminCSV
-from sis_provisioner.dao.user import get_person_by_regid
+from sis_provisioner.dao.user import get_person_by_regid, DataFailureException
 from sis_provisioner.exceptions import UserPolicyException
 from logging import getLogger
 
@@ -30,7 +30,7 @@ class AdminBuilder(Builder):
             if not self.add_user_data_for_person(person):
                 raise UserPolicyException('Invalid UWNetID')
 
-        except UserPolicyException as err:
+        except (DataFailureException, UserPolicyException) as err:
             logger.info(
                 'SKIP ADMIN "{}", account: "{}", role: "{}", {}'.format(
                     admin.net_id, account_id, role, err))
@@ -39,10 +39,11 @@ class AdminBuilder(Builder):
         if str(admin.canvas_id) == settings.RESTCLIENTS_CANVAS_ACCOUNT_ID:
             account_id = ''
 
-        self.data.add(AdminCSV(admin.reg_id, account_id, role, status=status))
+        self.data.add(AdminCSV(
+            person.uwregid, account_id, role, status=status))
 
         logger.info('{} ADMIN "{}", account: "{}", role: "{}"'.format(
-            action, admin.net_id, account_id, role))
+            action, person.uwnetid, account_id, role))
 
         if admin.role in settings.ANCILLARY_CANVAS_ROLES:
             ancillary_role = settings.ANCILLARY_CANVAS_ROLES.get(
@@ -54,8 +55,8 @@ class AdminBuilder(Builder):
                 ancillary_account_id = account_id
 
             self.data.add(AdminCSV(
-                admin.reg_id, ancillary_account_id, ancillary_role,
+                person.uwregid, ancillary_account_id, ancillary_role,
                 status=status))
 
             logger.info('{} ADMIN "{}", account: "{}", role "{}"'.format(
-                action, admin.net_id, ancillary_account_id, ancillary_role))
+                action, person.uwnetid, ancillary_account_id, ancillary_role))
