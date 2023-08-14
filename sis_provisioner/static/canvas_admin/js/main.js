@@ -1363,8 +1363,9 @@ $(document).ready(function () {
             data: JSON.stringify({'course_name': course_name}),
             success: function (data) {
                 $('#cc-form-body').hide();
-                $('#cc-course-info').html(data).show();
-                // $('#course-create-form').modal('hide');
+                $('#cc-modal-footer').hide();
+                $('#cc-course-url').attr('href', data.course_url).text(data.course_url);
+                $('#cc-course-info').show();
             },
             error: function (xhr) {
                 var json;
@@ -1399,6 +1400,7 @@ $(document).ready(function () {
         $('#cc-user-login-id').val(net_id);
         $('#cc-course-instructor').html(net_id)
         $('#cc-form-body').show();
+        $('#cc-modal-footer').show();
     }
 
     function initializeUserSearchEvents() {
