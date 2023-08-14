@@ -5,6 +5,7 @@
 import json
 import datetime
 from logging import getLogger
+from django.conf import settings
 from django.utils.decorators import method_decorator
 from restclients_core.exceptions import (
     InvalidNetID, InvalidRegID, DataFailureException)
@@ -190,4 +191,8 @@ class UserCourseView(UserView):
         except UserPolicyException as ex:
             return self.error_response(400, f'User not permitted: {login_id}')
 
-        return self.json_response(course.json_data())
+        resp_data = course.json_data()
+        resp_data['course_url'] = '{host}/courses/{course_id}'.format(
+            host=getattr(settings, 'RESTCLIENTS_CANVAS_HOST', ''),
+            course_id=resp_data['canvas_course_id'])
+        return self.json_response(resp_data)
