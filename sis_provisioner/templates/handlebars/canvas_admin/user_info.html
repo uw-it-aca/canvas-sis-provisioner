@@ -52,6 +52,9 @@ has <strong>NOT</strong> been provisioned to Canvas. <button class="btn" type="b
     {{#if can_merge_users}}
     <br/><div><button class="btn btn-xs btn-secondary merge-users" data-reg-id="{{reg_id}}" ref="javascript:void(0);">Merge Canvas Users</button></div>
     {{/if}}
+    {{#if can_create_user_course}}
+    <br/><div><button class="btn btn-xs btn-primary create-course" data-net-id="{{net_id}}" ref="javascript:void(0);" title="Create a course for this user">Create Course</button></div>
+    {{/if}}
     {{else}}
       <strong>This user does NOT exist in Canvas, and {{net_id}} {{#if can_access_canvas}}is{{else}}is NOT{{/if}} allowed to access Canvas.</strong>
     {{/if}}

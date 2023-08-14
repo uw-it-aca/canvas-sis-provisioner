@@ -20,6 +20,7 @@ class SectionPolicyTest(TestCase):
         self.assertEquals(valid_canvas_course_id('12345'), None)
         self.assertEquals(valid_canvas_course_id('0'), None)
         self.assertEquals(valid_canvas_course_id('1111111111'), None)
+        self.assertEquals(valid_canvas_course_id(12345), None)
         self.assertRaises(
             CoursePolicyException, valid_canvas_course_id, None)
         self.assertRaises(

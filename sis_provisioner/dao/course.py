@@ -23,7 +23,7 @@ RE_ADHOC_COURSE_SIS_ID = re.compile(r"^course_\d+$")
 
 
 def valid_canvas_course_id(canvas_id):
-    if (canvas_id is None or RE_CANVAS_ID.match(canvas_id) is None):
+    if (canvas_id is None or RE_CANVAS_ID.match(str(canvas_id)) is None):
         raise CoursePolicyException("Invalid Canvas ID: {}".format(canvas_id))
 
 
