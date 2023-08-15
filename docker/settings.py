@@ -215,6 +215,7 @@ ALLOWED_CANVAS_STUDENT_USERS = 'u_subman_s-canvas-student'
 ALLOWED_ADD_USER_DOMAINS = [
     'uw.edu', 'washington.edu', 'u.washington.edu', 'cac.washington.edu']
 
+ADHOC_COURSE_DEFAULT_ACCOUNT_ID = os.getenv('ADHOC_COURSE_DEFAULT_ACCOUNT_ID', '')
 CONTINUUM_CANVAS_ACCOUNT_ID = os.getenv('CONTINUUM_ACCOUNT_ID', '')
 PERMISSIONS_CHECK_ACCOUNTS = [RESTCLIENTS_CANVAS_ACCOUNT_ID, CONTINUUM_CANVAS_ACCOUNT_ID]
 
@@ -246,6 +247,7 @@ ASTRA_ADMIN_EXCEPTIONS = [
     'readygoadmin@cidilabs.com',
     'a_gradeit_canvas_int',
     'a_atomic_canvas_int',
+    'a_cidiscape_canvas_int',
 ]
 
 LMS_OWNERSHIP_SUBACCOUNT = {

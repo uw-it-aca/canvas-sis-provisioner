@@ -20,6 +20,7 @@ from sis_provisioner.dao.canvas import (
 from sis_provisioner.dao.user import (
     get_person_by_netid, get_person_by_regid, valid_reg_id, can_access_canvas)
 from sis_provisioner.models.user import User
+from sis_provisioner.models.course import Course
 from sis_provisioner.views.admin import RESTDispatch
 
 logger = getLogger(__name__)
@@ -85,6 +86,7 @@ class UserView(RESTDispatch):
             'priority': 'normal',
             'queue_id': None,
             'can_merge_users': False,
+            'can_create_user_course': False,
             'enrollment_url': '/restclients/view/sws{}{}'.format(
                 enrollment_search_url_prefix, person.uwregid) if (
                     can_view_source_data) else None,
@@ -125,9 +127,16 @@ class UserView(RESTDispatch):
             except UserPolicyException:
                 response['can_access_canvas'] = False
         elif len(response['canvas_users']) == 1:
-            if (response['canvas_users'][0]['sis_user_id'] != person.uwregid and  # noqa
-                    self.can_merge_users(self.request)):
-                response['canvas_users'][0]['can_update_sis_id'] = True
+            response['can_access_canvas'] = (
+                response['canvas_users'][0]['can_access_canvas'])
+
+            if response['canvas_users'][0]['sis_user_id'] != person.uwregid:
+                if self.can_merge_users(self.request):
+                    response['canvas_users'][0]['can_update_sis_id'] = True
+            else:
+                if (self.can_create_user_course(self.request) and
+                        response['can_access_canvas']):
+                    response['can_create_user_course'] = True
         else:
             response['can_merge_users'] = self.can_merge_users(self.request)
 
@@ -136,6 +145,9 @@ class UserView(RESTDispatch):
 
 class UserMergeView(UserView):
     def put(self, request, *args, **kwargs):
+        if not self.can_merge_users(request):
+            return self.error_response(401, 'Unauthorized')
+
         reg_id = kwargs.get('reg_id')
         try:
             person = get_person_by_regid(reg_id)
@@ -148,6 +160,9 @@ class UserMergeView(UserView):
 
 class UserSessionsView(UserView):
     def delete(self, request, *args, **kwargs):
+        if not self.can_terminate_user_sessions(request):
+            return self.error_response(401, 'Unauthorized')
+
         user_id = kwargs.get('user_id')
         try:
             terminate_user_sessions(user_id)
@@ -155,3 +170,29 @@ class UserSessionsView(UserView):
             return self.error_response(ex.status, message=ex.msg)
 
         return self.json_response({'user_id': user_id})
+
+
+class UserCourseView(UserView):
+    http_method_names = ['post']
+
+    def post(self, request, *args, **kwargs):
+        if not self.can_create_user_course(request):
+            return self.error_response(401, 'Unauthorized')
+
+        login_id = kwargs.get('net_id')
+        name = json.loads(request.body).get('course_name')
+
+        try:
+            can_access_canvas(login_id)
+            person = get_person_by_netid(login_id)
+            course = Course.objects.create_user_course(person.uwregid, name)
+        except DataFailureException as ex:
+            return self.error_response(ex.status, message=ex.msg)
+        except UserPolicyException as ex:
+            return self.error_response(400, f'User not permitted: {login_id}')
+
+        resp_data = course.json_data()
+        resp_data['course_url'] = '{host}/courses/{course_id}'.format(
+            host=getattr(settings, 'RESTCLIENTS_CANVAS_HOST', ''),
+            course_id=resp_data['canvas_course_id'])
+        return self.json_response(resp_data)

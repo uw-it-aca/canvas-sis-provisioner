@@ -15,7 +15,11 @@ from dateutil.parser import parse as date_parse
 log_prefix = 'ENROLLMENT:'
 QUEUE_SETTINGS_NAME = 'ENROLLMENT_V2'
 STATUS_CODES = {
-    'A': ENROLLMENT_ACTIVE, 'D': ENROLLMENT_DELETED, 'S': ENROLLMENT_ACTIVE}
+    'A': ENROLLMENT_ACTIVE,
+    'D': ENROLLMENT_DELETED,
+    'S': ENROLLMENT_ACTIVE,
+    'L': ENROLLMENT_DELETED
+}
 
 
 class EnrollmentProcessor(SISProvisionerProcessor):

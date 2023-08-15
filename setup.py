@@ -34,7 +34,7 @@ setup(
         'djangorestframework~=3.11',
         'django-storages[google]>=1.10',
         'uw-memcached-clients~=1.0',
-        'UW-RestClients-Core~=1.3',
+        'UW-RestClients-Core~=1.4',
         'UW-RestClients-SWS~=2.3',
         'UW-RestClients-PWS~=2.1',
         'UW-RestClients-GWS~=2.3',

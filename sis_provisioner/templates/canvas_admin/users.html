@@ -5,7 +5,7 @@
 <h2>Canvas Users</h2>
 
 <div class="user-manager pull-left">
-<div class="event-freq clearfix">
+  <div class="event-freq clearfix">
 
     <div id="event-tab-1" class="pull-left" style="width:65%;">
         <h3>Person Event Frequency <span id="event-count" class="badge">0</span></h3>
@@ -16,22 +16,59 @@
         <h3>Person Event Rate</h3>
         <div id="event-gauge"></div>
     </div>
-</div>
+  </div>
 
-<br/>
-<div class="clearfix">
+  <br/>
+  <div class="clearfix">
     <h3>Search Users</h3>
-        <div id="user-search" class="form-inline">
-            <label for="userID">UWNetID or UWRegID:</label>
-            <input class="validate valid-nonnull valid-require form-control" id="userID" placeholder="javerage" size="40" type="text">
-            <button class="btn" type="button" id="user_search_button">Find User</button>
+    <div id="user-search" class="form-inline">
+      <label for="userID">UWNetID or UWRegID:</label>
+        <input class="validate valid-nonnull valid-require form-control" id="userID" placeholder="javerage" size="40" type="text">
+        <button class="btn" type="button" id="user_search_button">Find User</button>
 
-            <h3>Results</h3>
-            <div id="user_search_result">
-                <div>Search Results Displayed Here</div>
-            </div>
+        <h3>Results</h3>
+        <div id="user_search_result">
+          <div>Search Results Displayed Here</div>
         </div>
+    </div>
+  </div>
 </div>
+
+<div id="course-create-form" class="modal fade" role="dialog">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 id="cc-modal-title" class="modal-title">Create a course for this user</h4>
+      </div>
+      <div class="modal-body">
+        <form id="cc-form-body">
+          <div class="form-group">
+            <div>
+              <label for="cc-course-instructor">Instructor:</label>
+              <span id="cc-course-instructor"></span>
+            </div>
+            <label for="cc-course-name">Course name:</label>
+            <div>
+              <input type="text" id="cc-course-name" size="40" value=""/>
+            </div>
+          </div>
+          <input id="cc-user-login-id" type="hidden" value=""/>
+        </form>
+        <div id="cc-course-info">
+            <strong>Course created!</strong> The URL of the course is
+            <br/><br/>
+            <a id="cc-course-url" target="_blank" href="" title="Open the course in Canvas"></a>.
+            <br/><br/>
+            <button type="button" class="btn btn-default cancel-btn" title="Close" data-dismiss="modal"><span class="glyphicon" aria-hidden="true"></span>Close</button>
+        </div>
+      </div>
+      <div id="cc-modal-footer" class="modal-footer">
+        <button type="button" class="btn btn-primary save-btn" title="Create the course"><span class="glyphicon" aria-hidden="true"></span>Create</button>
+        <button type="button" class="btn btn-default cancel-btn" title="Cancel" data-dismiss="modal"><span class="glyphicon" aria-hidden="true"></span>Cancel</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 {% include "handlebars/canvas_admin/user_info.html" %}

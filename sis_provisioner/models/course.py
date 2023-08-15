@@ -11,7 +11,9 @@ from sis_provisioner.models.user import User
 from sis_provisioner.models.term import Term
 from sis_provisioner.dao.course import (
     valid_canvas_section, get_new_sections_by_term)
-from sis_provisioner.dao.canvas import get_active_courses_for_term
+from sis_provisioner.dao.canvas import (
+    get_active_courses_for_term, create_course)
+from sis_provisioner.dao.term import get_current_active_term
 from sis_provisioner.exceptions import (
     CoursePolicyException, EmptyQueueException)
 from datetime import datetime, timedelta
@@ -25,6 +27,27 @@ class CourseManager(models.Manager):
             if not sis_course_id:
                 raise
             course = Course.objects.get(course_id=sis_course_id)
+        return course
+
+    def create_user_course(self, sis_user_id, name, account_id=None,
+                           sis_term_id=None):
+        if not account_id:
+            account_id = getattr(settings, 'ADHOC_COURSE_DEFAULT_ACCOUNT_ID')
+        if not sis_term_id:
+            term = get_current_active_term()
+            sis_term_id = term.canvas_sis_id()
+
+        canvas_course = create_course(
+            sis_user_id, account_id, sis_term_id, name)
+
+        course, _ = Course.objects.get_or_create(
+            canvas_course_id=canvas_course.course_id, defaults={
+                'course_id': canvas_course.sis_course_id,
+                'course_type': Course.ADHOC_TYPE,
+                'term_id': sis_term_id,
+                'created_date': canvas_course.created_at,
+                'priority': Course.PRIORITY_NONE,
+            })
         return course
 
     def get_linked_course_ids(self, course_id):
