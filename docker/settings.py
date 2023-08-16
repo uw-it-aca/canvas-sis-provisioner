@@ -247,7 +247,7 @@ ASTRA_ADMIN_EXCEPTIONS = [
     'readygoadmin@cidilabs.com',
     'a_gradeit_canvas_int',
     'a_atomic_canvas_int',
-    'a_cidiscape_canvas_int',
+    'a_cidiscp_canvas_int',
 ]
 
 LMS_OWNERSHIP_SUBACCOUNT = {
