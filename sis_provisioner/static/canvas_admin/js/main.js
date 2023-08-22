@@ -1387,7 +1387,7 @@ $(document).ready(function () {
             qtr = window.canvas_manager.current_term.quarter.toLowerCase();
 
         course_name = net_id + ' ' +
-            qtr.charAt(0).toUpperCase() + qtr.slice(1, 2) + year.slice(0, 2) +
+            qtr.charAt(0).toUpperCase() + qtr.slice(1, 2) + year.slice(2, 4) +
             ' Course';
 
         $('#course-create-form').modal({
