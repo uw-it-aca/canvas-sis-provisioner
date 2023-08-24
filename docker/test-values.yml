@@ -31,18 +31,15 @@ externalService:
   enabled: true
   name: canvas-db-service
   type: ClusterIP
-  serviceAddress: 172.18.0.28
-  servicePort: 3306
+  serviceAddress: 172.18.1.43
+  servicePort: 5432
 database:
-  engine: mysql
+  engine: postgres
   name: sis_provisioner_test
   hostname: canvas-db-service
   secretName: test-apps.canvas.uw.edu-sql-secrets
 repo: canvas
 instance: test
-image:
-  repository: gcr.io/uwit-mci-axdd/canvas
-  tag: IMAGE_TAG
 memcached:
   enabled: true
   replicaCount: 1
