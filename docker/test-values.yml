@@ -1,5 +1,5 @@
 ingress:
-  enabled: true
+  enabled: false
   tls:
     canvas:
       secretName: test-apps.canvas.uw.edu-ingress-cert
@@ -49,14 +49,14 @@ gcsCredentials:
   mounted: true
   secretName: test-apps.canvas.uw.edu-gcs-credentials
 cronjob:
-  enabled: true
+  enabled: false
   jobs:
     - name: sync-external-tools
       schedule: "40 3 * * 1-5"
       command: ["/scripts/management_command.sh"]
       args: ["sync_external_tools"]
 daemon:
-  enabled: true
+  enabled: false
   daemons:
     - name: monitor-imports
       replicaCount: 1
