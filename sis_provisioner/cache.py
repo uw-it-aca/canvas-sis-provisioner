@@ -26,7 +26,7 @@ class RestClientsCache(RestclientPymemcacheClient):
             if re.match(
                 r'^/student/v\d/(?:campus|college|department|curriculum)',
                     url):
-                return ONE_DAY
+                return ONE_HOUR * 4
 
         if 'pws' == service:
             return ONE_HOUR
