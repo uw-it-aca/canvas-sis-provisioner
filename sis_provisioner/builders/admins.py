@@ -16,6 +16,16 @@ class AdminBuilder(Builder):
     """
     Generates the data for sub-account admins.
     """
+    def _init_build(self, **kwargs):
+        self.active_ancillary = set()
+
+    def _add_active_ancillary(self, admin):
+        if not admin.is_deleted:
+            self.active_ancillary.add(f'{admin.reg_id}/{admin.role}')
+
+    def _is_active_ancillary(self, admin):
+        return f'{admin.reg_id}/{admin.role}' in self.active_ancillary
+
     def _process(self, admin):
         if admin.queue_id is not None:
             self.queue_id = admin.queue_id
@@ -46,6 +56,10 @@ class AdminBuilder(Builder):
             action, person.uwnetid, account_id, role))
 
         if admin.role in settings.ANCILLARY_CANVAS_ROLES:
+            self._add_active_ancillary(admin)
+            status = 'active' if self._is_active_ancillary(admin) else 'deleted'  # noqa
+            action = 'ADD' if self._is_active_ancillary(admin) else 'REMOVE'
+
             ancillary_role = settings.ANCILLARY_CANVAS_ROLES.get(
                 admin.role).get('canvas_role')
             if ('root' == settings.ANCILLARY_CANVAS_ROLES.get(
