@@ -56,9 +56,9 @@ class InstructorProcessor(SISProvisionerProcessor):
             return
 
         self._previous_instructors = self._instructors_from_section_json(
-            json_data['Previous'])
+            json_data['Previous'], section)
         self._current_instructors = self._instructors_from_section_json(
-            json_data['Current'])
+            json_data['Current'], section)
 
         sections = []
         primary_section = section_data["PrimarySection"]
@@ -123,10 +123,10 @@ class InstructorProcessor(SISProvisionerProcessor):
     def load_instructors(self, section):
         raise Exception('Not Implemented!')
 
-    def _instructors_from_section_json(self, section):
+    def _instructors_from_section_json(self, json_data, section):
         instructors = {}
-        if section:
-            for meeting in section['Meetings']:
+        if json_data:
+            for meeting in json_data['Meetings']:
                 for instructor in meeting['Instructors']:
                     if instructor['Person']['RegID']:
                         instructors[instructor['Person']['RegID']] = instructor
