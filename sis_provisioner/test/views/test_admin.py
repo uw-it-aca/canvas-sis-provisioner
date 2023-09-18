@@ -14,6 +14,7 @@ from uw_pws.util import fdao_pws_override
 from uw_sws.util import fdao_sws_override
 from uw_gws.utilities import fdao_gws_override
 from datetime import datetime
+import mock
 
 
 @fdao_pws_override
@@ -33,7 +34,9 @@ class AdminViewTest(TestCase):
 
         self.request = RequestFactory().get(
             reverse('ImportStatus'), HTTP_HOST='example.uw.edu')
-        SessionMiddleware().process_request(self.request)
+        get_response = mock.MagicMock()
+        middleware = SessionMiddleware(get_response)
+        response = middleware(self.request)
         self.request.session['samlUserdata'] = settings.MOCK_SAML_ATTRIBUTES
         self.request.session.save()
 
