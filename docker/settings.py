@@ -76,6 +76,7 @@ else:
     GS_LOCATION = os.path.join(os.getenv('SIS_IMPORT_CSV_ROOT', ''))
     GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
         '/gcs/credentials.json')
+    CSRF_TRUSTED_ORIGINS = ['https://' + os.getenv('CLUSTER_CNAME')]
 
 RESTCLIENTS_DISABLE_THREADING = True
 RESTCLIENTS_ADMIN_AUTH_MODULE = 'sis_provisioner.views.admin.can_view_source_data'
