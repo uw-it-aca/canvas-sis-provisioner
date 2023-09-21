@@ -5,6 +5,7 @@
 import json
 import datetime
 from logging import getLogger
+from urllib.parse import urlencode
 from django.conf import settings
 from django.utils.decorators import method_decorator
 from restclients_core.exceptions import (
@@ -87,9 +88,12 @@ class UserView(RESTDispatch):
             'queue_id': None,
             'can_merge_users': False,
             'can_create_user_course': False,
-            'enrollment_url': '/restclients/view/sws{}{}'.format(
-                enrollment_search_url_prefix, person.uwregid) if (
-                    can_view_source_data) else None,
+            'enrollment_url': '/restclients/view/sws{}?{}'.format(
+                enrollment_search_url_prefix, urlencode({
+                    'reg_id': person.uwregid,
+                    'transcriptable_course': 'all',
+                    'verbose': 'true'})) if (
+                can_view_source_data) else None,
             'canvas_users': [],
         }
 
