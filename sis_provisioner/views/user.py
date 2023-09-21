@@ -20,6 +20,7 @@ from sis_provisioner.dao.canvas import (
     get_all_users_for_person, merge_all_users_for_person)
 from sis_provisioner.dao.user import (
     get_person_by_netid, get_person_by_regid, valid_reg_id, can_access_canvas)
+from sis_provisioner.dao.term import get_current_active_term
 from sis_provisioner.models.user import User
 from sis_provisioner.models.course import Course
 from sis_provisioner.views.admin import RESTDispatch
@@ -88,14 +89,20 @@ class UserView(RESTDispatch):
             'queue_id': None,
             'can_merge_users': False,
             'can_create_user_course': False,
-            'enrollment_url': '/restclients/view/sws{}?{}'.format(
-                registration_res_url_prefix, urlencode({
-                    'reg_id': person.uwregid,
-                    'transcriptable_course': 'all',
-                    'verbose': 'true'})) if (
-                can_view_source_data) else None,
+            'enrollment_url': None,
             'canvas_users': [],
         }
+
+        if can_view_source_data:
+            curr_term = get_current_active_term()
+            response['enrollment_url'] = '/restclients/view/sws{}?{}'.format(
+                registration_res_url_prefix, urlencode({
+                    'reg_id': person.uwregid,
+                    'year': curr_term.year,
+                    'quarter': curr_term.quarter,
+                    'future_terms': '1',
+                    'transcriptable_course': 'all',
+                    'verbose': 'true'}))
 
         # Add the provisioning information for this user
         user = User.objects._find_existing(person.uwnetid, person.uwregid)
