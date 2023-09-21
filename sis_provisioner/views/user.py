@@ -10,7 +10,7 @@ from django.conf import settings
 from django.utils.decorators import method_decorator
 from restclients_core.exceptions import (
     InvalidNetID, InvalidRegID, DataFailureException)
-from uw_sws.enrollment import enrollment_search_url_prefix
+from uw_sws.registration import registration_res_url_prefix
 from uw_pws import PERSON_PREFIX
 from uw_saml.decorators import group_required
 from sis_provisioner.exceptions import (
@@ -89,7 +89,7 @@ class UserView(RESTDispatch):
             'can_merge_users': False,
             'can_create_user_course': False,
             'enrollment_url': '/restclients/view/sws{}?{}'.format(
-                enrollment_search_url_prefix, urlencode({
+                registration_res_url_prefix, urlencode({
                     'reg_id': person.uwregid,
                     'transcriptable_course': 'all',
                     'verbose': 'true'})) if (
