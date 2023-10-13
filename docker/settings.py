@@ -63,20 +63,28 @@ if os.getenv('ENV', 'localdev') == 'localdev':
     RESTCLIENTS_ADMIN_GROUP = 'u_test_group'
     RESTCLIENTS_DAO_CACHE_CLASS = None
     RESTCLIENTS_CANVAS_ACCOUNT_ID = '12345'
-    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
     MEDIA_ROOT = os.getenv('SIS_IMPORT_CSV_ROOT', '/app/csv')
 else:
     SIS_IMPORT_CSV_DEBUG = False
     CANVAS_MANAGER_ADMIN_GROUP = os.getenv('SUPPORT_GROUP', '')
     RESTCLIENTS_ADMIN_GROUP = os.getenv('ADMIN_GROUP', '')
     RESTCLIENTS_DAO_CACHE_CLASS = 'sis_provisioner.cache.RestClientsCache'
-    DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
-    GS_PROJECT_ID = os.getenv('STORAGE_PROJECT_ID', '')
-    GS_BUCKET_NAME = os.getenv('STORAGE_BUCKET_NAME', '')
-    GS_LOCATION = os.path.join(os.getenv('SIS_IMPORT_CSV_ROOT', ''))
-    GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
-        '/gcs/credentials.json')
     CSRF_TRUSTED_ORIGINS = ['https://' + os.getenv('CLUSTER_CNAME')]
+    STORAGES = {
+        'default': {
+            'BACKEND': 'storages.backends.gcloud.GoogleCloudStorage',
+            'OPTIONS': {
+                'project_id': os.getenv('STORAGE_PROJECT_ID', ''),
+                'bucket_name': os.getenv('STORAGE_BUCKET_NAME', ''),
+                'location': os.path.join(os.getenv('STORAGE_DATA_ROOT', '')),
+                'credentials': service_account.Credentials.from_service_account_file(
+                    '/gcs/credentials.json'),
+            }
+        },
+        'staticfiles': {
+            'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
+        },
+    }
 
 RESTCLIENTS_DISABLE_THREADING = True
 RESTCLIENTS_ADMIN_AUTH_MODULE = 'sis_provisioner.views.admin.can_view_source_data'

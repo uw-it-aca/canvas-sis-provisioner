@@ -32,7 +32,7 @@ setup(
         'django-cors-headers',
         'aws-message-client~=1.5',
         'djangorestframework~=3.11',
-        'django-storages[google]>=1.10',
+        'django-storages[google]',
         'uw-memcached-clients~=1.0',
         'UW-RestClients-Core~=1.4',
         'UW-RestClients-SWS>=2.4.5',
