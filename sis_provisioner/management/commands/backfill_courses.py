@@ -40,7 +40,6 @@ class Command(BaseCommand):
 
         with default_storage.open(course_file, mode='r') as csvfile:
             reader = csv.reader(codecs.iterdecode(csvfile, 'utf-8'))
-            next(reader)
 
             for row in reader:
                 canvas_id = row[1]
