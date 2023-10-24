@@ -28,6 +28,12 @@ class Command(BaseCommand):
                             dest='commit', default=False,
                             help='Insert/update course models')
 
+    def _log(self, action, course):
+        logger.info(
+            f'{action}, Canvas ID: {course.canvas_course_id}, '
+            f'SIS ID: {course.course_id}, Created: {course.created_date}, '
+            f'Expires: {course.expiration_date}')
+
     def get_all_terms(self):
         terms = {}
         for term in Terms().get_all_terms():
@@ -35,6 +41,7 @@ class Command(BaseCommand):
         return terms
 
     def handle(self, *args, **options):
+        commit = options.get('commit')
         course_file = options.get('course_file')
         terms = self.get_all_terms()
 
@@ -50,12 +57,6 @@ class Command(BaseCommand):
                 except ParserError as ex:
                     pass
 
-                if not options.get('commit'):
-                    logger.info(
-                        f'Canvas ID: {canvas_id}, SIS ID: {sis_source_id}, '
-                        f'Created: {created_at}')
-                    continue
-
                 try:
                     course = Course.objects.find_course(
                         canvas_id, sis_source_id)
@@ -66,7 +67,14 @@ class Command(BaseCommand):
                         course.created_date = created_at
                         course.expiration_date = \
                             course.default_expiration_date
-                        course.save()
+
+                        if commit:
+                            course.save()
+                        else:
+                            self._log('UPDATE', course)
+                    else:
+                        if not commit:
+                            self._log('SKIP', course)
 
                 except Course.DoesNotExist:
                     course = Course(
@@ -83,4 +91,7 @@ class Command(BaseCommand):
                         expiration_date = expiration_date.replace(
                             month=12, day=18)
 
-                    course.save()
+                    if commit:
+                        course.save()
+                    else:
+                        self._log('INSERT', course)
