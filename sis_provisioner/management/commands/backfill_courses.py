@@ -20,11 +20,13 @@ logger = getLogger(__name__)
 
 
 class Command(BaseCommand):
-    help = "Insert courses from file."
+    help = "Insert courses from a Canvas course provisioning report file"
 
     def add_arguments(self, parser):
-        parser.add_argument(
-            'course_file', help='Course file path')
+        parser.add_argument('course_file', help='Course file path')
+        parser.add_argument('-c', '--commit', action='store_true',
+                            dest='commit', default=False,
+                            help='Insert/update course models')
 
     def get_all_terms(self):
         terms = {}
@@ -38,7 +40,6 @@ class Command(BaseCommand):
 
         with default_storage.open(course_file, mode='r') as csvfile:
             reader = csv.reader(codecs.iterdecode(csvfile, 'utf-8'))
-            next(reader)
 
             for row in reader:
                 canvas_id = row[1]
@@ -48,6 +49,12 @@ class Command(BaseCommand):
                     created_at = parse(row[8]).replace(tzinfo=utc)
                 except ParserError as ex:
                     pass
+
+                if not options.get('commit'):
+                    logger.info(
+                        f'Canvas ID: {canvas_id}, SIS ID: {sis_source_id}, '
+                        f'Created: {created_at}')
+                    continue
 
                 try:
                     course = Course.objects.find_course(
