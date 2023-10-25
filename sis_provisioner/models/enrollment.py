@@ -224,7 +224,7 @@ class Enrollment(ImportResource):
 
 class InvalidEnrollmentManager(models.Manager):
     def queue_by_priority(self, priority=ImportResource.PRIORITY_DEFAULT):
-        filter_limit = settings.SIS_IMPORT_LIMIT['enrollment']['default']
+        filter_limit = settings.SIS_IMPORT_LIMIT['inv_enrollment']['default']
 
         pks = super(InvalidEnrollmentManager, self).get_queryset().filter(
             priority=priority, queue_id__isnull=True

@@ -3,7 +3,7 @@
 
 
 from sis_provisioner.builders import Builder
-from sis_provisioner.csv.format import CourseCSV, SectionCSV
+from sis_provisioner.csv.format import CourseCSV, SectionCSV, EnrollmentCSV
 from sis_provisioner.dao.user import get_person_by_regid
 from sis_provisioner.dao.course import is_active_section, section_id_from_url
 from sis_provisioner.dao.canvas import ENROLLMENT_ACTIVE, ENROLLMENT_DELETED
@@ -168,4 +168,4 @@ class InvalidEnrollmentBuilder(Builder):
             inv_enrollment.queue_id = None
             inv_enrollment.save()
             self.logger.info('Requeue invalid enrollment {} in {}: {}'.format(
-                inv_enrollment.reg_id, inv_enrollment.section_id, err))
+                inv_enrollment.user.reg_id, inv_enrollment.section_id, err))
