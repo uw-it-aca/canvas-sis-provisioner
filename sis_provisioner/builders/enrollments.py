@@ -134,6 +134,8 @@ class InvalidEnrollmentBuilder(Builder):
     """
     def _process(self, inv_enrollment):
         now = datetime.utcnow().replace(tzinfo=utc)
+        grace_dt = now - timedelta(days=getattr(
+            settings, 'INVALID_ENROLLMENT_GRACE_DAYS', 90))
         status = None
 
         try:
@@ -143,17 +145,12 @@ class InvalidEnrollmentBuilder(Builder):
                 status = ENROLLMENT_ACTIVE
                 if inv_enrollment.deleted_date is not None:
                     inv_enrollment.restored_date = now
-                    inv_enrollment.save()
 
             elif inv_enrollment.user.is_student_user():
-                grace_dt = now - timedelta(days=getattr(
-                    settings, 'INVALID_ENROLLMENT_GRACE_DAYS', 90))
-
                 if inv_enrollment.found_date < grace_dt:
                     status = ENROLLMENT_DELETED
                     inv_enrollment.deleted_date = now
                     inv_enrollment.restored_date = None
-                    inv_enrollment.save()
 
             if status is not None:
                 person = get_person_by_regid(inv_enrollment.user.reg_id)
@@ -163,6 +160,7 @@ class InvalidEnrollmentBuilder(Builder):
                         person=person,
                         role=inv_enrollment.role,
                         status=status))
+                inv_enrollment.save()
 
         except DataFailureException as err:
             inv_enrollment.queue_id = None
