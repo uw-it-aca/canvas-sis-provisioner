@@ -138,6 +138,17 @@ cronjob:
         requests:
           cpu: 25m
           memory: 64Mi
+    - name: import-invalid-enrollments
+      schedule: "20 15-23 * * 1-5"
+      command: ["/scripts/management_command.sh"]
+      args: ["import_invalid_enrollments"]
+      resources:
+        limits:
+          cpu: 500m
+          memory: 256Mi
+        requests:
+          cpu: 25m
+          memory: 64Mi
     - name: import-accounts
       schedule: "10 9 * * 1-6"
       command: ["/scripts/management_command.sh"]
@@ -424,7 +435,7 @@ externalSecrets:
   enabled: true
   secrets:
     - name: apps.canvas.uw.edu-shared-secrets
-      externalKey: axdd/kv/data/canvas/shared/secrets
+      externalKey: canvas/shared/secrets
       data:
         - name: canvas-account-id
           property: canvas-account-id
@@ -443,12 +454,12 @@ externalSecrets:
         - name: admin-group-id
           property: admin-group-id
     - name: apps.canvas.uw.edu-gcs-credentials
-      externalKey: axdd/kv/data/canvas/shared/gcs-credentials
+      externalKey: canvas/shared/gcs-credentials
       data:
         - name: credentials.json
           property: credentials.json
     - name: apps.canvas.uw.edu-secrets
-      externalKey: axdd/kv/data/canvas/prod/secrets
+      externalKey: canvas/prod/secrets
       data:
         - name: django-secret
           property: django-secret
@@ -491,33 +502,33 @@ externalSecrets:
         - name: sqs-person-queue-arn
           property: sqs-person-queue-arn
     - name: apps.canvas.uw.edu-sql-secrets
-      externalKey: axdd/kv/data/canvas/shared/sql-secrets
+      externalKey: canvas/shared/sql-secrets
       data:
         - name: username
           property: username
         - name: password
           property: password
     - name: apps.canvas.uw.edu-uwca-certs
-      externalKey: axdd/kv/data/canvas/prod/uwca-certs
+      externalKey: canvas/prod/uwca-certs
       data:
         - name: apps.canvas.uw.edu-uwca.cert
           property: apps.canvas.uw.edu-uwca.cert
         - name: apps.canvas.uw.edu-uwca.key
           property: apps.canvas.uw.edu-uwca.key
     - name: apps.canvas.uw.edu-ic-certs
-      externalKey: axdd/kv/data/canvas/prod/ic-certs
+      externalKey: canvas/prod/ic-certs
       data:
         - name: apps.canvas.uw.edu-ic.cert
           property: apps.canvas.uw.edu-ic.cert
         - name: apps.canvas.uw.edu-ic.key
           property: apps.canvas.uw.edu-ic.key
     - name: apps.canvas.uw.edu-uw-idp-cert
-      externalKey: axdd/kv/data/idp-cert
+      externalKey: idp-cert
       data:
         - name: uw-idp-cert
           property: cert
     - name: apps.canvas.uw.edu-openssl-conf
-      externalKey: axdd/kv/data/openssl-conf
+      externalKey: openssl-conf
       data:
         - name: openssl.cnf
           property: openssl.cnf
