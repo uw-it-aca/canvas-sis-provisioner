@@ -49,6 +49,7 @@ class Command(BaseCommand):
             reader = csv.reader(codecs.iterdecode(csvfile, 'utf-8'))
 
             for row in reader:
+                course = None
                 canvas_id = row[1]
                 term_id = row[4].lstrip('1').lstrip('0')
                 sis_source_id = None if (row[12] == "\\N") else row[12]
@@ -76,6 +77,9 @@ class Command(BaseCommand):
                         if not commit:
                             self._log('SKIP', course)
 
+                except Course.MultipleObjectsReturned:
+                    self._log(f'ERROR {canvas_id} {sis_source_id}', course)
+                    break
                 except Course.DoesNotExist:
                     course = Course(
                         course_id=sis_source_id,

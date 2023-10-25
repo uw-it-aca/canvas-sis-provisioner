@@ -145,7 +145,7 @@ class InvalidEnrollmentBuilder(Builder):
                     inv_enrollment.restored_date = now
                     inv_enrollment.save()
 
-            elif user.is_student_user():
+            elif inv_enrollment.user.is_student_user():
                 grace_dt = now - timedelta(days=getattr(
                     settings, 'INVALID_ENROLLMENT_GRACE_DAYS', 90))
 
