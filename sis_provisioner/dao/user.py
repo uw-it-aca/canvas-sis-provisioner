@@ -20,8 +20,8 @@ RE_TEMPORARY_NETID = re.compile(
 RE_CANVAS_ID = re.compile(r"^\d+$")
 
 
-def is_group_member(group_id, login_id, act_as=None):
-    return GWS(act_as=act_as).is_effective_member(group_id, login_id)
+def is_group_member(group_id, login_id, act_as=None, is_effective=False):
+    return GWS(act_as=act_as).is_member(group_id, login_id, is_effective)
 
 
 def is_group_admin(group_id, login_id):
@@ -60,7 +60,7 @@ def valid_nonpersonal_net_id(netid):
         except InvalidLoginIdException:
             group = getattr(settings, 'NONPERSONAL_NETID_EXCEPTION_GROUP', '')
             try:
-                if (not group or not is_group_member(group, netid)):
+                if not is_group_member(group, netid):
                     raise InvalidLoginIdException('UWNetID not permitted')
             except InvalidGroupID:
                 raise InvalidLoginIdException('UWNetID not permitted')
@@ -117,9 +117,12 @@ def user_fullname(user):
             raise UserPolicyException('Invalid user')
 
 
-def can_access_canvas(login_id):
-    login_group_id = getattr(settings, 'ALLOWED_CANVAS_LOGIN_USERS')
-    if not is_group_member(login_group_id, login_id):
+def can_access_canvas(netid):
+    login_group_id = getattr(settings, 'ALLOWED_CANVAS_LOGIN_USERS', '')
+    try:
+        if not is_group_member(login_group_id, netid, is_effective=True):
+            raise UserPolicyException('UWNetID not permitted')
+    except InvalidGroupID:
         raise UserPolicyException('UWNetID not permitted')
     return True
 
