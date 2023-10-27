@@ -22,13 +22,18 @@ class InvalidPerson(object):
 class IsGroupMemberTest(TestCase):
     def test_is_group_member(self):
         self.assertEquals(
-            is_group_member('u_acadev_unittest', 'javerage'), True)
+            is_group_member(
+                'u_acadev_unittest', 'javerage', is_effective=True), True)
         self.assertEquals(
-            is_group_member('u_acadev_unittest', 'eight'), True)
+            is_group_member(
+                'u_acadev_unittest', 'eight', is_effective=True), True)
         self.assertEquals(
-            is_group_member('u_acadev_unittest', 'baverage'), False)
+            is_group_member(
+                'u_acadev_unittest', 'baverage', is_effective=True), False)
         self.assertEquals(
-            is_group_member('u_acadev_unittest', 'joe@gmail.com'), False)
+            is_group_member('u_acadev_unittest', 'seven'), True)
+        self.assertEquals(
+            is_group_member('u_acadev_unittest', 'jo@gmail.com'), False)
 
 
 @fdao_pws_override
@@ -111,7 +116,7 @@ class UserPolicyTest(TestCase):
 @fdao_pws_override
 @fdao_gws_override
 class NetidPolicyTest(TestCase):
-    @override_settings(NONPERSONAL_NETID_EXCEPTION_GROUP='u_acadev_unittest')
+    @override_settings(NONPERSONAL_NETID_EXCEPTION_GROUP='u_acadev_tester')
     def test_get_person_by_netid(self):
         self.assertEquals(get_person_by_netid('javerage').uwnetid, 'javerage')
         self.assertRaises(
@@ -160,7 +165,7 @@ class NetidPolicyTest(TestCase):
         self.assertRaises(
             UserPolicyException, valid_application_net_id, 'javerage')
 
-    @override_settings(NONPERSONAL_NETID_EXCEPTION_GROUP='u_acadev_unittest')
+    @override_settings(NONPERSONAL_NETID_EXCEPTION_GROUP='u_acadev_tester')
     def test_nonpersonal_netid(self):
         # Valid
         self.assertEquals(
@@ -190,7 +195,7 @@ class NetidPolicyTest(TestCase):
 @fdao_pws_override
 @fdao_gws_override
 class RegidPolicyTest(TestCase):
-    @override_settings(NONPERSONAL_NETID_EXCEPTION_GROUP='u_acadev_unittest')
+    @override_settings(NONPERSONAL_NETID_EXCEPTION_GROUP='u_acadev_tester')
     def test_get_person_by_regid(self):
         user = get_person_by_regid('9136CCB8F66711D5BE060004AC494FFE')
         self.assertEquals(user.uwregid, '9136CCB8F66711D5BE060004AC494FFE')
