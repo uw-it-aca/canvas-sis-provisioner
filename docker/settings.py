@@ -239,6 +239,10 @@ SIS_IMPORT_LIMIT = {
         'default': 1000,
         'high': 100
     },
+    'inv_enrollment': {
+        'default': 500,
+        'high': 500
+    },
     'user': {
         'default': 500,
         'high': 500
@@ -257,6 +261,7 @@ ASTRA_ADMIN_EXCEPTIONS = [
     'a_gradeit_canvas_int',
     'a_atomic_canvas_int',
     'a_cidiscp_canvas_int',
+    'a_eab_canvas_int',
 ]
 
 LMS_OWNERSHIP_SUBACCOUNT = {

@@ -12,6 +12,15 @@ ONE_HOUR = 60 * 60
 ONE_DAY = 60 * 60 * 24
 ONE_WEEK = 60 * 60 * 24 * 7
 ONE_MONTH = 60 * 60 * 24 * 30
+
+ALLOWED_CANVAS_LOGIN_USERS = getattr(
+    settings, 'ALLOWED_CANVAS_LOGIN_USERS', 'none')
+ALLOWED_CANVAS_STUDENT_USERS = getattr(
+    settings, 'ALLOWED_CANVAS_STUDENT_USERS', 'none')
+ALLOWED_CANVAS_AFFILIATE_USERS = getattr(
+    settings, 'ALLOWED_CANVAS_AFFILIATE_USERS', 'none')
+ALLOWED_CANVAS_SPONSORED_USERS = getattr(
+    settings, 'ALLOWED_CANVAS_SPONSORED_USERS', 'none')
 NONPERSONAL_NETID_EXCEPTION_GROUP = getattr(
     settings, 'NONPERSONAL_NETID_EXCEPTION_GROUP', 'none')
 
@@ -42,10 +51,17 @@ class RestClientsCache(RestclientPymemcacheClient):
         if 'gws' == service:
             if re.match(r'^/group_sws/v\d/group/u_somalt_', url):
                 return ONE_HOUR
-
             if re.match(r'^/group_sws/v\d/group/{}/effective_member/'.format(
-                    NONPERSONAL_NETID_EXCEPTION_GROUP), url):
+                    ALLOWED_CANVAS_LOGIN_USERS), url):
                 return ONE_HOUR
+            if re.match(r'^/group_sws/v\d/group/(?:{}|{}|{})/member/'.format(
+                    ALLOWED_CANVAS_STUDENT_USERS,
+                    ALLOWED_CANVAS_AFFILIATE_USERS,
+                    ALLOWED_CANVAS_SPONSORED_USERS), url):
+                return ONE_HOUR * 2
+            if re.match(r'^/group_sws/v\d/group/{}/member/'.format(
+                    NONPERSONAL_NETID_EXCEPTION_GROUP), url):
+                return ONE_HOUR * 8
 
         if 'canvas' == service:
             if re.match(r'^/api/v\d/accounts/sis_account_id:', url):
