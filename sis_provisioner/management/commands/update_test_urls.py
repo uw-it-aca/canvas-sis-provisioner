@@ -3,18 +3,16 @@
 
 
 from django.test.utils import override_settings
-from django.conf import settings
 from sis_provisioner.management.commands import SISProvisionerCommand
 from sis_provisioner.models.external_tools import ExternalTool
 from sis_provisioner.dao.canvas import update_external_tool
-from uw_canvas.accounts import Accounts
 from restclients_core.dao import LiveDAO
 from restclients_core.exceptions import DataFailureException
 import json
 
 
 class Command(SISProvisionerCommand):
-    help = "Fixes the discovery and LTI URLs for uw.test and uw.beta"
+    help = "Update LTI URLs for non-production Canvas instances"
 
     BLTI_HOSTS = {
         'canvas': {
@@ -39,24 +37,14 @@ class Command(SISProvisionerCommand):
             'prod': 'https://infohub.canvas.uw.edu',
             'test': 'https://test-infohub.canvas.uw.edu'},
     }
-    LOGIN_TEST_HOST = 'https://test-login.canvas.uw.edu'
 
     def handle(self, *args, **options):
         self.update_canvas_test()
         self.update_canvas_beta()
         self.update_job()
 
-    def update_discovery_url(self, discovery_url):
-        account_id = settings.RESTCLIENTS_CANVAS_ACCOUNT_ID
-
-        LiveDAO.pools = {}
-        auth = Accounts().get_auth_settings(account_id)
-
-        if auth.auth_discovery_url != discovery_url:
-            auth.auth_discovery_url = discovery_url
-            Accounts().update_auth_settings(account_id, auth)
-
     def update_blti_urls(self):
+        LiveDAO.pools = {}
         for service in self.BLTI_HOSTS:
             prod_host = self.BLTI_HOSTS.get(service).get('prod')
             test_host = self.BLTI_HOSTS.get(service).get('test')
@@ -75,13 +63,9 @@ class Command(SISProvisionerCommand):
     @override_settings(
         RESTCLIENTS_CANVAS_HOST="https://uw.beta.instructure.com")
     def update_canvas_beta(self):
-        self.update_discovery_url(
-            "{host}/wayf-beta".format(host=self.LOGIN_TEST_HOST))
         self.update_blti_urls()
 
     @override_settings(
         RESTCLIENTS_CANVAS_HOST="https://uw.test.instructure.com")
     def update_canvas_test(self):
-        self.update_discovery_url(
-            "{host}/wayf-test".format(host=self.LOGIN_TEST_HOST))
         self.update_blti_urls()
