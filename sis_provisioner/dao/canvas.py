@@ -1,4 +1,4 @@
-# Copyright 2023 UW-IT, University of Washington
+# Copyright 2024 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
 
@@ -216,6 +216,10 @@ def create_course(sis_user_id, account_id, sis_term_id, course_name):
     return course
 
 
+def delete_course(course_id):
+    return Courses().delete_course(event='delete')
+
+
 def update_term_overrides(term_sis_id, override_dates):
     overrides = {}
     for role in override_dates.keys():
@@ -322,17 +326,24 @@ def get_active_sis_enrollments_for_user(user_sis_id, roles=[]):
     return enrollments
 
 
-def get_active_courses_for_term(term, account_id=None):
+def get_course_report_data(term_sis_id, account_id=None):
+    term = Terms().get_term_by_sis_id(term_sis_id)
     if account_id is None:
         account_id = getattr(settings, 'RESTCLIENTS_CANVAS_ACCOUNT_ID', None)
-    canvas_term = get_term_by_sis_id(term.canvas_sis_id())
+
     reports = Reports()
-
     course_report = reports.create_course_provisioning_report(
-        account_id, canvas_term.term_id)
+        account_id, term_id=term.term_id)
 
+    report_data = reports.get_report_data(course_report)
+
+    reports.delete_report(course_report)
+    return report_data
+
+
+def get_active_courses_for_term(term, account_id=None):
     active_courses = []
-    for row in reader(reports.get_report_data(course_report)):
+    for row in get_course_report_data(term.canvas_sis_id(), account_id):
         try:
             sis_course_id = row[1]
             status = row[9]
@@ -341,8 +352,6 @@ def get_active_courses_for_term(term, account_id=None):
                 active_courses.append(sis_course_id)
         except (IndexError, CoursePolicyException):
             pass
-
-    reports.delete_report(course_report)
     return active_courses
 
 

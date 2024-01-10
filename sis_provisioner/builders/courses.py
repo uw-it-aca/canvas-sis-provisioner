@@ -1,21 +1,26 @@
-# Copyright 2023 UW-IT, University of Washington
+# Copyright 2024 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
 
+from django.utils.timezone import utc
 from sis_provisioner.builders import Builder
 from sis_provisioner.csv.format import CourseCSV, SectionCSV, TermCSV, XlistCSV
 from sis_provisioner.dao.course import (
     is_active_section, get_section_by_url, canvas_xlist_id, section_short_name,
     section_id_from_url)
 from sis_provisioner.dao.canvas import (
-    get_section_by_sis_id, get_sis_sections_for_course,
+    get_section_by_sis_id, get_sis_sections_for_course, get_course_report_data,
     get_unused_course_report_data)
 from sis_provisioner.models.course import Course
 from sis_provisioner.exceptions import CoursePolicyException
 from restclients_core.exceptions import DataFailureException
 from uw_sws.exceptions import InvalidCanvasIndependentStudyCourse
+from logging import getLogger
+from datetime import datetime
 import csv
 import re
+
+logger = getLogger(__name__)
 
 
 class CourseBuilder(Builder):
@@ -295,16 +300,63 @@ class UnusedCourseBuilder(Builder):
 
     def _process(self, row):
         course_id = row[1]
+        short_name = row[2]
+        long_name = row[3]
+        status = row[4]
+
         if course_id is None or not len(course_id):
             return
 
-        status = row[4]
         if status == 'unpublished':
             kwargs = {'course_id': course_id,
-                      'short_name': row[2],
-                      'long_name': row[3],
+                      'short_name': short_name,
+                      'long_name': long_name,
                       'account_id': None,
                       'term_id': self.term_sis_id,
                       'status': 'deleted'}
 
             self.data.add(CourseCSV(**kwargs))
+
+
+class ExpiredCourseBuilder(Builder):
+    def _init_build(self, **kwargs):
+        self.queue_id = kwargs.get('queue_id')
+        self.term_sis_id = kwargs.get('term_sis_id')
+
+        report_data = get_course_report_data(self.term_sis_id)
+        header = report_data.pop(0)
+        for row in csv.reader(report_data):
+            if len(row):
+                self.items.append(row)
+
+    def _process(self, row):
+        canvas_course_id = row[0]
+        course_sis_id = row[1]
+        short_name = row[3]
+        long_name = row[4]
+        account_sis_id = row[6]
+
+        try:
+            course = Course.objects.find_course(canvas_course_id,
+                                                course_sis_id)
+            if not course.is_expired():
+                logger.info(f"Course '{canvas_course_id}' not expired")
+                return
+
+        except Course.DoesNotExist:
+            logger.info(f"Course model not found for '{canvas_course_id}'")
+            return
+
+        # Course exists and is expired
+        if course.is_sdb():
+            kwargs = {'course_id': course_sis_id,
+                      'short_name': short_name,
+                      'long_name': long_name,
+                      'account_id': account_sis_id,
+                      'term_id': self.term_sis_id,
+                      'status': 'deleted'}
+            self.data.add(CourseCSV(**kwargs))
+
+        # Add the queue_id to all expired courses
+        course.queue_id = self.queue_id
+        course.save()
