@@ -1,4 +1,4 @@
-# Copyright 2023 UW-IT, University of Washington
+# Copyright 2024 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
 
@@ -7,10 +7,10 @@ from sis_provisioner.builders import Builder
 from sis_provisioner.csv.format import CourseCSV, SectionCSV, TermCSV, XlistCSV
 from sis_provisioner.dao.course import (
     is_active_section, get_section_by_url, canvas_xlist_id, section_short_name,
-    section_id_from_url, valid_academic_course_sis_id)
+    section_id_from_url)
 from sis_provisioner.dao.canvas import (
     get_section_by_sis_id, get_sis_sections_for_course, get_course_report_data,
-    get_unused_course_report_data, Courses as CanvasCourses)
+    get_unused_course_report_data)
 from sis_provisioner.models.course import Course
 from sis_provisioner.exceptions import CoursePolicyException
 from restclients_core.exceptions import DataFailureException
@@ -328,7 +328,6 @@ class ExpiredCourseBuilder(Builder):
         for row in csv.reader(report_data):
             if len(row):
                 self.items.append(row)
-        self.client = CanvasCourses()
 
     def _process(self, row):
         canvas_course_id = row[0]
@@ -340,20 +339,16 @@ class ExpiredCourseBuilder(Builder):
         try:
             course = Course.objects.find_course(canvas_course_id,
                                                 course_sis_id)
+            if not course.is_expired():
+                logger.info(f"Course '{canvas_course_id}' not expired")
+                return
+
         except Course.DoesNotExist:
             logger.info(f"Course model not found for '{canvas_course_id}'")
             return
 
-        utcnow = datetime.utcnow().replace(tzinfo=utc)
-        if course.expiration_date is None:
-            logger.info(f"Missing expiration date for '{canvas_course_id}'")
-            return
-        elif course.expiration_date > utcnow:
-            logger.info(f"Course '{canvas_course_id}' not expired")
-            return
-
         # Course exists and is expired
-        if valid_academic_course_sis_id(course_sis_id):
+        if course.is_sdb():
             kwargs = {'course_id': course_sis_id,
                       'short_name': short_name,
                       'long_name': long_name,
@@ -361,12 +356,7 @@ class ExpiredCourseBuilder(Builder):
                       'term_id': self.term_sis_id,
                       'status': 'deleted'}
             self.data.add(CourseCSV(**kwargs))
-            course.queue_id = self.queue_id
-            course.save()
-        else:
-            try:
-                self.client.delete_course(canvas_course_id)
-                course.deleted_date = utcnow
-                course.save()
-            except DataFailureException as err:
-                logger.info(f"DELETE course '{canvas_course_id}' error: {err}")
+
+        # Add the queue_id to all expired courses
+        course.queue_id = self.queue_id
+        course.save()

@@ -1,4 +1,4 @@
-# Copyright 2023 UW-IT, University of Washington
+# Copyright 2024 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
 
@@ -82,6 +82,7 @@ class Import(models.Model):
         ('admin', 'sis_provisioner.models.admin.Admin'),
         ('user', 'sis_provisioner.models.user.User'),
         ('course', 'sis_provisioner.models.course.Course'),
+        ('expired_course', 'sis_provisioner.models.course.ExpiredCourse'),
         ('unused_course', 'sis_provisioner.models.term.Term'),
         ('enrollment', 'sis_provisioner.models.enrollment.Enrollment'),
         ('invalid_enrollment',
