@@ -3,19 +3,17 @@
 
 
 from sis_provisioner.management.commands import SISProvisionerCommand
-from sis_provisioner.models.term import Term
+from sis_provisioner.models.course import Course, Import
 from sis_provisioner.exceptions import (
     EmptyQueueException, MissingImportPathException)
-from sis_provisioner.dao.term import (
-    get_current_active_term, get_term_before, get_term_by_year_and_quarter)
-from sis_provisioner.builders.courses import UnusedCourseBuilder
-from datetime import datetime
+from sis_provisioner.dao.term import get_term_by_year_and_quarter
+from sis_provisioner.builders.courses import ExpiredCourseBuilder
 import traceback
 
 
 class Command(SISProvisionerCommand):
-    help = "Create a csv import file of unused courses for a specified \
-            term. The csv file will be used to delete unused courses from \
+    help = "Create a csv import file of expired courses for a specified \
+            term. The csv file will be used to delete expired courses from \
             Canvas."
 
     def add_arguments(self, parser):
@@ -28,23 +26,16 @@ class Command(SISProvisionerCommand):
             target_term = get_term_by_year_and_quarter(year, quarter)
 
         else:
-            curr_term = get_current_active_term()
-
-            if datetime.now().date() < curr_term.census_day:
-                self.update_job()
-                return
-
-            target_term = get_term_before(get_term_before(curr_term))
-
-        term_sis_id = target_term.canvas_sis_id()
-        try:
-            imp = Term.objects.queue_unused_courses(term_sis_id)
-        except EmptyQueueException:
-            self.update_job()
+            print('Empty term-sis-id arg not implemented!')
             return
 
+        term_sis_id = target_term.canvas_sis_id()
+        imp = Import(priority=Course.PRIORITY_DEFAULT,
+                     csv_type='expired_course')
+
         try:
-            imp.csv_path = UnusedCourseBuilder().build(term_sis_id=term_sis_id)
+            imp.csv_path = ExpiredCourseBuilder().build(
+                term_sis_id=term_sis_id, queue_id=imp.queue_id)
         except Exception:
             imp.csv_errors = traceback.format_exc()
 

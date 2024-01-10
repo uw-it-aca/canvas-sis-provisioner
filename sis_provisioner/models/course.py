@@ -1,4 +1,4 @@
-# Copyright 2023 UW-IT, University of Washington
+# Copyright 2024 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
 
@@ -12,11 +12,15 @@ from sis_provisioner.models.term import Term
 from sis_provisioner.dao.course import (
     valid_canvas_section, get_new_sections_by_term)
 from sis_provisioner.dao.canvas import (
-    get_active_courses_for_term, create_course)
+    get_active_courses_for_term, create_course, delete_course)
 from sis_provisioner.dao.term import get_current_active_term
 from sis_provisioner.exceptions import (
     CoursePolicyException, EmptyQueueException)
+from restclients_core.exceptions import DataFailureException
 from datetime import datetime, timedelta
+from logging import getLogger
+
+logger = getLogger(__name__)
 
 
 class CourseManager(models.Manager):
@@ -346,3 +350,47 @@ class Course(ImportResource):
             "sws_url": self.sws_url() if (
                 include_sws_url and self.is_sdb()) else None,
         }
+
+
+class ExpiredCourseManager(models.Manager):
+    def queued(self, queue_id):
+        return Course.objects.queued(queue_id)
+
+    def queued_sdb_courses(self, queue_id):
+        return Course.objects.filter(
+            queue_id=queue_id, course_type=Course.SDB_TYPE)
+
+    def queued_adhoc_courses(self, queue_id):
+        return Course.objects.filter(
+            queue_id=queue_id, course_type=Course.ADHOC_TYPE)
+
+    def dequeue(self, sis_import):
+        if not sis_import.is_imported():
+            self.queued(sis_import.pk).update(queue_id=None)
+            return
+
+        # Dequeue the sdb courses
+        self.queued_sdb_courses(sis_import.pk).update(
+            queue_id=None, deleted_date=sis_import.monitor_date,
+            priority=Course.PRIORITY_DEFAULT)
+
+        # Delete the adhoc courses via the Canvas api
+        for course in self.queued_adhoc_courses(sis_import.pk):
+            try:
+                delete_course(course.canvas_course_id)
+                course.deleted_date = sis_import.monitor_date
+            except DataFailureException as err:
+                course.provisioned_error = True
+                course.provisioned_status = str(err)
+                logger.info(f"DELETE course '{course.canvas_course_id}' "
+                            f"error: {err}")
+
+            course.priority = Course.PRIORITY_DEFAULT
+            course.save()
+
+
+class ExpiredCourse(ImportResource):
+    objects = ExpiredCourseManager()
+
+    class Meta:
+        abstract = True
