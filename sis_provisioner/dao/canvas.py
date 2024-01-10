@@ -1,4 +1,4 @@
-# Copyright 2023 UW-IT, University of Washington
+# Copyright 2024 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
 
@@ -214,6 +214,10 @@ def create_course(sis_user_id, account_id, sis_term_id, course_name):
     Enrollments().enroll_user_in_course(
         course.course_id, user.user_id, CanvasEnrollment.TEACHER)
     return course
+
+
+def delete_course(course_id):
+    return Courses().delete_course(event='delete')
 
 
 def update_term_overrides(term_sis_id, override_dates):
