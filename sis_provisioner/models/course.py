@@ -71,7 +71,8 @@ class CourseManager(models.Manager):
 
         pks = super(CourseManager, self).get_queryset().filter(
             priority=priority, course_type=Course.SDB_TYPE,
-            queue_id__isnull=True, provisioned_error__isnull=True
+            queue_id__isnull=True, provisioned_error__isnull=True,
+            deleted_date__is_null=True
         ).order_by(
             'provisioned_date', 'added_date'
         ).values_list('pk', flat=True)[:filter_limit]
@@ -393,4 +394,4 @@ class ExpiredCourse(ImportResource):
     objects = ExpiredCourseManager()
 
     class Meta:
-        abstract = True
+        managed = False
