@@ -366,27 +366,27 @@ class ExpiredCourseManager(models.Manager):
             queue_id=queue_id, course_type=Course.ADHOC_TYPE)
 
     def dequeue(self, sis_import):
-        if not sis_import.is_imported():
-            self.queued(sis_import.pk).update(queue_id=None)
-            return
-
-        # Dequeue the sdb courses
-        self.queued_sdb_courses(sis_import.pk).update(
-            queue_id=None, deleted_date=sis_import.monitor_date,
-            priority=Course.PRIORITY_DEFAULT)
+        utcnow = datetime.utcnow().replace(tzinfo=utc)
+        if sis_import.is_imported():
+            # Dequeue the sdb courses
+            self.queued_sdb_courses(sis_import.pk).update(
+                queue_id=None, priority=Course.PRIORITY_NONE,
+                deleted_date=utcnow)
 
         # Delete the adhoc courses via the Canvas api
         for course in self.queued_adhoc_courses(sis_import.pk):
             try:
                 delete_course(course.canvas_course_id)
-                course.deleted_date = sis_import.monitor_date
+                course.deleted_date = utcnow
+                logger.info(f"DELETE adhoc course '{course.canvas_course_id}'")
             except DataFailureException as err:
                 course.provisioned_error = True
                 course.provisioned_status = str(err)
-                logger.info(f"DELETE course '{course.canvas_course_id}' "
+                logger.info(f"DELETE adhoc course '{course.canvas_course_id}' "
                             f"error: {err}")
 
-            course.priority = Course.PRIORITY_DEFAULT
+            course.queue_id = None
+            course.priority = Course.PRIORITY_NONE
             course.save()
 
 
