@@ -217,7 +217,7 @@ def create_course(sis_user_id, account_id, sis_term_id, course_name):
 
 
 def delete_course(course_id):
-    return Courses().delete_course(event='delete')
+    return Courses().delete_course(course_id, event='delete')
 
 
 def update_term_overrides(term_sis_id, override_dates):
