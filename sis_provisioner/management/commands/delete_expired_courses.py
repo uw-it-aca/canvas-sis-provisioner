@@ -6,9 +6,9 @@ from sis_provisioner.management.commands import SISProvisionerCommand
 from sis_provisioner.models.course import Course, Import
 from sis_provisioner.exceptions import (
     EmptyQueueException, MissingImportPathException)
-from sis_provisioner.dao.term import get_term_by_year_and_quarter
 from sis_provisioner.builders.courses import ExpiredCourseBuilder
 import traceback
+import os
 
 
 class Command(SISProvisionerCommand):
@@ -20,22 +20,19 @@ class Command(SISProvisionerCommand):
         parser.add_argument('-t', '--term-sis-id', help='Term SIS ID')
 
     def handle(self, *args, **options):
-        term_sis_id = options.get('term-sis-id')
-        if term_sis_id:
-            (year, quarter) = term_sis_id.split('-')
-            target_term = get_term_by_year_and_quarter(year, quarter)
-
-        else:
+        term_sis_id = (
+            options.get('term-sis-id') or os.getenv('EXPIRED_COURSES_TERM'))
+        if not term_sis_id:
             print('Empty term-sis-id arg not implemented!')
             return
 
-        term_sis_id = target_term.canvas_sis_id()
         imp = Import(priority=Course.PRIORITY_DEFAULT,
                      csv_type='expired_course')
+        imp.save()
 
         try:
             imp.csv_path = ExpiredCourseBuilder().build(
-                term_sis_id=term_sis_id, queue_id=imp.queue_id)
+                term_sis_id=term_sis_id, queue_id=imp.pk)
         except Exception:
             imp.csv_errors = traceback.format_exc()
 
