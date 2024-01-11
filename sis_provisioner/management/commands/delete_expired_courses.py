@@ -27,7 +27,8 @@ class Command(SISProvisionerCommand):
             return
 
         imp = Import(priority=Course.PRIORITY_DEFAULT,
-                     csv_type='expired_course')
+                     csv_type='expired_course',
+                     override_sis_stickiness=True)
         imp.save()
 
         try:
