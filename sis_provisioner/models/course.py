@@ -3,6 +3,7 @@
 
 
 from django.db import models
+from django.db.models import Q
 from django.conf import settings
 from django.utils.timezone import utc, localtime
 from sis_provisioner.models import Import, ImportResource
@@ -25,11 +26,24 @@ logger = getLogger(__name__)
 
 class CourseManager(models.Manager):
     def find_course(self, canvas_course_id, sis_course_id):
-        try:
-            course = Course.objects.get(canvas_course_id=canvas_course_id)
-        except Course.DoesNotExist:
-            if not sis_course_id:
-                raise
+        course = None
+        if canvas_course_id and sis_course_id:
+            courses = super().get_queryset().filter(
+                Q(canvas_course_id=canvas_course_id) |
+                Q(course_id=sis_course_id))
+
+            if len(courses) == 1:
+                course = courses[0]
+            elif len(courses) > 1:
+                raise Course.MultipleObjectsReturned()
+            else:
+                raise Course.DoesNotExist()
+        else:
+            try:
+                course = Course.objects.get(canvas_course_id=canvas_course_id)
+            except Course.DoesNotExist:
+                if not sis_course_id:
+                    raise
             course = Course.objects.get(course_id=sis_course_id)
         return course
 
