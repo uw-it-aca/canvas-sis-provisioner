@@ -55,11 +55,11 @@ class CourseManager(models.Manager):
         return course
 
     def get_linked_course_ids(self, course_id):
-        return super(CourseManager, self).get_queryset().filter(
+        return super().get_queryset().filter(
             primary_id=course_id).values_list('course_id', flat=True)
 
     def get_joint_course_ids(self, course_id):
-        return super(CourseManager, self).get_queryset().filter(
+        return super().get_queryset().filter(
             xlist_id=course_id).exclude(course_id=course_id).values_list(
                 'course_id', flat=True)
 
@@ -69,7 +69,7 @@ class CourseManager(models.Manager):
         else:
             filter_limit = settings.SIS_IMPORT_LIMIT['course']['default']
 
-        pks = super(CourseManager, self).get_queryset().filter(
+        pks = super().get_queryset().filter(
             priority=priority, course_type=Course.SDB_TYPE,
             queue_id__isnull=True, provisioned_error__isnull=True,
             deleted_date__isnull=True
@@ -83,14 +83,13 @@ class CourseManager(models.Manager):
         imp = Import(priority=priority, csv_type='course')
         imp.save()
 
-        super(CourseManager, self).get_queryset().filter(
-            pk__in=list(pks)).update(queue_id=imp.pk)
+        super().get_queryset().filter(pk__in=list(pks)).update(
+            queue_id=imp.pk)
 
         return imp
 
     def queued(self, queue_id):
-        return super(CourseManager, self).get_queryset().filter(
-            queue_id=queue_id)
+        return super().get_queryset().filter(queue_id=queue_id)
 
     def dequeue(self, sis_import):
         User.objects.dequeue(sis_import)
@@ -164,7 +163,7 @@ class CourseManager(models.Manager):
     def add_all_courses_for_term(self, term):
         term_id = term.canvas_sis_id()
         existing_course_ids = dict((c, p) for c, p in (
-            super(CourseManager, self).get_queryset().filter(
+            super().get_queryset().filter(
                 term_id=term_id, course_type=Course.SDB_TYPE
             ).values_list('course_id', 'priority')))
 
@@ -188,9 +187,8 @@ class CourseManager(models.Manager):
             course_id = section_data['course_id']
             if course_id in existing_course_ids:
                 if existing_course_ids[course_id] == Course.PRIORITY_NONE:
-                    super(CourseManager, self).get_queryset().filter(
-                        course_id=course_id).update(
-                            priority=Course.PRIORITY_HIGH)
+                    super().get_queryset().filter(course_id=course_id).update(
+                        priority=Course.PRIORITY_HIGH)
                 continue
 
             new_courses.append(Course(course_id=course_id,
@@ -214,8 +212,8 @@ class CourseManager(models.Manager):
                 pass
 
     def deprioritize_all_courses_for_term(self, term):
-        super(CourseManager, self).get_queryset().filter(
-            term_id=term.canvas_sis_id()).update(priority=Course.PRIORITY_NONE)
+        super().get_queryset().filter(term_id=term.canvas_sis_id()).update(
+            priority=Course.PRIORITY_NONE)
 
 
 class Course(ImportResource):
@@ -351,6 +349,47 @@ class Course(ImportResource):
             "sws_url": self.sws_url() if (
                 include_sws_url and self.is_sdb()) else None,
         }
+
+
+class UnusedCourseManager(models.Manager):
+    def queue_unused_courses(self, term_id):
+        try:
+            term = Term.objects.get(term_id=term_id)
+            if (term.deleted_unused_courses_date is not None or
+                    term.queue_id is not None):
+                raise EmptyQueueException()
+        except Term.DoesNotExist:
+            term = Term(term_id=term_id)
+            term.save()
+
+        imp = Import(priority=Course.PRIORITY_DEFAULT,
+                     csv_type='unused_course')
+        imp.save()
+
+        term.queue_id = imp.pk
+        term.save()
+
+        return imp
+
+    def queued(self, queue_id):
+        return Course.objects.queued(queue_id)
+
+    def dequeue(self, sis_import):
+        Term.objects.dequeue(sis_import)
+
+        kwargs = {'queue_id': None}
+        if sis_import.is_imported():
+            kwargs['deleted_date'] = sis_import.monitor_date
+            kwargs['priority'] = Course.PRIORITY_NONE
+
+        self.queued(sis_import.pk).update(**kwargs)
+
+
+class UnusedCourse(ImportResource):
+    objects = UnusedCourseManager()
+
+    class Meta:
+        managed = False
 
 
 class ExpiredCourseManager(models.Manager):
