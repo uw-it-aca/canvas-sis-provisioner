@@ -4,11 +4,10 @@
 
 from django.db import models
 from django.utils.timezone import utc
-from sis_provisioner.models import Import, ImportResource
+from sis_provisioner.models import ImportResource
 from sis_provisioner.dao.term import (
     get_term_by_year_and_quarter, term_date_overrides)
 from sis_provisioner.dao.canvas import update_term_overrides
-from sis_provisioner.exceptions import EmptyQueueException
 from restclients_core.exceptions import DataFailureException
 from datetime import datetime
 from logging import getLogger
@@ -18,7 +17,7 @@ logger = getLogger(__name__)
 
 class TermManager(models.Manager):
     def update_override_dates(self):
-        for term in super(TermManager, self).get_queryset().filter(
+        for term in super().get_queryset().filter(
                 updated_overrides_date__isnull=True):
 
             (year, quarter) = term.term_id.split('-')
@@ -33,27 +32,8 @@ class TermManager(models.Manager):
             except DataFailureException as ex:
                 logger.info('Unable to set term overrides: {}'.format(ex))
 
-    def queue_unused_courses(self, term_id):
-        try:
-            term = Term.objects.get(term_id=term_id)
-            if (term.deleted_unused_courses_date is not None or
-                    term.queue_id is not None):
-                raise EmptyQueueException()
-        except Term.DoesNotExist:
-            term = Term(term_id=term_id)
-            term.save()
-
-        imp = Import(priority=Term.PRIORITY_DEFAULT, csv_type='unused_course')
-        imp.save()
-
-        term.queue_id = imp.pk
-        term.save()
-
-        return imp
-
     def queued(self, queue_id):
-        return super(TermManager, self).get_queryset().filter(
-            queue_id=queue_id)
+        return super().get_queryset().filter(queue_id=queue_id)
 
     def dequeue(self, sis_import):
         kwargs = {'queue_id': None}
