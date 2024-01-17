@@ -3,8 +3,11 @@
 
 
 from django.core.management.base import BaseCommand, CommandError
-from sis_provisioner.dao.canvas import get_course_report_data, get_course_by_id
+from sis_provisioner.dao.canvas import (
+    get_course_report_data, get_course_by_id, DataFailureException)
+from sis_provisioner.dao.course import valid_academic_course_sis_id
 from sis_provisioner.models.course import Course
+from sis_provisioner.exceptions import CoursePolicyException
 from logging import getLogger
 import csv
 
@@ -15,7 +18,9 @@ class Command(BaseCommand):
     help = "Insert courses from a Canvas course provisioning report file"
 
     def add_arguments(self, parser):
-        parser.add_argument('-t', '--term-sis-id', help='Term SIS ID')
+        parser.add_argument('-t', '--term-sis-id', action='store',
+                            dest='term-sis-id', default=None,
+                            help='Term SIS ID')
         parser.add_argument('-c', '--commit', action='store_true',
                             dest='commit', default=False,
                             help='Insert/update course models')
@@ -29,6 +34,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         term_sis_id = options.get('term-sis-id')
         commit = options.get('commit')
+        logger.info(f'Term: {term_sis_id}, Commit: {commit}')
 
         report_data = get_course_report_data(term_sis_id)
         header = report_data.pop(0)
@@ -55,8 +61,8 @@ class Command(BaseCommand):
                         course.created_date = canvas_course.created_at
                         course.expiration_date = course.default_expiration_date
                     except DataFailureException as err:
-                        self._log(f'ERROR {canvas_course_id} {course_sis_id}',
-                                  course)
+                        logger.info(f'ERROR {canvas_course_id} {course_sis_id}'
+                                    f', {err}')
                         continue
 
                     if commit:
@@ -68,14 +74,21 @@ class Command(BaseCommand):
                         self._log('SKIP', course)
 
             except Course.MultipleObjectsReturned:
-                self._log(f'ERROR {canvas_course_id} {course_sis_id}', course)
+                logger.info(f'ERROR Multiple courses for {canvas_course_id}, '
+                            f'{course_sis_id}')
                 break
             except Course.DoesNotExist:
                 course = Course(course_id=course_sis_id,
                                 canvas_course_id=canvas_course_id,
-                                course_type=Course.ADHOC_TYPE,
-                                term_id=term_sis_id,
-                                priority=Course.PRIORITY_NONE)
+                                term_id=term_sis_id)
+
+                try:
+                    valid_academic_course_sis_id(course_sis_id)
+                    course.course_type = Course.SDB_TYPE
+                    course.priority = Course.PRIORITY_DEFAULT
+                except CoursePolicyException:
+                    course.course_type = Course.ADHOC_TYPE
+                    course.priority = Course.PRIORITY_NONE
 
                 # API request to get course.created_at
                 try:
@@ -83,16 +96,16 @@ class Command(BaseCommand):
                     course.created_date = canvas_course.created_at
                     course.expiration_date = course.default_expiration_date
                 except DataFailureException as err:
-                    self._log(f'ERROR {canvas_course_id} {course_sis_id}',
-                              course)
+                    logger.info(f'ERROR {canvas_course_id} {course_sis_id}'
+                                f', {err}')
                     continue
 
-                    # Temporary logic for first round of expirations
-                    if expiration_date.year == 2023:
-                        expiration_date = expiration_date.replace(
-                            month=12, day=18)
+                # Temporary logic for first round of expirations
+                if course.expiration_date.year == 2023:
+                    course.expiration_date = course.expiration_date.replace(
+                        month=12, day=18)
 
-                    if commit:
-                        course.save()
-                    else:
-                        self._log('INSERT', course)
+                if commit:
+                    course.save()
+                else:
+                    self._log('INSERT', course)
