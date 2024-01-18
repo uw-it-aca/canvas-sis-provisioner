@@ -291,6 +291,7 @@ class CourseBuilder(Builder):
 
 class UnusedCourseBuilder(Builder):
     def _init_build(self, **kwargs):
+        self.queue_id = kwargs.get('queue_id')
         self.term_sis_id = kwargs.get('term_sis_id')
         report_data = get_unused_course_report_data(self.term_sis_id)
         header = report_data.pop(0)
@@ -308,6 +309,15 @@ class UnusedCourseBuilder(Builder):
             return
 
         if status == 'unpublished':
+            try:
+                course = Course.objects.get(course_id=course_id)
+                # Add the queue_id to all unused courses
+                course.queue_id = self.queue_id
+                course.save()
+            except Course.DoesNotExist:
+                logger.info(f"Course model not found for '{course_id}'")
+                return
+
             kwargs = {'course_id': course_id,
                       'short_name': short_name,
                       'long_name': long_name,

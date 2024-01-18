@@ -3,7 +3,7 @@
 
 
 from sis_provisioner.management.commands import SISProvisionerCommand
-from sis_provisioner.models.term import Term
+from sis_provisioner.models.course import UnusedCourse
 from sis_provisioner.exceptions import (
     EmptyQueueException, MissingImportPathException)
 from sis_provisioner.dao.term import (
@@ -38,13 +38,14 @@ class Command(SISProvisionerCommand):
 
         term_sis_id = target_term.canvas_sis_id()
         try:
-            imp = Term.objects.queue_unused_courses(term_sis_id)
+            imp = UnusedCourse.objects.queue_unused_courses(term_sis_id)
         except EmptyQueueException:
             self.update_job()
             return
 
         try:
-            imp.csv_path = UnusedCourseBuilder().build(term_sis_id=term_sis_id)
+            imp.csv_path = UnusedCourseBuilder().build(
+                term_sis_id=term_sis_id, queue_id=imp.pk)
         except Exception:
             imp.csv_errors = traceback.format_exc()
 

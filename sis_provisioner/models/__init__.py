@@ -83,7 +83,7 @@ class Import(models.Model):
         ('user', 'sis_provisioner.models.user.User'),
         ('course', 'sis_provisioner.models.course.Course'),
         ('expired_course', 'sis_provisioner.models.course.ExpiredCourse'),
-        ('unused_course', 'sis_provisioner.models.term.Term'),
+        ('unused_course', 'sis_provisioner.models.course.UnusedCourse'),
         ('enrollment', 'sis_provisioner.models.enrollment.Enrollment'),
         ('invalid_enrollment',
             'sis_provisioner.models.enrollment.InvalidEnrollment'),
