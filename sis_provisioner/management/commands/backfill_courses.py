@@ -42,41 +42,34 @@ class Command(BaseCommand):
             if not len(row):
                 continue
 
-            canvas_course_id = row[0]
-            course_sis_id = row[1]
-            term_sis_id = row[8]
-            course = None
+            canvas_course_id = row[0] or None
+            course_sis_id = row[1] or None
+            term_sis_id = row[8] or 'default'
+            needs_save = False
 
             try:
                 course = Course.objects.find_course(
                     canvas_course_id, course_sis_id)
-                if course.expiration_date is None:
-                    # Backfill sis course with new attrs
-                    course.course_id = course_sis_id
+
+                if course.canvas_course_id != canvas_course_id:
+                    logger.info(f'Change canvas_course_id, '
+                                f'Old: {course.canvas_course_id}, '
+                                f'New: {canvas_course_id}')
                     course.canvas_course_id = canvas_course_id
+                    needs_save = True
 
-                    # API request to get course.created_at
-                    try:
-                        canvas_course = get_course_by_id(canvas_course_id)
-                        course.created_date = canvas_course.created_at
-                        course.expiration_date = course.default_expiration_date
-                    except DataFailureException as err:
-                        logger.info(f'ERROR {canvas_course_id} {course_sis_id}'
-                                    f', {err}')
-                        continue
-
-                    if commit:
-                        course.save()
-                    else:
-                        self._log('UPDATE', course)
-                else:
-                    if not commit:
-                        self._log('SKIP', course)
+                if course.course_id != course_sis_id:
+                    logger.info(f'Change course_sis_id, '
+                                f'Old: {course.course_id}, '
+                                f'New: {course_sis_id}')
+                    course.course_id = course_sis_id
+                    needs_save = True
 
             except Course.MultipleObjectsReturned:
                 logger.info(f'ERROR Multiple courses for {canvas_course_id}, '
                             f'{course_sis_id}')
-                break
+                continue
+
             except Course.DoesNotExist:
                 course = Course(course_id=course_sis_id,
                                 canvas_course_id=canvas_course_id,
@@ -90,22 +83,23 @@ class Command(BaseCommand):
                     course.course_type = Course.ADHOC_TYPE
                     course.priority = Course.PRIORITY_NONE
 
+            if course.expiration_date is None:
                 # API request to get course.created_at
                 try:
                     canvas_course = get_course_by_id(canvas_course_id)
                     course.created_date = canvas_course.created_at
                     course.expiration_date = course.default_expiration_date
+                    needs_save = True
                 except DataFailureException as err:
-                    logger.info(f'ERROR {canvas_course_id} {course_sis_id}'
-                                f', {err}')
+                    logger.info(f'ERROR {canvas_course_id} '
+                                f'{course_sis_id}, {err}')
                     continue
 
-                # Temporary logic for first round of expirations
+                # Logic for first round of expirations
                 if course.expiration_date.year == 2023:
                     course.expiration_date = course.expiration_date.replace(
                         month=12, day=18)
 
-                if commit:
-                    course.save()
-                else:
-                    self._log('INSERT', course)
+            if needs_save and commit:
+                course.save()
+                self._log('BACKFILL', course)
