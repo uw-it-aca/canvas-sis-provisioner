@@ -25,12 +25,6 @@ class Command(BaseCommand):
                             dest='commit', default=False,
                             help='Insert/update course models')
 
-    def _log(self, action, course):
-        logger.info(
-            f'{action}, Canvas ID: {course.canvas_course_id}, '
-            f'SIS ID: {course.course_id}, Created: {course.created_date}, '
-            f'Expires: {course.expiration_date}')
-
     def handle(self, *args, **options):
         term_sis_id = options.get('term-sis-id')
         commit = options.get('commit')
@@ -63,6 +57,13 @@ class Command(BaseCommand):
                                 f'Old: {course.course_id}, '
                                 f'New: {course_sis_id}')
                     course.course_id = course_sis_id
+                    needs_save = True
+
+                if course.term_id != term_sis_id:
+                    logger.info(f'Change term_sis_id, '
+                                f'Old: {course.term_id}, '
+                                f'New: {term_sis_id}')
+                    course.term_id = term_sis_id
                     needs_save = True
 
             except Course.MultipleObjectsReturned:
@@ -102,4 +103,8 @@ class Command(BaseCommand):
 
             if needs_save and commit:
                 course.save()
-                self._log('BACKFILL', course)
+                logger.info(f'BACKFILL Canvas ID: {course.canvas_course_id}, '
+                            f'SIS ID: {course.course_id}, '
+                            f'Term ID: {course.term_id}, '
+                            f'Created: {course.created_date}, '
+                            f'Expires: {course.expiration_date}')
