@@ -11,7 +11,8 @@ from sis_provisioner.models.group import Group
 from sis_provisioner.models.user import User
 from sis_provisioner.models.term import Term
 from sis_provisioner.dao.course import (
-    valid_canvas_section, get_new_sections_by_term)
+    valid_canvas_course_id, valid_course_sis_id, valid_canvas_section,
+    get_new_sections_by_term)
 from sis_provisioner.dao.canvas import (
     get_active_courses_for_term, create_course, delete_course)
 from sis_provisioner.dao.term import get_current_active_term
@@ -26,26 +27,31 @@ logger = getLogger(__name__)
 
 class CourseManager(models.Manager):
     def find_course(self, canvas_course_id, sis_course_id):
-        course = None
-        if canvas_course_id and sis_course_id:
+        try:
+            valid_canvas_course_id(canvas_course_id)
+            valid_course_sis_id(sis_course_id)
+
             courses = super().get_queryset().filter(
                 Q(canvas_course_id=canvas_course_id) |
                 Q(course_id=sis_course_id))
 
             if len(courses) == 1:
-                course = courses[0]
+                return courses[0]
             elif len(courses) > 1:
                 raise Course.MultipleObjectsReturned()
             else:
                 raise Course.DoesNotExist()
-        else:
+        except CoursePolicyException:
             try:
-                course = Course.objects.get(canvas_course_id=canvas_course_id)
-            except Course.DoesNotExist:
-                if not sis_course_id:
-                    raise
-            course = Course.objects.get(course_id=sis_course_id)
-        return course
+                valid_canvas_course_id(canvas_course_id)
+                return Course.objects.get(canvas_course_id=canvas_course_id)
+            except (CoursePolicyException, Course.DoesNotExist):
+                try:
+                    valid_course_sis_id(sis_course_id)
+                    return Course.objects.get(course_id=sis_course_id)
+                except CoursePolicyException:
+                    pass
+            raise Course.DoesNotExist()
 
     def create_user_course(self, sis_user_id, name, account_id=None,
                            sis_term_id=None):
