@@ -45,6 +45,7 @@ class Command(BaseCommand):
                 course = Course.objects.find_course(
                     canvas_course_id, course_sis_id)
 
+                # Check for out-of-date properties in the model
                 if course.canvas_course_id != canvas_course_id:
                     logger.info(f'Change canvas_course_id, '
                                 f'Old: {course.canvas_course_id}, '
@@ -64,6 +65,12 @@ class Command(BaseCommand):
                                 f'Old: {course.term_id}, '
                                 f'New: {term_sis_id}')
                     course.term_id = term_sis_id
+                    needs_save = True
+
+                if course.deleted_date is not None:
+                    logger.info(f'Course is not deleted, '
+                                f'{canvas_course_id}, {course_sis_id}')
+                    course.deleted_date = None
                     needs_save = True
 
             except Course.MultipleObjectsReturned:
