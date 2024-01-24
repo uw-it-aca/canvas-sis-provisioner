@@ -10,7 +10,23 @@
 </ul>
 
 {% if can_view_restclients|default_if_none:True %}
-{% include 'supporttools/default_sidelinks.html' %}
+<h3>Data Searches</h3>
+<ul class="default-sidelinks">
+{% url 'restclients_proxy' 'sws' 'student/v5.json' as sws_url %}
+{% if sws_url %}
+    <li><a href="{{ sws_url }}">{{ restclients_sws_link|default:"Search Student Web Service" }}</a></li>
+{% endif %}
+
+{% url 'restclients_proxy' 'pws' 'identity/v2/person.json' as pws_url %}
+{% if pws_url %}
+    <li><a href="{{ pws_url }}">{{ restclients_pws_link|default:"Search Person Web Service" }}</a></li>
+{% endif %}
+
+{% url 'restclients_proxy' 'gws' 'group_sws/v3/search' as gws_url %}
+{% if gws_url %}
+    <li><a href="{{ gws_url }}">{{ restclients_gws_link|default:"Search Groups Web Service" }}</a></li>
+{% endif %}
+</ul>
 {% endif %}
 
 {% if can_manage_admin_group|default_if_none:False %}
