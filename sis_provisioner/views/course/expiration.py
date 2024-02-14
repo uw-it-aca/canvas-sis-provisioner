@@ -10,9 +10,9 @@ from sis_provisioner.models.user import User
 from sis_provisioner.views.admin import OpenRESTDispatch, AdminView
 from sis_provisioner.exceptions import CoursePolicyException
 from uw_saml.utils import get_user
-from django.utils.timezone import utc, localtime
+from django.utils.timezone import localtime
 from django.conf import settings
-from datetime import datetime
+from datetime import datetime, timezone
 from logging import getLogger
 import json
 
@@ -75,8 +75,7 @@ class CourseExpirationView(OpenRESTDispatch):
 
         exp = course.default_expiration_date
         course.expiration_date = exp.replace(year=exp.year + 1)
-        course.expiration_exc_granted_date = datetime.utcnow().replace(
-            tzinfo=utc)
+        course.expiration_exc_granted_date = datetime.now(timezone.utc)
         course.expiration_exc_granted_by = user
         course.expiration_exc_desc = put_data.get('expiration_exc_desc')
         course.save()

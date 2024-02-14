@@ -5,14 +5,14 @@
 from django.db import models
 from django.db.models import F
 from django.conf import settings
-from django.utils.timezone import utc, localtime
+from django.utils.timezone import localtime
 from restclients_core.exceptions import DataFailureException
 from sis_provisioner.dao.group import is_modified_group
 from sis_provisioner.models import Import, ImportResource
 from sis_provisioner.models.user import User
 from sis_provisioner.exceptions import (
     EmptyQueueException, GroupNotFoundException)
-from datetime import datetime
+from datetime import datetime, timezone
 from logging import getLogger
 
 logger = getLogger(__name__)
@@ -145,7 +145,7 @@ class GroupManager(models.Manager):
             group_id=group_id, is_deleted__isnull=True
         ).update(
             is_deleted=True, deleted_by='gws',
-            deleted_date=datetime.utcnow().replace(tzinfo=utc)
+            deleted_date=datetime.now(timezone.utc)
         )
 
 

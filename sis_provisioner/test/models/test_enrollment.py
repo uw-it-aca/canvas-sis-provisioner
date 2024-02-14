@@ -4,8 +4,7 @@
 
 from django.test import TestCase, override_settings
 from django.db.models.query import QuerySet
-from django.utils.timezone import utc
-from datetime import datetime
+from datetime import datetime, timezone
 from sis_provisioner.dao.course import get_section_by_id
 from sis_provisioner.models import Import
 from sis_provisioner.models.enrollment import (
@@ -22,44 +21,44 @@ import mock
 class EnrollmentModelTest(TestCase):
     def test_is_active(self):
         active_enrollment = Enrollment(status='active')
-        self.assertEquals(active_enrollment.is_active(), True)
+        self.assertEqual(active_enrollment.is_active(), True)
 
         active_enrollment = Enrollment(status='Active')
-        self.assertEquals(active_enrollment.is_active(), True)
+        self.assertEqual(active_enrollment.is_active(), True)
 
         inactive_enrollment = Enrollment()
-        self.assertEquals(inactive_enrollment.is_active(), False)
+        self.assertEqual(inactive_enrollment.is_active(), False)
 
         inactive_enrollment = Enrollment(status='inactive')
-        self.assertEquals(inactive_enrollment.is_active(), False)
+        self.assertEqual(inactive_enrollment.is_active(), False)
 
         deleted_enrollment = Enrollment(status='deleted')
-        self.assertEquals(deleted_enrollment.is_active(), False)
+        self.assertEqual(deleted_enrollment.is_active(), False)
 
         completed_enrollment = Enrollment(status='completed')
-        self.assertEquals(completed_enrollment.is_active(), False)
+        self.assertEqual(completed_enrollment.is_active(), False)
 
     def test_is_instructor(self):
         enrollment = Enrollment(role='teacher')
-        self.assertEquals(enrollment.is_instructor(), True)
+        self.assertEqual(enrollment.is_instructor(), True)
 
         enrollment = Enrollment(role='Teacher')
-        self.assertEquals(enrollment.is_instructor(), True)
+        self.assertEqual(enrollment.is_instructor(), True)
 
         enrollment = Enrollment(role='instructor')
-        self.assertEquals(enrollment.is_instructor(), False)
+        self.assertEqual(enrollment.is_instructor(), False)
 
         enrollment = Enrollment(role='student')
-        self.assertEquals(enrollment.is_instructor(), False)
+        self.assertEqual(enrollment.is_instructor(), False)
 
         enrollment = Enrollment()
-        self.assertEquals(enrollment.is_instructor(), False)
+        self.assertEqual(enrollment.is_instructor(), False)
 
     @mock.patch('sis_provisioner.models.enrollment.is_active_term',
                 return_value=False)
     @mock.patch('sis_provisioner.models.enrollment.logger')
     def test_add_teacher_enrollment(self, mock_logger, mock_is_active_term):
-        now_dt = datetime(2013, 1, 1).replace(tzinfo=utc)
+        now_dt = datetime(2013, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
         teacher_data = {
             'Section': get_section_by_id('2013-summer-TRAIN-101-A'),
             'UWRegID': 'BCDEF1234567890ABCDEF1234567890',
@@ -121,7 +120,7 @@ class EnrollmentModelTest(TestCase):
                 return_value=False)
     @mock.patch('sis_provisioner.models.enrollment.logger')
     def test_add_student_enrollment(self, mock_logger, mock_is_active_term):
-        now_dt = datetime(2013, 1, 1).replace(tzinfo=utc)
+        now_dt = datetime(2013, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
         student_data = {
             'Section': get_section_by_id('2013-summer-TRAIN-101-A'),
             'UWRegID': 'BCDEF1234567890ABCDEF1234567890',
@@ -215,11 +214,12 @@ class EnrollmentModelTest(TestCase):
     @mock.patch('sis_provisioner.models.enrollment.datetime')
     @override_settings(ENROLLMENT_EVENT_RETENTION_DAYS=3)
     def test_purge_expired(self, mock_datetime, mock_filter):
-        mock_datetime.utcnow.return_value = datetime(2013, 1, 4, 0, 0, 0)
+        mock_datetime.now.return_value = datetime(2013, 1, 4, 0, 0, 0)
         r = Enrollment.objects.purge_expired()
         mock_filter.assert_called_with(
             priority=Enrollment.PRIORITY_NONE,
-            last_modified__lt=datetime(2013, 1, 1, 0, 0, 0, tzinfo=utc))
+            last_modified__lt=datetime(
+                2013, 1, 1, 0, 0, 0, tzinfo=timezone.utc))
 
 
 class InvalidEnrollmentModelTest(TestCase):

@@ -6,8 +6,7 @@ from django.test import TestCase
 from django.db.models.query import QuerySet
 from sis_provisioner.models import Import
 from sis_provisioner.models.group import Group
-from datetime import datetime
-from dateutil import tz
+from datetime import datetime, timezone
 import mock
 
 
@@ -92,8 +91,8 @@ class GroupModelTest(TestCase):
     @mock.patch('sis_provisioner.models.group.datetime')
     @mock.patch.object(QuerySet, 'update')
     def test_delete_group_not_found(self, mock_update, mock_dt):
-        mock_dt.utcnow = mock.Mock(return_value=datetime(2015, 1, 23))
+        mock_dt.now = mock.Mock(return_value=datetime(2015, 1, 23))
         r = Group.objects.delete_group_not_found('u_does_not_exist')
         mock_update.assert_called_with(
             is_deleted=True, deleted_by='gws',
-            deleted_date=datetime(2015, 1, 23, tzinfo=tz.tzutc()))
+            deleted_date=datetime(2015, 1, 23, 0, 0, 0, tzinfo=timezone.utc))

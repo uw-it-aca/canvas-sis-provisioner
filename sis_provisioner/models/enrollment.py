@@ -5,7 +5,7 @@
 from django.db import models, IntegrityError
 from django.db.models import F
 from django.conf import settings
-from django.utils.timezone import utc, localtime
+from django.utils.timezone import localtime
 from sis_provisioner.models import Import, ImportResource
 from sis_provisioner.models.course import Course
 from sis_provisioner.models.user import User
@@ -14,7 +14,7 @@ from sis_provisioner.dao.canvas import (
     get_instructor_sis_import_role, ENROLLMENT_ACTIVE)
 from sis_provisioner.exceptions import EmptyQueueException
 from restclients_core.exceptions import DataFailureException
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from logging import getLogger
 
 logger = getLogger(__name__)
@@ -60,7 +60,7 @@ class EnrollmentManager(models.Manager):
         self.purge_expired()
 
     def purge_expired(self):
-        retention_dt = datetime.utcnow().replace(tzinfo=utc) - timedelta(
+        retention_dt = datetime.now(timezone.utc) - timedelta(
             days=getattr(settings, 'ENROLLMENT_EVENT_RETENTION_DAYS', 180))
         return super(EnrollmentManager, self).get_queryset().filter(
             priority=Enrollment.PRIORITY_NONE,
@@ -87,7 +87,8 @@ class EnrollmentManager(models.Manager):
         reg_id = enrollment_data.get('UWRegID')
         role = enrollment_data.get('Role')
         status = enrollment_data.get('Status').lower()
-        last_modified = enrollment_data.get('LastModified').replace(tzinfo=utc)
+        last_modified = enrollment_data.get('LastModified').replace(
+            tzinfo=timezone.utc)
         request_date = enrollment_data.get('RequestDate')
         duplicate_code = enrollment_data.get('DuplicateCode', '')
         instructor_reg_id = enrollment_data.get('InstructorUWRegID', None)

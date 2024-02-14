@@ -17,10 +17,10 @@ class BuilderTest(TestCase):
     def test_builder(self):
         builder = Builder()
 
-        self.assertEquals(type(builder.data), Collector)
-        self.assertEquals(builder.queue_id, None)
-        self.assertEquals(len(builder.invalid_users), 0)
-        self.assertEquals(builder.build(), None)
+        self.assertEqual(type(builder.data), Collector)
+        self.assertEqual(builder.queue_id, None)
+        self.assertEqual(len(builder.invalid_users), 0)
+        self.assertEqual(builder.build(), None)
         self.assertRaises(NotImplementedError, builder._process, True)
 
     def test_get_section_resource_by_id(self):

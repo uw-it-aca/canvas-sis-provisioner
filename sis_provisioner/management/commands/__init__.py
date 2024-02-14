@@ -4,10 +4,9 @@
 
 from django.core.management.base import BaseCommand
 from django.core.mail import mail_admins
-from django.utils.timezone import utc
 from sis_provisioner.models import Job
 from logging import getLogger
-import datetime
+from datetime import datetime, timedelta, timezone
 import sys
 
 
@@ -29,14 +28,14 @@ class SISProvisionerCommand(BaseCommand):
             job = Job(name=name,
                       title=self.title_from_name(name),
                       is_active=False)
-            job.changed_date = datetime.datetime.utcnow().replace(tzinfo=utc)
+            job.changed_date = datetime.now(timezone.utc)
             job.save()
 
         return True if job.is_active else False
 
     def update_job(self):
         job = Job.objects.get(name=self.name_from_argv())
-        job.last_run_date = datetime.datetime.utcnow().replace(tzinfo=utc)
+        job.last_run_date = datetime.now(timezone.utc)
         job.save()
 
     def health_check(self):
@@ -44,11 +43,11 @@ class SISProvisionerCommand(BaseCommand):
         pass
 
     def squawk(self, message="Problem with Provisioning Job"):
-        now = datetime.datetime.utcnow().replace(tzinfo=utc)
+        now = datetime.now(timezone.utc)
         job = Job.objects.get(name=self.name_from_argv())
         job.health_status = message
         if (not job.last_status_date or
-                (now - job.last_status_date) > datetime.timedelta(hours=1)):
+                (now - job.last_status_date) > timedelta(hours=1)):
             try:
                 mail_admins(
                     'Provisioning job "{}" may be having issues'.format(

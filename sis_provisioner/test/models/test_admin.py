@@ -5,13 +5,12 @@
 from django.conf import settings
 from django.test import TestCase, override_settings
 from django.db.models.query import QuerySet
-from django.utils.timezone import utc
 from sis_provisioner.models.admin import Admin
 from sis_provisioner.exceptions import AccountPolicyException
 from sis_provisioner.test.models.test_account import create_account
 from uw_canvas.utilities import fdao_canvas_override
 from uw_canvas.admins import Admins as CanvasAdmins
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import binascii
 import os
 import copy
@@ -54,7 +53,7 @@ class AdminModelTest(TestCase):
         self.assertEqual(admin.queue_id, None)
 
         admin.is_deleted = True
-        admin.deleted_date = datetime.utcnow().replace(tzinfo=utc)
+        admin.deleted_date = datetime.now(timezone.utc)
         admin.save()
 
         # add_admin should reset is_deleted
@@ -111,7 +110,7 @@ class AdminModelTest(TestCase):
         self.assertEqual(Admin.objects.is_account_admin('javerage'), False)
 
         admin.is_deleted = True
-        admin.deleted_date = datetime.utcnow().replace(tzinfo=utc)
+        admin.deleted_date = datetime.now(timezone.utc)
         admin.save()
 
         self.assertEqual(Admin.objects.is_account_admin('javerage'), False)
@@ -180,8 +179,7 @@ class AdminModelTest(TestCase):
         Admin.objects.start_reconcile(queue_id=imp.pk)
 
         Admin.objects.queued(imp.pk).update(
-            deleted_date=(datetime.utcnow() - timedelta(days=100)).replace(
-                tzinfo=utc))
+            deleted_date=datetime.now(timezone.utc) - timedelta(days=100))
 
         Admin.objects.finish_reconcile(queue_id=imp.pk)
 

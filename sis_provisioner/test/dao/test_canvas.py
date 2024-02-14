@@ -143,7 +143,7 @@ class CanvasSectionsTest(TestCase):
     def test_get_sis_sections_for_course(self, mock_method):
         r = get_sis_sections_for_course('abc')
         mock_method.assert_called_with('abc')
-        self.assertEquals(len(r), 0)
+        self.assertEqual(len(r), 0)
 
 
 class CanvasTermsTest(TestCase):
@@ -164,63 +164,63 @@ class CanvasTermsTest(TestCase):
 @fdao_pws_override
 class CanvasEnrollmentsTest(TestCase):
     def test_valid_enrollment_status(self):
-        self.assertEquals(valid_enrollment_status('active'), True)
-        self.assertEquals(valid_enrollment_status('inactive'), True)
-        self.assertEquals(valid_enrollment_status('deleted'), True)
-        self.assertEquals(valid_enrollment_status('abc'), False)
-        self.assertEquals(valid_enrollment_status(None), False)
-        self.assertEquals(valid_enrollment_status(4), False)
+        self.assertEqual(valid_enrollment_status('active'), True)
+        self.assertEqual(valid_enrollment_status('inactive'), True)
+        self.assertEqual(valid_enrollment_status('deleted'), True)
+        self.assertEqual(valid_enrollment_status('abc'), False)
+        self.assertEqual(valid_enrollment_status(None), False)
+        self.assertEqual(valid_enrollment_status(4), False)
 
     def test_status_from_registration(self):
         section = get_section_by_label('2013,winter,DROP_T,100/B')
 
         reg = Registration(section=section,
                            is_active=True)
-        self.assertEquals(enrollment_status_from_registration(reg), 'active')
+        self.assertEqual(enrollment_status_from_registration(reg), 'active')
 
         reg = Registration(section=section,
                            is_active=False,
                            request_date=section.term.last_day_instruction)
-        self.assertEquals(enrollment_status_from_registration(reg), 'inactive')
+        self.assertEqual(enrollment_status_from_registration(reg), 'inactive')
 
         reg = Registration(section=section,
                            is_active=False,
                            request_status='Added to Standby')
-        self.assertEquals(enrollment_status_from_registration(reg), 'active')
+        self.assertEqual(enrollment_status_from_registration(reg), 'active')
 
         reg = Registration(section=section,
                            is_active=False,
                            request_status='PENDING ADDED TO CLASS')
-        self.assertEquals(enrollment_status_from_registration(reg), 'active')
+        self.assertEqual(enrollment_status_from_registration(reg), 'active')
 
         # request_date equals term.first_day_quarter
         reg = Registration(section=section,
                            is_active=False,
                            request_date=section.term.first_day_quarter)
-        self.assertEquals(enrollment_status_from_registration(reg), 'deleted')
+        self.assertEqual(enrollment_status_from_registration(reg), 'deleted')
 
         # request_date equals term.census_day
         reg = Registration(section=section,
                            is_active=False,
                            request_date=section.term.census_day)
-        self.assertEquals(enrollment_status_from_registration(reg), 'deleted')
+        self.assertEqual(enrollment_status_from_registration(reg), 'deleted')
 
     @mock.patch.object(Enrollments, 'get_enrollments_for_course_by_sis_id')
     def test_get_sis_enrollments_for_user_in_course(self, mock_method):
         r = get_sis_enrollments_for_user_in_course('abc', 'def')
         mock_method.assert_called_with('def', {'user_id': 'sis_user_id%3Aabc'})
-        self.assertEquals(len(r), 0)
+        self.assertEqual(len(r), 0)
 
     @mock.patch.object(Enrollments, 'get_enrollments_for_regid')
     def test_get_active_sis_enrollments_for_user(self, mock_method):
         r = get_active_sis_enrollments_for_user('abc')
         mock_method.assert_called_with('abc', {'state': ['active']})
-        self.assertEquals(len(r), 0)
+        self.assertEqual(len(r), 0)
 
         r = get_active_sis_enrollments_for_user('abc', roles=['testRole'])
         mock_method.assert_called_with('abc', {
             'state': ['active'], 'type': ['testRole']})
-        self.assertEquals(len(r), 0)
+        self.assertEqual(len(r), 0)
 
 
 class CanvasReportsTest(TestCase):

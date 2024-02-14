@@ -5,8 +5,7 @@
 from logging import getLogger
 from sis_provisioner.models import Job
 from sis_provisioner.views.admin import RESTDispatch, get_user
-from django.utils.timezone import utc
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 
 logger = getLogger(__name__)
@@ -37,7 +36,7 @@ class JobView(RESTDispatch):
             if 'is_active' in data:
                 job.is_active = data['is_active']
                 job.changed_by = get_user(request)
-                job.changed_date = datetime.utcnow().replace(tzinfo=utc)
+                job.changed_date = datetime.now(timezone.utc)
                 job.save()
 
                 logger.info('%s %s Job "%s"' % (
