@@ -167,7 +167,7 @@ class GroupView(RESTDispatch):
                 course_id=sis_id,
                 course_type=Course.ADHOC_TYPE,
                 term_id='',
-                added_date=datetime.now(timezone.utc)
+                added_date=datetime.now(timezone.utc),
                 priority=Course.PRIORITY_NONE)
             course.save()
 

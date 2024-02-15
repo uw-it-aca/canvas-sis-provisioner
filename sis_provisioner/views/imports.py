@@ -6,7 +6,6 @@ import re
 import json
 import dateutil.parser
 from logging import getLogger
-from django.utils.timezone import utc
 from django.core.management import call_command
 from sis_provisioner.models import Import
 from sis_provisioner.models.user import User

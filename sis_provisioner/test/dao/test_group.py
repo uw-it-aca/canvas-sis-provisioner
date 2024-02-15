@@ -3,7 +3,6 @@
 
 
 from django.test import TestCase, override_settings
-from django.utils.timezone import utc
 from restclients_core.exceptions import DataFailureException
 from sis_provisioner.dao.group import *
 from sis_provisioner.exceptions import (
@@ -12,6 +11,7 @@ from datetime import datetime, timedelta
 from uw_gws.utilities import fdao_gws_override
 from uw_gws.models import GroupEntity
 from uw_pws.util import fdao_pws_override
+from datetime import timezone
 import mock
 
 
@@ -69,10 +69,10 @@ class GroupModifiedTest(TestCase):
             GroupNotFoundException, is_modified_group,
             'u_does_not_exist', mtime)
 
-        mtime = datetime(2000, 10, 10, 0, 0, 0).replace(tzinfo=utc)
+        mtime = datetime(2000, 10, 10, 0, 0, 0).replace(tzinfo=timezone.utc)
         self.assertEqual(is_modified_group('u_acadev_tester', mtime), True)
 
-        mtime = datetime(2020, 10, 10, 0, 0, 0).replace(tzinfo=utc)
+        mtime = datetime(2020, 10, 10, 0, 0, 0).replace(tzinfo=timezone.utc)
         self.assertEqual(is_modified_group('u_acadev_tester', mtime), False)
 
         mtime = None

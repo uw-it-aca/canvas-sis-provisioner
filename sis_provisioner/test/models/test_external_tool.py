@@ -3,11 +3,10 @@
 
 
 from django.test import TestCase, override_settings
-from django.utils.timezone import utc
 from sis_provisioner.models.external_tools import (
     ExternalTool, ExternalToolManager)
 from sis_provisioner.test.models.test_account import create_account
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 import mock
 
@@ -24,7 +23,9 @@ class ExternalToolModelTest(TestCase):
             config=json.dumps({
                 'name': 'Test1', 'consumer_key': 'xx'}),
             changed_by='user123',
-            changed_date=datetime(2000, 10, 10, 0, 0, 0).replace(tzinfo=utc))
+            changed_date=datetime(2000, 10, 10, 0, 0, 0).replace(
+                tzinfo=timezone.utc)
+        )
         self.tool1.save()
 
     def test_generate_shared_secret(self):

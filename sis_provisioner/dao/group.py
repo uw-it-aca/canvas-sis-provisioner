@@ -3,7 +3,6 @@
 
 
 from django.conf import settings
-from django.utils.timezone import utc
 from uw_gws import GWS
 from uw_gws.exceptions import InvalidGroupID
 from restclients_core.exceptions import DataFailureException
@@ -11,6 +10,7 @@ from sis_provisioner.dao.user import valid_net_id
 from sis_provisioner.exceptions import (
     UserPolicyException, GroupPolicyException, GroupNotFoundException,
     GroupUnauthorizedException)
+from datetime import timezone
 from logging import getLogger
 import re
 
@@ -33,7 +33,7 @@ def valid_group_id(group_id):
 def is_modified_group(group_id, changed_since_dt):
     try:
         group = GWS().get_group_by_id(group_id)
-        member_mtime = group.membership_modified.replace(tzinfo=utc)
+        member_mtime = group.membership_modified.replace(tzinfo=timezone.utc)
         return (member_mtime > changed_since_dt)
     except DataFailureException as err:
         if err.status == 404:
