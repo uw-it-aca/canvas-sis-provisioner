@@ -248,17 +248,6 @@ cronjob:
         requests:
           cpu: 25m
           memory: 128Mi
-    - name: delete-unused-courses
-      schedule: "30 11 * * 1-5"
-      command: ["/scripts/management_command.sh"]
-      args: ["delete_unused_courses"]
-      resources:
-        limits:
-          cpu: 500m
-          memory: 256Mi
-        requests:
-          cpu: 25m
-          memory: 128Mi
     - name: sync-external-tools
       schedule: "15 14 * * 1-6"
       command: ["/scripts/management_command.sh"]
