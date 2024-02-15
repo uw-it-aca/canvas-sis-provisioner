@@ -214,7 +214,8 @@ class EnrollmentModelTest(TestCase):
     @mock.patch('sis_provisioner.models.enrollment.datetime')
     @override_settings(ENROLLMENT_EVENT_RETENTION_DAYS=3)
     def test_purge_expired(self, mock_datetime, mock_filter):
-        mock_datetime.now.return_value = datetime(2013, 1, 4, 0, 0, 0)
+        mock_now = datetime(2013, 1, 4, 0, 0, 0, tzinfo=timezone.utc)
+        mock_datetime.now.return_value = mock_now
         r = Enrollment.objects.purge_expired()
         mock_filter.assert_called_with(
             priority=Enrollment.PRIORITY_NONE,

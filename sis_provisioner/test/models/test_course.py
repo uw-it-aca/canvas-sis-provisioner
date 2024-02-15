@@ -111,7 +111,7 @@ class CourseModelTest(TestCase):
         self.assertRaises(CoursePolicyException, course.update_priority, '')
 
     def test_default_expiration_date(self):
-        now = datetime.now().replace(tzinfo=utc)
+        now = datetime.now(timezone.utc)
         year = now.year - 2
         sis_id = '{}-summer-TRAIN-101-A'.format(year)
         course = Course(course_type=Course.SDB_TYPE, course_id=sis_id)
