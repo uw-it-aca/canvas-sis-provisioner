@@ -12,9 +12,8 @@ from sis_provisioner.exceptions import (
 from uw_sws.models import Registration
 from uw_sws.exceptions import InvalidCanvasIndependentStudyCourse
 from restclients_core.exceptions import DataFailureException
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from django.conf import settings
-from django.utils.timezone import utc
 
 
 class EnrollmentBuilder(Builder):
@@ -123,7 +122,7 @@ class EnrollmentBuilder(Builder):
             enrollment.reg_id, enrollment.course_id, err))
 
     def _init_build(self, **kwargs):
-        now = datetime.utcnow().replace(tzinfo=utc)
+        now = datetime.now(timezone.utc)
         timeout = getattr(settings, 'MISSING_LOGIN_ID_RETRY_TIMEOUT', 48)
         self.retry_missing_id = now - timedelta(hours=timeout)
 
@@ -133,7 +132,7 @@ class InvalidEnrollmentBuilder(Builder):
     Generates import data for each of the passed InvalidEnrollment models.
     """
     def _process(self, inv_enrollment):
-        now = datetime.utcnow().replace(tzinfo=utc)
+        now = datetime.now(timezone.utc)
         grace_dt = now - timedelta(days=getattr(
             settings, 'INVALID_ENROLLMENT_GRACE_DAYS', 90))
         status = None

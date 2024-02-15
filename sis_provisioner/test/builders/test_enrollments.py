@@ -11,5 +11,5 @@ class EnrollmentBuilderTest(TestCase):
     def test_enrollment_builder(self):
         builder = EnrollmentBuilder()
 
-        self.assertEquals(builder.build(), None)
-        self.assertEquals(type(builder.retry_missing_id), datetime)
+        self.assertEqual(builder.build(), None)
+        self.assertEqual(type(builder.retry_missing_id), datetime)

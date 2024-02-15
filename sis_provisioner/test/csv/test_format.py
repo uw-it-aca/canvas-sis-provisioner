@@ -21,35 +21,35 @@ class CSVHeaderTest(TestCase):
         self.assertEqual(csv_format.data, [])
 
     def test_csv_headers(self):
-        self.assertEquals(
+        self.assertEqual(
             str(AccountHeader()), 'account_id,parent_account_id,name,status\n')
-        self.assertEquals(
+        self.assertEqual(
             str(AdminHeader()), 'user_id,account_id,role,status\n')
-        self.assertEquals(
+        self.assertEqual(
             str(TermHeader()), 'term_id,name,status,start_date,end_date\n')
-        self.assertEquals(
+        self.assertEqual(
             str(CourseHeader()), (
                 'course_id,short_name,long_name,account_id,term_id,status,'
                 'start_date,end_date\n'))
-        self.assertEquals(
+        self.assertEqual(
             str(SectionHeader()),
             'section_id,course_id,name,status,start_date,end_date\n')
-        self.assertEquals(
+        self.assertEqual(
             str(EnrollmentHeader()), (
                 'course_id,root_account,user_id,role,role_id,section_id,'
                 'status,associated_user_id\n'))
-        self.assertEquals(
+        self.assertEqual(
             str(UserHeader()), (
                 'user_id,login_id,password,first_name,last_name,full_name,'
                 'sortable_name,short_name,email,status\n'))
-        self.assertEquals(
+        self.assertEqual(
             str(XlistHeader()), 'xlist_course_id,section_id,status\n')
 
 
 class AccountCSVTest(TestCase):
     def test_account_csv(self):
         context = Curriculum(full_name='CSV Test')
-        self.assertEquals(
+        self.assertEqual(
             str(AccountCSV('abc', 'def', context, 'active')),
             'abc,def,Csv Test,active\n')
 
@@ -60,15 +60,15 @@ class TermCSVTest(TestCase):
     def test_term_csv(self):
         section = get_section_by_label('2013,summer,TRAIN,101/A')
 
-        self.assertEquals(
+        self.assertEqual(
             str(TermCSV(section, 'active')), (
                 '2013-summer,Summer 2013,active,2013-06-24T00:00:00-0800,'
                 '2013-08-28T00:00:00-0800\n'))
-        self.assertEquals(
+        self.assertEqual(
             str(TermCSV(section, 'deleted')), (
                 '2013-summer,Summer 2013,deleted,2013-06-24T00:00:00-0800,'
                 '2013-08-28T00:00:00-0800\n'))
-        self.assertEquals(
+        self.assertEqual(
             str(TermCSV(section)), (
                 '2013-summer,Summer 2013,active,2013-06-24T00:00:00-0800,'
                 '2013-08-28T00:00:00-0800\n'))
@@ -85,7 +85,7 @@ class CourseCSVTest(TestCase):
             AccountPolicyException, CourseCSV, section=section)
 
         section.course_campus = 'PCE'
-        self.assertEquals(
+        self.assertEqual(
             str(CourseCSV(section=section)), (
                 '2013-spring-TRAIN-101-A,TRAIN 101 A,TRAIN 101 A Sp 13: '
                 'Intro Train,pce_none_account,2013-spring,active,,\n'))
@@ -98,7 +98,7 @@ class CourseCSVTest(TestCase):
                 'term_id': '2013-spring',
                 'status': 'deleted'}
 
-        self.assertEquals(
+        self.assertEqual(
             str(CourseCSV(**data)), (
                 '2013-spring-TRAIN-101-A,TRAIN 101 A,TRAIN 101 A Sp 13: '
                 'Intro Train,,2013-spring,deleted,,\n'))
@@ -112,7 +112,7 @@ class SectionCSVTest(TestCase):
     def test_with_section(self):
         section = get_section_by_label('2013,spring,TRAIN,101/A')
 
-        self.assertEquals(
+        self.assertEqual(
             str(SectionCSV(section=section)), (
                 '2013-spring-TRAIN-101-A--,2013-spring-TRAIN-101-A,'
                 'TRAIN 101 A,active,,\n'))
@@ -121,7 +121,7 @@ class SectionCSVTest(TestCase):
         data = {'section_id': '2013-spring-TRAIN-101-A--',
                 'course_id': '2013-spring-TRAIN-101-A',
                 'name': 'TRAIN 101 A'}
-        self.assertEquals(
+        self.assertEqual(
             str(SectionCSV(**data)), (
                 '2013-spring-TRAIN-101-A--,2013-spring-TRAIN-101-A,'
                 'TRAIN 101 A,active,,\n'))
@@ -130,11 +130,11 @@ class SectionCSVTest(TestCase):
                 'course_id': 'abc',
                 'name': 'UW Group members'}
 
-        self.assertEquals(
+        self.assertEqual(
             str(SectionCSV(**data)),
             'abc-groups,abc,UW Group members,active,,\n')
         data['status'] = 'deleted'
-        self.assertEquals(
+        self.assertEqual(
             str(SectionCSV(**data)),
             'abc-groups,abc,UW Group members,deleted,,\n')
 
@@ -157,12 +157,12 @@ class EnrollmentCSVTest(TestCase):
         self.assertRaises(EnrollmentPolicyException, EnrollmentCSV, **data)
 
         data['status'] = 'active'
-        self.assertEquals(
+        self.assertEqual(
             str(EnrollmentCSV(**data)),
             ',,9136CCB8F66711D5BE060004AC494FFE,student,,abc,active,\n')
 
         data['status'] = 'deleted'
-        self.assertEquals(
+        self.assertEqual(
             str(EnrollmentCSV(**data)),
             ',,9136CCB8F66711D5BE060004AC494FFE,student,,abc,deleted,\n')
 
@@ -174,12 +174,12 @@ class EnrollmentCSVTest(TestCase):
         self.assertRaises(EnrollmentPolicyException, EnrollmentCSV, **data)
 
         data['course_id'] = 'abc'
-        self.assertEquals(
+        self.assertEqual(
             str(EnrollmentCSV(**data)),
             'abc,,9136CCB8F66711D5BE060004AC494FFE,student,,,active,\n')
 
         data['section_id'] = 'abc--'
-        self.assertEquals(
+        self.assertEqual(
             str(EnrollmentCSV(**data)),
             'abc,,9136CCB8F66711D5BE060004AC494FFE,student,,abc--,active,\n')
 
@@ -188,17 +188,17 @@ class EnrollmentCSVTest(TestCase):
         self.assertRaises(EnrollmentPolicyException, EnrollmentCSV, **data)
 
         data['role'] = 'TaEnrollment'
-        self.assertEquals(
+        self.assertEqual(
             str(EnrollmentCSV(**data)),
             'abc,,9136CCB8F66711D5BE060004AC494FFE,ta,,abc--,active,\n')
 
         data['role'] = 'Librarian'  # Known custom role
-        self.assertEquals(
+        self.assertEqual(
             str(EnrollmentCSV(**data)),
             'abc,,9136CCB8F66711D5BE060004AC494FFE,Librarian,,abc--,active,\n')
 
         data['role'] = 'Custom'  # Unknown custom role
-        self.assertEquals(
+        self.assertEqual(
             str(EnrollmentCSV(**data)),
             'abc,,9136CCB8F66711D5BE060004AC494FFE,Custom,,abc--,active,\n')
 
@@ -207,16 +207,16 @@ class EnrollmentCSVTest(TestCase):
 
         registrations = get_registrations_by_section(section)
 
-        self.assertEquals(len(registrations), 2)
+        self.assertEqual(len(registrations), 2)
 
         reg0 = registrations[0]
         reg1 = registrations[1]
 
-        self.assertEquals(
+        self.assertEqual(
             str(EnrollmentCSV(registration=reg0)), (
                 ',,260A0DEC95CB11D78BAA000629C31437,student,,'
                 '2013-winter-DROP_T-100-B--,active,\n'))
-        self.assertEquals(
+        self.assertEqual(
             str(EnrollmentCSV(registration=reg1)), (
                 ',,9136CCB8F66711D5BE060004AC494FFE,student,,'
                 '2013-winter-DROP_T-100-B--,active,\n'))
@@ -225,7 +225,7 @@ class EnrollmentCSVTest(TestCase):
         section = get_section_by_label('2013,spring,TRAIN,101/A')
 
         for user in section.get_instructors():
-            self.assertEquals(
+            self.assertEqual(
                 str(EnrollmentCSV(
                     section=section, instructor=user, status='active')),
                 ',,{},teacher,,2013-spring-TRAIN-101-A--,active,\n'.format(
@@ -237,13 +237,13 @@ class EnrollmentCSVTest(TestCase):
 class UserCSVTest(TestCase):
     def test_user_csv(self):
         user = PWS().get_person_by_netid('javerage')
-        self.assertEquals(
+        self.assertEqual(
             str(UserCSV(user, 'active')), (
                 '9136CCB8F66711D5BE060004AC494FFE,javerage,,Jamesy,'
                 'McJamesy,,,,javerage@uw.edu,active\n'))
 
         user = PWS().get_entity_by_netid('somalt')
-        self.assertEquals(
+        self.assertEqual(
             str(UserCSV(user, 'active')), (
                 '605764A811A847E690F107D763A4B32A,somalt,,,,'
                 'SOM ACADEMIC LRNG TECHNOLOGY,,,somalt@uw.edu,active\n'))
@@ -251,9 +251,9 @@ class UserCSVTest(TestCase):
 
 class XlistCSVTest(TestCase):
     def test_xlist_csv(self):
-        self.assertEquals(
+        self.assertEqual(
             str(XlistCSV('abc', 'def', 'active')), 'abc,def,active\n')
-        self.assertEquals(
+        self.assertEqual(
             str(XlistCSV('abc', 'def', 'deleted')), 'abc,def,deleted\n')
-        self.assertEquals(
+        self.assertEqual(
             str(XlistCSV('abc', 'def')), 'abc,def,active\n')

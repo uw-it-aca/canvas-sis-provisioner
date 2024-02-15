@@ -17,10 +17,10 @@ import mock
 @fdao_pws_override
 class SectionPolicyTest(TestCase):
     def test_valid_canvas_course_id(self):
-        self.assertEquals(valid_canvas_course_id('12345'), None)
-        self.assertEquals(valid_canvas_course_id('0'), None)
-        self.assertEquals(valid_canvas_course_id('1111111111'), None)
-        self.assertEquals(valid_canvas_course_id(12345), None)
+        self.assertEqual(valid_canvas_course_id('12345'), None)
+        self.assertEqual(valid_canvas_course_id('0'), None)
+        self.assertEqual(valid_canvas_course_id('1111111111'), None)
+        self.assertEqual(valid_canvas_course_id(12345), None)
         self.assertRaises(
             CoursePolicyException, valid_canvas_course_id, None)
         self.assertRaises(
@@ -29,15 +29,15 @@ class SectionPolicyTest(TestCase):
             CoursePolicyException, valid_canvas_course_id, '1234z')
 
     def test_valid_course_sis_id(self):
-        self.assertEquals(valid_course_sis_id('12345'), None)
-        self.assertEquals(valid_course_sis_id('abc'), None)
-        self.assertEquals(valid_course_sis_id('0'), None)
+        self.assertEqual(valid_course_sis_id('12345'), None)
+        self.assertEqual(valid_course_sis_id('abc'), None)
+        self.assertEqual(valid_course_sis_id('0'), None)
         self.assertRaises(CoursePolicyException, valid_course_sis_id, None)
         self.assertRaises(CoursePolicyException, valid_course_sis_id, '')
 
     def test_valid_adhoc_course_sis_id(self):
-        self.assertEquals(valid_adhoc_course_sis_id('course_12345'), None)
-        self.assertEquals(valid_adhoc_course_sis_id('course_1'), None)
+        self.assertEqual(valid_adhoc_course_sis_id('course_12345'), None)
+        self.assertEqual(valid_adhoc_course_sis_id('course_1'), None)
         self.assertRaises(
             CoursePolicyException, valid_adhoc_course_sis_id, None)
         self.assertRaises(
@@ -48,17 +48,17 @@ class SectionPolicyTest(TestCase):
             CoursePolicyException, valid_adhoc_course_sis_id, 'abc')
 
     def test_valid_academic_course_sis_id(self):
-        self.assertEquals(
+        self.assertEqual(
             valid_academic_course_sis_id('2016-autumn-ABC-100-A'), None)
-        self.assertEquals(
+        self.assertEqual(
             valid_academic_course_sis_id('2016-autumn-ABC-100-AA'), None)
-        self.assertEquals(
+        self.assertEqual(
             valid_academic_course_sis_id('2016-autumn-ABC-100-A2'), None)
-        self.assertEquals(
+        self.assertEqual(
             valid_academic_course_sis_id('2016-autumn-AB&C-100-A'), None)
-        self.assertEquals(
+        self.assertEqual(
             valid_academic_course_sis_id('2016-autumn-A B-100-A'), None)
-        self.assertEquals(
+        self.assertEqual(
             valid_academic_course_sis_id(
                 '2016-autumn-ABC-100-A-ABCDEF1234567890ABCDEF1234567890'),
             None)
@@ -87,17 +87,17 @@ class SectionPolicyTest(TestCase):
             '2016-autumn-ABC-100-A-ABCDEF1234567890ABCDEF123456789Z')
 
     def test_valid_academic_section_sis_id(self):
-        self.assertEquals(
+        self.assertEqual(
             valid_academic_section_sis_id('2016-autumn-ABC-100-AA'), None)
-        self.assertEquals(
+        self.assertEqual(
             valid_academic_section_sis_id('2016-autumn-ABC-100-A--'), None)
-        self.assertEquals(
+        self.assertEqual(
             valid_academic_section_sis_id('2016-autumn-ABC-100-A2'), None)
-        self.assertEquals(
+        self.assertEqual(
             valid_academic_section_sis_id('2016-autumn-AB&C-100-AA'), None)
-        self.assertEquals(
+        self.assertEqual(
             valid_academic_section_sis_id('2016-autumn-A B-100-AA'), None)
-        self.assertEquals(
+        self.assertEqual(
             valid_academic_section_sis_id(
                 '2016-autumn-ABC-100-A-ABCDEF1234567890ABCDEF1234567890--'),
             None)
@@ -115,60 +115,60 @@ class SectionPolicyTest(TestCase):
             '2016-autumn-ABC-100-ABC')
 
     def test_adhoc_course_sis_id(self):
-        self.assertEquals(adhoc_course_sis_id('12345'), 'course_12345')
-        self.assertEquals(adhoc_course_sis_id('0'), 'course_0')
+        self.assertEqual(adhoc_course_sis_id('12345'), 'course_12345')
+        self.assertEqual(adhoc_course_sis_id('0'), 'course_0')
         self.assertRaises(CoursePolicyException, adhoc_course_sis_id, None)
         self.assertRaises(CoursePolicyException, adhoc_course_sis_id, 'abc')
         self.assertRaises(CoursePolicyException, adhoc_course_sis_id, '')
 
     def test_group_section_sis_id(self):
-        self.assertEquals(
+        self.assertEqual(
             group_section_sis_id('2016-autumn-ABC-100-A'),
             '2016-autumn-ABC-100-A-groups')
-        self.assertEquals(
+        self.assertEqual(
             group_section_sis_id(
                 '2016-autumn-ABC-100-A-ABCDEF1234567890ABCDEF1234567890'),
             '2016-autumn-ABC-100-A-ABCDEF1234567890ABCDEF1234567890-groups')
 
     @override_settings(DEFAULT_GROUP_SECTION_NAME='GROUP_NAME')
     def test_group_section_name(self):
-        self.assertEquals(group_section_name(), 'GROUP_NAME')
+        self.assertEqual(group_section_name(), 'GROUP_NAME')
 
     def test_section_id_from_url(self):
-        self.assertEquals(
+        self.assertEqual(
             section_id_from_url(
                 '/student/v5/course/2016,autumn,ABC,100/A.json'),
             '2016-autumn-ABC-100-A')
-        self.assertEquals(
+        self.assertEqual(
             section_id_from_url(
                 '/student/v5/course/2016,autumn,ABC,100/AB.json'),
             '2016-autumn-ABC-100-AB')
-        self.assertEquals(
+        self.assertEqual(
             section_id_from_url(
                 '/student/v5/course/2016,autumn,A%20B%20C,100/AB.json'),
             '2016-autumn-A B C-100-AB')
-        self.assertEquals(
+        self.assertEqual(
             section_id_from_url(
                 '/student/v5/course/2016,autumn,AB%26C,100/AB.json'),
             '2016-autumn-AB&C-100-AB')
-        self.assertEquals(section_id_from_url(''), None)
-        self.assertEquals(section_id_from_url(None), None)
+        self.assertEqual(section_id_from_url(''), None)
+        self.assertEqual(section_id_from_url(None), None)
 
     def test_section_label_from_section_id(self):
-        self.assertEquals(
+        self.assertEqual(
             section_label_from_section_id('2016-autumn-ABC-100-A'),
             '2016,autumn,ABC,100/A')
-        self.assertEquals(
+        self.assertEqual(
             section_label_from_section_id(
                 '2016-autumn-ABC-100-A-ABCDEF1234567890ABCDEF1234567890'),
             '2016,autumn,ABC,100/A')
-        self.assertEquals(
+        self.assertEqual(
             section_label_from_section_id('2016-autumn-ABC-100-AB'),
             '2016,autumn,ABC,100/AB')
-        self.assertEquals(
+        self.assertEqual(
             section_label_from_section_id('2016-autumn-ABC-100-A--'),
             '2016,autumn,ABC,100/A')
-        self.assertEquals(
+        self.assertEqual(
             section_label_from_section_id(
                 '2016-autumn-ABC-100-A-ABCDEF1234567890ABCDEF1234567890--'),
             '2016,autumn,ABC,100/A')
@@ -182,86 +182,86 @@ class SectionPolicyTest(TestCase):
             CoursePolicyException, section_label_from_section_id, None)
 
     def test_instructor_regid_from_section_id(self):
-        self.assertEquals(
+        self.assertEqual(
             instructor_regid_from_section_id('2016-autumn-ABC-100-A'), None)
-        self.assertEquals(
+        self.assertEqual(
             instructor_regid_from_section_id(
                 '2016-autumn-ABC-100-A-ABCDEF1234567890ABCDEF1234567890'),
             'ABCDEF1234567890ABCDEF1234567890')
-        self.assertEquals(
+        self.assertEqual(
             instructor_regid_from_section_id('2016-autumn-ABC-100-A--'), None)
-        self.assertEquals(
+        self.assertEqual(
             instructor_regid_from_section_id(
                 '2016-autumn-ABC-100-A-ABCDEF1234567890ABCDEF1234567890--'),
             'ABCDEF1234567890ABCDEF1234567890')
-        self.assertEquals(
+        self.assertEqual(
             instructor_regid_from_section_id('2016-autumn-ABC-100'), None)
-        self.assertEquals(instructor_regid_from_section_id(''), None)
-        self.assertEquals(instructor_regid_from_section_id(None), None)
+        self.assertEqual(instructor_regid_from_section_id(''), None)
+        self.assertEqual(instructor_regid_from_section_id(None), None)
 
     def test_valid_canvas_section(self):
         section = get_section_by_label('2013,spring,TRAIN,101/A')
 
         section.primary_lms = None
-        self.assertEquals(valid_canvas_section(section), None)
+        self.assertEqual(valid_canvas_section(section), None)
 
         section.primary_lms = Section.LMS_CANVAS
-        self.assertEquals(valid_canvas_section(section), None)
+        self.assertEqual(valid_canvas_section(section), None)
 
         section.primary_lms = 'ABC'
         self.assertRaises(CoursePolicyException, valid_canvas_section, section)
 
         section.primary_lms = Section.LMS_CANVAS
         section.delete_flag = Section.DELETE_FLAG_ACTIVE
-        self.assertEquals(is_active_section(section), True)
+        self.assertEqual(is_active_section(section), True)
 
         section.delete_flag = Section.DELETE_FLAG_WITHDRAWN
-        self.assertEquals(is_active_section(section), False)
+        self.assertEqual(is_active_section(section), False)
 
         section.primary_lms = 'ABC'
         section.delete_flag = Section.DELETE_FLAG_ACTIVE
-        self.assertEquals(is_active_section(section), False)
+        self.assertEqual(is_active_section(section), False)
 
     def test_suspended_canvas_section(self):
         section = get_section_by_label('2013,winter,BIGDATA,220/A')
-        self.assertEquals(section.is_active(), False)
-        self.assertEquals(section.is_withdrawn(), False)
-        self.assertEquals(section.is_suspended(), True)
-        self.assertEquals(is_active_section(section), True)
+        self.assertEqual(section.is_active(), False)
+        self.assertEqual(section.is_withdrawn(), False)
+        self.assertEqual(section.is_suspended(), True)
+        self.assertEqual(is_active_section(section), True)
 
     def test_section_short_name(self):
         section = get_section_by_label('2013,spring,TRAIN,101/A')
-        self.assertEquals(section_short_name(section), 'TRAIN 101 A')
+        self.assertEqual(section_short_name(section), 'TRAIN 101 A')
 
     def test_section_long_name(self):
         section = get_section_by_id('2013-spring-TRAIN-101-A')
-        self.assertEquals(
+        self.assertEqual(
             section_long_name(section), 'TRAIN 101 A Sp 13: Intro Train')
 
         section.course_title_long = ''
-        self.assertEquals(section_long_name(section), 'TRAIN 101 A Sp 13')
+        self.assertEqual(section_long_name(section), 'TRAIN 101 A Sp 13')
 
         section.course_title_long = 'Intro Train'
         section.is_independent_start = True
-        self.assertEquals(
+        self.assertEqual(
             section_long_name(section), 'TRAIN 101 A Sp 13: Intro Train')
 
         section.course_title_long = ''
-        self.assertEquals(section_long_name(section), 'TRAIN 101 A Sp 13')
+        self.assertEqual(section_long_name(section), 'TRAIN 101 A Sp 13')
 
     def test_independent_study_section_long_name(self):
         section = get_section_by_id(
             '2013-autumn-REHAB-591-C-8BD26A286A7D11D5A4AE0004AC494FFE')
-        self.assertEquals(
+        self.assertEqual(
             section_long_name(section),
             'REHAB 591 C Au 13: Graduate Project (Bill Teacher)')
 
         section.course_title_long = None
-        self.assertEquals(
+        self.assertEqual(
             section_long_name(section), 'REHAB 591 C Au 13 (Bill Teacher)')
 
         section.course_title_long = ''
-        self.assertEquals(
+        self.assertEqual(
             section_long_name(section), 'REHAB 591 C Au 13 (Bill Teacher)')
 
 
@@ -270,13 +270,13 @@ class SectionPolicyTest(TestCase):
 class SectionByIDTest(TestCase):
     def test_section_by_id(self):
         section = get_section_by_id('2013-summer-TRAIN-101-A')
-        self.assertEquals(section.section_label(), '2013,summer,TRAIN,101/A')
+        self.assertEqual(section.section_label(), '2013,summer,TRAIN,101/A')
 
     def test_independent_study_section_by_id(self):
         section = get_section_by_id(
             '2013-autumn-REHAB-591-C-8BD26A286A7D11D5A4AE0004AC494FFE')
-        self.assertEquals(section.section_label(), '2013,autumn,REHAB,591/C')
-        self.assertEquals(
+        self.assertEqual(section.section_label(), '2013,autumn,REHAB,591/C')
+        self.assertEqual(
             section.independent_study_instructor_regid,
             '8BD26A286A7D11D5A4AE0004AC494FFE')
 
@@ -286,20 +286,20 @@ class SectionByIDTest(TestCase):
 class XlistSectionTest(TestCase):
     def test_canvas_xlist_id(self):
         section = get_section_by_id('2013-summer-TRAIN-101-A')
-        self.assertEquals(
+        self.assertEqual(
             canvas_xlist_id([section]), '2013-summer-TRAIN-101-A')
 
         section.delete_flag = Section.DELETE_FLAG_WITHDRAWN
-        self.assertEquals(canvas_xlist_id([section]), None)
+        self.assertEqual(canvas_xlist_id([section]), None)
 
         section1 = get_section_by_id('2013-spring-TRAIN-101-A')
         section2 = get_section_by_id('2013-summer-TRAIN-101-A')
 
-        self.assertEquals(
+        self.assertEqual(
             canvas_xlist_id([section1, section2]), '2013-spring-TRAIN-101-A')
 
         section2.lms_ownership = Section.LMS_OWNER_OL
-        self.assertEquals(
+        self.assertEqual(
             canvas_xlist_id([section1, section2]), '2013-summer-TRAIN-101-A')
 
 
@@ -332,8 +332,7 @@ class RegistrationsBySectionTest(TestCase):
     def test_get_registrations_by_section(self):
         section = get_section_by_label('2013,winter,DROP_T,100/B')
         registrations = get_registrations_by_section(section)
-
-        self.assertEquals(len(registrations), 2)
+        self.assertEqual(len(registrations), 2)
 
 
 @fdao_sws_override

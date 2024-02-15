@@ -5,7 +5,7 @@
 from django.db import models
 from django.db.models import Q
 from django.conf import settings
-from django.utils.timezone import utc, localtime
+from django.utils.timezone import localtime
 from sis_provisioner.models import Import, ImportResource
 from sis_provisioner.models.group import Group
 from sis_provisioner.models.user import User
@@ -19,7 +19,7 @@ from sis_provisioner.dao.term import get_current_active_term
 from sis_provisioner.exceptions import (
     CoursePolicyException, EmptyQueueException)
 from restclients_core.exceptions import DataFailureException
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from logging import getLogger
 
 logger = getLogger(__name__)
@@ -187,14 +187,15 @@ class CourseManager(models.Manager):
                 term_id=term_id, course_type=Course.SDB_TYPE
             ).values_list('course_id', 'priority')))
 
-        last_search_date = datetime.utcnow().replace(tzinfo=utc)
+        last_search_date = datetime.now(timezone.utc)
         try:
             delta = Term.objects.get(term_id=term_id)
         except Term.DoesNotExist:
             delta = Term(term_id=term_id)
 
         if delta.last_course_search_date is None:
-            delta.courses_changed_since_date = datetime.fromtimestamp(0, utc)
+            delta.courses_changed_since_date = datetime.fromtimestamp(
+                0, timezone.utc)
         else:
             delta.courses_changed_since_date = (
                 delta.last_course_search_date - timedelta(days=1))
@@ -303,10 +304,10 @@ class Course(ImportResource):
 
     @property
     def default_expiration_date(self):
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         expiration = datetime(
             now.year + self.RETENTION_LIFE_SPAN, self.RETENTION_EXPIRE_MONTH,
-            self.RETENTION_EXPIRE_DAY, 12).replace(tzinfo=utc)
+            self.RETENTION_EXPIRE_DAY, 12, 0, 0, tzinfo=timezone.utc)
         try:
             (year, quarter, c, n, s) = self.course_id.split('-')
             year = int(year) + self.RETENTION_LIFE_SPAN + (1 if (
@@ -324,7 +325,7 @@ class Course(ImportResource):
 
     def is_expired(self):
         if self.expiration_date is not None:
-            return self.expiration_date < datetime.utcnow().replace(tzinfo=utc)
+            return self.expiration_date < datetime.now(timezone.utc)
         return False
 
     def json_data(self, include_sws_url=False):
@@ -425,18 +426,17 @@ class ExpiredCourseManager(models.Manager):
             queue_id=queue_id, course_type=Course.ADHOC_TYPE)
 
     def dequeue(self, sis_import):
-        utcnow = datetime.utcnow().replace(tzinfo=utc)
         if sis_import.is_imported():
             # Dequeue the sdb courses
             self.queued_sdb_courses(sis_import.pk).update(
                 queue_id=None, priority=Course.PRIORITY_NONE,
-                deleted_date=utcnow)
+                deleted_date=datetime.now(timezone.utc))
 
         # Delete the adhoc courses via the Canvas api
         for course in self.queued_adhoc_courses(sis_import.pk):
             try:
                 delete_course(course.canvas_course_id)
-                course.deleted_date = utcnow
+                course.deleted_date = datetime.now(timezone.utc)
                 logger.info(f"DELETE adhoc course '{course.canvas_course_id}'")
             except DataFailureException as err:
                 course.provisioned_error = True
