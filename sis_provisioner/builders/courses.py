@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from django.utils.timezone import utc
 from sis_provisioner.builders import Builder
 from sis_provisioner.csv.format import CourseCSV, SectionCSV, TermCSV, XlistCSV
 from sis_provisioner.dao.course import (
@@ -16,7 +15,6 @@ from sis_provisioner.exceptions import CoursePolicyException
 from restclients_core.exceptions import DataFailureException
 from uw_sws.exceptions import InvalidCanvasIndependentStudyCourse
 from logging import getLogger
-from datetime import datetime
 import csv
 import re
 

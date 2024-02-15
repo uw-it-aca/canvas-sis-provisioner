@@ -4,13 +4,13 @@
 
 from django.db import models
 from django.db.models import Q
-from django.utils.timezone import utc, localtime
+from django.utils.timezone import localtime
 from sis_provisioner.dao.canvas import (
     sis_import_by_path, get_sis_import_status, delete_sis_import)
 from sis_provisioner.exceptions import MissingImportPathException
 from restclients_core.exceptions import DataFailureException
 from importlib import import_module
-from datetime import datetime
+from datetime import datetime, timezone
 from logging import getLogger
 import json
 import re
@@ -160,7 +160,7 @@ class Import(models.Model):
         try:
             sis_import = get_sis_import_status(self.canvas_id)
             self.monitor_status = 200
-            self.monitor_date = datetime.utcnow().replace(tzinfo=utc)
+            self.monitor_date = datetime.now(timezone.utc)
             self.canvas_state = sis_import.workflow_state
             self.canvas_progress = sis_import.progress
             self.canvas_warnings = None

@@ -14,9 +14,9 @@ from uw_pws.util import fdao_pws_override
 @fdao_sws_override
 class AccountPolicyTest(TestCase):
     def test_valid_canvas_account_id(self):
-        self.assertEquals(valid_canvas_account_id(12345), None)
-        self.assertEquals(valid_canvas_account_id('0'), None)
-        self.assertEquals(valid_canvas_account_id('1111111111'), None)
+        self.assertEqual(valid_canvas_account_id(12345), None)
+        self.assertEqual(valid_canvas_account_id('0'), None)
+        self.assertEqual(valid_canvas_account_id('1111111111'), None)
         self.assertRaises(
             AccountPolicyException, valid_canvas_account_id, None)
         self.assertRaises(
@@ -26,9 +26,9 @@ class AccountPolicyTest(TestCase):
 
     @override_settings(SIS_IMPORT_ROOT_ACCOUNT_ID='sis_root')
     def test_valid_account_sis_id(self):
-        self.assertEquals(valid_account_sis_id('sis_root'), None)
-        self.assertEquals(valid_account_sis_id('sis_root:courses'), None)
-        self.assertEquals(valid_account_sis_id('sis_root:abc:def'), None)
+        self.assertEqual(valid_account_sis_id('sis_root'), None)
+        self.assertEqual(valid_account_sis_id('sis_root:courses'), None)
+        self.assertEqual(valid_account_sis_id('sis_root:abc:def'), None)
 
         self.assertRaises(
             AccountPolicyException, valid_account_sis_id, 'course')
@@ -41,9 +41,9 @@ class AccountPolicyTest(TestCase):
 
     @override_settings(SIS_IMPORT_ROOT_ACCOUNT_ID='sis_root')
     def test_valid_academic_account_sis_id(self):
-        self.assertEquals(
+        self.assertEqual(
             valid_academic_account_sis_id('sis_root:seattle'), None)
-        self.assertEquals(
+        self.assertEqual(
             valid_academic_account_sis_id('sis_root:tacoma:abc'), None)
 
         self.assertRaises(
@@ -54,30 +54,30 @@ class AccountPolicyTest(TestCase):
             valid_academic_account_sis_id, 'sis_root:uweo')
 
     def test_adhoc_account_sis_id(self):
-        self.assertEquals(adhoc_account_sis_id('12345'), 'account_12345')
-        self.assertEquals(adhoc_account_sis_id('0'), 'account_0')
+        self.assertEqual(adhoc_account_sis_id('12345'), 'account_12345')
+        self.assertEqual(adhoc_account_sis_id('0'), 'account_0')
         self.assertRaises(AccountPolicyException, adhoc_account_sis_id, None)
         self.assertRaises(AccountPolicyException, adhoc_account_sis_id, 'abc')
         self.assertRaises(AccountPolicyException, adhoc_account_sis_id, '')
 
     def test_account_sis_id(self):
-        self.assertEquals(account_sis_id(['abc']), 'abc')
-        self.assertEquals(account_sis_id(['ab&c']), 'ab&c')
-        self.assertEquals(account_sis_id(['a b c']), 'a-b-c')
-        self.assertEquals(account_sis_id(['a:b:c']), 'a-b-c')
-        self.assertEquals(account_sis_id(['a-b-c']), 'a-b-c')
+        self.assertEqual(account_sis_id(['abc']), 'abc')
+        self.assertEqual(account_sis_id(['ab&c']), 'ab&c')
+        self.assertEqual(account_sis_id(['a b c']), 'a-b-c')
+        self.assertEqual(account_sis_id(['a:b:c']), 'a-b-c')
+        self.assertEqual(account_sis_id(['a-b-c']), 'a-b-c')
 
         accounts = ['abc', 'def', 'ghi']
-        self.assertEquals(account_sis_id(accounts), 'abc:def:ghi')
+        self.assertEqual(account_sis_id(accounts), 'abc:def:ghi')
 
         accounts = [' abc ', 'def ', ' ghi']
-        self.assertEquals(account_sis_id(accounts), 'abc:def:ghi')
+        self.assertEqual(account_sis_id(accounts), 'abc:def:ghi')
 
         accounts = ['abc', 'de:f', 'g:hi']
-        self.assertEquals(account_sis_id(accounts), 'abc:de-f:g-hi')
+        self.assertEqual(account_sis_id(accounts), 'abc:de-f:g-hi')
 
         accounts = ['ABC', 'DEF', 'GHI']
-        self.assertEquals(account_sis_id(accounts), 'abc:def:ghi')
+        self.assertEqual(account_sis_id(accounts), 'abc:def:ghi')
 
         accounts = [123, 456, 789]
         self.assertRaises(AccountPolicyException, account_sis_id, accounts)
@@ -95,16 +95,16 @@ class AccountPolicyTest(TestCase):
         curriculum = Curriculum(full_name='Curriculum Name',
                                 label='ABC')
 
-        self.assertEquals(account_name(campus), campus.full_name)
-        self.assertEquals(account_name(college), college.full_name)
-        self.assertEquals(account_name(dept), dept.full_name)
-        self.assertEquals(account_name(curriculum), 'Curriculum Name [ABC]')
+        self.assertEqual(account_name(campus), campus.full_name)
+        self.assertEqual(account_name(college), college.full_name)
+        self.assertEqual(account_name(dept), dept.full_name)
+        self.assertEqual(account_name(curriculum), 'Curriculum Name [ABC]')
 
         campus.full_name = 'uw campus'
-        self.assertEquals(account_name(campus), 'UW Campus')
+        self.assertEqual(account_name(campus), 'UW Campus')
 
         curriculum.full_name = 'Name UW Bothell Campus'
-        self.assertEquals(account_name(curriculum), 'Name [ABC]')
+        self.assertEqual(account_name(curriculum), 'Name [ABC]')
 
     @override_settings(LMS_OWNERSHIP_SUBACCOUNT={
             'PCE_OL': 'uwcourse:uweo:ol-managed',
@@ -118,12 +118,12 @@ class AccountPolicyTest(TestCase):
                           account_id_for_section, section)
 
         section.course_campus = 'PCE'
-        self.assertEquals(account_id_for_section(section),
-                          'uwcourse:uweo:noncredit-campus-managed')
+        self.assertEqual(account_id_for_section(section),
+                         'uwcourse:uweo:noncredit-campus-managed')
 
         section.lms_ownership = 'PCE_OL'
-        self.assertEquals(account_id_for_section(section),
-                          'uwcourse:uweo:ol-managed')
+        self.assertEqual(account_id_for_section(section),
+                         'uwcourse:uweo:ol-managed')
 
 
 @fdao_sws_override

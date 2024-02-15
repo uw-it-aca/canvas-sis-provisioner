@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from django.utils.timezone import utc
 from django.http import HttpResponse
 from django.core.exceptions import ValidationError
 from sis_provisioner.models.group import Group, GroupMemberGroup
@@ -14,7 +13,7 @@ from sis_provisioner.exceptions import (
     GroupPolicyException, CoursePolicyException)
 from blti.views import BLTILaunchView, RESTDispatch
 from logging import getLogger
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 import re
 
@@ -66,7 +65,7 @@ class GroupView(RESTDispatch):
                 group.deleted_by = None
                 group.deleted_date = None
                 group.provisioned_date = None
-                group.added_date = datetime.utcnow().replace(tzinfo=utc)
+                group.added_date = datetime.now(timezone.utc)
             else:
                 return self.error_response(
                     400, 'Group {} has duplicate role in course'.format(
@@ -97,7 +96,7 @@ class GroupView(RESTDispatch):
             id = self._valid_model_id(kwargs['id'])
             group = Group.objects.get(id=id)
             group.is_deleted = True
-            group.deleted_date = datetime.utcnow().replace(tzinfo=utc)
+            group.deleted_date = datetime.now(timezone.utc)
             group.priority = Course.PRIORITY_IMMEDIATE
             group.deleted_by = self.blti.user_login_id
             group.save()
@@ -168,7 +167,7 @@ class GroupView(RESTDispatch):
                 course_id=sis_id,
                 course_type=Course.ADHOC_TYPE,
                 term_id='',
-                added_date=datetime.utcnow().replace(tzinfo=utc),
+                added_date=datetime.now(timezone.utc),
                 priority=Course.PRIORITY_NONE)
             course.save()
 

@@ -3,7 +3,6 @@
 
 
 from django.test import TestCase, override_settings
-from django.utils.timezone import utc
 from restclients_core.exceptions import DataFailureException
 from sis_provisioner.dao.group import *
 from sis_provisioner.exceptions import (
@@ -12,6 +11,7 @@ from datetime import datetime, timedelta
 from uw_gws.utilities import fdao_gws_override
 from uw_gws.models import GroupEntity
 from uw_pws.util import fdao_pws_override
+from datetime import timezone
 import mock
 
 
@@ -21,8 +21,8 @@ class GroupPolicyTest(TestCase):
     @override_settings(DISALLOWED_UW_GROUPS=['uw_student', 'uw_staff'])
     def test_valid_group(self):
         # Valid
-        self.assertEquals(valid_group_id('u_javerage_test'), None)
-        self.assertEquals(valid_group_id('uw_faculty'), None)
+        self.assertEqual(valid_group_id('u_javerage_test'), None)
+        self.assertEqual(valid_group_id('uw_faculty'), None)
 
         # Invalid
         self.assertRaises(GroupPolicyException, valid_group_id, None)
@@ -69,11 +69,11 @@ class GroupModifiedTest(TestCase):
             GroupNotFoundException, is_modified_group,
             'u_does_not_exist', mtime)
 
-        mtime = datetime(2000, 10, 10, 0, 0, 0).replace(tzinfo=utc)
-        self.assertEquals(is_modified_group('u_acadev_tester', mtime), True)
+        mtime = datetime(2000, 10, 10, 0, 0, 0).replace(tzinfo=timezone.utc)
+        self.assertEqual(is_modified_group('u_acadev_tester', mtime), True)
 
-        mtime = datetime(2020, 10, 10, 0, 0, 0).replace(tzinfo=utc)
-        self.assertEquals(is_modified_group('u_acadev_tester', mtime), False)
+        mtime = datetime(2020, 10, 10, 0, 0, 0).replace(tzinfo=timezone.utc)
+        self.assertEqual(is_modified_group('u_acadev_tester', mtime), False)
 
         mtime = None
         self.assertRaises(
@@ -88,7 +88,7 @@ class SISImportMembersTest(TestCase):
     def test_sis_import_members(self):
         members = get_sis_import_members()
 
-        self.assertEquals(len(members), 3)
+        self.assertEqual(len(members), 3)
 
     @override_settings(SIS_IMPORT_USERS='u_does_not_exist')
     def test_sis_import_members_none(self):
@@ -103,16 +103,16 @@ class EffectiveMemberTest(TestCase):
         valid_members, invalid_members, member_groups = get_effective_members(
             'u_acadev_unittest')
 
-        self.assertEquals(len(valid_members), 2)
-        self.assertEquals(len(invalid_members), 0)
-        self.assertEquals(len(member_groups), 0)
+        self.assertEqual(len(valid_members), 2)
+        self.assertEqual(len(invalid_members), 0)
+        self.assertEqual(len(member_groups), 0)
 
         valid_members, invalid_members, member_groups = get_effective_members(
             'u_acadev_unittest', 'javerage')  # Using act_as
 
-        self.assertEquals(len(valid_members), 2)
-        self.assertEquals(len(invalid_members), 0)
-        self.assertEquals(len(member_groups), 0)
+        self.assertEqual(len(valid_members), 2)
+        self.assertEqual(len(invalid_members), 0)
+        self.assertEqual(len(member_groups), 0)
 
         self.assertRaises(
             GroupNotFoundException, get_effective_members, 'u_acadev_fake')
@@ -127,6 +127,6 @@ class EffectiveMemberTest(TestCase):
         valid_members, invalid_members, member_groups = get_effective_members(
             group_id)
 
-        self.assertEquals(len(valid_members), 1)
-        self.assertEquals(len(invalid_members), 0)
-        self.assertEquals(len(member_groups), 1)
+        self.assertEqual(len(valid_members), 1)
+        self.assertEqual(len(invalid_members), 0)
+        self.assertEqual(len(member_groups), 1)

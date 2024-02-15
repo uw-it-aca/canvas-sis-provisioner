@@ -6,7 +6,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 from sis_provisioner.dao.user import valid_reg_id, valid_gmail_id
 from sis_provisioner.exceptions import UserPolicyException
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import csv
 
 
@@ -112,4 +112,5 @@ class Command(BaseCommand):
     def logged_in_past_year(self, last_access_str):
         last_access_dt = datetime.strptime(last_access_str[:-6],
                                            '%Y-%m-%dT%H:%M:%S')
-        return last_access_dt < datetime.utcnow() - timedelta(days=365)
+        return last_access_dt < (
+            datetime.now(timezone.utc) - timedelta(days=365))

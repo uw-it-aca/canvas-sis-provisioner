@@ -21,18 +21,18 @@ class InvalidPerson(object):
 @fdao_gws_override
 class IsGroupMemberTest(TestCase):
     def test_is_group_member(self):
-        self.assertEquals(
+        self.assertEqual(
             is_group_member(
                 'u_acadev_unittest', 'javerage', is_effective=True), True)
-        self.assertEquals(
+        self.assertEqual(
             is_group_member(
                 'u_acadev_unittest', 'eight', is_effective=True), True)
-        self.assertEquals(
+        self.assertEqual(
             is_group_member(
                 'u_acadev_unittest', 'baverage', is_effective=True), False)
-        self.assertEquals(
+        self.assertEqual(
             is_group_member('u_acadev_unittest', 'seven'), True)
-        self.assertEquals(
+        self.assertEqual(
             is_group_member('u_acadev_unittest', 'jo@gmail.com'), False)
 
 
@@ -40,13 +40,13 @@ class IsGroupMemberTest(TestCase):
 @fdao_gws_override
 class IsGroupAdminTest(TestCase):
     def test_is_group_admin(self):
-        self.assertEquals(
+        self.assertEqual(
             is_group_admin('u_acadev_unittest', 'javerage'), True)
-        self.assertEquals(
+        self.assertEqual(
             is_group_admin('u_acadev_unittest', 'eight'), False)
-        self.assertEquals(
+        self.assertEqual(
             is_group_admin('u_acadev_unittest', 'baverage'), False)
-        self.assertEquals(
+        self.assertEqual(
             is_group_admin('u_acadev_unittest', 'joe@gmail.com'), False)
 
 
@@ -62,26 +62,26 @@ class UserPolicyTest(TestCase):
                                can_access_canvas, 'baverage')
 
     def test_valid_canvas_user_id(self):
-        self.assertEquals(valid_canvas_user_id(12345), None)
-        self.assertEquals(valid_canvas_user_id('12345'), None)
-        self.assertEquals(valid_canvas_user_id(0), None)
-        self.assertEquals(valid_canvas_user_id(1111111111), None)
+        self.assertEqual(valid_canvas_user_id(12345), None)
+        self.assertEqual(valid_canvas_user_id('12345'), None)
+        self.assertEqual(valid_canvas_user_id(0), None)
+        self.assertEqual(valid_canvas_user_id(1111111111), None)
         self.assertRaises(UserPolicyException, valid_canvas_user_id, None)
         self.assertRaises(UserPolicyException, valid_canvas_user_id, 'abc')
         self.assertRaises(UserPolicyException, valid_canvas_user_id, '1234z')
 
     def test_user_sis_id(self):
         user = PWS().get_person_by_netid('javerage')
-        self.assertEquals(
+        self.assertEqual(
             user_sis_id(user), '9136CCB8F66711D5BE060004AC494FFE')
 
     def test_user_email(self):
         user = PWS().get_person_by_netid('javerage')
-        self.assertEquals(user_email(user), 'javerage@uw.edu')
+        self.assertEqual(user_email(user), 'javerage@uw.edu')
 
         # non-personal netid
         user = PWS().get_entity_by_netid('somalt')
-        self.assertEquals(user_email(user), 'somalt@uw.edu')
+        self.assertEqual(user_email(user), 'somalt@uw.edu')
 
         user = PWS().get_entity_by_netid('somalt')
         user.uwnetid = None
@@ -93,21 +93,21 @@ class UserPolicyTest(TestCase):
     def test_user_fullname(self):
         user = PWS().get_person_by_netid('javerage')
         name = user_fullname(user)
-        self.assertEquals(len(name), 2)
-        self.assertEquals(name[0], 'Jamesy')
-        self.assertEquals(name[1], 'McJamesy')
+        self.assertEqual(len(name), 2)
+        self.assertEqual(name[0], 'Jamesy')
+        self.assertEqual(name[1], 'McJamesy')
 
         user = PWS().get_person_by_regid('8BD26A286A7D11D5A4AE0004AC494FFE')
         name = user_fullname(user)
-        self.assertEquals(len(name), 2)
-        self.assertEquals(name[0], 'BILL AVERAGE')
-        self.assertEquals(name[1], 'TEACHER')
+        self.assertEqual(len(name), 2)
+        self.assertEqual(name[0], 'BILL AVERAGE')
+        self.assertEqual(name[1], 'TEACHER')
 
         # non-personal netid
         user = PWS().get_entity_by_netid('somalt')
         name = user_fullname(user)
-        self.assertEquals(len(name), 1)
-        self.assertEquals(name[0], user.display_name)
+        self.assertEqual(len(name), 1)
+        self.assertEqual(name[0], user.display_name)
 
         user = InvalidPerson()
         self.assertRaises(UserPolicyException, user_fullname, user)
@@ -118,7 +118,7 @@ class UserPolicyTest(TestCase):
 class NetidPolicyTest(TestCase):
     @override_settings(NONPERSONAL_NETID_EXCEPTION_GROUP='u_acadev_tester')
     def test_get_person_by_netid(self):
-        self.assertEquals(get_person_by_netid('javerage').uwnetid, 'javerage')
+        self.assertEqual(get_person_by_netid('javerage').uwnetid, 'javerage')
         self.assertRaises(
             DataFailureException, get_person_by_netid, 'a_canvas_application')
         self.assertRaises(
@@ -131,11 +131,11 @@ class NetidPolicyTest(TestCase):
 
     def test_valid_netid(self):
         # Valid
-        self.assertEquals(valid_net_id('javerage'), None)
-        self.assertEquals(valid_net_id('sadm_javerage'), None)
-        self.assertEquals(valid_net_id('a_canvas_application'), None)
-        self.assertEquals(valid_net_id('j1234567890'), None)
-        self.assertEquals(valid_net_id('css1234'), None)
+        self.assertEqual(valid_net_id('javerage'), None)
+        self.assertEqual(valid_net_id('sadm_javerage'), None)
+        self.assertEqual(valid_net_id('a_canvas_application'), None)
+        self.assertEqual(valid_net_id('j1234567890'), None)
+        self.assertEqual(valid_net_id('css1234'), None)
 
         # Invalid
         self.assertRaises(MissingLoginIdException, valid_net_id, None)
@@ -149,8 +149,8 @@ class NetidPolicyTest(TestCase):
 
     def test_valid_admin_netid(self):
         # Valid
-        self.assertEquals(valid_admin_net_id('sadm_javerage'), None)
-        self.assertEquals(valid_admin_net_id('wadm_javerage'), None)
+        self.assertEqual(valid_admin_net_id('sadm_javerage'), None)
+        self.assertEqual(valid_admin_net_id('wadm_javerage'), None)
 
         # Invalid
         self.assertRaises(
@@ -158,7 +158,7 @@ class NetidPolicyTest(TestCase):
 
     def test_valid_application_netid(self):
         # Valid
-        self.assertEquals(
+        self.assertEqual(
             valid_application_net_id('a_canvas_application'), None)
 
         # Invalid
@@ -168,10 +168,10 @@ class NetidPolicyTest(TestCase):
     @override_settings(NONPERSONAL_NETID_EXCEPTION_GROUP='u_acadev_tester')
     def test_nonpersonal_netid(self):
         # Valid
-        self.assertEquals(
+        self.assertEqual(
             valid_nonpersonal_net_id('a_canvas_application'), None)
-        self.assertEquals(valid_nonpersonal_net_id('wadm_javerage'), None)
-        self.assertEquals(valid_nonpersonal_net_id('javerage'), None)
+        self.assertEqual(valid_nonpersonal_net_id('wadm_javerage'), None)
+        self.assertEqual(valid_nonpersonal_net_id('javerage'), None)
 
         # Invalid
         self.assertRaises(
@@ -183,10 +183,10 @@ class NetidPolicyTest(TestCase):
             InvalidLoginIdException, valid_nonpersonal_net_id, 'canvas')
 
     def test_valid_canvas_user_id(self):
-        self.assertEquals(valid_canvas_user_id(12345), None)
-        self.assertEquals(valid_canvas_user_id('12345'), None)
-        self.assertEquals(valid_canvas_user_id(0), None)
-        self.assertEquals(valid_canvas_user_id(1111111111), None)
+        self.assertEqual(valid_canvas_user_id(12345), None)
+        self.assertEqual(valid_canvas_user_id('12345'), None)
+        self.assertEqual(valid_canvas_user_id(0), None)
+        self.assertEqual(valid_canvas_user_id(1111111111), None)
         self.assertRaises(UserPolicyException, valid_canvas_user_id, None)
         self.assertRaises(UserPolicyException, valid_canvas_user_id, 'abc')
         self.assertRaises(UserPolicyException, valid_canvas_user_id, '1234z')
@@ -198,7 +198,7 @@ class RegidPolicyTest(TestCase):
     @override_settings(NONPERSONAL_NETID_EXCEPTION_GROUP='u_acadev_tester')
     def test_get_person_by_regid(self):
         user = get_person_by_regid('9136CCB8F66711D5BE060004AC494FFE')
-        self.assertEquals(user.uwregid, '9136CCB8F66711D5BE060004AC494FFE')
+        self.assertEqual(user.uwregid, '9136CCB8F66711D5BE060004AC494FFE')
 
         self.assertRaises(
             DataFailureException, get_person_by_regid,
@@ -212,7 +212,7 @@ class RegidPolicyTest(TestCase):
 
     def test_valid_regid(self):
         # Valid
-        self.assertEquals(
+        self.assertEqual(
             valid_reg_id('9136CCB8F66711D5BE060004AC494FFE'), None)
 
         # Invalid
@@ -247,12 +247,12 @@ class GmailPolicyTest(TestCase):
     ]
 
     def test_valid_gmail_id(self):
-        self.assertEquals(
+        self.assertEqual(
             valid_gmail_id(self.default_user), self.default_user,
             "Default user is not changed")
 
         for user in self.valid_users:
-            self.assertEquals(
+            self.assertEqual(
                 valid_gmail_id(user), self.default_user,
                 "Valid user: {}".format(user))
 

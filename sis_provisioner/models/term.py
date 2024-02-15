@@ -3,13 +3,12 @@
 
 
 from django.db import models
-from django.utils.timezone import utc
 from sis_provisioner.models import ImportResource
 from sis_provisioner.dao.term import (
     get_term_by_year_and_quarter, term_date_overrides)
 from sis_provisioner.dao.canvas import update_term_overrides
 from restclients_core.exceptions import DataFailureException
-from datetime import datetime
+from datetime import datetime, timezone
 from logging import getLogger
 
 logger = getLogger(__name__)
@@ -25,8 +24,7 @@ class TermManager(models.Manager):
                 sws_term = get_term_by_year_and_quarter(year, quarter)
                 update_term_overrides(term.term_id,
                                       term_date_overrides(sws_term))
-                term.updated_overrides_date = datetime.utcnow().replace(
-                    tzinfo=utc)
+                term.updated_overrides_date = datetime.now(timezone.utc)
                 term.save()
 
             except DataFailureException as ex:

@@ -4,7 +4,7 @@
 
 from django.db import models
 from django.conf import settings
-from django.utils.timezone import utc, localtime
+from django.utils.timezone import localtime
 from sis_provisioner.dao.astra import ASTRA
 from sis_provisioner.dao.canvas import get_account_role_data
 from sis_provisioner.models import Import, ImportResource
@@ -12,7 +12,7 @@ from sis_provisioner.models.account import Account
 from sis_provisioner.models.user import User
 from sis_provisioner.exceptions import (
     AccountPolicyException, EmptyQueueException)
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 
 class AdminManager(models.Manager):
@@ -64,7 +64,7 @@ class AdminManager(models.Manager):
 
     def finish_reconcile(self, queue_id):
         retention = getattr(settings, 'REMOVED_ADMIN_RETENTION_DAYS', 90)
-        now_dt = datetime.utcnow().replace(tzinfo=utc)
+        now_dt = datetime.now(timezone.utc)
         retention_dt = now_dt - timedelta(days=retention)
 
         # Set deleted date for admins who were just deleted

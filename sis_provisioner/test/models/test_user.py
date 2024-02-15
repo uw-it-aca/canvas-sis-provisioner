@@ -18,10 +18,10 @@ class UserModelTest(TestCase):
     def test_update_priority(self):
         person = PWS().get_person_by_netid('javerage')
         user = User.objects.add_user(person)
-        self.assertEquals(user.priority, User.PRIORITY_HIGH)
+        self.assertEqual(user.priority, User.PRIORITY_HIGH)
 
         user = User.objects.update_priority(person, User.PRIORITY_NONE)
-        self.assertEquals(user.priority, User.PRIORITY_NONE)
+        self.assertEqual(user.priority, User.PRIORITY_NONE)
         User.objects.all().delete()
 
     @mock.patch.object(QuerySet, 'update')
@@ -43,27 +43,27 @@ class UserModelTest(TestCase):
     def test_add_user(self):
         person = PWS().get_person_by_netid('javerage')
         user = User.objects.add_user(person)
-        self.assertEquals(user.reg_id, person.uwregid)
-        self.assertEquals(user.net_id, person.uwnetid)
-        self.assertEquals(user.priority, User.PRIORITY_HIGH)
+        self.assertEqual(user.reg_id, person.uwregid)
+        self.assertEqual(user.net_id, person.uwnetid)
+        self.assertEqual(user.priority, User.PRIORITY_HIGH)
         User.objects.all().delete()
 
         person = PWS().get_person_by_netid('javerage')
         user = User.objects.add_user(person, priority=User.PRIORITY_NONE)
-        self.assertEquals(user.reg_id, person.uwregid)
-        self.assertEquals(user.net_id, person.uwnetid)
-        self.assertEquals(user.priority, User.PRIORITY_NONE)
+        self.assertEqual(user.reg_id, person.uwregid)
+        self.assertEqual(user.net_id, person.uwnetid)
+        self.assertEqual(user.priority, User.PRIORITY_NONE)
         User.objects.all().delete()
 
     def test_add_user_by_netid(self):
         user = User.objects.add_user_by_netid('bill')
-        self.assertEquals(user.net_id, 'bill')
-        self.assertEquals(user.priority, User.PRIORITY_HIGH)
+        self.assertEqual(user.net_id, 'bill')
+        self.assertEqual(user.priority, User.PRIORITY_HIGH)
 
         user = User.objects.add_user_by_netid('bill',
                                               priority=User.PRIORITY_NONE)
-        self.assertEquals(user.net_id, 'bill')
-        self.assertEquals(user.priority, User.PRIORITY_NONE)
+        self.assertEqual(user.net_id, 'bill')
+        self.assertEqual(user.priority, User.PRIORITY_NONE)
 
         # is_test_entity
         self.assertRaises(UserPolicyException, User.objects.add_user_by_netid,
@@ -74,10 +74,10 @@ class UserModelTest(TestCase):
         user = User.objects.add_user(person)
 
         json = user.json_data()
-        self.assertEquals(json['net_id'], 'javerage')
-        self.assertEquals(json['reg_id'], '9136CCB8F66711D5BE060004AC494FFE')
-        self.assertEquals(json['queue_id'], None)
-        self.assertEquals(json['provisioned_date'], None)
-        self.assertEquals(json['priority'], 'high')
+        self.assertEqual(json['net_id'], 'javerage')
+        self.assertEqual(json['reg_id'], '9136CCB8F66711D5BE060004AC494FFE')
+        self.assertEqual(json['queue_id'], None)
+        self.assertEqual(json['provisioned_date'], None)
+        self.assertEqual(json['priority'], 'high')
 
         User.objects.all().delete()

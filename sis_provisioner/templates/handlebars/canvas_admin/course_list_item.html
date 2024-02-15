@@ -124,13 +124,10 @@
 {% verbatim %}
 <script id="course-item-exception" type="text/x-handlebars-template">
   <i class="fa fa-trash"></i>This course {{#if is_expired}}expired{{else}}expires{{/if}} on {{expiration_date}} ({{expiration_date_relative}})
-  {{#if is_expired}}
+  {{#if expiration_exc_granted_date}}
+    <span>Exception granted by {{expiration_exc_granted_by}}, Reason: {{expiration_exc_desc}}</span> <a class="course-expiration-reset" href="javascript:void(0);" title="Remove the exception" data-canvas-course-id="{{canvas_course_id}}">Remove exception</a>
   {{else}}
-    {{#if expiration_exc_granted_date}}
-      <span>Exception granted by {{expiration_exc_granted_by}}, Reason: {{expiration_exc_desc}}</span> <a class="course-expiration-reset" href="javascript:void(0);" title="Remove the exception" data-canvas-course-id="{{canvas_course_id}}">Remove exception</a>
-    {{else}}
-      <a class="course-expiration-edit" href="javascript:void(0);" title="Add exception for this course" data-canvas-course-id="{{canvas_course_id}}" data-expiration_exc_desc="">Add exception</a>
-    {{/if}}
+    <a class="course-expiration-edit" href="javascript:void(0);" title="Add exception for this course" data-canvas-course-id="{{canvas_course_id}}" data-expiration_exc_desc="">Add exception</a>
   {{/if}}
 </script>
 {% endverbatim %}

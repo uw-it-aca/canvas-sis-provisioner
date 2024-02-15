@@ -4,12 +4,12 @@
 
 from django.conf import settings
 from django.db import models
-from django.utils.timezone import utc, localtime
+from django.utils.timezone import localtime
 from sis_provisioner.models.account import Account
 from sis_provisioner.dao.canvas import (
     get_account_by_id, get_sub_accounts, get_external_tools,
     create_external_tool, update_external_tool, delete_external_tool)
-from datetime import datetime
+from datetime import datetime, timezone
 import string
 import random
 import json
@@ -55,7 +55,7 @@ class ExternalToolManager(models.Manager):
 
             tool.config = json.dumps(config)
             tool.changed_by = changed_by
-            tool.changed_date = datetime.utcnow().replace(tzinfo=utc)
+            tool.changed_date = datetime.now(timezone.utc)
             tool.queue_id = None
             tool.save()
 
@@ -67,7 +67,7 @@ class ExternalToolManager(models.Manager):
         tool = ExternalTool(
             account=account,
             changed_by=created_by,
-            changed_date=datetime.utcnow().replace(tzinfo=utc))
+            changed_date=datetime.now(timezone.utc))
 
         try:
             keystore = BLTIKeyStore.objects.get(
@@ -87,7 +87,7 @@ class ExternalToolManager(models.Manager):
 
         tool.canvas_id = new_config.get('id')
         tool.config = json.dumps(new_config)
-        tool.provisioned_date = datetime.utcnow().replace(tzinfo=utc)
+        tool.provisioned_date = datetime.now(timezone.utc)
         tool.save()
         return tool
 
@@ -113,8 +113,8 @@ class ExternalToolManager(models.Manager):
 
         tool.config = json.dumps(new_config)
         tool.changed_by = updated_by
-        tool.changed_date = datetime.utcnow().replace(tzinfo=utc)
-        tool.provisioned_date = datetime.utcnow().replace(tzinfo=utc)
+        tool.changed_date = datetime.now(timezone.utc)
+        tool.provisioned_date = datetime.now(timezone.utc)
         tool.save()
         return tool
 
