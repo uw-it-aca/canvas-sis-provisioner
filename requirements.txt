@@ -1,2 +1,1 @@
-aws_message@git+https://github.com/uw-it-aca/aws-message-client@task/cryptography
 -e .
