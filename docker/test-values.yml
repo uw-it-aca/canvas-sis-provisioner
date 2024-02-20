@@ -76,11 +76,6 @@ certs:
   keyPath: /certs/test-apps.canvas.uw.edu-ic.key
   secretName: test-apps.canvas.uw.edu-ic-certs
 
-mountedSecrets:
-  enabled: true
-  mountPath: /ssl
-  secretName: test-apps.canvas.uw.edu-openssl-conf
-
 environmentVariables:
   - name: ENV
     value: test
