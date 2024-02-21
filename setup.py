@@ -30,7 +30,7 @@ setup(
         'suds',
         'django-blti~=2.2',
         'django-cors-headers',
-        'aws-message-client==v1.6-beta.1',
+        'aws-message-client~=1.6',
         'djangorestframework~=3.14',
         'django-storages[google]',
         'uw-memcached-clients~=1.0',
