@@ -365,14 +365,9 @@ daemon:
 
 certs:
   mounted: true
-  certPath: /certs/apps.canvas.uw.edu-uwca.cert
-  keyPath: /certs/apps.canvas.uw.edu-uwca.key
-  secretName: apps.canvas.uw.edu-uwca-certs
-
-mountedSecrets:
-  enabled: true
-  mountPath: /ssl
-  secretName: apps.canvas.uw.edu-openssl-conf
+  certPath: /certs/apps.canvas.uw.edu-ic.cert
+  keyPath: /certs/apps.canvas.uw.edu-ic.key
+  secretName: apps.canvas.uw.edu-ic-certs
 
 environmentVariables:
   - name: ENV
@@ -416,9 +411,6 @@ environmentVariables:
     value: https://apps.canvas.uw.edu/shibboleth
   - name: CLUSTER_CNAME
     value: apps.canvas.uw.edu
-
-  - name: OPENSSL_CONF
-    value: /ssl/openssl.cnf
 
 externalSecrets:
   enabled: true
@@ -497,13 +489,6 @@ externalSecrets:
           property: username
         - name: password
           property: password
-    - name: apps.canvas.uw.edu-uwca-certs
-      externalKey: canvas/prod/uwca-certs
-      data:
-        - name: apps.canvas.uw.edu-uwca.cert
-          property: apps.canvas.uw.edu-uwca.cert
-        - name: apps.canvas.uw.edu-uwca.key
-          property: apps.canvas.uw.edu-uwca.key
     - name: apps.canvas.uw.edu-ic-certs
       externalKey: canvas/prod/ic-certs
       data:
@@ -516,11 +501,6 @@ externalSecrets:
       data:
         - name: uw-idp-cert
           property: cert
-    - name: apps.canvas.uw.edu-openssl-conf
-      externalKey: openssl-conf
-      data:
-        - name: openssl.cnf
-          property: openssl.cnf
 
 environmentVariablesSecrets:
   djangoSecret:
