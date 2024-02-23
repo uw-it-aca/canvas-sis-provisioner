@@ -27,12 +27,19 @@ class HTTPSConnectionClientCertV3(http.client.HTTPSConnection):
         self.key_file = settings.ASTRA_KEY
         self.cert_file = settings.ASTRA_CERT
 
+    @property
+    def _ssl_context(self):
+        ctx = ssl.SSLContext()
+        ctx.load_cert_chain(certfile=self.cert_file, keyfile=self.key_file)
+        ctx.set_ciphers('HIGH:!DH:!aNULL')
+        return ctx
+
     def connect(self):
         sock = socket.create_connection((self.host, self.port), self.timeout)
         if self._tunnel_host:
             self.sock = sock
             self._tunnel()
-        self.sock = ssl.wrap_socket(sock, self.key_file, self.cert_file)
+        self.sock = self._ssl_context.wrap_socket(sock)
 
 
 class HTTPSClientAuthHandler(HTTPSHandler):
