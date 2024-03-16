@@ -27,9 +27,9 @@ class EnrollmentBuilder(Builder):
         try:
             enrollment.person = get_person_by_regid(enrollment.reg_id)
 
-            section = self.get_section_resource_by_id(enrollment.course_id)
-            section.independent_study_instructor_regid = (
-                enrollment.instructor_reg_id)
+            section = self.get_section_resource_by_id(
+                enrollment.course_id,
+                instructor_reg_id=enrollment.instructor_reg_id)
 
             if not is_active_section(section):
                 return

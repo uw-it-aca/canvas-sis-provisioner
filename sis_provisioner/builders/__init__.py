@@ -104,15 +104,16 @@ class Builder(object):
             self.logger.info("Skip enrollments for section {}: {}".format(
                 section.section_label(), ex))
 
-    def get_section_resource_by_id(self, section_id):
+    def get_section_resource_by_id(self, section_id, instructor_reg_id=None):
         """
         Fetch the section resource for the passed section ID, and add to queue.
         """
         try:
             section = get_section_by_id(section_id)
+            if instructor_reg_id is not None:
+                section.independent_study_instructor_regid = instructor_reg_id
             Course.objects.add_to_queue(section, self.queue_id)
             return section
-
         except (ValueError, CoursePolicyException, DataFailureException) as ex:
             Course.objects.remove_from_queue(section_id, ex)
             self.logger.info("Skip section {}: {}".format(section_id, ex))
