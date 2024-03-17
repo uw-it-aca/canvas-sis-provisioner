@@ -45,7 +45,7 @@ class BuilderTest(TestCase):
                           '2013-winter-AAA-BBB')
 
         # Independent study
-        builder.get_section_resource_by_id(
+        section = builder.get_section_resource_by_id(
             '2020-summer-PHIL-600-A-9136CCB8F66711D5BE060004AC494FFE')
         self.assertEqual(section.section_label(), '2020,summer,PHIL,600/A')
         self.assertEqual(section.canvas_course_sis_id(), (
