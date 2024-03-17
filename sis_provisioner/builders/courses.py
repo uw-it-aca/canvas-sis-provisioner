@@ -14,11 +14,8 @@ from sis_provisioner.models.course import Course
 from sis_provisioner.exceptions import CoursePolicyException
 from restclients_core.exceptions import DataFailureException
 from uw_sws.exceptions import InvalidCanvasIndependentStudyCourse
-from logging import getLogger
 import csv
 import re
-
-logger = getLogger(__name__)
 
 
 class CourseBuilder(Builder):
@@ -40,7 +37,8 @@ class CourseBuilder(Builder):
 
         try:
             section = self.get_section_resource_by_id(section_id)
-        except Exception:
+        except Exception as err:
+            self.logger.info(f"ERROR in get_section for '{section_id}': {err}")
             return
 
         if section.is_independent_study:
@@ -313,7 +311,7 @@ class UnusedCourseBuilder(Builder):
                 course.queue_id = self.queue_id
                 course.save()
             except Course.DoesNotExist:
-                logger.info(f"Course model not found for '{course_id}'")
+                self.logger.info(f"Course model not found for '{course_id}'")
                 return
 
             kwargs = {'course_id': course_id,
@@ -348,11 +346,12 @@ class ExpiredCourseBuilder(Builder):
             course = Course.objects.find_course(canvas_course_id,
                                                 course_sis_id)
             if not course.is_expired():
-                logger.info(f"Course '{canvas_course_id}' not expired")
+                self.logger.info(f"Course '{canvas_course_id}' not expired")
                 return
 
         except Course.DoesNotExist:
-            logger.info(f"Course model not found for '{canvas_course_id}'")
+            self.logger.info(
+                f"Course model not found for '{canvas_course_id}'")
             return
 
         # Course exists and is expired
