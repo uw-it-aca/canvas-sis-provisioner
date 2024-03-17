@@ -9,6 +9,7 @@ from sis_provisioner.builders import Builder
 from sis_provisioner.csv.data import Collector
 from sis_provisioner.exceptions import CoursePolicyException
 from restclients_core.exceptions import DataFailureException
+from uw_sws.exceptions import InvalidCanvasIndependentStudyCourse
 
 
 @fdao_sws_override
@@ -30,6 +31,8 @@ class BuilderTest(TestCase):
         section = builder.get_section_resource_by_id(
             '2013-winter-DROP_T-100-B')
         self.assertEqual(section.section_label(), '2013,winter,DROP_T,100/B')
+        self.assertEqual(section.canvas_course_sis_id(),
+                         '2013-winter-DROP_T-100-B')
 
         # 404 Not Found
         self.assertRaises(DataFailureException,
@@ -40,6 +43,18 @@ class BuilderTest(TestCase):
         self.assertRaises(CoursePolicyException,
                           builder.get_section_resource_by_id,
                           '2013-winter-AAA-BBB')
+
+        # Independent study
+        builder.get_section_resource_by_id(
+            '2020-summer-PHIL-600-A-9136CCB8F66711D5BE060004AC494FFE')
+        self.assertEqual(section.section_label(), '2020,summer,PHIL,600/A')
+        self.assertEqual(section.canvas_course_sis_id(), (
+            '2020-summer-PHIL-600-A-9136CCB8F66711D5BE060004AC494FFE'))
+
+        # Independent study, Missing instructor regid
+        self.assertRaises(InvalidCanvasIndependentStudyCourse,
+                          builder.get_section_resource_by_id,
+                          '2020-summer-PHIL-600-A')
 
     def test_add_registrations_by_section(self):
         builder = Builder()
