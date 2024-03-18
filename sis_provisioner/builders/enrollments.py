@@ -9,7 +9,7 @@ from sis_provisioner.dao.course import is_active_section, section_id_from_url
 from sis_provisioner.dao.canvas import ENROLLMENT_ACTIVE, ENROLLMENT_DELETED
 from sis_provisioner.exceptions import (
     UserPolicyException, MissingLoginIdException)
-from uw_sws.models import Registration
+from uw_sws.models import Registration, Section
 from uw_sws.exceptions import InvalidCanvasIndependentStudyCourse
 from restclients_core.exceptions import DataFailureException
 from datetime import datetime, timedelta, timezone
@@ -73,7 +73,7 @@ class EnrollmentBuilder(Builder):
                                                  enrollment.person,
                                                  enrollment.status)
             else:
-                enrollment.section.delete_flag = section.DELETE_FLAG_WITHDRAWN
+                enrollment.section.delete_flag = Section.DELETE_FLAG_WITHDRAWN
 
             # Add or remove independent study course
             self.data.add(CourseCSV(section=enrollment.section))
