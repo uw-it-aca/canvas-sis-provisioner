@@ -109,6 +109,9 @@ class EnrollmentBuilder(Builder):
         self.add_student_enrollment_data(registration)
         self.data.add(SectionCSV(section=enrollment.section))
 
+        if enrollment.section.is_independent_study:
+            self.data.add(CourseCSV(section=enrollment.section))
+
     def _requeue_enrollment_event(self, enrollment, err):
         enrollment.queue_id = None
         enrollment.priority = enrollment.PRIORITY_DEFAULT
