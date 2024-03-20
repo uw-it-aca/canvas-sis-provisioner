@@ -39,8 +39,8 @@ class Command(BaseCommand):
         csv.register_dialect('unix_newline', lineterminator='\n')
         writer = csv.writer(outfile, dialect='unix_newline')
         writer.writerow([
-            'datetime', 'remote_ip', 'user_agent', 'http_method', 'url',
-            'session_id', 'context_type', 'action', 'participated',
+            'datetime', 'user', 'remote_ip', 'user_agent', 'http_method',
+            'url', 'session_id', 'context_type', 'action', 'participated',
             'contributed'])
 
         canvas = Users(per_page=500)
@@ -52,7 +52,7 @@ class Command(BaseCommand):
             participated = 'yes' if pv['participated'] else ''
             contributed = 'yes' if pv['contributed'] else ''
             writer.writerow([
-                dt.strftime('%Y-%m-%d %H:%M:%S'), pv['remote_ip'],
+                dt.strftime('%Y-%m-%d %H:%M:%S'), login, pv['remote_ip'],
                 pv['user_agent'], pv['http_method'], pv['url'],
                 pv['session_id'], pv['context_type'], pv['action'],
                 participated, contributed])
