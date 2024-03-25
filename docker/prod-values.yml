@@ -1,14 +1,14 @@
 autoscaling:
   enabled: true
   minReplicas: 2
-  maxReplicas: 4
+  maxReplicas: 6
 resources:
   limits:
     cpu: 500m
-    memory: 768Mi
+    memory: 512Mi
   requests:
-    cpu: 50m
-    memory: 384Mi
+    cpu: 25m
+    memory: 256Mi
 targetAverageUtilization: 100
 affinity:
    podsSpanNodes: true
@@ -321,7 +321,7 @@ daemon:
     - name: process-enrollment-events
       replicaCount: 1
       command: ["/scripts/management_daemon.sh"]
-      args: ["load_enrollments"]
+      args: ["--delay", "5", "load_enrollments"]
       resources:
         limits:
           cpu: 500m
