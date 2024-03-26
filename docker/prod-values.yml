@@ -1,13 +1,13 @@
 autoscaling:
   enabled: true
   minReplicas: 2
-  maxReplicas: 6
+  maxReplicas: 10
 resources:
   limits:
     cpu: 500m
     memory: 512Mi
   requests:
-    cpu: 25m
+    cpu: 50m
     memory: 256Mi
 targetAverageUtilization: 100
 affinity:
