@@ -232,8 +232,8 @@ SIS_IMPORT_ROOT_ACCOUNT_ID = 'uwcourse'
 SIS_IMPORT_USERS = 'u_acadev_canvas_sis-import-users'
 SIS_IMPORT_LIMIT = {
     'course': {
-        'default': 400,
-        'high': 200
+        'default': 1000,
+        'high': 500
     },
     'enrollment': {
         'default': 1000,

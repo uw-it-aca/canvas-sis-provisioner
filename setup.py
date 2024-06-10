@@ -45,6 +45,7 @@ setup(
         'UW-Django-SAML2~=1.8',
         'prometheus-client>=0.7,<1.0',
         'lxml==4.9.4',
+        'xmlsec==1.3.13'
     ],
     license='Apache License, Version 2.0',
     description='An application that manages SIS imports to Canvas',
