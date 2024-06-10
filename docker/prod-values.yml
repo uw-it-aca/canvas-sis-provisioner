@@ -194,18 +194,7 @@ cronjob:
           cpu: 25m
           memory: 64Mi
     - name: import-courses
-      schedule: "10,25,40,55 * * * 1-6"
-      command: ["/scripts/management_command.sh"]
-      args: ["import_courses", "1"]
-      resources:
-        limits:
-          cpu: 500m
-          memory: 256Mi
-        requests:
-          cpu: 25m
-          memory: 64Mi
-    - name: import-courses-high
-      schedule: "*/10 * * * 1-6"
+      schedule: "*/15 * * * 1-6"
       command: ["/scripts/management_command.sh"]
       args: ["import_courses", "2"]
       resources:
