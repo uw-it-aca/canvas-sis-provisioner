@@ -1,7 +1,6 @@
 # Copyright 2024 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
-
 from sis_provisioner.management.commands import SISProvisionerCommand
 from sis_provisioner.dao.term import get_current_active_term, get_term_after
 from sis_provisioner.models.course import Course
@@ -25,7 +24,6 @@ class Command(SISProvisionerCommand):
                 'current', 'next', 'future', 'any'],
             help='Import courses for term <term>')
 
-
     def get_term(self, relative):
         match relative:
             case 'current':
@@ -37,7 +35,6 @@ class Command(SISProvisionerCommand):
                     get_term_after(get_current_active_term()))
             case _:
                 return None
-
 
     def handle(self, *args, **options):
         priority = options.get('priority')
