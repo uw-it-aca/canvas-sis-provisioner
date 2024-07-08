@@ -3,6 +3,7 @@
 
 
 from sis_provisioner.management.commands import SISProvisionerCommand
+from sis_provisioner.dao.term import get_current_active_term, get_term_after
 from sis_provisioner.models.course import Course
 from sis_provisioner.exceptions import (
     EmptyQueueException, MissingImportPathException)
@@ -17,19 +18,38 @@ class Command(SISProvisionerCommand):
         parser.add_argument(
             'priority', type=int, default=Course.PRIORITY_DEFAULT,
             choices=[Course.PRIORITY_DEFAULT,
-                     Course.PRIORITY_HIGH,
                      Course.PRIORITY_IMMEDIATE],
             help='Import courses with priority <priority>')
+        parser.add_argument(
+            'term', type=str, default='current', choices=[
+                'current', 'next', 'future', 'any'],
+            help='Import courses for term <term>')
+
+
+    def get_term(self, relative):
+        match relative:
+            case 'current':
+                return get_current_active_term()
+            case 'next':
+                return get_term_after(get_current_active_term())
+            case 'future':
+                return get_term_after(
+                    get_term_after(get_current_active_term()))
+            case _:
+                return None
+
 
     def handle(self, *args, **options):
         priority = options.get('priority')
+        relative_term = options.get('term')
         try:
-            imp = Course.objects.queue_by_priority(priority)
+            term = self.get_term(relative_term)
+            imp = Course.objects.queue_by_priority(priority, term=term)
         except EmptyQueueException as ex:
             self.update_job()
             return
 
-        include_enrollment = (priority > Course.PRIORITY_DEFAULT)
+        include_enrollment = relative_term != 'future'
         try:
             builder = CourseBuilder(imp.queued_objects())
             imp.csv_path = builder.build(include_enrollment=include_enrollment)

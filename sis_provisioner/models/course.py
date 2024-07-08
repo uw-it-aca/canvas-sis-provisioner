@@ -13,8 +13,7 @@ from sis_provisioner.models.term import Term
 from sis_provisioner.dao.course import (
     valid_canvas_course_id, valid_course_sis_id, valid_canvas_section,
     get_new_sections_by_term)
-from sis_provisioner.dao.canvas import (
-    get_active_courses_for_term, create_course, delete_course)
+from sis_provisioner.dao.canvas import create_course, delete_course
 from sis_provisioner.dao.term import get_current_active_term
 from sis_provisioner.exceptions import (
     CoursePolicyException, EmptyQueueException)
@@ -83,17 +82,19 @@ class CourseManager(models.Manager):
             xlist_id=course_id).exclude(course_id=course_id).values_list(
                 'course_id', flat=True)
 
-    def queue_by_priority(self, priority=ImportResource.PRIORITY_DEFAULT):
-        if priority > Course.PRIORITY_DEFAULT:
-            filter_limit = settings.SIS_IMPORT_LIMIT['course']['high']
-        else:
-            filter_limit = settings.SIS_IMPORT_LIMIT['course']['default']
+    def queue_by_priority(self, priority, term=None):
+        filter_limit = settings.SIS_IMPORT_LIMIT['course']['default']
+        kwargs = {
+            'priority': priority,
+            'course_type': Course.SDB_TYPE,
+            'queue_id__isnull': True,
+            'provisioned_error__isnull': True,
+            'deleted_date__isnull': True
+        }
+        if term is not None:
+            kwargs['term_id'] = term.canvas_sis_id()
 
-        pks = super().get_queryset().filter(
-            priority=priority, course_type=Course.SDB_TYPE,
-            queue_id__isnull=True, provisioned_error__isnull=True,
-            deleted_date__isnull=True
-        ).order_by(
+        pks = super().get_queryset().filter(**kwargs).order_by(
             'provisioned_date', 'added_date'
         ).values_list('pk', flat=True)[:filter_limit]
 
@@ -209,28 +210,19 @@ class CourseManager(models.Manager):
             if course_id in existing_course_ids:
                 if existing_course_ids[course_id] == Course.PRIORITY_NONE:
                     super().get_queryset().filter(course_id=course_id).update(
-                        priority=Course.PRIORITY_HIGH)
+                        priority=Course.PRIORITY_DEFAULT)
                 continue
 
             new_courses.append(Course(course_id=course_id,
                                       course_type=Course.SDB_TYPE,
                                       term_id=term_id,
                                       primary_id=section_data['primary_id'],
-                                      priority=Course.PRIORITY_HIGH))
+                                      priority=Course.PRIORITY_DEFAULT))
 
         Course.objects.bulk_create(new_courses)
 
         delta.last_course_search_date = last_search_date
         delta.save()
-
-    def prioritize_active_courses_for_term(self, term):
-        for sis_course_id in get_active_courses_for_term(term):
-            try:
-                course = Course.objects.get(course_id=sis_course_id)
-                course.priority = Course.PRIORITY_HIGH
-                course.save()
-            except Course.DoesNotExist:
-                pass
 
     def deprioritize_all_courses_for_term(self, term):
         super().get_queryset().filter(term_id=term.canvas_sis_id()).update(

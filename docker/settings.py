@@ -231,9 +231,8 @@ PERMISSIONS_CHECK_ACCOUNTS = [RESTCLIENTS_CANVAS_ACCOUNT_ID, CONTINUUM_CANVAS_AC
 SIS_IMPORT_ROOT_ACCOUNT_ID = 'uwcourse'
 SIS_IMPORT_USERS = 'u_acadev_canvas_sis-import-users'
 SIS_IMPORT_LIMIT = {
-    'course': {
-        'default': 1000,
-        'high': 500
+    'course':
+        'default': 500
     },
     'enrollment': {
         'default': 1000,
