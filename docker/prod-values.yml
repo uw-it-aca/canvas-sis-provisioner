@@ -105,17 +105,6 @@ cronjob:
         requests:
           cpu: 25m
           memory: 64Mi
-    - name: queue-active-courses
-      schedule: "35 13 * * *"
-      command: ["/scripts/management_command.sh"]
-      args: ["queue_active_courses"]
-      resources:
-        limits:
-          cpu: 500m
-          memory: 256Mi
-        requests:
-          cpu: 25m
-          memory: 64Mi
     - name: cleanup-sis-errors
       schedule: "15 14 * * *"
       command: ["/scripts/management_command.sh"]
@@ -193,21 +182,32 @@ cronjob:
         requests:
           cpu: 25m
           memory: 64Mi
-    - name: import-courses
-      schedule: "10,25,40,55 * * * 1-6"
+    - name: import-courses-current-term
+      schedule: "5,20,35,50 * * * 1-6"
       command: ["/scripts/management_command.sh"]
-      args: ["import_courses", "1"]
+      args: ["import_courses", "1", "current"]
       resources:
         limits:
           cpu: 500m
           memory: 256Mi
         requests:
           cpu: 25m
-          memory: 64Mi
-    - name: import-courses-high
-      schedule: "*/10 * * * 1-6"
+          memory: 128Mi
+    - name: import-courses-next-term
+      schedule: "10,25,40,55 * * * 1-6"
       command: ["/scripts/management_command.sh"]
-      args: ["import_courses", "2"]
+      args: ["import_courses", "1", "next"]
+      resources:
+        limits:
+          cpu: 500m
+          memory: 256Mi
+        requests:
+          cpu: 25m
+          memory: 128Mi
+    - name: import-courses-future-term
+      schedule: "30 13-20 * * 1-6"
+      command: ["/scripts/management_command.sh"]
+      args: ["import_courses", "1", "future"]
       resources:
         limits:
           cpu: 500m
@@ -299,7 +299,7 @@ daemon:
     - name: import-courses-immediate
       replicaCount: 1
       command: ["/scripts/management_daemon.sh"]
-      args: ["--delay", "30", "import_courses", "3"]
+      args: ["--delay", "30", "import_courses", "3", "any"]
       resources:
         limits:
           cpu: 500m
