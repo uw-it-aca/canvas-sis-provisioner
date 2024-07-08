@@ -204,6 +204,17 @@ cronjob:
         requests:
           cpu: 25m
           memory: 128Mi
+    - name: import-courses-future-term
+      schedule: "30 13-20 * * 1-6"
+      command: ["/scripts/management_command.sh"]
+      args: ["import_courses", "1", "future"]
+      resources:
+        limits:
+          cpu: 500m
+          memory: 256Mi
+        requests:
+          cpu: 25m
+          memory: 128Mi
     - name: import-groups
       schedule: "*/15 12-23 * * 1-6"
       command: ["/scripts/management_command.sh"]
