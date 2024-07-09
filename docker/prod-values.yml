@@ -172,7 +172,7 @@ cronjob:
           cpu: 25m
           memory: 64Mi
     - name: import-users
-      schedule: "15,45 * * * 1-6"
+      schedule: "15,45 12-23 * * 1-6"
       command: ["/scripts/management_command.sh"]
       args: ["import_users", "2"]
       resources:
@@ -182,8 +182,8 @@ cronjob:
         requests:
           cpu: 25m
           memory: 64Mi
-    - name: import-courses-current-term
-      schedule: "5,20,35,50 * * * 1-6"
+    - name: import-courses-current
+      schedule: "5,20,35,50 13-23 * * 1-6"
       command: ["/scripts/management_command.sh"]
       args: ["import_courses", "1", "current"]
       resources:
@@ -193,8 +193,8 @@ cronjob:
         requests:
           cpu: 25m
           memory: 128Mi
-    - name: import-courses-next-term
-      schedule: "10,25,40,55 * * * 1-6"
+    - name: import-courses-next
+      schedule: "10,25,40,55 13-23 * * 1-6"
       command: ["/scripts/management_command.sh"]
       args: ["import_courses", "1", "next"]
       resources:
@@ -204,8 +204,8 @@ cronjob:
         requests:
           cpu: 25m
           memory: 128Mi
-    - name: import-courses-future-term
-      schedule: "30 13-20 * * 1-6"
+    - name: import-courses-future
+      schedule: "30 13-23 * * 1-6"
       command: ["/scripts/management_command.sh"]
       args: ["import_courses", "1", "future"]
       resources:
@@ -332,7 +332,7 @@ daemon:
     - name: process-instructor-events
       replicaCount: 1
       command: ["/scripts/management_daemon.sh"]
-      args: ["load_instructors"]
+      args: ["--delay", "30", "load_instructors"]
       resources:
         limits:
           cpu: 500m
