@@ -31,7 +31,7 @@ class RestClientsCache(RestclientPymemcacheClient):
             if re.match(r'^/student/v\d/course/', url):
                 return ONE_MINUTE * 5
             if re.match(r'^/student/v\d/term/', url):
-                return ONE_HOUR * 4
+                return ONE_DAY
             if re.match(
                 r'^/student/v\d/(?:campus|college|department|curriculum)',
                     url):
