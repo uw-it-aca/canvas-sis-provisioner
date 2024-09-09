@@ -25,10 +25,9 @@ class GroupManager(models.Manager):
         else:
             filter_limit = settings.SIS_IMPORT_LIMIT['group']['default']
 
-        course_ids = super(GroupManager, self).get_queryset().filter(
-            priority=priority, queue_id__isnull=True
-        ).order_by(
-            'provisioned_date'
+        course_ids = super().get_queryset().filter(
+            priority=priority, queue_id__isnull=True).order_by(
+                (F('provisioned_date').asc(nulls_first=True), 'added_date')
         ).values_list('course_id', flat=True).distinct()[:filter_limit]
 
         if not len(course_ids):

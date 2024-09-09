@@ -3,7 +3,7 @@
 
 
 from django.db import models
-from django.db.models import Q
+from django.db.models import F, Q
 from django.conf import settings
 from django.utils.timezone import localtime
 from sis_provisioner.models import Import, ImportResource
@@ -95,7 +95,7 @@ class CourseManager(models.Manager):
             kwargs['term_id'] = term.canvas_sis_id()
 
         pks = super().get_queryset().filter(**kwargs).order_by(
-            'provisioned_date', 'added_date'
+            (F('provisioned_date').asc(nulls_first=True), 'added_date')
         ).values_list('pk', flat=True)[:filter_limit]
 
         if not len(pks):
