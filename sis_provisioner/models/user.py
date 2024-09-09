@@ -3,7 +3,7 @@
 
 
 from django.db import models
-from django.db.models import Q
+from django.db.models import F, Q
 from django.conf import settings
 from django.utils.timezone import localtime
 from sis_provisioner.dao.user import get_person_by_netid, is_group_member
@@ -27,7 +27,7 @@ class UserManager(models.Manager):
         pks = super(UserManager, self).get_queryset().filter(
             priority=priority, queue_id__isnull=True
         ).order_by(
-            'provisioned_date', 'added_date'
+            (F('provisioned_date').asc(nulls_first=True), 'added_date')
         ).values_list('pk', flat=True)[:filter_limit]
 
         if not len(pks):
