@@ -26,9 +26,11 @@ class GroupManager(models.Manager):
             filter_limit = settings.SIS_IMPORT_LIMIT['group']['default']
 
         course_ids = super().get_queryset().filter(
-            priority=priority, queue_id__isnull=True).order_by(
-                (F('provisioned_date').asc(nulls_first=True), 'added_date')
-        ).values_list('course_id', flat=True).distinct()[:filter_limit]
+            priority=priority, queue_id__isnull=True
+        ).order_by(
+            F('provisioned_date').asc(nulls_first=True)
+        ).values_list(
+            'course_id', flat=True).distinct()[:filter_limit]
 
         if not len(course_ids):
             raise EmptyQueueException()
@@ -37,7 +39,7 @@ class GroupManager(models.Manager):
         imp.save()
 
         # Mark the groups as in process, and reset the priority
-        super(GroupManager, self).get_queryset().filter(
+        super().get_queryset().filter(
             course_id__in=list(course_ids)
         ).update(
             priority=ImportResource.PRIORITY_DEFAULT, queue_id=imp.pk
@@ -46,7 +48,7 @@ class GroupManager(models.Manager):
         return imp
 
     def update_priority_by_modified_date(self):
-        groups = super(GroupManager, self).get_queryset().filter(
+        groups = super().get_queryset().filter(
             priority=Group.PRIORITY_DEFAULT, queue_id__isnull=True
         ).exclude(
             is_deleted=True, provisioned_date__gt=F('deleted_date')
@@ -96,21 +98,22 @@ class GroupManager(models.Manager):
 
     def find_by_search(self, **kwargs):
         kwargs['is_deleted__isnull'] = True
-        return super(GroupManager, self).get_queryset().filter(**kwargs)
+        return super().get_queryset().filter(**kwargs)
 
     def get_active_by_group(self, group_id):
-        return super(GroupManager, self).get_queryset().filter(
+        return super().get_queryset().filter(
             group_id=group_id, priority__gt=Group.PRIORITY_NONE,
             is_deleted__isnull=True)
 
     def get_active_by_course(self, course_id):
-        return super(GroupManager, self).get_queryset().filter(
+        return super().get_queryset().filter(
             course_id=course_id, is_deleted__isnull=True)
 
     def queued(self, queue_id):
-        return super(GroupManager, self).get_queryset().filter(
-            queue_id=queue_id).order_by('course_id').values_list(
-                'course_id', flat=True).distinct()
+        return super().get_queryset().filter(
+            queue_id=queue_id
+        ).order_by('course_id').values_list(
+            'course_id', flat=True).distinct()
 
     def dequeue(self, sis_import):
         User.objects.dequeue(sis_import)
@@ -122,25 +125,25 @@ class GroupManager(models.Manager):
         self.queued(sis_import.pk).update(**kwargs)
 
     def dequeue_course(self, course_id):
-        super(GroupManager, self).get_queryset().filter(
+        super().get_queryset().filter(
             course_id=course_id
         ).update(
             priority=Group.PRIORITY_DEFAULT, queue_id=None
         )
 
     def deprioritize_course(self, course_id):
-        super(GroupManager, self).get_queryset().filter(
+        super().get_queryset().filter(
             course_id=course_id
         ).update(
             priority=Group.PRIORITY_NONE, queue_id=None
         )
 
     def update_group_id(self, old_group_id, new_group_id):
-        super(GroupManager, self).get_queryset().filter(
+        super().get_queryset().filter(
             group_id=old_group_id).update(group_id=new_group_id)
 
     def delete_group_not_found(self, group_id):
-        super(GroupManager, self).get_queryset().filter(
+        super().get_queryset().filter(
             group_id=group_id, is_deleted__isnull=True
         ).update(
             is_deleted=True, deleted_by='gws',
@@ -198,19 +201,19 @@ class Group(ImportResource):
 
 class GroupMemberGroupManager(models.Manager):
     def get_active_by_group(self, group_id):
-        return super(GroupMemberGroupManager, self).get_queryset().filter(
+        return super().get_queryset().filter(
             group_id=group_id, is_deleted__isnull=True)
 
     def get_active_by_root(self, root_group_id):
-        return super(GroupMemberGroupManager, self).get_queryset().filter(
+        return super().get_queryset().filter(
             root_group_id=root_group_id, is_deleted__isnull=True)
 
     def update_group_id(self, old_group_id, new_group_id):
-        super(GroupMemberGroupManager, self).get_queryset().filter(
+        super().get_queryset().filter(
             group_id=old_group_id).update(group_id=new_group_id)
 
     def update_root_group_id(self, old_group_id, new_group_id):
-        super(GroupMemberGroupManager, self).get_queryset().filter(
+        super().get_queryset().filter(
             root_group_id=old_group_id).update(root_group_id=new_group_id)
 
 
