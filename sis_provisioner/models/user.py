@@ -24,10 +24,10 @@ class UserManager(models.Manager):
         else:
             filter_limit = settings.SIS_IMPORT_LIMIT['user']['default']
 
-        pks = super(UserManager, self).get_queryset().filter(
+        pks = super().get_queryset().filter(
             priority=priority, queue_id__isnull=True
         ).order_by(
-            (F('provisioned_date').asc(nulls_first=True), 'added_date')
+            F('provisioned_date').asc(nulls_first=True)
         ).values_list('pk', flat=True)[:filter_limit]
 
         if not len(pks):
@@ -38,14 +38,13 @@ class UserManager(models.Manager):
             imp.override_sis_stickiness = True
         imp.save()
 
-        super(UserManager, self).get_queryset().filter(
+        super().get_queryset().filter(
             pk__in=list(pks)).update(queue_id=imp.pk)
 
         return imp
 
     def queued(self, queue_id):
-        return super(UserManager, self).get_queryset().filter(
-            queue_id=queue_id)
+        return super().get_queryset().filter(queue_id=queue_id)
 
     def dequeue(self, sis_import):
         kwargs = {'queue_id': None}
@@ -57,8 +56,7 @@ class UserManager(models.Manager):
 
     def add_all_users(self):
         existing_netids = dict((u, p) for u, p in (
-            super(UserManager, self).get_queryset().values_list(
-                'net_id', 'priority')))
+            super().get_queryset().values_list('net_id', 'priority')))
 
         for member in get_sis_import_members():
             if (member.name not in existing_netids or
@@ -73,7 +71,7 @@ class UserManager(models.Manager):
         if net_id is None:
             raise MissingLoginIdException()
 
-        users = super(UserManager, self).get_queryset().filter(
+        users = super().get_queryset().filter(
             models.Q(reg_id=reg_id) | models.Q(net_id=net_id))
 
         user = None
@@ -125,7 +123,7 @@ class UserManager(models.Manager):
 
     def get_invalid_enrollment_check_users(self):
         filter_limit = settings.SIS_IMPORT_LIMIT['user']['default']
-        return super(UserManager, self).get_queryset().filter(
+        return super().get_queryset().filter(
             invalid_enrollment_check_required=True,
             provisioned_date__isnull=False)[:filter_limit]
 
