@@ -95,7 +95,7 @@ class CourseManager(models.Manager):
             kwargs['term_id'] = term.canvas_sis_id()
 
         pks = super().get_queryset().filter(**kwargs).order_by(
-            (F('provisioned_date').asc(nulls_first=True), 'added_date')
+            F('provisioned_date').asc(nulls_first=True)
         ).values_list('pk', flat=True)[:filter_limit]
 
         if not len(pks):
