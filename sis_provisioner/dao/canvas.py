@@ -329,8 +329,11 @@ def get_active_sis_enrollments_for_user(user_sis_id, roles=[]):
 def get_course_report_data(term_sis_id=None, account_id=None):
     term_id = None
     if term_sis_id:
-        term = Terms().get_term_by_sis_id(term_sis_id)
-        term_id = term.term_id
+        if term_sis_id == 'default':
+            term_id = 'default'
+        else:
+            term = Terms().get_term_by_sis_id(term_sis_id)
+            term_id = term.term_id
 
     if account_id is None:
         account_id = getattr(settings, 'RESTCLIENTS_CANVAS_ACCOUNT_ID', None)
