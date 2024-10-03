@@ -6,6 +6,7 @@ from sis_provisioner.events import SISProvisionerProcessor
 from sis_provisioner.models.user import User
 from sis_provisioner.models.events import PersonLog
 from uw_sws.models import Person as PersonModel
+import json
 
 log_prefix = 'PERSON:'
 QUEUE_SETTINGS_NAME = 'PERSON_V1'
@@ -29,6 +30,7 @@ class PersonProcessor(SISProvisionerProcessor):
         current = json_data['Current']
         previous = json_data['Previous']
         net_id = current['UWNetID'] if current else previous['UWNetID']
+        self.logger.info('Event data: {}'.format(json.dumps(json_data)))
         if not net_id:
             self.logger.info('{} IGNORE missing uwnetid for {}'.format(
                 log_prefix,
