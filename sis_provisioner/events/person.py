@@ -35,30 +35,27 @@ class PersonProcessor(SISProvisionerProcessor):
         previous = json_data['Previous']
 
         net_id = current['UWNetID'] if current else previous['UWNetID']
-        if not net_id:
-            self.logger.info('{} IGNORE missing uwnetid, uwregid: {}'.format(
-                log_prefix,
-                current['RegID'] if current else previous['RegID']))
-            return
+        if net_id:
+            # Preferred name, net_id or reg_id change?
+            if (not (previous and current) or
+                    current['StudentName'] != previous['StudentName'] or
+                    current['FirstName'] != previous['FirstName'] or
+                    current['LastName'] != previous['LastName'] or
+                    current['UWNetID'] != previous['UWNetID'] or
+                    current['RegID'] != previous['RegID']):
 
-        # Preferred name, net_id or reg_id change?
-        if (not (previous and current) or
-                current['StudentName'] != previous['StudentName'] or
-                current['FirstName'] != previous['FirstName'] or
-                current['LastName'] != previous['LastName'] or
-                current['UWNetID'] != previous['UWNetID'] or
-                current['RegID'] != previous['RegID']):
+                user = User.objects.update_priority(
+                    PersonModel(uwregid=current['RegID'], uwnetid=net_id),
+                    User.PRIORITY_HIGH)
 
-            user = User.objects.update_priority(
-                PersonModel(uwregid=current['RegID'], uwnetid=net_id),
-                User.PRIORITY_HIGH)
+                action = 'IGNORE unknown user' if (user is None) else 'ACCEPT'
+                self.logger.info('{} {}, uwnetid: {}, uwregid: {}'.format(
+                    log_prefix, action, current['UWNetID'], current['RegID']))
 
-            if user is None:
-                self.logger.info(
-                    '{} IGNORE unknown user, uwnetid: {}, uwregid: {}'.format(
-                        log_prefix, current['UWNetID'], current['RegID']))
-            else:
-                self.logger.info('{} ACCEPT, uwnetid: {}, uwregid: {}'.format(
-                    log_prefix, current['UWNetID'], current['RegID']))
+        else:
+            self.logger.info(
+                '{} IGNORE missing uwnetid, uwnetid: {}, uwregid: {}'.format(
+                    log_prefix, action, net_id,
+                    current['RegID'] if current else previous['RegID']))
 
-            self.record_success_to_log(event_count=1)
+        self.record_success_to_log(event_count=1)
