@@ -7,6 +7,7 @@ from sis_provisioner.models.user import User
 from sis_provisioner.models.events import PersonLog
 from uw_sws.models import Person as PersonModel
 import json
+import os
 
 log_prefix = 'PERSON:'
 QUEUE_SETTINGS_NAME = 'PERSON_V1'
@@ -27,27 +28,39 @@ class PersonProcessor(SISProvisionerProcessor):
             queue_settings_name=QUEUE_SETTINGS_NAME, is_encrypted=False)
 
     def process_message_body(self, json_data):
+        if os.getenv('LOG_PERSON_EVENT_DATA'):
+            self.logger.info('Event data: {}'.format(json.dumps(json_data)))
+
         current = json_data['Current']
         previous = json_data['Previous']
+
         net_id = current['UWNetID'] if current else previous['UWNetID']
-        self.logger.info('Event data: {}'.format(json.dumps(json_data)))
-        if not net_id:
-            self.logger.info('{} IGNORE missing uwnetid for {}'.format(
-                log_prefix,
-                current['RegID'] if current else previous['RegID']))
-            return
+        if net_id:
+            # Preferred name, net_id or reg_id change?
+            if (not (previous and current) or
+                    current['StudentName'] != previous['StudentName'] or
+                    current['FirstName'] != previous['FirstName'] or
+                    current['LastName'] != previous['LastName'] or
+                    current['UWNetID'] != previous['UWNetID'] or
+                    current['RegID'] != previous['RegID']):
 
-        # Preferred name, net_id or reg_id change?
-        if (not (previous and current) or
-                current['StudentName'] != previous['StudentName'] or
-                current['FirstName'] != previous['FirstName'] or
-                current['LastName'] != previous['LastName'] or
-                current['UWNetID'] != previous['UWNetID'] or
-                current['RegID'] != previous['RegID']):
+                user = User.objects.update_priority(
+                    PersonModel(uwregid=current['RegID'], uwnetid=net_id),
+                    User.PRIORITY_HIGH)
 
-            user = User.objects.update_priority(
-                PersonModel(uwregid=current['RegID'], uwnetid=net_id),
-                User.PRIORITY_HIGH)
+                action = 'IGNORE unknown user' if (user is None) else 'ACCEPT'
+                self.logger.info('{} {}, uwnetid: {}, uwregid: {}'.format(
+                    log_prefix, action, current['UWNetID'], current['RegID']))
 
-            if user is not None:
                 self.record_success_to_log(event_count=1)
+            else:
+                self.logger.info(
+                    '{} IGNORE unchanged, uwnetid: {}, uwregid: {}'.format(
+                        log_prefix, current['UWNetID'], current['RegID']))
+
+            self.record_success_to_log(event_count=1)
+        else:
+            self.logger.info(
+                '{} IGNORE missing uwnetid, uwnetid: {}, uwregid: {}'.format(
+                    log_prefix, net_id, current['RegID'] if (
+                        current) else previous['RegID']))
