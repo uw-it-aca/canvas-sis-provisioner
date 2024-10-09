@@ -30,9 +30,8 @@ class PersonProcessor(SISProvisionerProcessor):
         current = json_data['Current']
         previous = json_data['Previous']
         net_id = current['UWNetID'] if current else previous['UWNetID']
-        self.logger.info('Event data: {}'.format(json.dumps(json_data)))
         if not net_id:
-            self.logger.info('{} IGNORE missing uwnetid for {}'.format(
+            self.logger.info('{} IGNORE missing uwnetid, uwregid: {}'.format(
                 log_prefix,
                 current['RegID'] if current else previous['RegID']))
             return
@@ -49,5 +48,12 @@ class PersonProcessor(SISProvisionerProcessor):
                 PersonModel(uwregid=current['RegID'], uwnetid=net_id),
                 User.PRIORITY_HIGH)
 
-            if user is not None:
-                self.record_success_to_log(event_count=1)
+            if user is None:
+                self.logger.info(
+                    '{} IGNORE unknown user, uwnetid: {}, uwregid: {}'.format(
+                        log_prefix, current['UWNetID'], current['RegID']))
+            else:
+                self.logger.info('{} ACCEPT, uwnetid: {}, uwregid: {}'.format(
+                    log_prefix, current['UWNetID'], current['RegID']))
+
+            self.record_success_to_log(event_count=1)
