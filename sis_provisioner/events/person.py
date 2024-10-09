@@ -52,10 +52,15 @@ class PersonProcessor(SISProvisionerProcessor):
                 self.logger.info('{} {}, uwnetid: {}, uwregid: {}'.format(
                     log_prefix, action, current['UWNetID'], current['RegID']))
 
+                self.record_success_to_log(event_count=1)
+            else:
+                self.logger.info(
+                    '{} IGNORE unchanged, uwnetid: {}, uwregid: {}'.format(
+                        log_prefix, current['UWNetID'], current['RegID']))
+
+            self.record_success_to_log(event_count=1)
         else:
             self.logger.info(
                 '{} IGNORE missing uwnetid, uwnetid: {}, uwregid: {}'.format(
-                    log_prefix, action, net_id,
-                    current['RegID'] if current else previous['RegID']))
-
-        self.record_success_to_log(event_count=1)
+                    log_prefix, net_id, current['RegID'] if (
+                        current) else previous['RegID']))
