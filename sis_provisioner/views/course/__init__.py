@@ -122,7 +122,7 @@ class CourseListView(RESTDispatch):
             },
             {
                 'term': 'section',
-                'test': re.compile(r'^[a-z]{1,2}$', re.I).match,
+                'test': re.compile(r'^[a-z][a-z0-9]?$', re.I).match,
                 'case': 'upper'
             }
         ]
