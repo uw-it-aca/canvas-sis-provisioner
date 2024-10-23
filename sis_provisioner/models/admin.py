@@ -3,6 +3,7 @@
 
 
 from django.db import models
+from django.db.models import F
 from django.conf import settings
 from django.utils.timezone import localtime
 from sis_provisioner.dao.astra import ASTRA
@@ -45,7 +46,7 @@ class AdminManager(models.Manager):
 
     def queued(self, queue_id):
         return super(AdminManager, self).get_queryset().filter(
-            queue_id=queue_id).order_by('-is_deleted')
+            queue_id=queue_id).order_by(F('is_deleted').desc(nulls_last=True))
 
     def dequeue(self, sis_import):
         User.objects.dequeue(sis_import)
