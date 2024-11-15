@@ -106,9 +106,12 @@ class AccountPolicyTest(TestCase):
         curriculum.full_name = 'Name UW Bothell Campus'
         self.assertEqual(account_name(curriculum), 'Name [ABC]')
 
-    @override_settings(LMS_OWNERSHIP_SUBACCOUNT={
+    @override_settings(
+        LMS_OWNERSHIP_SUBACCOUNT={
             'PCE_OL': 'uwcourse:uweo:ol-managed',
-            'PCE_NONE': 'uwcourse:uweo:noncredit-campus-managed'})
+            'PCE_NONE': 'uwcourse:uweo:noncredit-campus-managed'
+        },
+        INSTITUTE_NAME_SUBACCOUNT={'MSIM': 'canvas_12345'})
     def test_account_id_for_section(self):
         section = get_section_by_label('2013,spring,TRAIN,101/A')
 
@@ -124,6 +127,9 @@ class AccountPolicyTest(TestCase):
         section.lms_ownership = 'PCE_OL'
         self.assertEqual(account_id_for_section(section),
                          'uwcourse:uweo:ol-managed')
+
+        section.institute_name = 'MSIM'
+        self.assertEqual(account_id_for_section(section), 'canvas_12345')
 
 
 @fdao_sws_override
