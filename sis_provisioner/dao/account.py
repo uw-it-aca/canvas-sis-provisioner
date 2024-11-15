@@ -100,13 +100,20 @@ def account_id_for_section(section):
     # Default to the curriculum-based account
     account_id = CACHED_ACCOUNTS.get(section.curriculum_abbr, None)
 
-    # Check for a PCE-managed override
+    # Check for a Continuum-managed override
     lms_owner_accounts = getattr(settings, 'LMS_OWNERSHIP_SUBACCOUNT', {})
     try:
         account_id = lms_owner_accounts[section.lms_ownership]
     except (AttributeError, KeyError):
         if account_id is None and section.course_campus == 'PCE':
             account_id = lms_owner_accounts.get('PCE_NONE', None)
+
+    # Check for section.institute_name override
+    try:
+        account_id = getattr(
+            settings, 'INSTITUTE_NAME_SUBACCOUNT', {})[section.institute_name]
+    except KeyError:
+        pass
 
     # Check for an adhoc override
     course_id = section.canvas_course_sis_id()

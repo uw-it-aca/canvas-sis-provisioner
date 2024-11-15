@@ -270,6 +270,9 @@ LMS_OWNERSHIP_SUBACCOUNT = {
     'PCE_NONE': 'uwcourse:uweo:noncredit-campus-managed',
     'ISCHOOL': 'canvas_104251',
 }
+INSTITUTE_NAME_SUBACCOUNT = {
+    'UW ISCHOOL MSIM ONLINE': 'canvas_104251',
+}
 
 ADMIN_EVENT_GRAPH_FREQ = 10
 ADMIN_IMPORT_STATUS_FREQ = 30
