@@ -72,21 +72,16 @@ def term_date_overrides(term):
     overrides = {}
     for role_choice in CanvasEnrollment.ROLE_CHOICES:
         role = role_choice[0]
-        if role == CanvasEnrollment.OBSERVER:
-            continue
-        elif role == CanvasEnrollment.TEACHER:
-            overrides[role] = (
-                (quarter_term_start_date(term) - timedelta(days=365)).strftime(
-                    TERM_DATE_FORMAT),
-                (quarter_term_end_date(term) + timedelta(days=365*5)).strftime(
-                    TERM_DATE_FORMAT))
-        else:
-            overrides[role] = (
-                (quarter_term_start_date(term) - timedelta(days=365)).strftime(
-                    TERM_DATE_FORMAT),
-                (quarter_term_end_date(term) + timedelta(days=365)).strftime(
-                    TERM_DATE_FORMAT))
-
+        if role == CanvasEnrollment.STUDENT:
+            overrides[role] = {
+                'start_at': (quarter_term_start_date(term) - timedelta(
+                    days=365)).strftime(TERM_DATE_FORMAT),
+            }
+        elif role != CanvasEnrollment.OBSERVER:
+            overrides[role] = {
+                'end_at': (quarter_term_end_date(term) + timedelta(
+                    days=365*7)).strftime(TERM_DATE_FORMAT),
+            }
     return overrides
 
 
