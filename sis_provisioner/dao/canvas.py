@@ -221,14 +221,7 @@ def delete_course(course_id):
 
 
 def update_term_overrides(term_sis_id, override_dates):
-    overrides = {}
-    for role in override_dates.keys():
-        overrides[role] = {
-            'start_at': override_dates[role][0],
-            'end_at': override_dates[role][1]
-        }
-
-    return Terms().update_term_overrides(term_sis_id, overrides=overrides)
+    return Terms().update_term_overrides(term_sis_id, overrides=override_dates)
 
 
 def get_section_by_sis_id(section_sis_id):

@@ -154,10 +154,9 @@ class CanvasTermsTest(TestCase):
 
     @mock.patch.object(Terms, 'update_term_overrides')
     def test_update_term_overrides(self, mock_method):
-        r = update_term_overrides('abc', {'xyz': ('somedate', 'anotherdate')})
+        r = update_term_overrides('abc', {'xyz': {'start_at': 'somedate'}})
         mock_method.assert_called_with(
-            'abc', overrides={
-                'xyz': {'start_at': 'somedate', 'end_at': 'anotherdate'}})
+            'abc', overrides={'xyz': {'start_at': 'somedate'}})
 
 
 @fdao_sws_override
