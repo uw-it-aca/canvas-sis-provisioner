@@ -90,12 +90,10 @@ class TermPolicyTest(TestCase):
 
     def test_term_overrides(self):
         term = get_term_by_year_and_quarter(2013, 'summer')
+        self.maxDiff = None
         self.assertEqual(term_date_overrides(term), {
-            'StudentEnrollment': (
-                '2012-06-24T00:00:00-0800', '2014-08-28T00:00:00-0800'),
-            'TaEnrollment': (
-                '2012-06-24T00:00:00-0800', '2014-08-28T00:00:00-0800'),
-            'TeacherEnrollment': (
-                '2012-06-24T00:00:00-0800', '2018-08-27T00:00:00-0800'),
-            'DesignerEnrollment': (
-                '2012-06-24T00:00:00-0800', '2014-08-28T00:00:00-0800')})
+            'StudentEnrollment': {'start_at': '2012-06-24T00:00:00-0800'},
+            'TaEnrollment': {'end_at': '2020-08-26T00:00:00-0800'},
+            'TeacherEnrollment': {'end_at': '2020-08-26T00:00:00-0800'},
+            'DesignerEnrollment': {'end_at': '2020-08-26T00:00:00-0800'},
+        })
