@@ -89,6 +89,11 @@ class AdminView(View):
     def can_create_user_course(request):
         return is_member_of_group(request, settings.RESTCLIENTS_ADMIN_GROUP)
 
+    @staticmethod
+    def can_masquerade_as_user(request, as_user):
+        return (is_member_of_group(request, settings.RESTCLIENTS_ADMIN_GROUP)
+                and not Admin.objects.is_account_admin(as_user))
+
 
 class ImportStatus(AdminView):
     template_name = 'canvas_admin/status.html'

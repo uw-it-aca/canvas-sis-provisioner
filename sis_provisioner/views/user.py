@@ -89,6 +89,7 @@ class UserView(RESTDispatch):
             'queue_id': None,
             'can_merge_users': False,
             'can_create_user_course': False,
+            'can_masquerade_as_user': False,
             'enrollment_url': None,
             'canvas_users': [],
         }
@@ -148,6 +149,10 @@ class UserView(RESTDispatch):
                 if (self.can_create_user_course(self.request) and
                         response['can_access_canvas']):
                     response['can_create_user_course'] = True
+
+            if (self.can_masquerade_as_user(
+                    self.request, response['canvas_users'][0]['login_id'])):
+                response['can_masquerade_as_user'] = True
         else:
             response['can_merge_users'] = self.can_merge_users(self.request)
 
