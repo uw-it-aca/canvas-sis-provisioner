@@ -89,7 +89,6 @@ class UserView(RESTDispatch):
             'queue_id': None,
             'can_merge_users': False,
             'can_create_user_course': False,
-            'can_masquerade_as_user': False,
             'enrollment_url': None,
             'canvas_users': [],
         }
@@ -125,6 +124,7 @@ class UserView(RESTDispatch):
                 ).format(api_path=PERSON_PREFIX, uwregid=user.sis_user_id)
 
             user_data['can_update_sis_id'] = False
+            user_data['can_masquerade_as_user'] = False
             user_data['can_terminate_user_sessions'] = (
                 user_data['can_access_canvas'] and
                 user_data['last_login'] is not None and
@@ -152,7 +152,7 @@ class UserView(RESTDispatch):
 
             if (self.can_masquerade_as_user(
                     self.request, response['canvas_users'][0]['login_id'])):
-                response['can_masquerade_as_user'] = True
+                response['canvas_users'][0]['can_masquerade_as_user'] = True
         else:
             response['can_merge_users'] = self.can_merge_users(self.request)
 
