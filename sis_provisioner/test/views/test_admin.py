@@ -62,6 +62,12 @@ class AdminViewTest(TestCase):
     def test_can_manage_course_expirations(self):
         self.assertTrue(AdminView.can_manage_course_expirations(self.request))
 
+    def test_can_masquerade_as_user(self):
+        self.assertTrue(AdminView.can_masquerade_as_user(
+            self.request, 'jbothell'))
+        self.assertFalse(AdminView.can_masquerade_as_user(
+            self.request, 'javerage'))
+
 
 class RestDispatchTest(TestCase):
     def test_error_response(self):

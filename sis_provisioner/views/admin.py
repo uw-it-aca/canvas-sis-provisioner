@@ -91,8 +91,10 @@ class AdminView(View):
 
     @staticmethod
     def can_masquerade_as_user(request, as_user):
-        return (is_member_of_group(request, settings.RESTCLIENTS_ADMIN_GROUP)
-                and not Admin.objects.is_account_admin(as_user))
+        return (
+            get_user(request) != as_user and
+            not Admin.objects.is_account_admin(as_user) and
+            is_member_of_group(request, settings.RESTCLIENTS_ADMIN_GROUP))
 
 
 class ImportStatus(AdminView):
