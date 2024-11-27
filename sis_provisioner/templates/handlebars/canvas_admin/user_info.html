@@ -33,6 +33,9 @@ has <strong>NOT</strong> been provisioned to Canvas. <button class="btn" type="b
         <div>UWNetID: <strong>{{login_id}}</strong>
         {{#if can_access_canvas}}
         <i class="fa fa-check-circle-o success" title="This UWNetid is allowed to access Canvas"></i>
+          {{#if can_masquerade_as_user}}
+          &nbsp;&nbsp;&nbsp;<a class="js-sws-person" href="https://canvas.uw.edu/users/{{id}}/masquerade" target="_blank" title="Masquerade as {{name}} in Canvas">Masquerade</a>
+          {{/if}}
         {{else}}
         <i class="fa fa-ban failure" title="This UWNetid is NOT allowed to access Canvas"></i>
         {{/if}}
