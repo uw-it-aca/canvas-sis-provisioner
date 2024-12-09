@@ -6,6 +6,9 @@ from django.conf import settings
 from django.core.management.base import CommandError
 from sis_provisioner.management.commands import SISProvisionerCommand
 from sis_provisioner.models.admin import RoleCache
+from logging import getLogger
+
+logger = getLogger(__name__)
 
 
 class Command(SISProvisionerCommand):
@@ -20,9 +23,8 @@ class Command(SISProvisionerCommand):
             except Exception as ex:
                 raise CommandError(ex)
 
-        self.update_job()
-
         if len(notify_accounts):
-            raise CommandError(
-                'Permissions changed for accounts: {}'.format(
-                    ', '.join(notify_accounts)))
+            log_accounts = ', '.join(notify_accounts)
+            logger.info(f'Permissions changed for accounts: {log_accounts}')
+
+        self.update_job()
