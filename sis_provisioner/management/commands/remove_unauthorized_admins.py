@@ -3,13 +3,14 @@
 
 
 from django.conf import settings
+from restclients_core.exceptions import DataFailureException
 from sis_provisioner.models.admin import Admin
 from sis_provisioner.dao.canvas import (
     get_account_by_id, get_all_sub_accounts, get_admins, delete_admin)
 from sis_provisioner.management.commands import SISProvisionerCommand
 from logging import getLogger
 
-logger = getLogger('sis_provisioner.dao.astra')
+logger = getLogger(__name__)
 
 
 class Command(SISProvisionerCommand):
@@ -34,15 +35,21 @@ class Command(SISProvisionerCommand):
         for account in accounts:
             account_id = account.account_id
 
-            for admin in get_admins(account_id):
+            try:
+                admins = get_admins(account_id)
+            except DataFailureException as ex:
+                logger.error(
+                    f'get_admins failed for account "{account_id}": {ex}')
+                continue
+
+            for admin in admins:
                 if not Admin.objects.verify_canvas_admin(admin, account_id):
                     if options.get('commit'):
                         delete_admin(
                             account_id, admin.user.user_id, admin.role)
 
-                    logger.info((
-                        'REMOVE UNAUTHORIZED ADMIN "{}", account: "{}", '
-                        'role: "{}"').format(
-                            admin.user.login_id, account_id, admin.role))
+                    logger.info(
+                        f'REMOVE UNAUTHORIZED ADMIN "{admin.user.login_id}", '
+                        f'account: "{account_id}", role: "{admin.role}"')
 
         self.update_job()
