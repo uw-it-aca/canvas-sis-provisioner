@@ -3,7 +3,6 @@
 
 
 from django.conf import settings
-from django.core.management.base import CommandError
 from sis_provisioner.management.commands import SISProvisionerCommand
 from sis_provisioner.models.admin import RoleCache
 from logging import getLogger
@@ -21,7 +20,8 @@ class Command(SISProvisionerCommand):
                 if RoleCache.objects.check_roles_for_account(account_id):
                     notify_accounts.append(account_id)
             except Exception as ex:
-                raise CommandError(ex)
+                logger.info(
+                    f'Role check failed for account {account_id}: {ex}')
 
         if len(notify_accounts):
             log_accounts = ', '.join(notify_accounts)
