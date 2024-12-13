@@ -30,7 +30,8 @@ class Command(BaseCommand):
         writer.writerow([
             'course_id', 'course_sis_id', 'media_id', 'media_type',
             'media_title', 'media_tracks', 'media_source_content_type',
-            'media_source_format', 'media_source_bitrate', 'media_source_size'
+            'media_source_container_format', 'media_source_bitrate',
+            'media_source_size'
         ])
 
         report_client = Reports()
@@ -45,7 +46,7 @@ class Command(BaseCommand):
         mo_client = MediaObjects()
 
         for row in csv.reader(sis_data):
-            if not len(row):
+            if not len(row) or row[0] == 'canvas_course_id':
                 continue
 
             course_id = row[0]
@@ -56,7 +57,7 @@ class Command(BaseCommand):
                     course_id)
             except DataFailureException as ex:
                 logger.error(
-                    'GET media_objects failed for course {course_id}: {ex}')
+                    f'GET media_objects failed for course {course_id}: {ex}')
                 continue
 
             for mo in media_objects:
@@ -64,7 +65,7 @@ class Command(BaseCommand):
                 for ms in mo.media_sources:
                     writer.writerow([
                         course_id, sis_course_id, mo.media_id, mo.media_type,
-                        mo.title, ','.join(tracks), ms.content_type, ms.format,
-                        ms.bitrate, ms.size])
+                        mo.title, ', '.join(tracks), ms.content_type,
+                        ms.container_format, ms.bitrate, ms.size])
 
         outfile.close()
