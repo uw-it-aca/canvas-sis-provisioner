@@ -318,6 +318,17 @@ daemon:
         requests:
           cpu: 25m
           memory: 64Mi
+    - name: import-users-immediate
+      replicaCount: 1
+      command: ["/scripts/management_daemon.sh"]
+      args: ["--delay", "30", "import_users", "3"]
+      resources:
+        limits:
+          cpu: 500m
+          memory: 256Mi
+        requests:
+          cpu: 25m
+          memory: 64Mi
     - name: process-enrollment-events
       replicaCount: 1
       command: ["/scripts/management_daemon.sh"]
