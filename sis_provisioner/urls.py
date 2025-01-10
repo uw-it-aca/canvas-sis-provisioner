@@ -1,4 +1,4 @@
-# Copyright 2024 UW-IT, University of Washington
+# Copyright 2025 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
 
@@ -61,13 +61,13 @@ urlpatterns = [
     re_path(r'api/v1/course/(?P<course_id>[a-zA-Z0-9\-_ &]+)/expiration$',
             CourseExpirationView.as_view(), name='CourseExpiration'),
     re_path(r'api/v1/courses/?$', CourseListView.as_view()),
-    re_path(r'api/v1/users/?$', UserView.as_view()),
     re_path(r'api/v1/users/(?P<reg_id>[a-fA-F0-9]{32})/merge$',
             UserMergeView.as_view()),
     re_path(r'api/v1/users/(?P<user_id>[0-9]+)/sessions$',
             UserSessionsView.as_view()),
     re_path(r'api/v1/users/(?P<net_id>[a-zA-Z0-9]+)/courses$',
             UserCourseView.as_view()),
+    re_path(r'api/v1/users/(?P<reg_id>[a-fA-F0-9]{32})?$', UserView.as_view()),
     re_path(r'api/v1/logins/?$', LoginValidationView.as_view()),
     re_path(r'api/v1/import/(?P<import_id>[0-9]+)?$', ImportView.as_view()),
     re_path(r'api/v1/imports/?$', ImportListView.as_view()),

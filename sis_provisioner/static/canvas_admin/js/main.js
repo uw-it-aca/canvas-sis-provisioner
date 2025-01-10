@@ -1428,6 +1428,43 @@ $(document).ready(function () {
             }
         });
 
+        container.on('click', 'button.sync-user', function (e) {
+            var $button = $(this),
+                regid = $button.attr('data-reg-id'),
+                button_updating = function (b) {
+                    b.removeClass('btn-default');
+                    b.removeClass('btn-success');
+                    b.addClass('btn-warning');
+                    b.html('<i class="icon-time icon-white"></i> Updating');
+                };
+
+            $button.attr('disabled', 'disabled');
+
+            $.ajax({
+                url: '/api/v1/users/' + regid,
+                type: 'PUT',
+                processData: false,
+                data: '{ "priority": "immediate" }',
+                success: function () {
+                    button_updating($button);
+                },
+                error: function (xhr) {
+                    var json;
+                    try {
+                        json = $.parseJSON(xhr.responseText);
+                        if (json.error.match(/ being provisioned$/)) {
+                            button_updating($button);
+                        } else {
+                            $button.removeAttr('disabled');
+                        }
+                        console.log('Event service error:' + json.error);
+                    } catch (e) {
+                        console.log('Unknown course service error');
+                    }
+                }
+            });
+        });
+
         container.on('click', 'button.merge-users', function (e) {
             var $button = $(this),
                 regid = $button.attr('data-reg-id'),

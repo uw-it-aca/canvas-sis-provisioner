@@ -1,4 +1,4 @@
-# Copyright 2024 UW-IT, University of Washington
+# Copyright 2025 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
 
@@ -12,7 +12,7 @@ from restclients_core.exceptions import (
     InvalidNetID, InvalidRegID, DataFailureException)
 from uw_sws.registration import registration_res_url_prefix
 from uw_pws import PERSON_PREFIX
-from uw_saml.decorators import group_required
+from uw_saml.utils import get_user
 from sis_provisioner.exceptions import (
     UserPolicyException, InvalidLoginIdException)
 from sis_provisioner.dao.canvas import (
@@ -51,11 +51,40 @@ class UserView(RESTDispatch):
             return self.response_for_person(person)
 
         except DataFailureException as err:
-            data = json.loads(err.msg)
-            return self.error_response(
-                400, "{} {}".format(err.status, err.msg))
+            return self.error_response(400, f"{err.status} {err.msg}")
         except Exception as err:
             return self.error_response(400, err)
+
+    def put(self, request, *args, **kwargs):
+        reg_id = kwargs.get("reg_id")
+        body = request.read()
+        priority = None
+
+        try:
+            new_values = json.loads(body)
+        except Exception as err:
+            return self.error_response(400, f"Unable to parse JSON: {err}")
+
+        try:
+            # only priority PUTable right now
+            priority_str = new_values.get("priority", "").lower()
+            for key, val in User.PRIORITY_CHOICES:
+                if val == priority_str:
+                    priority = key
+
+            if priority is None:
+                return self.error_response(
+                    400, f"Invalid priority: '{priority_str}'")
+
+            person = get_person_by_regid(reg_id)
+            User.objects.update_priority(person, priority)
+
+            logger.info("{} set priority={} for user {}".format(
+                get_user(request), priority, reg_id))
+        except DataFailureException as ex:
+            return self.error_response(ex.status, message=ex.msg)
+
+        return self.response_for_person(person)
 
     def post(self, request, *args, **kwargs):
         try:
@@ -89,6 +118,7 @@ class UserView(RESTDispatch):
             'queue_id': None,
             'can_merge_users': False,
             'can_create_user_course': False,
+            'masquerade_url': None,
             'enrollment_url': None,
             'canvas_users': [],
         }
@@ -124,7 +154,6 @@ class UserView(RESTDispatch):
                 ).format(api_path=PERSON_PREFIX, uwregid=user.sis_user_id)
 
             user_data['can_update_sis_id'] = False
-            user_data['can_masquerade_as_user'] = False
             user_data['can_terminate_user_sessions'] = (
                 user_data['can_access_canvas'] and
                 user_data['last_login'] is not None and
@@ -150,9 +179,12 @@ class UserView(RESTDispatch):
                         response['can_access_canvas']):
                     response['can_create_user_course'] = True
 
-            if (self.can_masquerade_as_user(
+            if (response['can_access_canvas'] and self.can_masquerade_as_user(
                     self.request, response['canvas_users'][0]['login_id'])):
-                response['canvas_users'][0]['can_masquerade_as_user'] = True
+                canvas_host = getattr(settings, 'RESTCLIENTS_CANVAS_HOST', '')
+                user_id = response['canvas_users'][0]['id']
+                response['masquerade_url'] = (
+                    f'{canvas_host}/users/{user_id}/masquerade')
         else:
             response['can_merge_users'] = self.can_merge_users(self.request)
 
