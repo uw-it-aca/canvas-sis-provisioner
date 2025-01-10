@@ -12,7 +12,7 @@ from restclients_core.exceptions import (
     InvalidNetID, InvalidRegID, DataFailureException)
 from uw_sws.registration import registration_res_url_prefix
 from uw_pws import PERSON_PREFIX
-from uw_saml.decorators import group_required
+from uw_saml.utils import get_user
 from sis_provisioner.exceptions import (
     UserPolicyException, InvalidLoginIdException)
 from sis_provisioner.dao.canvas import (
@@ -181,9 +181,10 @@ class UserView(RESTDispatch):
 
             if (response['can_access_canvas'] and self.can_masquerade_as_user(
                     self.request, response['canvas_users'][0]['login_id'])):
+                canvas_host = getattr(settings, 'RESTCLIENTS_CANVAS_HOST', '')
                 user_id = response['canvas_users'][0]['id']
                 response['masquerade_url'] = (
-                    f'https://canvas.uw.edu/users/{{user_id}}/masquerade')
+                    f'{canvas_host}/users/{user_id}/masquerade')
         else:
             response['can_merge_users'] = self.can_merge_users(self.request)
 
