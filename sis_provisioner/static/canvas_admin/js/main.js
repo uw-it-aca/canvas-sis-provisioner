@@ -1462,7 +1462,6 @@ $(document).ready(function () {
                         console.log('Unknown course service error');
                     }
                 }
-                }
             });
         });
 
