@@ -55,7 +55,7 @@ has <strong>NOT</strong> been provisioned to Canvas. <button class="btn" type="b
         <button class="btn btn-xs btn-secondary merge-users" data-reg-id="{{reg_id}}" ref="javascript:void(0);">Merge Canvas Users</button>
       {{/if}}
       {{#if masquerade_url}}
-        <button class="btn btn-xs btn-primary masquerade-user"><a href="{{masquerade_url}}" target="_blank" title="Masquerade as {{name}} in Canvas" style="color:#fff;">Masquerade</a></button>
+        <button class="btn btn-xs btn-primary masquerade-user"><a href="{{masquerade_url}}" target="_blank" title="Masquerade as {{display_name}} in Canvas" style="color:#fff;">Masquerade</a></button>
       {{/if}}
       {{#if can_create_user_course}}
         &nbsp;&nbsp;<button class="btn btn-xs btn-primary sync-user" data-reg-id="{{reg_id}}" ref="javascript:void(0);" title="Sync this user to Canvas">Sync User</button>
