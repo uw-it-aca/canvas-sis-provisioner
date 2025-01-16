@@ -244,7 +244,6 @@ SIS_IMPORT_LIMIT = {
     },
     'user': {
         'default': 500,
-        'high': 500
     },
     'group': {
         'default': 0,

@@ -19,14 +19,17 @@ logger = getLogger(__name__)
 
 class UserManager(models.Manager):
     def queue_by_priority(self, priority=ImportResource.PRIORITY_DEFAULT):
-        if priority > User.PRIORITY_DEFAULT:
-            filter_limit = settings.SIS_IMPORT_LIMIT['user']['high']
-        else:
-            filter_limit = settings.SIS_IMPORT_LIMIT['user']['default']
+        filter_limit = settings.SIS_IMPORT_LIMIT['user']['default']
+        kwargs = {'queue_id__isnull': True}
 
-        pks = super().get_queryset().filter(
-            priority=priority, queue_id__isnull=True
-        ).order_by(
+        if priority == ImportResource.PRIORITY_IMMEDIATE:
+            kwargs['priority'] = priority
+        else:
+            kwargs['priority__in'] = [
+                ImportResource.PRIORITY_DEFAULT, ImportResource.PRIORITY_HIGH]
+
+        pks = super().get_queryset().filter(**kwargs).order_by(
+            F('priority').desc(),
             F('provisioned_date').asc(nulls_first=True)
         ).values_list('pk', flat=True)[:filter_limit]
 
@@ -34,8 +37,7 @@ class UserManager(models.Manager):
             raise EmptyQueueException()
 
         imp = Import(csv_type='user', priority=priority)
-        if priority == User.PRIORITY_HIGH:
-            imp.override_sis_stickiness = True
+        imp.override_sis_stickiness = True
         imp.save()
 
         super().get_queryset().filter(
