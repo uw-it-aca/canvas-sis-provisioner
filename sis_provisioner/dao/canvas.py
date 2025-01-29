@@ -98,11 +98,11 @@ def delete_admin(account_id, user_id, role):
 
 
 def get_developer_keys():
-   return DeveloperKeys(per_page=100).get_developer_keys()
+    return DeveloperKeys(per_page=100).get_developer_keys()
 
 
 def update_developer_key(key_id, key_data):
-   return DeveloperKeys().update_developer_key(key_id, key_data)
+    return DeveloperKeys().update_developer_key(key_id, key_data)
 
 
 def get_course_roles_in_account(account_sis_id):

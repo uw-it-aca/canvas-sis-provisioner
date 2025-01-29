@@ -83,7 +83,8 @@ class Command(SISProvisionerCommand):
                         'developer_key': {
                             'name': key.get(
                                 'name', f"Key {key['id']}") + ' (TEST)',
-                            'redirect_uris': tool_update.get('target_link_uri'),
+                            'redirect_uris': tool_update.get(
+                                'target_link_uri'),
                             'scopes': tool.get('scopes', [])
                         }
                     }
