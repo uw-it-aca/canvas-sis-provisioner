@@ -28,7 +28,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         term_sis_id = options.get('term-sis-id')
         commit = options.get('commit')
-        logger.info(f'Term: {term_sis_id}, Commit: {commit}')
+        logger.debug(f'Term: {term_sis_id}, Commit: {commit}')
 
         report_data = get_course_report_data(term_sis_id)
         header = report_data.pop(0)
@@ -74,8 +74,8 @@ class Command(BaseCommand):
                     needs_save = True
 
             except Course.MultipleObjectsReturned:
-                logger.info(f'ERROR Multiple courses for {canvas_course_id}, '
-                            f'{course_sis_id}')
+                logger.error(f'ERROR Multiple courses for {canvas_course_id}, '
+                             f'{course_sis_id}')
                 continue
 
             except Course.DoesNotExist:
@@ -99,19 +99,14 @@ class Command(BaseCommand):
                     course.expiration_date = course.default_expiration_date
                     needs_save = True
                 except DataFailureException as err:
-                    logger.info(f'ERROR {canvas_course_id} '
-                                f'{course_sis_id}, {err}')
+                    logger.error(f'ERROR {canvas_course_id} '
+                                 f'{course_sis_id}, {err}')
                     continue
-
-                # Logic for first round of expirations
-                if course.expiration_date.year == 2023:
-                    course.expiration_date = course.expiration_date.replace(
-                        month=12, day=18)
 
             if needs_save and commit:
                 course.save()
-                logger.info(f'BACKFILL Canvas ID: {course.canvas_course_id}, '
-                            f'SIS ID: {course.course_id}, '
-                            f'Term ID: {course.term_id}, '
-                            f'Created: {course.created_date}, '
-                            f'Expires: {course.expiration_date}')
+                logger.debug(f'BACKFILL Canvas ID: {course.canvas_course_id}, '
+                             f'SIS ID: {course.course_id}, '
+                             f'Term ID: {course.term_id}, '
+                             f'Created: {course.created_date}, '
+                             f'Expires: {course.expiration_date}')
