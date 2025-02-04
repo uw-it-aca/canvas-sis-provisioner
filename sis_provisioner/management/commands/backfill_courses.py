@@ -73,11 +73,6 @@ class Command(BaseCommand):
                     course.deleted_date = None
                     needs_save = True
 
-            except Course.MultipleObjectsReturned:
-                logger.error(f'ERROR Multiple courses for {canvas_course_id}, '
-                             f'{course_sis_id}')
-                continue
-
             except Course.DoesNotExist:
                 course = Course(course_id=course_sis_id,
                                 canvas_course_id=canvas_course_id,
