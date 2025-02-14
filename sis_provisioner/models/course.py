@@ -12,7 +12,7 @@ from sis_provisioner.models.user import User
 from sis_provisioner.models.term import Term
 from sis_provisioner.dao.course import (
     valid_canvas_course_id, valid_course_sis_id, valid_canvas_section,
-    get_new_sections_by_term)
+    valid_academic_course_sis_id, get_new_sections_by_term)
 from sis_provisioner.dao.canvas import create_course, delete_course
 from sis_provisioner.dao.term import get_current_active_term
 from sis_provisioner.exceptions import (
@@ -37,7 +37,17 @@ class CourseManager(models.Manager):
             if len(courses) == 1:
                 return courses[0]
             elif len(courses) > 1:
-                raise Course.MultipleObjectsReturned()
+                sis_course = None
+                for course in courses:
+                    try:
+                        valid_academic_course_sis_id(course.course_id)
+                        sis_course = course
+                    except CoursePolicyException:
+                        course.delete()
+                if sis_course is not None:
+                    return sis_course
+                else:
+                    raise Course.DoesNotExist()
             else:
                 raise Course.DoesNotExist()
         except CoursePolicyException:
@@ -49,8 +59,7 @@ class CourseManager(models.Manager):
                     valid_course_sis_id(sis_course_id)
                     return Course.objects.get(course_id=sis_course_id)
                 except CoursePolicyException:
-                    pass
-            raise Course.DoesNotExist()
+                    raise Course.DoesNotExist()
 
     def create_user_course(self, sis_user_id, name, account_id=None,
                            sis_term_id=None):
