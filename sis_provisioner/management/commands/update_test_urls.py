@@ -5,10 +5,15 @@
 from django.test.utils import override_settings
 from sis_provisioner.management.commands import SISProvisionerCommand
 from sis_provisioner.models.external_tools import ExternalTool
-from sis_provisioner.dao.canvas import update_external_tool
+from sis_provisioner.dao.canvas import (
+    update_external_tool, get_developer_keys, update_developer_key)
 from restclients_core.dao import LiveDAO
 from restclients_core.exceptions import DataFailureException
+from logging import getLogger
 import json
+
+
+logger = getLogger(__name__)
 
 
 class Command(SISProvisionerCommand):
@@ -60,12 +65,47 @@ class Command(SISProvisionerCommand):
                     if err.status != 404:
                         raise
 
+    def update_developer_keys(self):
+        for key in get_developer_keys():
+            for service in self.BLTI_HOSTS:
+                prod_host = self.BLTI_HOSTS.get(service).get('prod')
+                test_host = self.BLTI_HOSTS.get(service).get('test')
+
+                tool = key.get('tool_configuration', {}) or {}
+                if (tool.get('target_link_uri', '').startswith(prod_host)):
+                    tool_json = json.dumps(tool).replace(prod_host, test_host)
+                    tool_update = json.loads(tool_json)
+
+                    key_update = {
+                        'tool_configuration': {
+                            'settings': tool_update
+                        },
+                        'developer_key': {
+                            'name': key.get(
+                                'name', f"Key {key['id']}") + ' (TEST)',
+                            'redirect_uris': tool_update.get(
+                                'target_link_uri'),
+                            'scopes': tool.get('scopes', [])
+                        }
+                    }
+
+                    try:
+                        logger.info(f"Updating developer key {key['id']}")
+                        update_developer_key(key['id'], key_update)
+                    except DataFailureException as err:
+                        # 404s OK
+                        logger.error(f"Canvas API {err.status}: {err}")
+                        if err.status != 404:
+                            raise
+
     @override_settings(
         RESTCLIENTS_CANVAS_HOST="https://uw.beta.instructure.com")
     def update_canvas_beta(self):
         self.update_blti_urls()
+        self.update_developer_keys()
 
     @override_settings(
         RESTCLIENTS_CANVAS_HOST="https://uw.test.instructure.com")
     def update_canvas_test(self):
         self.update_blti_urls()
+        self.update_developer_keys()

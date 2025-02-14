@@ -172,7 +172,7 @@ cronjob:
           cpu: 25m
           memory: 64Mi
     - name: import-users
-      schedule: "15,45 12-23 * * 1-6"
+      schedule: "3,15,27,39,51 12-23 * * 1-6"
       command: ["/scripts/management_command.sh"]
       args: ["import_users", "2"]
       resources:
@@ -215,6 +215,17 @@ cronjob:
         requests:
           cpu: 25m
           memory: 128Mi
+    - name: backfill-courses
+      schedule: "30 22 * * 3"
+      command: ["/scripts/management_command.sh"]
+      args: ["backfill_courses", "--commit"]
+      resources:
+        limits:
+          cpu: 500m
+          memory: 512Mi
+        requests:
+          cpu: 50m
+          memory: 256Mi
     - name: import-groups
       schedule: "*/15 12-23 * * 1-6"
       command: ["/scripts/management_command.sh"]

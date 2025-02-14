@@ -67,6 +67,7 @@ urlpatterns = [
             UserSessionsView.as_view()),
     re_path(r'api/v1/users/(?P<net_id>[a-zA-Z0-9]+)/courses$',
             UserCourseView.as_view()),
+    re_path(r'api/v1/users$', UserView.as_view()),
     re_path(r'api/v1/users/(?P<reg_id>[a-fA-F0-9]{32})?$', UserView.as_view()),
     re_path(r'api/v1/logins/?$', LoginValidationView.as_view()),
     re_path(r'api/v1/import/(?P<import_id>[0-9]+)?$', ImportView.as_view()),
