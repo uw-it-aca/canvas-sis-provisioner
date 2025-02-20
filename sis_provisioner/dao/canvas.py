@@ -15,6 +15,7 @@ from uw_canvas.roles import Roles
 from uw_canvas.users import Users
 from uw_canvas.terms import Terms
 from uw_canvas.external_tools import ExternalTools
+from uw_canvas.developer_keys import DeveloperKeys
 from uw_canvas.sis_import import SISImport, CSV_FILES
 from uw_canvas.models import CanvasEnrollment, SISImport as SISImportModel
 from restclients_core.exceptions import DataFailureException
@@ -94,6 +95,14 @@ def delete_admin(account_id, user_id, role):
             return False
         raise
     return ret
+
+
+def get_developer_keys():
+    return DeveloperKeys(per_page=100).get_developer_keys()
+
+
+def update_developer_key(key_id, key_data):
+    return DeveloperKeys().update_developer_key(key_id, key_data)
 
 
 def get_course_roles_in_account(account_sis_id):
