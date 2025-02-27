@@ -78,7 +78,8 @@ class TermCSVTest(TestCase):
 @fdao_pws_override
 class CourseCSVTest(TestCase):
     @override_settings(
-        LMS_OWNERSHIP_SUBACCOUNT={'PCE_NONE': 'pce_none_account'})
+            LMS_OWNERSHIP_SUBACCOUNT={'PCE_NONE': 'pce_none_account:train'},
+            EXTENDED_COURSE_END_DATE_SUBACCOUNTS=['pce_none_account'])
     def test_with_section(self):
         section = get_section_by_label('2013,spring,TRAIN,101/A')
         self.assertRaises(
@@ -88,7 +89,8 @@ class CourseCSVTest(TestCase):
         self.assertEqual(
             str(CourseCSV(section=section)), (
                 '2013-spring-TRAIN-101-A,TRAIN 101 A,TRAIN 101 A Sp 13: '
-                'Intro Train,pce_none_account,2013-spring,active,,\n'))
+                'Intro Train,pce_none_account:train,2013-spring,active,,'
+                '2025-05-29T00:00:00-0800\n'))
 
     def test_with_kwargs(self):
         data = {'course_id': '2013-spring-TRAIN-101-A',

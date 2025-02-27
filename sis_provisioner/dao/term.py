@@ -54,6 +54,14 @@ def term_name(section):
             quarter=section.term.quarter.capitalize(), year=section.term.year)
 
 
+def course_end_date(section, account_id):
+    for a in getattr(settings, 'EXTENDED_COURSE_END_DATE_SUBACCOUNTS', []):
+        if account_id.startswith(a):
+            return (quarter_term_end_date(section.term) + timedelta(
+                days=90)).strftime(TERM_DATE_FORMAT)
+    return None
+
+
 def term_start_date(section):
     if section.is_independent_start:
         return None

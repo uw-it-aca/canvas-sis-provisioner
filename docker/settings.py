@@ -272,6 +272,11 @@ INSTITUTE_NAME_SUBACCOUNT = {
     'UW ISCHOOL MSIM ONLINE': 'canvas_104251',
 }
 
+EXTENDED_COURSE_END_DATE_SUBACCOUNTS = [
+    'uwcourse:seattle:business-school',
+    'uwcourse:seattle:education',
+]
+
 ADMIN_EVENT_GRAPH_FREQ = 10
 ADMIN_IMPORT_STATUS_FREQ = 30
 
