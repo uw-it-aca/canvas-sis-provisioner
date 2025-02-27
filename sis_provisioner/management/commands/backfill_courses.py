@@ -1,8 +1,7 @@
 # Copyright 2025 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
-
-from django.core.management.base import BaseCommand, CommandError
+from sis_provisioner.management.commands import SISProvisionerCommand
 from sis_provisioner.dao.canvas import (
     get_course_report_data, get_course_by_id, DataFailureException)
 from sis_provisioner.dao.course import valid_academic_course_sis_id
@@ -14,7 +13,7 @@ import csv
 logger = getLogger(__name__)
 
 
-class Command(BaseCommand):
+class Command(SISProvisionerCommand):
     help = "Insert courses from a Canvas course provisioning report file"
 
     def add_arguments(self, parser):
@@ -105,3 +104,5 @@ class Command(BaseCommand):
                              f'Term ID: {course.term_id}, '
                              f'Created: {course.created_date}, '
                              f'Expires: {course.expiration_date}')
+
+        self.update_job()
