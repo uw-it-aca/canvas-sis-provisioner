@@ -55,10 +55,11 @@ def term_name(section):
 
 
 def course_end_date(section, account_id):
-    for a in getattr(settings, 'EXTENDED_COURSE_END_DATE_SUBACCOUNTS', []):
-        if account_id.startswith(a):
+    for acct, days in getattr(
+            settings, 'EXTENDED_COURSE_END_DATE_SUBACCOUNTS', {}).items():
+        if account_id.startswith(acct):
             return (quarter_term_end_date(section.term) + timedelta(
-                days=90)).strftime(TERM_DATE_FORMAT)
+                days=days)).strftime(TERM_DATE_FORMAT)
     return None
 
 

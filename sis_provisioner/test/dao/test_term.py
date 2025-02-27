@@ -98,11 +98,12 @@ class TermPolicyTest(TestCase):
             'DesignerEnrollment': {'end_at': '2020-08-26T00:00:00-0800'},
         })
 
-    @override_settings(EXTENDED_COURSE_END_DATE_SUBACCOUNTS=['sis_root:abc'])
+    @override_settings(
+        EXTENDED_COURSE_END_DATE_SUBACCOUNTS={'sis_root:abc': 5})
     def test_course_end_date(self):
         section = get_section_by_label('2013,summer,TRAIN,101/A')
         self.assertEqual(
             course_end_date(section, 'sis_root:abc:xyz'),
-            '2013-11-26T00:00:00-0800')
+            '2013-09-02T00:00:00-0800')
 
         self.assertEqual(course_end_date(section, 'sis_root:def'), None)
