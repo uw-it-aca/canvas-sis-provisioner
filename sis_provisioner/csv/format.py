@@ -4,7 +4,7 @@
 
 from sis_provisioner.dao.account import account_name, account_id_for_section
 from sis_provisioner.dao.term import (
-    term_sis_id, term_name, term_start_date, term_end_date)
+    term_sis_id, term_name, term_start_date, term_end_date, course_end_date)
 from sis_provisioner.dao.course import (
     is_active_section, section_short_name, section_long_name)
 from sis_provisioner.dao.user import user_sis_id, user_email, user_fullname
@@ -134,14 +134,16 @@ class CourseCSV(CSVFormat):
     def __init__(self, **kwargs):
         if kwargs.get('section'):
             section = kwargs.get('section')
+            account_id = account_id_for_section(section)
             self.key = section.canvas_course_sis_id()
             self.data = [self.key,
                          section_short_name(section),
                          section_long_name(section),
-                         account_id_for_section(section),
+                         account_id,
                          term_sis_id(section),
                          'active' if is_active_section(section) else 'deleted',
-                         None, None]
+                         None,
+                         course_end_date(section, account_id)]
         else:
             self.key = kwargs['course_id']
             self.data = [self.key, kwargs['short_name'], kwargs['long_name'],
