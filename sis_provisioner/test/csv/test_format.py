@@ -55,6 +55,7 @@ class AccountCSVTest(TestCase):
 
 
 @fdao_sws_override
+@fdao_pws_override
 class TermCSVTest(TestCase):
     def test_term_csv(self):
         section = get_section_by_label('2013,summer,TRAIN,101/A')
@@ -74,6 +75,7 @@ class TermCSVTest(TestCase):
 
 
 @fdao_sws_override
+@fdao_pws_override
 class CourseCSVTest(TestCase):
     @override_settings(
             LMS_OWNERSHIP_SUBACCOUNT={'PCE_NONE': 'pce_none_account:train'},
