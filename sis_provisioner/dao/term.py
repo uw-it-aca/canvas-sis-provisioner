@@ -55,6 +55,9 @@ def term_name(section):
 
 
 def course_end_date(section, account_id):
+    if term_sis_id(section) == '2025-winter':  # Future terms only
+        return None
+
     for acct, days in getattr(
             settings, 'EXTENDED_COURSE_END_DATE_SUBACCOUNTS', {}).items():
         if account_id.startswith(acct):
