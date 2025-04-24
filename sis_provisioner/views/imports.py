@@ -79,7 +79,7 @@ class ImportListView(RESTDispatch):
         }
 
         try:
-            import_list = list(Import.objects.all())
+            import_list = Import.objects.all().order_by('added_date')
         except ImportInvalidException as err:
             return self.error_response(400, err)
 
