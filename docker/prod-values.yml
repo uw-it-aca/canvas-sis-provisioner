@@ -54,6 +54,8 @@ database:
 
 repo: canvas
 instance: prod
+namespace:
+  enabled: true
 
 memcached:
   enabled: true
