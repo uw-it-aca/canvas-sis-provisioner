@@ -21,7 +21,7 @@ setup(
     packages=['sis_provisioner'],
     include_package_data=True,
     install_requires=[
-        'django~=4.2',
+        'django~=5.2',
         'django-compressor',
         'django-user-agents',
         'python-dateutil',
@@ -49,7 +49,7 @@ setup(
     description='An application that manages SIS imports to Canvas',
     long_description=README,
     url='https://github.com/uw-it-aca/canvas-sis-provisioner',
-    author="UW-IT T&LS",
+    author="UW-IT Student & Educational Technology Services",
     author_email="aca-it@uw.edu",
     classifiers=[
         'Environment :: Web Environment',
