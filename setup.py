@@ -28,7 +28,7 @@ setup(
         'django-pyscss>=2.0',
         'beautifulsoup4',
         'suds-py3~=1.4',
-        'django-blti~=2.2',
+        'django-blti~=3.0',
         'django-cors-headers',
         'aws-message-client~=1.6',
         'djangorestframework~=3.14',
