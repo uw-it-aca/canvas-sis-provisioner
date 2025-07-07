@@ -262,7 +262,7 @@ ASTRA_ADMIN_EXCEPTIONS = [
     'a_gradeit_canvas_int',
     'a_atomic_canvas_int',
     'a_cidiscp_canvas_int',
-	'a_cnvshosted_snowflk',
+    'a_cnvshosted_snowflk',
 ]
 
 LMS_OWNERSHIP_SUBACCOUNT = {
