@@ -2,17 +2,12 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from django.utils.timezone import utc
-from optparse import make_option
 from sis_provisioner.management.commands import SISProvisionerCommand
 from sis_provisioner.models.group import Group
 from sis_provisioner.exceptions import (
     EmptyQueueException, MissingImportPathException)
 from sis_provisioner.builders.groups import GroupBuilder
-from dateutil.parser import parse
-from datetime import datetime, timedelta
 import traceback
-import re
 
 
 class Command(SISProvisionerCommand):
