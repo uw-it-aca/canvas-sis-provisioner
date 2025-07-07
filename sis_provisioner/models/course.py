@@ -13,11 +13,10 @@ from sis_provisioner.models.term import Term
 from sis_provisioner.dao.course import (
     valid_canvas_course_id, valid_course_sis_id, valid_canvas_section,
     valid_academic_course_sis_id, get_new_sections_by_term)
-from sis_provisioner.dao.canvas import create_course, delete_course
+from sis_provisioner.dao.canvas import create_course
 from sis_provisioner.dao.term import get_current_active_term
 from sis_provisioner.exceptions import (
     CoursePolicyException, EmptyQueueException)
-from restclients_core.exceptions import DataFailureException
 from datetime import datetime, timedelta, timezone
 from logging import getLogger
 
@@ -415,39 +414,38 @@ class UnusedCourse(ImportResource):
 
 
 class ExpiredCourseManager(models.Manager):
+    def queue_by_expiration(self, expiration_dt=None):
+        if expiration_dt is None:
+            expiration_dt = datetime.now(timezone.utc)
+
+        filter_limit = settings.SIS_IMPORT_LIMIT['course']['default']
+        pks = Course.objects.filter(
+                queue_id__isnull=True,
+                provisioned_error__isnull=True,
+                deleted_date__isnull=True,
+                expiration_date__isnull=False,
+                expiration_date__lt=expiration_dt,
+            ).order_by(
+                F('created_date').asc()
+            ).values_list('pk', flat=True)[:filter_limit]
+
+        if not len(pks):
+            raise EmptyQueueException()
+
+        imp = Import(priority=Course.PRIORITY_DEFAULT,
+                     csv_type='expired_course')
+        imp.save()
+
+        Course.objects.filter(pk__in=list(pks)).update(queue_id=imp.pk)
+
+        return imp
+
     def queued(self, queue_id):
         return Course.objects.queued(queue_id)
 
-    def queued_sdb_courses(self, queue_id):
-        return Course.objects.filter(
-            queue_id=queue_id, course_type=Course.SDB_TYPE)
-
-    def queued_adhoc_courses(self, queue_id):
-        return Course.objects.filter(
-            queue_id=queue_id, course_type=Course.ADHOC_TYPE)
-
     def dequeue(self, sis_import):
-        if sis_import.is_imported():
-            # Dequeue the sdb courses
-            self.queued_sdb_courses(sis_import.pk).update(
-                queue_id=None, priority=Course.PRIORITY_NONE,
-                deleted_date=datetime.now(timezone.utc))
-
-        # Delete the adhoc courses via the Canvas api
-        for course in self.queued_adhoc_courses(sis_import.pk):
-            try:
-                delete_course(course.canvas_course_id)
-                course.deleted_date = datetime.now(timezone.utc)
-                logger.info(f"DELETE adhoc course '{course.canvas_course_id}'")
-            except DataFailureException as err:
-                course.provisioned_error = True
-                course.provisioned_status = str(err)
-                logger.info(f"DELETE adhoc course '{course.canvas_course_id}' "
-                            f"error: {err}")
-
-            course.queue_id = None
-            course.priority = Course.PRIORITY_NONE
-            course.save()
+        self.queued(sis_import.pk).update(
+            queue_id=None, priority=Course.PRIORITY_NONE)
 
 
 class ExpiredCourse(ImportResource):

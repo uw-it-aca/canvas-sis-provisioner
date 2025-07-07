@@ -3,46 +3,59 @@
 
 
 from sis_provisioner.management.commands import SISProvisionerCommand
-from sis_provisioner.models.course import Course, Import
-from sis_provisioner.exceptions import (
-    EmptyQueueException, MissingImportPathException)
-from sis_provisioner.builders.courses import ExpiredCourseBuilder
-import traceback
-import os
+from sis_provisioner.models.course import ExpiredCourse, Course, Import
+from sis_provisioner.dao.canvas import delete_course
+from sis_provisioner.exceptions import EmptyQueueException
+from restclients_core.exceptions import DataFailureException
+from datetime import datetime, timezone
+from logging import getLogger
+
+logger = getLogger(__name__)
 
 
 class Command(SISProvisionerCommand):
-    help = "Create a csv import file of expired courses for a specified \
-            term. The csv file will be used to delete expired courses from \
-            Canvas."
+    help = "Delete courses that have expired."
 
     def add_arguments(self, parser):
-        parser.add_argument('-t', '--term-sis-id', help='Term SIS ID')
+        parser.add_argument('-c', '--commit', action='store_true',
+                            dest='commit', default=False,
+                            help='Delete expired courses')
 
     def handle(self, *args, **options):
-        term_sis_id = (
-            options.get('term-sis-id') or os.getenv('EXPIRED_COURSES_TERM'))
-        if not term_sis_id:
-            print('Empty term-sis-id arg not implemented!')
+        commit = options.get('commit')
+        try:
+            imp = ExpiredCourse.objects.queue_by_expiration()
+        except EmptyQueueException as ex:
+            self.update_job()
             return
 
-        imp = Import(priority=Course.PRIORITY_DEFAULT,
-                     csv_type='expired_course',
-                     override_sis_stickiness=True)
-        imp.save()
+        for course in ExpiredCourse.objects.queued(queue_id):
+            if commit:
+                self.delete_canvas_course(course)
+            else:
+                logger.debug(f'DELETE (Commit=False) '
+                             f'Canvas ID: {course.canvas_course_id}, '
+                             f'SIS ID: {course.course_id}, '
+                             f'Term ID: {course.term_id}, '
+                             f'Created: {course.created_date}, '
+                             f'Expires: {course.expiration_date}')
 
-        try:
-            imp.csv_path = ExpiredCourseBuilder().build(
-                term_sis_id=term_sis_id, queue_id=imp.pk)
-        except Exception:
-            imp.csv_errors = traceback.format_exc()
-
-        imp.save()
-
-        try:
-            imp.import_csv()
-        except MissingImportPathException as ex:
-            if not imp.csv_errors:
-                imp.delete()
+        imp.post_status = 200
+        imp.canvas_progress = 100
+        imp.delete()
 
         self.update_job()
+
+    def delete_canvas_course(self, course):
+        try:
+            delete_course(course.canvas_course_id)
+            course.deleted_date = datetime.now(timezone.utc)
+            logger.info(f"DELETE course '{course.canvas_course_id}'")
+
+        except DataFailureException as err:
+            course.provisioned_error = True
+            course.provisioned_status = str(err)
+            logger.info(
+                f"ERROR DELETE course '{course.canvas_course_id}': {err}")
+
+        course.save()
