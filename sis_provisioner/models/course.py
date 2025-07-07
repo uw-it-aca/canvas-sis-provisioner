@@ -13,10 +13,11 @@ from sis_provisioner.models.term import Term
 from sis_provisioner.dao.course import (
     valid_canvas_course_id, valid_course_sis_id, valid_canvas_section,
     valid_academic_course_sis_id, get_new_sections_by_term)
-from sis_provisioner.dao.canvas import create_course
+from sis_provisioner.dao.canvas import create_course, delete_course
 from sis_provisioner.dao.term import get_current_active_term
 from sis_provisioner.exceptions import (
     CoursePolicyException, EmptyQueueException)
+from restclients_core.exceptions import DataFailureException
 from datetime import datetime, timedelta, timezone
 from logging import getLogger
 
@@ -328,6 +329,20 @@ class Course(ImportResource):
             return self.expiration_date < datetime.now(timezone.utc)
         return False
 
+    def delete_canvas_course(self):
+        try:
+            delete_course(self.canvas_course_id)
+            self.deleted_date = datetime.now(timezone.utc)
+            logger.info(f"DELETE course '{self.canvas_course_id}'")
+
+        except DataFailureException as err:
+            self.provisioned_error = True
+            self.provisioned_status = str(err)
+            logger.info(
+                f"ERROR DELETE course '{self.canvas_course_id}': {err}")
+
+        self.save()
+
     def json_data(self, include_sws_url=False):
         try:
             group_models = Group.objects.filter(course_id=self.course_id,
@@ -418,7 +433,7 @@ class ExpiredCourseManager(models.Manager):
         if expiration_dt is None:
             expiration_dt = datetime.now(timezone.utc)
 
-        filter_limit = settings.SIS_IMPORT_LIMIT['course']['default']
+        filter_limit = settings.SIS_IMPORT_LIMIT['expired_course']['default']
         pks = Course.objects.filter(
                 queue_id__isnull=True,
                 provisioned_error__isnull=True,
