@@ -43,6 +43,8 @@ database:
 
 repo: canvas
 instance: test
+namespace:
+  enabled: true
 
 memcached:
   enabled: true
