@@ -26,7 +26,7 @@ class Command(SISProvisionerCommand):
             self.update_job()
             return
 
-        for course in ExpiredCourse.objects.queued(queue_id):
+        for course in imp.queued_objects():
             if commit:
                 course.delete_canvas_course()
             else:
