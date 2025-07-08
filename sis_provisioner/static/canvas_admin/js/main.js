@@ -761,18 +761,19 @@ $(document).ready(function () {
 
             // search by type
             switch ($a.attr('data-type').toLowerCase()) {
-            case 'course':
-                doCourseSearch('/api/v1/courses?queue_id=' +
-                    queue_id, { queue_id: queue_id },
-                    $('.status-result-list'));
-                break;
-            case 'enrollment':
-                doEnrollmentSearch('/api/v1/enrollments?queue_id=' +
-                    queue_id, { queue_id: queue_id },
-                    $('.status-result-list'));
-                break;
-            default:
-                break;
+                case 'expiredcourse':
+                case 'course':
+                    doCourseSearch('/api/v1/courses?queue_id=' +
+                        queue_id, { queue_id: queue_id },
+                        $('.status-result-list'));
+                    break;
+                case 'enrollment':
+                    doEnrollmentSearch('/api/v1/enrollments?queue_id=' +
+                        queue_id, { queue_id: queue_id },
+                        $('.status-result-list'));
+                    break;
+                default:
+                    break;
             }
         }).on('click', 'a.action', function (e) {
             var $li = $(e.target).closest('li'),
