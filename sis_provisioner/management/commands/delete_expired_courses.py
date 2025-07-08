@@ -11,7 +11,7 @@ logger = getLogger(__name__)
 
 
 class Command(SISProvisionerCommand):
-    help = "Delete courses that have expired."
+    help = 'Delete courses that have expired.'
 
     def add_arguments(self, parser):
         parser.add_argument('-c', '--commit', action='store_true',
@@ -29,13 +29,12 @@ class Command(SISProvisionerCommand):
         for course in imp.queued_objects():
             if commit:
                 course.delete_canvas_course()
-            else:
-                logger.info(f'DELETE (Commit=False) '
-                            f'Canvas ID: {course.canvas_course_id}, '
-                            f'SIS ID: {course.course_id}, '
-                            f'Term ID: {course.term_id}, '
-                            f'Created: {course.created_date}, '
-                            f'Expires: {course.expiration_date}')
+
+            logger.info(f'DELETE course (Commit={commit}), '
+                        f'Canvas ID: {course.canvas_course_id}, '
+                        f'SIS ID: {course.course_id}, '
+                        f'Created: {course.created_date}, '
+                        f'Expired: {course.expiration_date}')
 
         imp.post_status = 200
         imp.canvas_progress = 100
