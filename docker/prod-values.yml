@@ -229,7 +229,7 @@ cronjob:
           cpu: 50m
           memory: 256Mi
     - name: delete-expired-courses
-      schedule: "*/10 13-23 * * 1-6"
+      schedule: "*/10 13-23 * * 1-5"
       command: ["/scripts/management_command.sh"]
       args: ["delete_expired_courses", "--commit"]
       resources:

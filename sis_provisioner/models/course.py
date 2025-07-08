@@ -19,9 +19,6 @@ from sis_provisioner.exceptions import (
     CoursePolicyException, EmptyQueueException)
 from restclients_core.exceptions import DataFailureException
 from datetime import datetime, timedelta, timezone
-from logging import getLogger
-
-logger = getLogger(__name__)
 
 
 class CourseManager(models.Manager):
@@ -333,13 +330,10 @@ class Course(ImportResource):
         try:
             delete_course(self.canvas_course_id)
             self.deleted_date = datetime.now(timezone.utc)
-            logger.info(f"DELETE course '{self.canvas_course_id}'")
 
         except DataFailureException as err:
             self.provisioned_error = True
             self.provisioned_status = str(err)
-            logger.info(
-                f"ERROR DELETE course '{self.canvas_course_id}': {err}")
 
         self.save()
 
