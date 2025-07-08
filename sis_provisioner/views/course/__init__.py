@@ -151,8 +151,9 @@ class CourseListView(RESTDispatch):
                 }
 
         if filt_kwargs:
-            try:
+            if 'queue_id' not in filt_kwargs:
                 filt_kwargs['priority__gt'] = Course.PRIORITY_NONE
+            try:
                 course_list = list(Course.objects.filter(
                     **filt_kwargs).order_by('course_id'))
 
