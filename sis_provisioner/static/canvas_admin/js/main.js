@@ -761,7 +761,7 @@ $(document).ready(function () {
 
             // search by type
             switch ($a.attr('data-type').toLowerCase()) {
-                case 'expiredcourse':
+                case 'expired_course':
                 case 'course':
                     doCourseSearch('/api/v1/courses?queue_id=' +
                         queue_id, { queue_id: queue_id },
