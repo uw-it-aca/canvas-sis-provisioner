@@ -85,6 +85,8 @@ else:
             'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
         },
     }
+    RESTCLIENTS_CANVAS_FILE_RETRY = 3
+    RESTCLIENTS_CANVAS_FILE_REDIRECT = 3
 
 RESTCLIENTS_DISABLE_THREADING = True
 RESTCLIENTS_ADMIN_AUTH_MODULE = 'sis_provisioner.views.admin.can_view_source_data'
