@@ -114,9 +114,6 @@ environmentVariables:
   - name: ASTRA_APPLICATION
     value: Canvas
 
-  - name: SESSION_BACKEND
-    value: MEMCACHED
-
   - name: LTI_CONFIG_DIRECTORY
     value: /lti/config
 
