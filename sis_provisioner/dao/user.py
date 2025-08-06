@@ -96,6 +96,17 @@ def user_sis_id(user):
     return user.uwregid if hasattr(user, 'uwregid') else user.sis_user_id
 
 
+def user_integration_id(user):
+    if hasattr(user, 'student_number'):
+        if user.student_number:
+            integration_id = str(user.student_number).zfill(7)
+            return None if integration_id == "0000000" else integration_id
+    elif hasattr(user, 'integration_id'):
+        return user.integration_id  # CanvasUser
+    else:
+        return None  # UW Entity or some other object
+
+
 def user_email(user):
     if hasattr(user, 'uwnetid') and user.uwnetid is not None:
         return '{}@uw.edu'.format(user.uwnetid)

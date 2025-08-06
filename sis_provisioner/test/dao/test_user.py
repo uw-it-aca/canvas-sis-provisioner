@@ -3,6 +3,8 @@
 
 
 from django.test import TestCase, override_settings
+from uw_canvas.users import Users as CanvasUsers
+from uw_canvas.utilities import fdao_canvas_override
 from uw_pws import PWS
 from uw_pws.util import fdao_pws_override
 from uw_gws.utilities import fdao_gws_override
@@ -52,6 +54,7 @@ class IsGroupAdminTest(TestCase):
 
 @fdao_pws_override
 @fdao_gws_override
+@fdao_canvas_override
 class UserPolicyTest(TestCase):
     @override_settings(ALLOWED_CANVAS_LOGIN_USERS='u_acadev_unittest')
     def test_can_access_canvas(self):
@@ -74,6 +77,30 @@ class UserPolicyTest(TestCase):
         user = PWS().get_person_by_netid('javerage')
         self.assertEqual(
             user_sis_id(user), '9136CCB8F66711D5BE060004AC494FFE')
+
+    def test_user_integration_id(self):
+        user = PWS().get_person_by_netid('javerage')
+        self.assertEqual(user_integration_id(user), '1033334')
+
+        user.student_number = None
+        self.assertEqual(user_integration_id(user), None)
+        user.student_number = ''
+        self.assertEqual(user_integration_id(user), None)
+        user.student_number = '0'
+        self.assertEqual(user_integration_id(user), None)
+        user.student_number = '1234567'
+        self.assertEqual(user_integration_id(user), '1234567')
+        user.student_number = '1234'
+        self.assertEqual(user_integration_id(user), '0001234')
+        user.student_number = 1234
+        self.assertEqual(user_integration_id(user), '0001234')
+
+        canvas = CanvasUsers()
+        user = canvas.get_user(188885)
+        self.assertEqual(user_integration_id(user), '0012345')
+
+        # Non-user object
+        self.assertEqual(user_integration_id(object), None)
 
     def test_user_email(self):
         user = PWS().get_person_by_netid('javerage')
