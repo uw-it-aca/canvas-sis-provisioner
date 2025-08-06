@@ -85,6 +85,16 @@ else:
             'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
         },
     }
+    CACHES = {
+        'default': {
+            'BACKEND': 'memcached_clients.django_backend.PymemcacheCache',
+            'LOCATION': MEMCACHED_SERVERS,
+            'OPTIONS': {
+                'use_pooling': MEMCACHED_USE_POOLING,
+                'max_pool_size': MEMCACHED_MAX_POOL_SIZE,
+            }
+        }
+    }
     RESTCLIENTS_CANVAS_FILE_RETRY = 3
     RESTCLIENTS_CANVAS_FILE_REDIRECT = 3
 
