@@ -38,7 +38,7 @@ class RestClientsCache(RestclientPymemcacheClient):
                 return ONE_HOUR * 4
 
         if 'pws' == service:
-            return ONE_HOUR
+            return ONE_MINUTE * 5
 
         if 'kws' == service:
             if re.search(r'{}'.format(
