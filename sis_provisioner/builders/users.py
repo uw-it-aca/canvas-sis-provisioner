@@ -4,6 +4,7 @@
 
 from sis_provisioner.builders import Builder
 from sis_provisioner.dao.user import get_person_by_netid
+from sis_provisioner.cache import RestClientsCache
 from sis_provisioner.exceptions import UserPolicyException
 from restclients_core.exceptions import DataFailureException
 
@@ -13,6 +14,9 @@ class UserBuilder(Builder):
     Generates the import data for the passed list of User models.
     """
     def _process(self, user):
+        if user.priority == user.PRIORITY_IMMEDIATE:
+            RestClientsCache().delete_cached_person(user.net_id)
+
         try:
             person = get_person_by_netid(user.net_id)
             self.add_user_data_for_person(person, force=True)

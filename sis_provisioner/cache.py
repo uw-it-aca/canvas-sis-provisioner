@@ -5,6 +5,7 @@
 from django.conf import settings
 from memcached_clients import RestclientPymemcacheClient
 from uw_kws import ENCRYPTION_KEY_URL, ENCRYPTION_CURRENT_KEY_URL
+from uw_pws import PERSON_PREFIX
 import re
 
 ONE_MINUTE = 60
@@ -38,7 +39,7 @@ class RestClientsCache(RestclientPymemcacheClient):
                 return ONE_HOUR * 4
 
         if 'pws' == service:
-            return ONE_MINUTE * 5
+            return ONE_HOUR
 
         if 'kws' == service:
             if re.search(r'{}'.format(
@@ -72,3 +73,6 @@ class RestClientsCache(RestclientPymemcacheClient):
     def delete_cached_kws_current_key(self, resource_type):
         self.deleteCache('kws', ENCRYPTION_CURRENT_KEY_URL.format(
             resource_type))
+
+    def delete_cached_person(self, identifier):
+        self.deleteCache('pws', f'{PERSON_PREFIX}/{identifier}/full.json')

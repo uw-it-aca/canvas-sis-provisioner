@@ -46,7 +46,7 @@ class PersonProcessor(SISProvisionerProcessor):
 
                 user = User.objects.update_priority(
                     PersonModel(uwregid=current['RegID'], uwnetid=net_id),
-                    User.PRIORITY_HIGH)
+                    User.PRIORITY_IMMEDIATE)
 
                 action = 'IGNORE unknown user' if (user is None) else 'ACCEPT'
                 self.logger.info('{} {}, uwnetid: {}, uwregid: {}'.format(
