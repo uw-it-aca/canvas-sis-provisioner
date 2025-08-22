@@ -7,7 +7,8 @@ from sis_provisioner.dao.term import (
     term_sis_id, term_name, term_start_date, term_end_date, course_end_date)
 from sis_provisioner.dao.course import (
     is_active_section, section_short_name, section_long_name)
-from sis_provisioner.dao.user import user_sis_id, user_email, user_fullname
+from sis_provisioner.dao.user import (
+    user_sis_id, user_integration_id, user_email, user_fullname)
 from sis_provisioner.dao.canvas import (
     valid_enrollment_status, enrollment_status_from_registration,
     get_student_sis_import_role, get_instructor_sis_import_role,
@@ -82,9 +83,9 @@ class EnrollmentHeader(CSVFormat):
 
 class UserHeader(CSVFormat):
     def __init__(self):
-        self.data = ['user_id', 'login_id', 'password', 'first_name',
-                     'last_name', 'full_name', 'sortable_name', 'short_name',
-                     'email', 'status']
+        self.data = ['user_id', 'integration_id', 'login_id', 'password',
+                     'first_name', 'last_name', 'full_name', 'sortable_name',
+                     'short_name', 'email', 'status']
 
 
 class XlistHeader(CSVFormat):
@@ -224,8 +225,8 @@ class EnrollmentCSV(CSVFormat):
 
 class UserCSV(CSVFormat):
     """
-    user_id, login_id, password, first_name, last_name, full_name,
-    sortable_name, short_name, email, status (active|deleted)
+    user_id, integration_id, login_id, password, first_name, last_name,
+    full_name, sortable_name, short_name, email, status (active|deleted)
     """
     def __init__(self, user, status='active'):
         self.key = user_sis_id(user)
@@ -241,6 +242,7 @@ class UserCSV(CSVFormat):
 
         self.data = [
             self.key,
+            user_integration_id(user),
             user.uwnetid if hasattr(user, 'uwnetid') else user.login_id,
             None, first_name, last_name, full_name, None, None,
             user_email(user),
