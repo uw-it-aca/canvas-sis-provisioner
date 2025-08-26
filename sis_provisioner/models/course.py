@@ -95,7 +95,7 @@ class CourseManager(models.Manager):
             'course_type': Course.SDB_TYPE,
             'queue_id__isnull': True,
             'provisioned_error__isnull': True,
-            'deleted_date__isnull': True
+            'archived_date__isnull': True
         }
         if term is not None:
             kwargs['term_id'] = term.canvas_sis_id()
@@ -136,7 +136,6 @@ class CourseManager(models.Manager):
 
         try:
             course = Course.objects.get(course_id=course_id)
-
         except Course.DoesNotExist:
             if section.is_primary_section:
                 primary_id = None
@@ -147,6 +146,9 @@ class CourseManager(models.Manager):
                             course_type=Course.SDB_TYPE,
                             term_id=section.term.canvas_sis_id(),
                             primary_id=primary_id)
+
+        if course.archived_date is not None:
+            raise CoursePolicyException
 
         course.queue_id = queue_id
         course.save()
@@ -263,6 +265,7 @@ class Course(ImportResource):
     expiration_exc_granted_by = models.ForeignKey(User, null=True,
                                                   on_delete=models.SET_NULL)
     expiration_exc_desc = models.CharField(max_length=200, null=True)
+    archived_date = models.DateTimeField(null=True)
     deleted_date = models.DateTimeField(null=True)
     priority = models.SmallIntegerField(
         default=ImportResource.PRIORITY_DEFAULT,
@@ -326,10 +329,10 @@ class Course(ImportResource):
             return self.expiration_date < datetime.now(timezone.utc)
         return False
 
-    def delete_canvas_course(self):
+    def archive_canvas_course(self):
         try:
             delete_course(self.canvas_course_id)
-            self.deleted_date = datetime.now(timezone.utc)
+            self.archived_date = datetime.now(timezone.utc)
 
         except DataFailureException as err:
             self.provisioned_error = True
@@ -359,6 +362,8 @@ class Course(ImportResource):
                     self.provisioned_date is not None) else None,
             "created_date": localtime(self.created_date).isoformat() if (
                 self.created_date is not None) else None,
+            "archived_date": localtime(self.archived_date).isoformat() if (
+                self.archived_date is not None) else None,
             "deleted_date": localtime(self.deleted_date).isoformat() if (
                 self.deleted_date is not None) else None,
             "is_expired": self.is_expired(),
@@ -409,7 +414,7 @@ class UnusedCourseManager(models.Manager):
 
         kwargs = {'queue_id': None}
         if sis_import.is_imported():
-            kwargs['deleted_date'] = sis_import.monitor_date
+            kwargs['archived_date'] = sis_import.monitor_date
             kwargs['priority'] = Course.PRIORITY_NONE
 
         self.queued(sis_import.pk).update(**kwargs)
@@ -431,7 +436,7 @@ class ExpiredCourseManager(models.Manager):
         pks = Course.objects.filter(
                 queue_id__isnull=True,
                 provisioned_error__isnull=True,
-                deleted_date__isnull=True,
+                archived_date__isnull=True,
                 expiration_date__isnull=False,
                 expiration_date__lt=expiration_dt,
             ).order_by(

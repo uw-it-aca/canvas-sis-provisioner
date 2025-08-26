@@ -49,6 +49,13 @@ class CourseModelTest(TestCase):
         self.assertEqual(course.queue_id, 2)
         self.assertEqual(course.primary_id, '2013-summer-TRAIN-100-A')
 
+        # Add archived course to queue
+        course.queue_id = None
+        course.archived_date = datetime.now()
+        course.save()
+        self.assertRaises(CoursePolicyException,
+                          Course.objects.add_to_queue, section, queue_id=2)
+
         Course.objects.all().delete()
 
     def test_remove_from_queue(self):

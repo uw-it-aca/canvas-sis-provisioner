@@ -23,6 +23,11 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name='course',
+            name='archived_date',
+            field=models.DateTimeField(null=True),
+        ),
+        migrations.AddField(
+            model_name='course',
             name='deleted_date',
             field=models.DateTimeField(null=True),
         ),
