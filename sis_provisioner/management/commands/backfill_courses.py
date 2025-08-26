@@ -66,10 +66,10 @@ class Command(SISProvisionerCommand):
                     course.term_id = term_sis_id
                     needs_save = True
 
-                if course.deleted_date is not None:
-                    logger.info(f'Course is not deleted, '
+                if course.archived_date is not None:
+                    logger.info(f'Course is not archived, '
                                 f'{canvas_course_id}, {course_sis_id}')
-                    course.deleted_date = None
+                    course.archived_date = None
                     needs_save = True
 
             except Course.DoesNotExist:

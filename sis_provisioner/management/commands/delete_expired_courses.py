@@ -28,9 +28,9 @@ class Command(SISProvisionerCommand):
 
         for course in imp.queued_objects():
             if commit:
-                course.delete_canvas_course()
+                course.archive_canvas_course()
 
-            logger.info(f'DELETE course (Commit={commit}), '
+            logger.info(f'ARCHIVE course (Commit={commit}), '
                         f'Canvas ID: {course.canvas_course_id}, '
                         f'SIS ID: {course.course_id}, '
                         f'Created: {course.created_date}, '
