@@ -71,7 +71,7 @@
             {{else}}
               <li><i class="fa fa-cloud-upload course-available"></i>Created in Canvas on {{this.created_date}}</li>
             {{/if}}
-            {{#if this.deleted_date}}
+            {{#if this.archived_date}}
             {{else}}
               <li><i class="fa fa-spinner fa-spin"></i>This course <span class="workflow_state">state is being queried</span> in Canvas</li>
               <li><a class="canvas-course-link" data-course-id="{{#if this.primary_id}}{{this.primary_id}}{{else}}{{#if this.course_id}}{{this.course_id}}{{else}}{{this.canvas_course_id}}{{/if}}{{/if}}" href="javascript:void(0);" title="View {{#if this.course_id}}{{this.course_id}}{{else}}Course {{this.canvas_course_id}}{{/if}} in Canvas" target="_blank"><i class="fa fa-external-link"></i>View {{#if this.course_id}}{{this.course_id}}{{else}}Course {{this.canvas_course_id}}{{/if}} in Canvas</a></li>
@@ -102,8 +102,8 @@
           <li><i class="fa fa-users"></i>Course has {{this.group_count}} UW group{{this.group_plural}} attached</li>
           {{/if}}
           {{#if this.canvas_course_id}}
-            {{#if this.deleted_date}}
-              <li><i class="fa fa-trash"></i>Deleted on {{this.deleted_date}} ({{this.deleted_date_relative}})</li>
+            {{#if this.archived_date}}
+              <li><i class="fa fa-trash"></i>Archived on {{this.archived_date}} ({{this.archived_date_relative}})</li>
             {{else}}
               {{#if this.expiration_date}}
                 <li id="course-exception-{{this.canvas_course_id}}">

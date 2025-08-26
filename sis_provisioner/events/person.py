@@ -41,6 +41,7 @@ class PersonProcessor(SISProvisionerProcessor):
                     current['StudentName'] != previous['StudentName'] or
                     current['FirstName'] != previous['FirstName'] or
                     current['LastName'] != previous['LastName'] or
+                    current['StudentNumber'] != previous['StudentNumber'] or
                     current['UWNetID'] != previous['UWNetID'] or
                     current['RegID'] != previous['RegID']):
 
