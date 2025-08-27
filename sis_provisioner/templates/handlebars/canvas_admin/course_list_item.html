@@ -103,7 +103,10 @@
           {{/if}}
           {{#if this.canvas_course_id}}
             {{#if this.archived_date}}
-              <li><i class="fa fa-trash"></i>Archived on {{this.archived_date}} ({{this.archived_date_relative}})</li>
+              <li><i class="fa fa-lock"></i>Archived on {{this.archived_date}} ({{this.archived_date_relative}})</li>
+              {{#if this.deleted_date}}
+                <li><i class="fa fa-trash"></i>Deleted on {{this.deleted_date}} ({{this.deleted_date_relative}})</li>
+              {{/if}}
             {{else}}
               {{#if this.expiration_date}}
                 <li id="course-exception-{{this.canvas_course_id}}">
