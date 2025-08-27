@@ -1291,6 +1291,7 @@ $(document).ready(function () {
                     case 'deleted':
                         state_node.html('is deleted');
                         icon_node.addClass('course-emphasis');
+                        $('button.provision-course').hide();
                         link.parent().hide();
                         break;
                     default:  /* 'unpublished' */
