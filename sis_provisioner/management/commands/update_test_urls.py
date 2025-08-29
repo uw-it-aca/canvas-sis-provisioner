@@ -13,8 +13,6 @@ from logging import getLogger
 
 logger = getLogger(__name__)
 
-import logging
-logger.setLevel(logging.DEBUG)
 
 class Command(SISProvisionerCommand):
     help = "Update LTI URLs for non-production Canvas instances"
