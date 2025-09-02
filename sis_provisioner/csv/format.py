@@ -232,19 +232,22 @@ class UserCSV(CSVFormat):
         self.key = user_sis_id(user)
         name = user_fullname(user)
         if len(name) == 2:
-            first_name = name[0]
-            last_name = name[1]
-            full_name = None
+            if (name[0] is not None and len(name[0]) and
+                    name[1] is not None and len(name[1])):
+                full_name = f'{name[0]} {name[1]}'
+                sortable_name = f'{name[1]}, {name[0]}'
+            else:
+                full_name = name[0] or name[1]
+                sortable_name = name[0] or name[1]
         else:
-            first_name = None
-            last_name = None
             full_name = name[0]
+            sortable_name = name[0]
 
         self.data = [
             self.key,
             user_integration_id(user),
             user.uwnetid if hasattr(user, 'uwnetid') else user.login_id,
-            None, first_name, last_name, full_name, None, None,
+            None, None, None, full_name, sortable_name, full_name,
             user_email(user),
             status]
 
