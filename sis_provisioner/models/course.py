@@ -193,7 +193,8 @@ class CourseManager(models.Manager):
         term_id = term.canvas_sis_id()
         existing_course_ids = dict((c, p) for c, p in (
             super().get_queryset().filter(
-                term_id=term_id, course_type=Course.SDB_TYPE
+                course_type=Course.SDB_TYPE,
+                course_id__startswith=term_id,
             ).values_list('course_id', 'priority')))
 
         last_search_date = datetime.now(timezone.utc)
