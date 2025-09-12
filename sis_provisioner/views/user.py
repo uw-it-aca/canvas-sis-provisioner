@@ -112,6 +112,7 @@ class UserView(RESTDispatch):
             'display_name': person.display_name,
             'net_id': person.uwnetid,
             'reg_id': person.uwregid,
+            'student_number': person.student_number,
             'added_date': None,
             'provisioned_date': None,
             'priority': 'normal',
