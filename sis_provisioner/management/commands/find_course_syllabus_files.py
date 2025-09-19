@@ -59,6 +59,7 @@ class Command(BaseCommand):
                 continue
 
             course_sis_id = row[0]
+            course_has_syllabus = False
 
             course = course_client.get_course_by_sis_id(
                 course_sis_id, params=course_params)
@@ -66,6 +67,7 @@ class Command(BaseCommand):
             if course.syllabus_body:
                 logger.info(f"Found HTML syllabus in {course_sis_id}")
 
+                course_has_syllabus = True
                 syllabus_path = self.create_file_path(
                     account_id, term_sis_id, course_sis_id, 'syllabus.html')
 
@@ -76,7 +78,7 @@ class Command(BaseCommand):
             for file in file_client.get_course_files_by_sis_id(
                     course_sis_id, params=file_params):
 
-                if 'syllabus' not in file.filename.lower():
+                if 'syl' not in file.filename.lower():
                     continue
 
                 response = download_client.getURL(file.url)
@@ -84,6 +86,7 @@ class Command(BaseCommand):
                     logger.info(
                         f"Found file {file.filename} in {course_sis_id}")
 
+                    course_has_syllabus = True
                     file_path = self.create_file_path(
                         account_id, term_sis_id, course_sis_id, file.filename)
 
@@ -99,3 +102,15 @@ class Command(BaseCommand):
 
                     except Exception as ex:
                         logger.error(ex)
+
+            if not course_has_syllabus:
+                logger.info(
+                    f"Syllabus not found in {course_sis_id}")
+
+                notfound_path = self.create_file_path(
+                    account_id, term_sis_id, course_sis_id, 'Missing syllabus')
+
+                with default_storage.open(notfound_path, mode='w') as f:
+                    f.write('A syllabus file could not be identified for '
+                            'this course.')
+
