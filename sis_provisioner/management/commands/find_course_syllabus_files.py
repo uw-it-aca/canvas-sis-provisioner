@@ -113,4 +113,3 @@ class Command(BaseCommand):
                 with default_storage.open(notfound_path, mode='w') as f:
                     f.write('A syllabus file could not be identified for '
                             'this course.')
-
