@@ -3,15 +3,12 @@
 
 
 from django.core.management.base import BaseCommand
-from django.conf import settings
 from django.core.files.storage import default_storage
 from uw_canvas.reports import Reports
 from uw_canvas.courses import Courses
 from uw_canvas.files import Files
 from uw_canvas.dao import CanvasFileDownload_DAO
-from restclients_core.exceptions import DataFailureException
 from logging import getLogger
-import time
 import csv
 import os
 
@@ -66,7 +63,7 @@ class Command(BaseCommand):
                 course_sis_id, params={"include": ["syllabus_body"]})
 
             if course.syllabus_body:
-                print(f"Found HTML syllabus in {course_sis_id}")
+                logger.info(f"Found HTML syllabus in {course_sis_id}")
 
                 syllabus_path = self.create_file_path(
                     account_id, term_sis_id, course_sis_id, 'syllabus.html')
@@ -83,18 +80,21 @@ class Command(BaseCommand):
 
                 response = download_client.getURL(file.url)
                 if response.status == 200:
-                    print(f"Found file {file.filename} in {course_sis_id}")
+                    logger.info(
+                        f"Found file {file.filename} in {course_sis_id}")
 
                     file_path = self.create_file_path(
                         account_id, term_sis_id, course_sis_id, file.filename)
 
                     if file.filename in seen_files:
+                        # Remove previous versions to avoid checksum errors
                         default_storage.delete(file_path)
 
                     try:
                         with default_storage.open(file_path, mode='wb') as f:
                             f.write(response.data)
+
                         seen_files.add(file.filename)
 
                     except Exception as ex:
-                        print(ex)
+                        logger.error(ex)
