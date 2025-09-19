@@ -51,7 +51,8 @@ class Command(BaseCommand):
           'application/msword',
           'application/vnd.openxmlformats-officedocument.wordprocessingml.document'  # noqa
         ]
-        course_params = {'content_types': content_types, 'sort': 'updated_at'}
+        course_params = {"include": ["syllabus_body"]}
+        file_params = {'content_types': content_types, 'sort': 'updated_at'}
 
         for row in csv.reader(sis_data):
             if not len(row) or row[0] == 'course_id':
@@ -60,7 +61,7 @@ class Command(BaseCommand):
             course_sis_id = row[0]
 
             course = course_client.get_course_by_sis_id(
-                course_sis_id, params={"include": ["syllabus_body"]})
+                course_sis_id, params=course_params)
 
             if course.syllabus_body:
                 logger.info(f"Found HTML syllabus in {course_sis_id}")
@@ -73,7 +74,7 @@ class Command(BaseCommand):
 
             seen_files = set()
             for file in file_client.get_course_files_by_sis_id(
-                    course_sis_id, params=course_params):
+                    course_sis_id, params=file_params):
 
                 if 'syllabus' not in file.filename.lower():
                     continue
