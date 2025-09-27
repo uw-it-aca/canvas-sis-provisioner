@@ -104,12 +104,4 @@ class Command(BaseCommand):
                         logger.error(ex)
 
             if not course_has_syllabus:
-                logger.info(
-                    f"Syllabus not found in {course_sis_id}")
-
-                notfound_path = self.create_file_path(
-                    account_id, term_sis_id, course_sis_id, 'Missing syllabus')
-
-                with default_storage.open(notfound_path, mode='w') as f:
-                    f.write('A syllabus file could not be identified for '
-                            'this course.')
+                logger.info(f"Syllabus not found in {course_sis_id}")

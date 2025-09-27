@@ -83,9 +83,8 @@ class EnrollmentHeader(CSVFormat):
 
 class UserHeader(CSVFormat):
     def __init__(self):
-        self.data = ['user_id', 'integration_id', 'login_id', 'password',
-                     'first_name', 'last_name', 'full_name', 'sortable_name',
-                     'short_name', 'email', 'status']
+        self.data = ['user_id', 'integration_id', 'login_id', 'full_name',
+                     'sortable_name', 'short_name', 'email', 'status']
 
 
 class XlistHeader(CSVFormat):
@@ -225,8 +224,8 @@ class EnrollmentCSV(CSVFormat):
 
 class UserCSV(CSVFormat):
     """
-    user_id, integration_id, login_id, password, first_name, last_name,
-    full_name, sortable_name, short_name, email, status (active|deleted)
+    user_id, integration_id, login_id, full_name, sortable_name, short_name,
+    email, status (active|deleted)
     """
     def __init__(self, user, status='active'):
         self.key = user_sis_id(user)
@@ -247,7 +246,7 @@ class UserCSV(CSVFormat):
             self.key,
             user_integration_id(user),
             user.uwnetid if hasattr(user, 'uwnetid') else user.login_id,
-            None, None, None, full_name, sortable_name, full_name,
+            full_name, sortable_name, full_name,
             user_email(user),
             status]
 
