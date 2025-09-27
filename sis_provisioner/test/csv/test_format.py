@@ -40,8 +40,8 @@ class CSVHeaderTest(TestCase):
                 'status,associated_user_id\n'))
         self.assertEqual(
             str(UserHeader()), (
-                'user_id,integration_id,login_id,password,first_name,'
-                'last_name,full_name,sortable_name,short_name,email,status\n'))
+                'user_id,integration_id,login_id,full_name,sortable_name,'
+                'short_name,email,status\n'))
         self.assertEqual(
             str(XlistHeader()), 'xlist_course_id,section_id,status\n')
 
@@ -241,34 +241,34 @@ class UserCSVTest(TestCase):
         user = PWS().get_person_by_netid('javerage')
         self.assertEqual(
             str(UserCSV(user, 'active')), (
-                '9136CCB8F66711D5BE060004AC494FFE,1033334,javerage,,,,'
+                '9136CCB8F66711D5BE060004AC494FFE,1033334,javerage,'
                 'Jamesy McJamesy,"McJamesy, Jamesy",Jamesy McJamesy,'
                 'javerage@uw.edu,active\n'))
 
         user = PWS().get_person_by_netid('jbothell')
         self.assertEqual(
             str(UserCSV(user, 'active')), (
-                'FE36CCB8F66711D5BE060004AC494FCD,1233334,javerage,,,,'
+                'FE36CCB8F66711D5BE060004AC494FCD,1233334,javerage,'
                 'JAMES BOTHELL STUDENT,"STUDENT, JAMES BOTHELL",'
                 'JAMES BOTHELL STUDENT,javerage@uw.edu,active\n'))
 
         user = PWS().get_person_by_netid('bill')
         self.assertEqual(
             str(UserCSV(user, 'active')), (
-                'FBB38FE46A7C11D5A4AE0004AC494FFE,0111111,bill,,,,'
+                'FBB38FE46A7C11D5A4AE0004AC494FFE,0111111,bill,'
                 'Bill Average Teacher,"Teacher, Bill Average",'
                 'Bill Average Teacher,bill@uw.edu,active\n'))
 
         user.first_name = None  # Remove first name
         self.assertEqual(
             str(UserCSV(user, 'active')), (
-                'FBB38FE46A7C11D5A4AE0004AC494FFE,0111111,bill,,,,'
+                'FBB38FE46A7C11D5A4AE0004AC494FFE,0111111,bill,'
                 'Teacher,Teacher,Teacher,bill@uw.edu,active\n'))
 
         user = PWS().get_entity_by_netid('somalt')
         self.assertEqual(
             str(UserCSV(user, 'active')), (
-                '605764A811A847E690F107D763A4B32A,,somalt,,,,'
+                '605764A811A847E690F107D763A4B32A,,somalt,'
                 'SOM ACADEMIC LRNG TECHNOLOGY,SOM ACADEMIC LRNG TECHNOLOGY,'
                 'SOM ACADEMIC LRNG TECHNOLOGY,somalt@uw.edu,active\n'))
 
