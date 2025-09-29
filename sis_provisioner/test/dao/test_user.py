@@ -133,8 +133,9 @@ class UserPolicyTest(TestCase):
         # non-personal netid
         user = PWS().get_entity_by_netid('somalt')
         name = user_fullname(user)
-        self.assertEqual(len(name), 1)
+        self.assertEqual(len(name), 2)
         self.assertEqual(name[0], user.display_name)
+        self.assertIsNone(name[1])
 
         user = InvalidPerson()
         self.assertRaises(UserPolicyException, user_fullname, user)
