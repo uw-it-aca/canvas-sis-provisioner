@@ -406,6 +406,7 @@ def sis_import_by_path(csv_path, override_sis_stickiness=False):
     params = {}
     if override_sis_stickiness:
         params['override_sis_stickiness'] = '1'
+        params['clear_sis_stickiness'] = '1'
 
     return SISImport().import_archive(archive, params=params)
 

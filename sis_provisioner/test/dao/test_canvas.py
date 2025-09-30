@@ -238,7 +238,8 @@ class CanvasSISImportsTest(TestCase):
 
         r = sis_import_by_path('abc', override_sis_stickiness=True)
         mock_method.assert_called_with(
-            ANY, params={'override_sis_stickiness': '1'})
+            ANY, params={
+                'override_sis_stickiness': '1', 'clear_sis_stickiness': '1'})
 
     @mock.patch('sis_provisioner.dao.canvas.SISImportModel')
     @mock.patch.object(SISImport, 'get_import_status')
