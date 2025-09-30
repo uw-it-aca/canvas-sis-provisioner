@@ -121,9 +121,9 @@ def user_fullname(user):
         return user.get_first_last_name()
     except AttributeError:
         if hasattr(user, 'display_name'):
-            return (user.display_name,)  # UW Entity
+            return user.display_name, None  # UW Entity
         elif hasattr(user, 'sis_user_id'):
-            return (user.email.split('@')[0],)  # CanvasUser
+            return user.email.split('@')[0], None  # CanvasUser
         else:
             raise UserPolicyException('Invalid user')
 

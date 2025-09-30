@@ -83,9 +83,8 @@ class EnrollmentHeader(CSVFormat):
 
 class UserHeader(CSVFormat):
     def __init__(self):
-        self.data = ['user_id', 'integration_id', 'login_id', 'password',
-                     'first_name', 'last_name', 'full_name', 'sortable_name',
-                     'short_name', 'email', 'status']
+        self.data = ['user_id', 'integration_id', 'login_id', 'full_name',
+                     'sortable_name', 'short_name', 'email', 'status']
 
 
 class XlistHeader(CSVFormat):
@@ -225,29 +224,24 @@ class EnrollmentCSV(CSVFormat):
 
 class UserCSV(CSVFormat):
     """
-    user_id, integration_id, login_id, password, first_name, last_name,
-    full_name, sortable_name, short_name, email, status (active|deleted)
+    user_id, integration_id, login_id, full_name, sortable_name, short_name,
+    email, status (active|deleted)
     """
     def __init__(self, user, status='active'):
         self.key = user_sis_id(user)
-        name = user_fullname(user)
-        if len(name) == 2:
-            if (name[0] is not None and len(name[0]) and
-                    name[1] is not None and len(name[1])):
-                full_name = f'{name[0]} {name[1]}'
-                sortable_name = f'{name[1]}, {name[0]}'
-            else:
-                full_name = name[0] or name[1]
-                sortable_name = name[0] or name[1]
+        firstname, lastname = user_fullname(user)
+        if firstname and lastname:
+            full_name = f'{firstname} {lastname}'
+            sortable_name = f'{lastname}, {firstname}'
         else:
-            full_name = name[0]
-            sortable_name = name[0]
+            full_name = firstname or lastname
+            sortable_name = firstname or lastname
 
         self.data = [
             self.key,
             user_integration_id(user),
             user.uwnetid if hasattr(user, 'uwnetid') else user.login_id,
-            None, None, None, full_name, sortable_name, full_name,
+            full_name, sortable_name, full_name,
             user_email(user),
             status]
 
