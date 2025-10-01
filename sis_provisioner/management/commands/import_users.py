@@ -28,6 +28,8 @@ class Command(SISProvisionerCommand):
         priority = options.get('priority')
         try:
             imp = User.objects.queue_by_priority(priority)
+            imp.override_sis_stickiness = True
+            imp.save()
         except EmptyQueueException:
             self.update_job()
             return
