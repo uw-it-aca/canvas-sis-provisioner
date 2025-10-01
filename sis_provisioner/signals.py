@@ -55,10 +55,8 @@ def priority_user_import(sender, **kwargs):
 
             if imp.csv_path:
                 sis_import = imp.import_csv()
-
-                if imp.priority == user.PRIORITY_IMMEDIATE:
-                    logger.info(f'SIS Import URL: {sis_import.post_url}, '
-                                f'Headers: {sis_import.post_headers}')
+                logger.info(f'SIS Import URL: {sis_import.post_url}, '
+                            f'Headers: {sis_import.post_headers}')
             else:
                 user.queue_id = None
                 user.priority = user.PRIORITY_HIGH
