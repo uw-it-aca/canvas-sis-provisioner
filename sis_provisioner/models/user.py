@@ -37,8 +37,9 @@ class UserManager(models.Manager):
         if not len(pks):
             raise EmptyQueueException()
 
-        imp = Import(csv_type='user', priority=priority)
-        imp.override_sis_stickiness = True
+        imp = Import(csv_type='user',
+                     priority=priority,
+                     override_sis_stickiness=True)
         imp.save()
 
         super().get_queryset().filter(
@@ -57,8 +58,9 @@ class UserManager(models.Manager):
 
             if sis_import.priority == User.PRIORITY_IMMEDIATE:
                 log_data = sis_import.json_data()
-                log_data['uwnetids'] = self.queued(sis_import.pk).values_list(
+                netids = self.queued(sis_import.pk).values_list(
                     'net_id', flat=True)
+                log_data['uwnetids'] = list(netids)
                 logger.info(f'Users imported: {json.dumps(log_data)}')
 
         self.queued(sis_import.pk).update(**kwargs)
