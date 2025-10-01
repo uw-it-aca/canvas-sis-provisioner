@@ -131,6 +131,7 @@ class Import(models.Model):
             "canvas_progress": self.canvas_progress,
             "canvas_warnings": self.canvas_warnings,
             "canvas_errors": self.canvas_errors,
+            "canvas_id": self.canvas_id,
         }
 
     def import_csv(self):
@@ -152,6 +153,8 @@ class Import(models.Model):
             self.canvas_errors = ex
 
         self.save()
+
+        return sis_import
 
     def update_import_status(self):
         """
