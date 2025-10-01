@@ -9,8 +9,6 @@ from sis_provisioner.exceptions import (
 from sis_provisioner.builders.users import UserBuilder
 from logging import getLogger
 import traceback
-import django
-import os
 
 logger = getLogger(__name__)
 
@@ -53,7 +51,3 @@ class Command(SISProvisionerCommand):
                 imp.delete()
 
         self.update_job()
-
-    def health_check(self):
-        os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'project.settings')
-        django.setup()

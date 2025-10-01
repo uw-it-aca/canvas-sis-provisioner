@@ -12,8 +12,7 @@ from sis_provisioner.models.user import User
 from sis_provisioner.builders.users import UserBuilder
 import traceback
 
-
-log = getLogger(__name__)
+logger = getLogger(__name__)
 
 
 @receiver(post_save, sender=Course)
@@ -28,7 +27,7 @@ def priority_course_import(sender, **kwargs):
                                              queue_id__isnull=True)
             grouplist.update(priority=course.PRIORITY_IMMEDIATE)
         except Exception as err:
-            log.error('Immediate course provision fail: {}'.format(err))
+            logger.error(f'Immediate course provision failed: {err}')
 
         post_save.connect(priority_course_import, sender=Course)
 
@@ -40,7 +39,9 @@ def priority_user_import(sender, **kwargs):
         post_save.disconnect(priority_user_import, sender=User)
 
         try:
-            imp = Import(priority=user.priority, csv_type='user')
+            imp = Import(csv_type='user',
+                         priority=user.priority,
+                         override_sis_stickiness=True)
             imp.save()
 
             user.priority = user.PRIORITY_DEFAULT
@@ -53,7 +54,11 @@ def priority_user_import(sender, **kwargs):
                 imp.csv_errors = traceback.format_exc()
 
             if imp.csv_path:
-                imp.import_csv()
+                sis_import = imp.import_csv()
+
+                if imp.priority == user.PRIORITY_IMMEDIATE:
+                    logger.info(f'SIS Import URL: {sis_import.post_url}, '
+                                f'Headers: {sis_import.post_headers}')
             else:
                 user.queue_id = None
                 user.priority = user.PRIORITY_HIGH
@@ -61,7 +66,7 @@ def priority_user_import(sender, **kwargs):
                 imp.delete()
 
         except Exception as err:
-            log.error('Immediate user provision failed: {}'.format(err))
+            logger.error(f'Immediate user provision failed: {err}')
             user.priority = user.PRIORITY_HIGH
             user.save()
 
