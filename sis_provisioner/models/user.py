@@ -57,8 +57,9 @@ class UserManager(models.Manager):
 
             if sis_import.priority == User.PRIORITY_IMMEDIATE:
                 log_data = sis_import.json_data()
-                log_data['uwnetids'] = self.queued(sis_import.pk).values_list(
+                netids = self.queued(sis_import.pk).values_list(
                     'net_id', flat=True)
+                log_data['uwnetids'] = list(netids)
                 logger.info(f'Users imported: {json.dumps(log_data)}')
 
         self.queued(sis_import.pk).update(**kwargs)
