@@ -97,7 +97,7 @@ class Import(models.Model):
     priority = models.SmallIntegerField(
         default=ImportResource.PRIORITY_DEFAULT,
         choices=ImportResource.PRIORITY_CHOICES)
-    override_sis_stickiness = models.BooleanField(null=True)
+    override_sis_stickiness = models.BooleanField(default=False)
     post_status = models.SmallIntegerField(null=True)
     monitor_date = models.DateTimeField(null=True)
     monitor_status = models.SmallIntegerField(null=True)
