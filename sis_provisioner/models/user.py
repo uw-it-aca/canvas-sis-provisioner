@@ -37,9 +37,7 @@ class UserManager(models.Manager):
         if not len(pks):
             raise EmptyQueueException()
 
-        imp = Import(csv_type='user',
-                     priority=priority,
-                     override_sis_stickiness=True)
+        imp = Import(csv_type='user', priority=priority)
         imp.save()
 
         super().get_queryset().filter(
