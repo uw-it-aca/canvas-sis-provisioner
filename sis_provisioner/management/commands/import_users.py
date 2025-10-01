@@ -9,6 +9,8 @@ from sis_provisioner.exceptions import (
 from sis_provisioner.builders.users import UserBuilder
 from logging import getLogger
 import traceback
+import django
+import os
 
 logger = getLogger(__name__)
 
@@ -28,8 +30,6 @@ class Command(SISProvisionerCommand):
         priority = options.get('priority')
         try:
             imp = User.objects.queue_by_priority(priority)
-            imp.override_sis_stickiness = True
-            imp.save()
         except EmptyQueueException:
             self.update_job()
             return
@@ -53,3 +53,7 @@ class Command(SISProvisionerCommand):
                 imp.delete()
 
         self.update_job()
+
+    def health_check(self):
+        os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'project.settings')
+        django.setup()
