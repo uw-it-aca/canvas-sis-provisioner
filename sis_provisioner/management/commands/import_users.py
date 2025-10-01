@@ -7,7 +7,10 @@ from sis_provisioner.models.user import User
 from sis_provisioner.exceptions import (
     EmptyQueueException, MissingImportPathException)
 from sis_provisioner.builders.users import UserBuilder
+from logging import getLogger
 import traceback
+
+logger = getLogger(__name__)
 
 
 class Command(SISProvisionerCommand):
@@ -37,7 +40,12 @@ class Command(SISProvisionerCommand):
         imp.save()
 
         try:
-            imp.import_csv()
+            sis_import = imp.import_csv()
+
+            if imp.priority == User.PRIORITY_IMMEDIATE:
+                logger.info(f'SIS Import URL: {sis_import.post_url}, '
+                            f'Headers: {sis_import.post_headers}')
+
         except MissingImportPathException as ex:
             if not imp.csv_errors:
                 imp.delete()

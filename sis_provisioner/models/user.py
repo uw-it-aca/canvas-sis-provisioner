@@ -13,6 +13,7 @@ from sis_provisioner.models import Import, ImportResource
 from sis_provisioner.exceptions import (
     MissingLoginIdException, EmptyQueueException)
 from logging import getLogger
+import json
 
 logger = getLogger(__name__)
 
@@ -53,6 +54,12 @@ class UserManager(models.Manager):
         if sis_import.is_imported():
             kwargs['provisioned_date'] = sis_import.monitor_date
             kwargs['priority'] = User.PRIORITY_DEFAULT
+
+            if sis_import.priority == User.PRIORITY_IMMEDIATE:
+                log_data = sis_import.json_data()
+                log_data['uwnetids'] = self.queued(sis_import.pk).values_list(
+                    'net_id', flat=True)
+                logger.info(f'Users imported: {json.dumps(log_data)}')
 
         self.queued(sis_import.pk).update(**kwargs)
 
