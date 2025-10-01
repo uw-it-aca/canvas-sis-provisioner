@@ -29,7 +29,7 @@ class ImportModelTest(TestCase):
         imp = Import(
             post_status=200, canvas_progress=100,
             canvas_state="imported_with_messages",
-            canvas_warnings="[["users.csv", "oops"]]")
+            canvas_warnings='[["users.csv", "oops"]]')
         self.assertEqual(imp.is_cleanly_imported(), False)
 
         imp = Import(
