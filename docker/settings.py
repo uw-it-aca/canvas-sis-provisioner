@@ -189,7 +189,8 @@ ASTRA_ROLE_MAPPING = {
     "NoodleStdScsCoach": "Noodle Student Success Coach",
     "NoodleSupportDesk": "Noodle Support Desk",
     "NoodleAPISvcAccount": "Noodle API Service Account",
-    "NoodleLCMSAPI": "Noodle LCMS API"
+    "NoodleLCMSAPI": "Noodle LCMS API",
+    "UWBookstoreBuyer": "UW Bookstore Buyer"
 }
 
 CANVAS_MASQUERADE_ROLE = "Become users only (dept. admin)"
