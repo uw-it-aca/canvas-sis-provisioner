@@ -214,6 +214,10 @@ ANCILLARY_CANVAS_ROLES = {
         "account": "root",
         "canvas_role": CANVAS_MASQUERADE_ROLE
     },
+    "EduSourcedServiceAccount": {
+        "account": "root",
+        "canvas_role": CANVAS_MASQUERADE_ROLE
+    },
 }
 
 DISALLOWED_UW_GROUPS = [
