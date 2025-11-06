@@ -189,7 +189,8 @@ ASTRA_ROLE_MAPPING = {
     "NoodleStdScsCoach": "Noodle Student Success Coach",
     "NoodleSupportDesk": "Noodle Support Desk",
     "NoodleAPISvcAccount": "Noodle API Service Account",
-    "NoodleLCMSAPI": "Noodle LCMS API"
+    "NoodleLCMSAPI": "Noodle LCMS API",
+    "UWBookstoreBuyer": "UW Bookstore Buyer"
 }
 
 CANVAS_MASQUERADE_ROLE = "Become users only (dept. admin)"
@@ -211,6 +212,10 @@ ANCILLARY_CANVAS_ROLES = {
         "canvas_role": CANVAS_MASQUERADE_ROLE
     },
     "NoodleSupportDesk": {
+        "account": "root",
+        "canvas_role": CANVAS_MASQUERADE_ROLE
+    },
+    "EduSourcedServiceAccount": {
         "account": "root",
         "canvas_role": CANVAS_MASQUERADE_ROLE
     },
@@ -275,6 +280,7 @@ ASTRA_ADMIN_EXCEPTIONS = [
     'a_atomic_canvas_int',
     'a_cidiscp_canvas_int',
     'a_cnvshosted_snowflk',
+    'a_edusourced_canvas',
 ]
 
 LMS_OWNERSHIP_SUBACCOUNT = {
