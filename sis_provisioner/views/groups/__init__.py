@@ -25,7 +25,7 @@ class GroupsLaunchView(BLTILaunchView):
     authorized_role = 'admin'
 
     def get_context_data(self, **kwargs):
-        if self.blti.course_sis_id is not None:
+        if self.blti.course_sis_id:
             course_sis_id = self.blti.course_sis_id
         else:
             course_sis_id = adhoc_course_sis_id(self.blti.canvas_course_id)
