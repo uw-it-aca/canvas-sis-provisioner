@@ -29,3 +29,6 @@ class SetMemberTest(TestCase):
 
         self.assertTrue(hash(member1) == hash(member2))
         self.assertFalse(hash(member1) == hash(member3))
+
+        self.assertRaises(AttributeError, SetMember, None, 'StudentEnrollment')
+        self.assertRaises(AttributeError, SetMember, 'javerage', None)
