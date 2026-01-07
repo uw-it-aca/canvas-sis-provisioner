@@ -136,7 +136,12 @@ class GroupBuilder(Builder):
 
             except CoursePolicyException:
                 if enr.sis_section_id == group_section_id:
-                    group_enrollments.add(SetMember(enr.login_id, enr.role))
+                    try:
+                        group_enrollments.add(SetMember(enr.login_id, enr.role))  # noqa
+                    except AttributeError as err:
+                        self.logger.info(
+                            "Skip Canvas group member {}, sis_id: {} ({})".format(  # noqa
+                                enr.user_id, enr.sis_user_id, err))
 
         return (sis_enrollments, group_enrollments)
 
