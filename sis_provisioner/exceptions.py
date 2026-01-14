@@ -15,6 +15,10 @@ class MissingLoginIdException(UserPolicyException):
     pass
 
 
+class MissingStudentNumberException(UserPolicyException):
+    pass
+
+
 class TemporaryNetidException(UserPolicyException):
     pass
 

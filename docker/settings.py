@@ -221,12 +221,13 @@ ANCILLARY_CANVAS_ROLES = {
     },
 }
 
+STUDENT_AFFILIATION_GROUP = 'uw_student'
 DISALLOWED_UW_GROUPS = [
+    STUDENT_AFFILIATION_GROUP,
     'uw_affiliation_',
     'uw_employee',
     'uw_faculty',
     'uw_staff',
-    'uw_student',
     'uw_affiliate',
     'uw_member'
 ]

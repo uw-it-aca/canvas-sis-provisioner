@@ -11,7 +11,8 @@ from sis_provisioner.dao.group import get_sis_import_members
 from sis_provisioner.dao.canvas import get_active_sis_enrollments_for_user
 from sis_provisioner.models import Import, ImportResource
 from sis_provisioner.exceptions import (
-    MissingLoginIdException, EmptyQueueException)
+    MissingLoginIdException, MissingStudentNumberException, EmptyQueueException
+)
 from logging import getLogger
 import json
 
@@ -73,10 +74,16 @@ class UserManager(models.Manager):
             if (member.name not in existing_netids or
                     existing_netids[member.name] == User.PRIORITY_NONE):
                 try:
-                    user = self.add_user_by_netid(member.name)
+                    person = get_person_by_netid(member.name)
+
+                    if member.is_student and person.student_number is None:
+                        raise MissingStudentNumberException(
+                            'Missing student number')
+
+                    user = self.add_user(person, priority=User.PRIORITY_HIGH)
                     existing_netids[member.name] = user.priority
                 except Exception as err:
-                    logger.info('User: SKIP {}, {}'.format(member.name, err))
+                    logger.info(f'User: SKIP {member.name}, {err}')
 
     def _find_existing(self, net_id, reg_id):
         if net_id is None:
