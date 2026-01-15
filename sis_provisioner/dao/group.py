@@ -76,7 +76,7 @@ def get_sis_import_members():
                 try:
                     valid_net_id(member.name)
 
-                    # Add an attribute indicating hwhther the member
+                    # Add an attribute indicating whether the member
                     # is a student
                     existing = valid_members.get(member.name)
                     if not (existing and existing.is_student):
