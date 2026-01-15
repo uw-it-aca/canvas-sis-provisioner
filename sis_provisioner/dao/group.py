@@ -68,26 +68,23 @@ def search_groups(act_as, **kwargs):
 def get_sis_import_members():
     gws = GWS()
     valid_members = {}
-
-    def _add_member(user, is_student=False):
-        try:
-            valid_net_id(user.name)
-        except UserPolicyException:
-            return
-
-        existing_user = valid_members.get(user.name)
-        if not (existing_user and existing_user.is_student):
-            setattr(user, 'is_student', is_student)
-            valid_members[user.name] = user
-
     student_group_id = getattr(settings, 'STUDENT_AFFILIATION_GROUP')
-    for member in gws.get_members(getattr(settings, 'SIS_IMPORT_USERS')):
-        if member.is_group():
-            is_student = member.name == student_group_id
-            for user in gws.get_members(member.name):
-                _add_member(user, is_student)
-        elif member.is_uwnetid():
-            _add_member(member)
+
+    for group_id in getattr(settings, 'SIS_IMPORT_GROUPS', []):
+        is_student = group_id == student_group_id
+        for member in gws.get_members(group_id):
+            if member.is_uwnetid():
+                try:
+                    valid_net_id(member.name)
+
+                    # Add an attribute indicating hwhther the member
+                    # is a student
+                    existing = valid_members.get(member.name)
+                    if not (existing and existing.is_student):
+                        setattr(member, 'is_student', is_student)
+                        valid_members[member.name] = member
+                except UserPolicyException:
+                    continue
 
     return list(valid_members.values())
 

@@ -83,26 +83,29 @@ class GroupModifiedTest(TestCase):
 @fdao_gws_override
 @fdao_pws_override
 class SISImportMembersTest(TestCase):
-    @override_settings(
-        SIS_IMPORT_USERS='u_acadev_unittest')
+    @override_settings(SIS_IMPORT_GROUPS=['u_acadev_unittest'])
     def test_sis_import_members(self):
         members = get_sis_import_members()
         self.assertEqual(len(members), 2)
-        self.assertFalse(members[0].is_student, False)
-        self.assertFalse(members[1].is_student, False)
+        self.assertFalse(members[0].is_student)
+        self.assertFalse(members[1].is_student)
 
-    @override_settings(
-        SIS_IMPORT_USERS='u_acadev_unittest',
-        STUDENT_AFFILIATION_GROUP='u_acadev_unittest')
-    def test_sis_import_members(self):
+    @override_settings(SIS_IMPORT_GROUPS=['u_acadev_unittest'],
+                       STUDENT_AFFILIATION_GROUP='u_acadev_unittest')
+    def test_sis_import_members_students(self):
         members = get_sis_import_members()
         self.assertEqual(len(members), 2)
-        self.assertFalse(members[0].is_student, True)
-        self.assertFalse(members[1].is_student, True)
+        self.assertTrue(members[0].is_student)
+        self.assertTrue(members[1].is_student)
 
-    @override_settings(SIS_IMPORT_USERS='u_does_not_exist')
-    def test_sis_import_members_none(self):
+    @override_settings(SIS_IMPORT_GROUPS=['u_does_not_exist'])
+    def test_sis_import_members_error(self):
         self.assertRaises(DataFailureException, get_sis_import_members)
+
+    @override_settings(SIS_IMPORT_GROUPS=[])
+    def test_sis_import_members_none(self):
+        members = get_sis_import_members()
+        self.assertEqual(len(members), 0)
 
 
 @fdao_gws_override
