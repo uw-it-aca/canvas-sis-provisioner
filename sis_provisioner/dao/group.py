@@ -5,11 +5,10 @@
 from django.conf import settings
 from uw_gws import GWS
 from uw_gws.exceptions import InvalidGroupID
-from restclients_core.exceptions import DataFailureException
 from sis_provisioner.dao.user import valid_net_id
 from sis_provisioner.exceptions import (
     UserPolicyException, GroupPolicyException, GroupNotFoundException,
-    GroupUnauthorizedException)
+    GroupUnauthorizedException, DataFailureException)
 from datetime import timezone
 from logging import getLogger
 import re

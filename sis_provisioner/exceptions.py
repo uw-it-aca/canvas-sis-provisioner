@@ -2,9 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-"""
-Contains the custom exceptions used by sis_provisioner.
-"""
+from restclients_core.exceptions import DataFailureException
 
 
 class UserPolicyException(Exception):

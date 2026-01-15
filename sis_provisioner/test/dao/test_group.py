@@ -3,10 +3,9 @@
 
 
 from django.test import TestCase, override_settings
-from restclients_core.exceptions import DataFailureException
 from sis_provisioner.dao.group import *
 from sis_provisioner.exceptions import (
-    GroupPolicyException, GroupNotFoundException)
+    GroupPolicyException, GroupNotFoundException, DataFailureException)
 from datetime import datetime, timedelta
 from uw_gws.utilities import fdao_gws_override
 from uw_gws.models import GroupEntity
