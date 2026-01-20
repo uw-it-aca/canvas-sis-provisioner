@@ -5,11 +5,10 @@
 from django.conf import settings
 from uw_gws import GWS
 from uw_gws.exceptions import InvalidGroupID
-from restclients_core.exceptions import DataFailureException
 from sis_provisioner.dao.user import valid_net_id
 from sis_provisioner.exceptions import (
     UserPolicyException, GroupPolicyException, GroupNotFoundException,
-    GroupUnauthorizedException)
+    GroupUnauthorizedException, DataFailureException)
 from datetime import timezone
 from logging import getLogger
 import re
@@ -66,15 +65,25 @@ def search_groups(act_as, **kwargs):
 
 
 def get_sis_import_members():
+    gws = GWS()
     valid_members = {}
-    group_id = getattr(settings, 'SIS_IMPORT_USERS')
-    for member in GWS().get_effective_members(group_id):
-        try:
+    student_group_id = getattr(settings, 'STUDENT_AFFILIATION_GROUP')
+
+    for group_id in getattr(settings, 'SIS_IMPORT_GROUPS', []):
+        is_student = group_id == student_group_id
+        for member in gws.get_members(group_id):
             if member.is_uwnetid():
-                valid_net_id(member.name)
-                valid_members[member.name] = member
-        except UserPolicyException:
-            pass
+                try:
+                    valid_net_id(member.name)
+
+                    # Add an attribute indicating whether the member
+                    # is a student
+                    existing = valid_members.get(member.name)
+                    if not (existing and existing.is_student):
+                        setattr(member, 'is_student', is_student)
+                        valid_members[member.name] = member
+                except UserPolicyException:
+                    continue
 
     return list(valid_members.values())
 
