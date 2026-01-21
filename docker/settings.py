@@ -221,12 +221,13 @@ ANCILLARY_CANVAS_ROLES = {
     },
 }
 
+STUDENT_AFFILIATION_GROUP = 'uw_student'
 DISALLOWED_UW_GROUPS = [
+    STUDENT_AFFILIATION_GROUP,
     'uw_affiliation_',
     'uw_employee',
     'uw_faculty',
     'uw_staff',
-    'uw_student',
     'uw_affiliate',
     'uw_member'
 ]
@@ -246,7 +247,12 @@ CONTINUUM_CANVAS_ACCOUNT_ID = os.getenv('CONTINUUM_ACCOUNT_ID', '')
 PERMISSIONS_CHECK_ACCOUNTS = [RESTCLIENTS_CANVAS_ACCOUNT_ID, CONTINUUM_CANVAS_ACCOUNT_ID]
 
 SIS_IMPORT_ROOT_ACCOUNT_ID = 'uwcourse'
-SIS_IMPORT_USERS = 'u_acadev_canvas_sis-import-users'
+SIS_IMPORT_GROUPS = [
+    'uw_staff',
+    'uw_faculty',
+    'u_subman_s-canvas-sponsored',
+    STUDENT_AFFILIATION_GROUP,
+]
 SIS_IMPORT_LIMIT = {
     'course': {
         'default': 300
