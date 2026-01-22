@@ -13,6 +13,7 @@ from sis_provisioner.models import Import, ImportResource
 from sis_provisioner.exceptions import (
     MissingLoginIdException,
     MissingStudentNumberException,
+    UserPolicyException,
     EmptyQueueException,
     DataFailureException,
 )
@@ -86,8 +87,7 @@ class UserManager(models.Manager):
                     user = self.add_user(person, priority=User.PRIORITY_HIGH)
                     existing_netids[member.name] = user.priority
 
-                except (DataFailureException,
-                        MissingStudentNumberException) as err:
+                except (DataFailureException, UserPolicyException) as err:
                     logger.info(f'User: SKIP {member.name}, {err}')
 
     def _find_existing(self, net_id, reg_id):
