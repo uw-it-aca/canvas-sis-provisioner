@@ -80,7 +80,7 @@ class UserManager(models.Manager):
                 try:
                     person = get_person_by_netid(member.name)
 
-                    if member.is_student and person.student_number is None:
+                    if member.is_student and not person.student_number:
                         raise MissingStudentNumberException(
                             'Missing student number')
 
