@@ -23,6 +23,7 @@ from restclients_core.exceptions import DataFailureException
 from sis_provisioner.dao.course import (
     valid_academic_course_sis_id, valid_academic_section_sis_id,
     adhoc_course_sis_id, group_section_sis_id)
+from sis_provisioner.dao.user import user_sis_id, user_integration_id
 from sis_provisioner.exceptions import CoursePolicyException
 from urllib3.exceptions import SSLError
 from logging import getLogger
@@ -179,16 +180,17 @@ def merge_all_users_for_person(person):
         if login.unique_id == person.uwnetid:  # Current login_id/uwnetid
             current_login = login
         else:
-            # Update sis_id and delete the login
-            login.sis_user_id = 'x{}'.format(login.sis_user_id)
+            # Remove sis_id and integration_id, and delete the login
+            login.sis_user_id = ''
+            login.integration_id = ''
             canvas.update_user_login(login)
             canvas.delete_user_login(login)
-            logger.info('Deleted login {}, with sis_id {}'.format(
-                login.unique_id, login.sis_user_id))
+            logger.info(f'Deleted login {login.unique_id}')
 
     if current_login.sis_user_id != person.uwregid:
-        # Update the login.sis_id to the current uwregid
-        current_login.sis_user_id = person.uwregid
+        # Update the login with current attributes
+        current_login.sis_user_id = user_sis_id(person)
+        current_login.integration_id = user_integration_id(person)
         canvas.update_user_login(current_login)
         logger.info('Updated login {} to sis_id {}'.format(
             current_login.unique_id, current_login.sis_user_id))
