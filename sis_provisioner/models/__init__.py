@@ -142,6 +142,7 @@ class Import(models.Model):
         if not self.csv_path:
             raise MissingImportPathException()
 
+        sis_import = None
         try:
             sis_import = sis_import_by_path(self.csv_path,
                                             self.override_sis_stickiness)
