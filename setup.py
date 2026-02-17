@@ -35,7 +35,7 @@ setup(
         'django-storages[google]',
         'uw-memcached-clients~=1.0',
         'uw-restclients-core~=1.4',
-        'uw-restclients-sws>=2.4',
+        'uw-restclients-sws~=2.5',
         'uw-restclients-pws~=2.1',
         'uw-restclients-gws~=2.3',
         'uw-restclients-kws~=1.1',
