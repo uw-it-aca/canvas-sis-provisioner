@@ -35,7 +35,7 @@ setup(
         'django-storages[google]',
         'uw-memcached-clients~=1.0',
         'uw-restclients-core~=1.4',
-        'uw-restclients-sws>=2.4',
+        'uw-restclients-sws~=2.5',
         'uw-restclients-pws~=2.1',
         'uw-restclients-gws~=2.3',
         'uw-restclients-kws~=1.1',
@@ -49,7 +49,7 @@ setup(
     description='An application that manages SIS imports to Canvas',
     long_description=README,
     url='https://github.com/uw-it-aca/canvas-sis-provisioner',
-    author="UW-IT Student & Educational Technology Services",
+    author="UWIT Student & Educational Technology Services",
     author_email="aca-it@uw.edu",
     classifiers=[
         'Environment :: Web Environment',
