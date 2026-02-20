@@ -215,7 +215,7 @@ def get_new_sections_by_term(changed_since_date, term, existing={}):
 
 def get_registrations_by_section(section):
     registrations = get_all_registrations_by_section(
-        section, transcriptable_course='all')
+        section, transcriptable_course='all', use_pws_person=True)
 
     # Sort by regid, is_active, duplicate code
     registrations.sort(key=lambda r: (

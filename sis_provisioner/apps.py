@@ -3,6 +3,8 @@
 
 
 from django.apps import AppConfig
+from restclients_core.dao import MockDAO
+import os
 
 
 class SISProvisionerConfig(AppConfig):
@@ -10,3 +12,6 @@ class SISProvisionerConfig(AppConfig):
 
     def ready(self):
         import sis_provisioner.signals
+
+        mocks = os.path.join(os.path.dirname(__file__), 'resources')
+        MockDAO.register_mock_path(mocks)
