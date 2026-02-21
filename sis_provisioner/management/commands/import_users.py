@@ -42,7 +42,8 @@ class Command(SISProvisionerCommand):
         try:
             sis_import = imp.import_csv()
 
-            if imp.priority == User.PRIORITY_IMMEDIATE:
+            if (sis_import is not None and
+                    imp.priority == User.PRIORITY_IMMEDIATE):
                 logger.info(f'SIS Import URL: {sis_import.post_url}, '
                             f'Headers: {sis_import.post_headers}')
 

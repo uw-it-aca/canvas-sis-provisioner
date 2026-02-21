@@ -6,14 +6,13 @@ from django.core.management.base import BaseCommand
 from django.conf import settings
 from uw_canvas.users import Users
 from dateutil.parser import parse
-from datetime import timedelta
-from pytz import timezone
+from datetime import timedelta, timezone
+from zoneinfo import ZoneInfo
 import argparse
 import csv
 import os
 
-UTC = timezone('UTC')
-PST = timezone('US/Pacific')
+LOCAL_TZ = ZoneInfo('America/Los_Angeles')
 
 
 class Command(BaseCommand):
@@ -48,7 +47,8 @@ class Command(BaseCommand):
             login, start_time=start_time, end_time=end_time)
 
         for pv in page_views:
-            dt = parse(pv['created_at']).replace(tzinfo=UTC).astimezone(PST)
+            dt = parse(pv['created_at']).replace(
+                tzinfo=timezone.utc).astimezone(LOCAL_TZ)
             participated = 'yes' if pv['participated'] else ''
             contributed = 'yes' if pv['contributed'] else ''
             writer.writerow([
