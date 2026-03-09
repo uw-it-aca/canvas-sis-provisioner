@@ -51,7 +51,7 @@ class CourseModelTest(TestCase):
 
         # Add archived course to queue
         course.queue_id = None
-        course.archived_date = datetime.now()
+        course.archived_date = datetime.now(timezone.utc)
         course.save()
         self.assertRaises(CoursePolicyException,
                           Course.objects.add_to_queue, section, queue_id=2)

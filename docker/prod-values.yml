@@ -185,7 +185,7 @@ cronjob:
           cpu: 25m
           memory: 64Mi
     - name: import-courses-current
-      schedule: "5,20,35,50 13-23 * * 1-6"
+      schedule: "5,17,29,41,53 13-23 * * 1-6"
       command: ["/scripts/management_command.sh"]
       args: ["import_courses", "1", "current"]
       resources:
@@ -196,7 +196,7 @@ cronjob:
           cpu: 25m
           memory: 128Mi
     - name: import-courses-next
-      schedule: "10,25,40,55 13-23 * * 1-6"
+      schedule: "1,13,25,37,49 13-23 * * 1-6"
       command: ["/scripts/management_command.sh"]
       args: ["import_courses", "1", "next"]
       resources:
@@ -417,6 +417,8 @@ environmentVariables:
     value: PROD
   - name: SWS_TIMEOUT
     value: "10"
+  - name: SWS_THREAD_POOL_SIZE
+    value: "30"
 
   - name: GWS_ENV
     value: PROD
