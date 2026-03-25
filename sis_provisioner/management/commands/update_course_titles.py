@@ -13,7 +13,6 @@ import csv
 import os
 
 logger = getLogger(__name__)
-course_client = Courses()
 pretext = "ARCHIVED: "
 
 
@@ -22,11 +21,6 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument("term_sis_id", help="Term SIS ID")
-
-    def update_course_title(self, course_id, name, course_code):
-        url = COURSES_API.format(course_id)
-        body = {"course": {"name": name, "course_code": course_code}}
-        return course_client._put_resource(url, body)
 
     def handle(self, *args, **options):
         term_sis_id = options.get("term_sis_id")
@@ -59,14 +53,21 @@ class Command(BaseCommand):
                 continue
 
             course_id = row[canvas_course_id_idx]
-            long_name = row[long_name_idx].removeprefix(pretext)
-            short_name = row[short_name_idx].removeprefix(pretext)
+            long_name = row[long_name_idx]
+            short_name = row[short_name_idx]
+
+            if (long_name.startswith(pretext) and
+                    short_name.startswith(pretext)):
+                continue
+
             new_long_name = f"{pretext}{long_name}"
             new_short_name = f"{pretext}{short_name}"
 
             try:
-                data = self.update_course_title(
-                    course_id, new_long_name, new_short_name)
+                url = COURSES_API.format(course_id)
+                body = {"course": {"name": new_long_name,
+                                   "course_code": new_short_name}}
+                data = course_client._put_resource(url, body)
                 logger.info(
                     f"Update course name for {sis_course_id}: {new_long_name}")
             except DataFailureException as ex:
