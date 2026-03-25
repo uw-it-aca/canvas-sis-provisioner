@@ -59,8 +59,13 @@ class Command(BaseCommand):
                 continue
 
             course_id = row[canvas_course_id_idx]
-            long_name = row[long_name_idx].removeprefix(pretext)
-            short_name = row[short_name_idx].removeprefix(pretext)
+            long_name = row[long_name_idx]
+            short_name = row[short_name_idx]
+
+            if (long_name.startswith(pretext) and
+                    short_name.startswith(pretext)):
+                continue
+
             new_long_name = f"{pretext}{long_name}"
             new_short_name = f"{pretext}{short_name}"
 
