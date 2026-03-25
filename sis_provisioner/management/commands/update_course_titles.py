@@ -67,8 +67,9 @@ class Command(BaseCommand):
             try:
                 data = self.update_course_title(
                     course_id, new_long_name, new_short_name)
-                print(data)
+                logger.info(
+                    f"Update course name for {sis_course_id}: {new_long_name}")
             except DataFailureException as ex:
-                print(ex)
+                logger.info(f"Update course name failed: {ex}")
 
         report_client.delete_report(course_report)
