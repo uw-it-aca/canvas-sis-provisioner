@@ -1628,10 +1628,6 @@ $(document).ready(function () {
     function initializeStripAndGauge(event_types) {
         var url_base = '/api/v1/events?type=' + event_types.join(',') + '&',
             gauge = new Highcharts.Chart({
-                accessibility: {
-                    enabled: true,
-                    highContrastMode: false,
-                },
                 chart: {
                     renderTo: 'event-gauge',
                     type: 'gauge',
@@ -1762,10 +1758,6 @@ $(document).ready(function () {
                     renderTo: 'event-graph',
                     zoomType: 'x',
                     spacingRight: 8,
-                    accessibility: {
-                        enabled: true,
-                        highContrastMode: false,
-                    },
                     events: {
                         load: function () {
                             var chart = this;

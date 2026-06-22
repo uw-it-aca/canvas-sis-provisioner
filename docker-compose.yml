@@ -1,18 +1,19 @@
-version: '3.4'
-
 services:
   app:
-    environment:
-      ENV: localdev
-      PORT: 8000
-      AUTH: SAML_MOCK BLTI_DEV
-    restart: always
-    container_name: app-sis-provisioner
     build:
       context: .
       target: app-container
+    restart: always
+    container_name: sis_provisioner_app
+    environment:
+      ENV: localdev
+      AUTH: SAML_MOCK BLTI_DEV
     volumes:
       - ./sis_provisioner:/app/sis_provisioner
+      - statics-volume:/static
     ports:
-      - "8000:8000"
-      - "8001:8001"
+      - "${RUNSERVER_PORT:-8000}:8000"
+    stdin_open: true
+    tty: true
+volumes:
+  statics-volume:
