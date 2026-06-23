@@ -219,14 +219,14 @@ def get_registrations_by_section(section):
 
     # Sort by regid, is_active, duplicate code
     registrations.sort(key=lambda r: (
-        r.person.uwregid, r.is_active, r.duplicate_code))
+        r.regid, r.is_active, r.duplicate_code))
 
     # Keep the last instance of a regid
     uniques = {}
     for registration in registrations:
-        uniques[registration.person.uwregid] = registration
+        uniques[registration.regid] = registration
 
-    return sorted(list(uniques.values()), key=lambda r: r.person.uwregid)
+    return sorted(list(uniques.values()), key=lambda r: r.regid)
 
 
 def canvas_xlist_id(section_list):
