@@ -1701,7 +1701,10 @@ $(document).ready(function () {
                             enabled: false
                         },
                         dial: {
-                            radius: '100%'
+                            topWidth: 1,
+                            baseWidth: 3,
+                            radius: '100%',
+                            rearLength: '10%',
                         },
                         tooltip: {
                             followPointer: true
