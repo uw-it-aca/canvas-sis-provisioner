@@ -228,10 +228,6 @@ def create_course(sis_user_id, account_id, sis_term_id, course_name):
     course = courses.create_course(
         account_id, course_name, term_id=term.term_id)
 
-    # Add the sis_id
-    courses.update_sis_id(course.course_id,
-                          adhoc_course_sis_id(course.course_id))
-
     # Enroll user as teacher role
     Enrollments().enroll_user_in_course(
         course.course_id, user.user_id, CanvasEnrollment.TEACHER)
