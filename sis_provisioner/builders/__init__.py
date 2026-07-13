@@ -13,6 +13,7 @@ from sis_provisioner.dao.canvas import ENROLLMENT_ACTIVE
 from sis_provisioner.exceptions import (
     UserPolicyException, CoursePolicyException, InvalidLoginIdException)
 from restclients_core.exceptions import DataFailureException
+from uw_pws import PWS
 from logging import getLogger
 
 
@@ -77,7 +78,16 @@ class Builder(object):
         """
         Generates one student enrollment for the passed registration.
         """
-        if self.add_user_data_for_person(registration.person):
+        if registration.person is None:
+            try:
+                registration.person = PWS().get_person_by_regid(
+                    registration.regid)
+            except DataFailureException as ex:
+                self.logger.info(
+                    f"Skip registration person {registration.regid}: {ex}")
+
+        if (registration.person and
+                self.add_user_data_for_person(registration.person)):
             self.data.add(EnrollmentCSV(registration=registration))
 
     def add_group_enrollment_data(self, login_id, section_id, role, status):
