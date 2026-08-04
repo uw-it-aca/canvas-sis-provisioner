@@ -258,7 +258,7 @@ SIS_IMPORT_LIMIT = {
         'default': 300
     },
     'expired_course': {
-        'default': 500
+        'default': 1000,
     },
     'enrollment': {
         'default': 1000,
