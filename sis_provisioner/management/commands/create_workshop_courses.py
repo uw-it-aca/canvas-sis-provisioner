@@ -42,7 +42,7 @@ class Command(BaseCommand):
             try:
                 person = get_person_by_netid(netid.strip())
             except UserPolicyException as err:
-                print("Skipped user '{}': {}".format(netid, err))
+                print(f"Skipped user '{netid}': {err}")
                 continue
 
             if not csvdata.add(UserCSV(person)):
@@ -52,8 +52,13 @@ class Command(BaseCommand):
                 term_sis_id,
                 re.sub(r'[^\w]', '-', workshop_name.lower()),
                 person.uwnetid])
-            short_name = '{} {}'.format(date.today().year, workshop_name)
-            long_name = '{} Sandbox'.format(short_name)
+
+            (year, quarter) = term_sis_id.split('-')
+            year = year[2:]
+            quarter = quarter[:3].upper()
+
+            short_name = f'{quarter} {year} {workshop_name}'
+            long_name = f'{short_name} Sandbox'
 
             csvdata.add(CourseCSV(
                 course_id=course_sis_id, short_name=short_name,
