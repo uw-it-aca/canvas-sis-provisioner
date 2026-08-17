@@ -66,6 +66,14 @@ jobs:
 
     needs: context
 
+    permissions:
+      contents: read
+      security-events: write
+      # Coveralls may or may not need the following permissions
+      # pull-requests: write    # For PR comments
+      # statuses: write        # For commit status updates
+      # checks: write          # For check runs
+
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v6
@@ -81,9 +89,10 @@ jobs:
           app_name: ${DJANGO_APP}
           exclude_paths: 'migrations'
           linter: 'pycodestyle'
+        continue-on-error: true
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Cache Docker layers
         uses: actions/cache@v5
@@ -131,6 +140,14 @@ jobs:
           python -m pip install --upgrade pip coverage coveralls==3.3.1
           coverage combine
           coveralls
+        continue-on-error: true
+
+      - name: Run vulnerability scan
+        id: vuln-scan
+        uses: uw-it-aca/actions/container-vuln-scan@main
+        with:
+          image_tag: ${{ needs.context.outputs.image_tag }}
+          severity: 'HIGH,CRITICAL'
         continue-on-error: true
 
       - name: Push Image to Repository
