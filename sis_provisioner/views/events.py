@@ -2,13 +2,19 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from sis_provisioner.views.admin import RESTDispatch
-from sis_provisioner.models.events import (
-    EnrollmentLog, GroupLog, InstructorLog, PersonLog)
-from time import time, gmtime, strftime
 from calendar import timegm
 from math import floor
+from time import gmtime, strftime, time
+
 import dateutil.parser
+
+from sis_provisioner.models.events import (
+    EnrollmentLog,
+    GroupLog,
+    InstructorLog,
+    PersonLog,
+)
+from sis_provisioner.views.admin import RESTDispatch
 
 
 class EventListView(RESTDispatch):
@@ -18,7 +24,7 @@ class EventListView(RESTDispatch):
     def get(self, request, *args, **kwargs):
         try:
             event_types = request.GET.get('type', 'enrollment')
-            start_sample = int(floor(time() / 60))  # default to now
+            start_sample = floor(time() / 60)  # default to now
             end_sample = start_sample
 
             utc_str = request.GET.get('on')
@@ -44,8 +50,7 @@ class EventListView(RESTDispatch):
                                       gmtime(start_sample * 60)),
                     'end': strftime("%Y-%m-%dT%H:%M:%SZ",
                                     gmtime(end_sample * 60)),
-                    'points': [0 for i in range(
-                        (end_sample - start_sample + 1))]
+                    'points': [0 for i in range(end_sample - start_sample + 1)]
                 }
 
                 if event_type == 'enrollment':
@@ -61,7 +66,7 @@ class EventListView(RESTDispatch):
                     event_log = PersonLog.objects.filter(
                         minute__gte=start_sample)
                 else:
-                    raise Exception('unknown event type {}'.format(event_type))
+                    raise Exception(f'Unknown event type {event_type}')
 
                 for o in event_log:
                     try:
@@ -72,9 +77,8 @@ class EventListView(RESTDispatch):
 
             return self.json_response(events)
         except Exception as err:
-            return self.error_response(
-                400, "Invalid event search: {}".format(err))
+            return self.error_response(400, f"Invalid event search: {err}")
 
     def _start_minutes(self, utc_str):
         utc = dateutil.parser.parse(utc_str)
-        return int(floor(timegm(utc.timetuple()) / 60))
+        return floor(timegm(utc.timetuple()) / 60)

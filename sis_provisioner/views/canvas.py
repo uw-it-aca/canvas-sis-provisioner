@@ -2,17 +2,22 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
+import re
+from logging import getLogger
+from urllib.request import urlopen
+
+from bs4 import BeautifulSoup
 from django.conf import settings
+from restclients_core.exceptions import DataFailureException
+
+from sis_provisioner.dao.canvas import (
+    get_account_by_id,
+    get_course_by_id,
+    get_course_by_sis_id,
+    valid_canvas_id,
+)
 from sis_provisioner.models.course import Course
 from sis_provisioner.views.admin import RESTDispatch
-from sis_provisioner.dao.canvas import (
-    valid_canvas_id, get_account_by_id, get_course_by_id, get_course_by_sis_id)
-from restclients_core.exceptions import DataFailureException
-from logging import getLogger
-from bs4 import BeautifulSoup
-from urllib.request import urlopen
-import re
-
 
 logger = getLogger(__name__)
 
@@ -53,7 +58,7 @@ class CanvasCourseView(RESTDispatch):
                     include_sws_url=self.can_view_source_data(request)))
                 if model.xlist_id:
                     course_rep['xlist_url'] = self.course_url(
-                        'sis_course_id:{}'.format(model.xlist_id))
+                        f'sis_course_id:{model.xlist_id}')
             except Course.DoesNotExist:
                 pass
 
@@ -61,9 +66,9 @@ class CanvasCourseView(RESTDispatch):
         except DataFailureException as ex:
             if ex.status == 404:
                 return self.error_response(
-                    404, "Course not found in Canvas: {}".format(ex.msg))
+                    404, f"Course not found in Canvas: {ex.msg}")
             return self.error_response(
-                400, "Unable to retrieve course data: {}".format(ex.msg))
+                    400, f"Unable to retrieve course data: {ex.msg}")
 
     def course_url(self, course_id):
         return '{host}/courses/{course_id}'.format(
@@ -90,8 +95,7 @@ class CanvasAccountView(RESTDispatch):
             })
 
         except Exception as e:
-            return self.error_response(
-                400, "Unable to retrieve account: {}".format(e))
+            return self.error_response(400, f"Unable to retrieve account: {e}")
 
 
 class CanvasStatus(RESTDispatch):
@@ -127,7 +131,7 @@ class CanvasStatus(RESTDispatch):
                     'state': state
                 })
 
-        except Exception as err:
+        except Exception:
             components = [{
                 'component': 'Canvas',
                 'status': 'Unknown',

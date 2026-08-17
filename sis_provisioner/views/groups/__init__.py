@@ -2,20 +2,24 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from django.http import HttpResponse
-from django.core.exceptions import ValidationError
-from sis_provisioner.models.group import Group, GroupMemberGroup
-from sis_provisioner.models.course import Course
-from sis_provisioner.dao.group import valid_group_id
-from sis_provisioner.dao.course import (
-    valid_canvas_course_id, valid_course_sis_id, adhoc_course_sis_id)
-from sis_provisioner.exceptions import (
-    GroupPolicyException, CoursePolicyException)
-from blti.views import BLTILaunchView, RESTDispatch
-from logging import getLogger
-from datetime import datetime, timezone
 import json
 import re
+from datetime import datetime, timezone
+from logging import getLogger
+
+from blti.views import BLTILaunchView, RESTDispatch
+from django.core.exceptions import ValidationError
+from django.http import HttpResponse
+
+from sis_provisioner.dao.course import (
+    adhoc_course_sis_id,
+    valid_canvas_course_id,
+    valid_course_sis_id,
+)
+from sis_provisioner.dao.group import valid_group_id
+from sis_provisioner.exceptions import CoursePolicyException, GroupPolicyException
+from sis_provisioner.models.course import Course
+from sis_provisioner.models.group import Group, GroupMemberGroup
 
 logger = getLogger(__name__)
 
@@ -56,7 +60,7 @@ class GroupView(RESTDispatch):
 
     def post(self, request, *args, **kwargs):
         try:
-            course_id, canvas_id, group_id, role = self._validate_post(request)
+            course_id, _canvas_id, group_id, role = self._validate_post(request)
             group = Group.objects.get(course_id=course_id,
                                       group_id=group_id,
                                       role=role)
@@ -68,8 +72,7 @@ class GroupView(RESTDispatch):
                 group.added_date = datetime.now(timezone.utc)
             else:
                 return self.error_response(
-                    400, 'Group {} has duplicate role in course'.format(
-                        group_id))
+                    400, 'Group {group_id} has duplicate role in course')
 
         except Group.DoesNotExist:
             try:
@@ -78,11 +81,11 @@ class GroupView(RESTDispatch):
                               group_id=group_id,
                               role=role)
             except GroupPolicyException as ex:
-                logger.info('POST policy error: {}'.format(ex))
+                logger.info(f'POST policy error: {ex}')
                 return self.error_response(403, ex)
         except (CoursePolicyException, GroupPolicyException,
                 ValidationError) as ex:
-            logger.info('POST error: {}'.format(ex))
+            logger.info(f'POST error: {ex}')
             return self.error_response(400, ex)
 
         group.priority = Course.PRIORITY_IMMEDIATE
@@ -111,10 +114,10 @@ class GroupView(RESTDispatch):
                     gmg.save()
 
         except ValidationError as err:
-            logger.info('DELETE group error: {}'.format(err))
+            logger.info(f'DELETE group error: {err}')
             return self.error_response(400, err)
         except Group.DoesNotExist:
-            return self.error_response(404, 'Group not found ({})'.format(id))
+            return self.error_response(404, f'Group not found ({id})')
 
         return HttpResponse('')
 
@@ -123,7 +126,7 @@ class GroupView(RESTDispatch):
             group = Group.objects.get(id=id, is_deleted=None)
             return self.json_response(group.json_data())
         except Group.DoesNotExist:
-            return self.error_response(404, 'Group id {} not found'.format(id))
+            return self.error_response(404, f'Group id {id} not found')
 
     def _getGroupsByQuery(self, request):
         terms = {
@@ -133,11 +136,10 @@ class GroupView(RESTDispatch):
             'role': lambda x: self._valid_role(x)}
 
         kwargs = {}
-        for key in terms:
+        for key, value in terms.items():
             try:
-                kwargs[key] = terms[key](request.GET.get(key))
-            except (CoursePolicyException, GroupPolicyException,
-                    ValidationError):
+                kwargs[key] = value(request.GET.get(key))
+            except (CoursePolicyException, GroupPolicyException, ValidationError):
                 pass
 
         if not len(kwargs):
@@ -180,7 +182,7 @@ class GroupView(RESTDispatch):
     def _valid_role(self, role):
         if role is not None and len(role):
             return role
-        raise ValidationError("Invalid Role: {}".format(role))
+        raise ValidationError(f"Invalid Role: {role}")
 
     def _valid_canvas_id(self, course_id):
         valid_canvas_course_id(course_id)
@@ -189,5 +191,5 @@ class GroupView(RESTDispatch):
     def _valid_model_id(self, model_id):
         re_model_id = re.compile(r"^\d+$")
         if (re_model_id.match(str(model_id)) is None):
-            raise ValidationError("Invalid ID: {}".format(model_id))
+            raise ValidationError(f"Invalid ID: {model_id}")
         return model_id

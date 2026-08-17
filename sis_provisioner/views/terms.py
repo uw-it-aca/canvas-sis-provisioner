@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from sis_provisioner.views.admin import RESTDispatch
 from sis_provisioner.dao.term import get_current_active_term, get_term_after
+from sis_provisioner.views.admin import RESTDispatch
 
 
 class TermListView(RESTDispatch):

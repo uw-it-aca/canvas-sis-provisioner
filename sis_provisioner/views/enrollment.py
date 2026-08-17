@@ -4,9 +4,10 @@
 
 import re
 from logging import getLogger
+
+from sis_provisioner.dao.user import get_person_by_netid
 from sis_provisioner.models.enrollment import Enrollment
 from sis_provisioner.views.admin import RESTDispatch
-from sis_provisioner.dao.user import get_person_by_netid
 
 logger = getLogger(__name__)
 
@@ -30,13 +31,13 @@ class EnrollmentListView(RESTDispatch):
             {
                 'term': 'quarter',
                 'test': re.compile(
-                    r'^(?:winter|spring|summer|autumn)+$', re.I).match,
+                    r'^(?:winter|spring|summer|autumn)+$', re.IGNORECASE).match,
                 'required': True,
                 'case': 'lower'
             },
             {
                 'term': 'curriculum_abbreviation',
-                'test': re.compile(r'^[a-z &]+$', re.I).match,
+                'test': re.compile(r'^[a-z &]+$', re.IGNORECASE).match,
                 'case': 'upper'
             },
             {
@@ -45,7 +46,7 @@ class EnrollmentListView(RESTDispatch):
             },
             {
                 'term': 'section',
-                'test': re.compile(r'^[a-z]{1,2}$', re.I).match,
+                'test': re.compile(r'^[a-z]{1,2}$', re.IGNORECASE).match,
                 'case': 'upper'
             }
         ]
@@ -62,7 +63,7 @@ class EnrollmentListView(RESTDispatch):
             if re.match(r'^[0-9]+$', str(queue_id)):
                 filt_kwargs = {'queue_id': queue_id}
             else:
-                err = 'invalid queue_id: %s' % queue_id
+                err = f'Invalid queue_id: {queue_id}'
                 logger.error(err)
                 return self.error_response(400, err)
         else:
@@ -82,7 +83,7 @@ class EnrollmentListView(RESTDispatch):
 
                 return self.json_response(json_rep)
             except Exception as err:
-                logger.error('enrollment kwargs search fail: %s' % err)
+                logger.error(f'Enrollment kwargs search fail: {err}')
                 return self.error_response(400, err)
 
         reg_id = None
@@ -98,13 +99,13 @@ class EnrollmentListView(RESTDispatch):
 
             filter_terms = self._valid_enrollment_filter(request)
             filter_prefix = '-'.join(filter_terms)
-            enrollment_list = list(Enrollment.objects.filter(
+            _enrollment_list = list(Enrollment.objects.filter(
                 course_id__startswith=filter_prefix, reg_id=reg_id))
 
         except EnrollmentInvalidException as err:
             return self.error_response(400, err)
         except Exception as err:
-            logger.error('course filter fail: %s' % err)
+            logger.error(f'Course filter fail: {err}')
             return self.error_response(400, err)
 
         return self.json_response(json_rep)
@@ -116,7 +117,7 @@ class EnrollmentListView(RESTDispatch):
             if value is None or not len(value):
                 if 'required' in filter and filter['required'] is True:
                     raise EnrollmentInvalidException(
-                        '%s query term is required' % filter['term'])
+                        f'{filter["term"]} query term is required')
                 else:
                     break
             elif filter['test'](value):
@@ -128,11 +129,10 @@ class EnrollmentListView(RESTDispatch):
 
                 values.append(value)
             else:
-                raise EnrollmentInvalidException('%s is invalid' % (
-                    filter['term']))
+                raise EnrollmentInvalidException(f'{filter["term"]} is invalid')
 
         return values
 
     def _is_true(self, val):
-        return True if (
-            val == '1' or re.match(r'^(yes|true)$', val, re.I)) else False
+        return bool(
+            val == '1' or re.match(r'^(yes|true)$', val, re.IGNORECASE))
