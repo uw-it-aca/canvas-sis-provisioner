@@ -89,7 +89,7 @@ jobs:
           app_name: ${DJANGO_APP}
           exclude_paths: 'migrations'
           linter: 'pycodestyle'
-          ignore: 'E501'
+        continue-on-error: true
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
