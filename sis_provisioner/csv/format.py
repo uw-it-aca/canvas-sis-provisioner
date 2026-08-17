@@ -2,23 +2,39 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from sis_provisioner.dao.account import account_name, account_id_for_section
-from sis_provisioner.dao.term import (
-    term_sis_id, term_name, term_start_date, term_end_date, course_end_date)
-from sis_provisioner.dao.course import (
-    is_active_section, section_short_name, section_long_name)
-from sis_provisioner.dao.user import (
-    user_sis_id, user_integration_id, user_email, user_fullname)
-from sis_provisioner.dao.canvas import (
-    valid_enrollment_status, enrollment_status_from_registration,
-    get_student_sis_import_role, get_instructor_sis_import_role,
-    get_sis_import_role)
-from sis_provisioner.exceptions import EnrollmentPolicyException
 import csv
 import io
 
+from sis_provisioner.dao.account import account_id_for_section, account_name
+from sis_provisioner.dao.canvas import (
+    enrollment_status_from_registration,
+    get_instructor_sis_import_role,
+    get_sis_import_role,
+    get_student_sis_import_role,
+    valid_enrollment_status,
+)
+from sis_provisioner.dao.course import (
+    is_active_section,
+    section_long_name,
+    section_short_name,
+)
+from sis_provisioner.dao.term import (
+    course_end_date,
+    term_end_date,
+    term_name,
+    term_sis_id,
+    term_start_date,
+)
+from sis_provisioner.dao.user import (
+    user_email,
+    user_fullname,
+    user_integration_id,
+    user_sis_id,
+)
+from sis_provisioner.exceptions import EnrollmentPolicyException
 
-class CSVFormat(object):
+
+class CSVFormat:
     def __init__(self):
         self.key = None
         self.data = []
@@ -205,19 +221,16 @@ class EnrollmentCSV(CSVFormat):
         user_id = user_sis_id(person)
         if not valid_enrollment_status(status):
             raise EnrollmentPolicyException(
-                'Invalid enrollment status for {}: {}'.format(user_id, status))
+                f'Invalid enrollment status for {user_id}: {status}')
 
         if course_id is None and section_id is None:
             raise EnrollmentPolicyException(
-                'Missing course and section for {}: {}'.format(
-                    user_id, status))
+                f'Missing course and section for {user_id}: {status}')
 
         if not role:
-            raise EnrollmentPolicyException(
-                'Missing role for {}: {}'.format(user_id, role))
+            raise EnrollmentPolicyException(f'Missing role for {user_id}: {role}')
 
-        self.key = '{}:{}:{}:{}:{}'.format(
-            course_id, section_id, user_id, role, status)
+        self.key = f'{course_id}:{section_id}:{user_id}:{role}:{status}'
         self.data = [course_id, None, user_id, role, None, section_id, status,
                      None]
 

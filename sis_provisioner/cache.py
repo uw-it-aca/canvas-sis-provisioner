@@ -2,11 +2,12 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
+import re
+
 from django.conf import settings
 from memcached_clients import RestclientPymemcacheClient
-from uw_kws import ENCRYPTION_KEY_URL, ENCRYPTION_CURRENT_KEY_URL
+from uw_kws import ENCRYPTION_CURRENT_KEY_URL, ENCRYPTION_KEY_URL
 from uw_pws import PERSON_PREFIX
-import re
 
 ONE_MINUTE = 60
 ONE_HOUR = 60 * 60
@@ -54,16 +55,18 @@ class RestClientsCache(RestclientPymemcacheClient):
         if 'gws' == service:
             if re.match(r'^/group_sws/v\d/group/u_somalt_', url):
                 return ONE_HOUR
-            if re.match(r'^/group_sws/v\d/group/{}/effective_member/'.format(
-                    ALLOWED_CANVAS_LOGIN_USERS), url):
+            if re.match((
+                    rf'^/group_sws/v\d/group/{ALLOWED_CANVAS_LOGIN_USERS}/'
+                    rf'effective_member/'), url):
                 return ONE_HOUR
-            if re.match(r'^/group_sws/v\d/group/(?:{}|{}|{})/member/'.format(
-                    ALLOWED_CANVAS_STUDENT_USERS,
-                    ALLOWED_CANVAS_AFFILIATE_USERS,
-                    ALLOWED_CANVAS_SPONSORED_USERS), url):
+            if re.match((
+                    rf'^/group_sws/v\d/group/(?:{ALLOWED_CANVAS_STUDENT_USERS}|'
+                    rf'{ALLOWED_CANVAS_AFFILIATE_USERS}|'
+                    rf'{ALLOWED_CANVAS_SPONSORED_USERS})/member/'), url):
                 return ONE_HOUR * 2
-            if re.match(r'^/group_sws/v\d/group/{}/member/'.format(
-                    NONPERSONAL_NETID_EXCEPTION_GROUP), url):
+            if re.match((
+                    rf'^/group_sws/v\d/group/{NONPERSONAL_NETID_EXCEPTION_GROUP}/'
+                    rf'member/'), url):
                 return ONE_HOUR * 8
 
         if 'canvas' == service:
