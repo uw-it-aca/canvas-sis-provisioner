@@ -2,18 +2,19 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from sis_provisioner.builders import Builder
-from sis_provisioner.csv.format import CourseCSV, SectionCSV, EnrollmentCSV
-from sis_provisioner.dao.user import get_person_by_regid
-from sis_provisioner.dao.course import is_active_section, section_id_from_url
-from sis_provisioner.dao.canvas import ENROLLMENT_ACTIVE, ENROLLMENT_DELETED
-from sis_provisioner.exceptions import (
-    UserPolicyException, MissingLoginIdException)
-from uw_sws.models import Registration, Section
-from uw_sws.exceptions import InvalidCanvasIndependentStudyCourse
-from restclients_core.exceptions import DataFailureException
 from datetime import datetime, timedelta, timezone
+
 from django.conf import settings
+from restclients_core.exceptions import DataFailureException
+from uw_sws.exceptions import InvalidCanvasIndependentStudyCourse
+from uw_sws.models import Registration, Section
+
+from sis_provisioner.builders import Builder
+from sis_provisioner.csv.format import CourseCSV, EnrollmentCSV, SectionCSV
+from sis_provisioner.dao.canvas import ENROLLMENT_ACTIVE, ENROLLMENT_DELETED
+from sis_provisioner.dao.course import is_active_section, section_id_from_url
+from sis_provisioner.dao.user import get_person_by_regid
+from sis_provisioner.exceptions import MissingLoginIdException, UserPolicyException
 
 
 class EnrollmentBuilder(Builder):
@@ -90,8 +91,7 @@ class EnrollmentBuilder(Builder):
                                                      enrollment.person,
                                                      enrollment.status)
                 except Exception:
-                    continue
-
+                    pass
         else:
             self.data.add(SectionCSV(section=enrollment.section))
             self.add_teacher_enrollment_data(
@@ -116,15 +116,15 @@ class EnrollmentBuilder(Builder):
         enrollment.queue_id = None
         enrollment.priority = enrollment.PRIORITY_DEFAULT
         enrollment.save()
-        self.logger.info("Requeue enrollment {} in {}: {}".format(
-            enrollment.reg_id, enrollment.course_id, err))
+        self.logger.info(
+            f"Requeue enrollment {enrollment.reg_id} in {enrollment.course_id}: {err}")
 
     def _skip_enrollment_event(self, enrollment, err):
         enrollment.queue_id = None
         enrollment.priority = enrollment.PRIORITY_NONE
         enrollment.save()
-        self.logger.info("Skip enrollment {} in {}: {}".format(
-            enrollment.reg_id, enrollment.course_id, err))
+        self.logger.info(
+            f"Skip enrollment {enrollment.reg_id} in {enrollment.course_id}: {err}")
 
     def _init_build(self, **kwargs):
         now = datetime.now(timezone.utc)
@@ -169,5 +169,7 @@ class InvalidEnrollmentBuilder(Builder):
         except DataFailureException as err:
             inv_enrollment.queue_id = None
             inv_enrollment.save()
-            self.logger.info('Requeue invalid enrollment {} in {}: {}'.format(
-                inv_enrollment.user.reg_id, inv_enrollment.section_id, err))
+            self.logger.info(
+                f'Requeue invalid enrollment {inv_enrollment.user.reg_id} '
+                f'in {inv_enrollment.section_id}: {err}'
+            )
