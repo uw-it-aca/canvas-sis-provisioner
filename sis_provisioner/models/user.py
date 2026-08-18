@@ -2,23 +2,25 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from django.db import models
-from django.db.models import F, Q
+import json
+from logging import getLogger
+
 from django.conf import settings
+from django.db import models
+from django.db.models import F
 from django.utils.timezone import localtime
-from sis_provisioner.dao.user import get_person_by_netid, is_group_member
-from sis_provisioner.dao.group import get_sis_import_members
+
 from sis_provisioner.dao.canvas import get_active_sis_enrollments_for_user
-from sis_provisioner.models import Import, ImportResource
+from sis_provisioner.dao.group import get_sis_import_members
+from sis_provisioner.dao.user import get_person_by_netid, is_group_member
 from sis_provisioner.exceptions import (
+    DataFailureException,
+    EmptyQueueException,
     MissingLoginIdException,
     MissingStudentNumberException,
     UserPolicyException,
-    EmptyQueueException,
-    DataFailureException,
 )
-from logging import getLogger
-import json
+from sis_provisioner.models import Import, ImportResource
 
 logger = getLogger(__name__)
 
@@ -71,8 +73,9 @@ class UserManager(models.Manager):
         self.queued(sis_import.pk).update(**kwargs)
 
     def add_all_users(self):
-        existing_netids = dict((u, p) for u, p in (
-            super().get_queryset().values_list('net_id', 'priority')))
+        existing_netids = {
+            u: p for u, p in super().get_queryset().values_list('net_id', 'priority')
+        }
 
         for member in get_sis_import_members():
             if (member.name not in existing_netids or
@@ -178,17 +181,19 @@ class User(ImportResource):
             "queue_id": self.queue_id,
         }
 
-    def get_active_sis_enrollments(self, roles=[]):
+    def get_active_sis_enrollments(self, roles=None):
+        if roles is None:
+            roles = []
         return get_active_sis_enrollments_for_user(self.reg_id, roles=roles)
 
     def is_student_user(self):
         return is_group_member(
-            getattr(settings, 'ALLOWED_CANVAS_STUDENT_USERS'), self.net_id)
+            settings.ALLOWED_CANVAS_STUDENT_USERS, self.net_id)
 
     def is_affiliate_user(self):
         return is_group_member(
-            getattr(settings, 'ALLOWED_CANVAS_AFFILIATE_USERS'), self.net_id)
+            settings.ALLOWED_CANVAS_AFFILIATE_USERS, self.net_id)
 
     def is_sponsored_user(self):
         return is_group_member(
-            getattr(settings, 'ALLOWED_CANVAS_SPONSORED_USERS'), self.net_id)
+            settings.ALLOWED_CANVAS_SPONSORED_USERS, self.net_id)

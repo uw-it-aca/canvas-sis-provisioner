@@ -2,20 +2,21 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from django.db import models, IntegrityError
-from django.db.models import F
+from datetime import datetime, timedelta, timezone
+from logging import getLogger
+
 from django.conf import settings
+from django.db import IntegrityError, models
+from django.db.models import F
 from django.utils.timezone import localtime
+from restclients_core.exceptions import DataFailureException
+
+from sis_provisioner.dao.canvas import ENROLLMENT_ACTIVE, get_instructor_sis_import_role
+from sis_provisioner.dao.term import is_active_term
+from sis_provisioner.exceptions import EmptyQueueException
 from sis_provisioner.models import Import, ImportResource
 from sis_provisioner.models.course import Course
 from sis_provisioner.models.user import User
-from sis_provisioner.dao.term import is_active_term
-from sis_provisioner.dao.canvas import (
-    get_instructor_sis_import_role, ENROLLMENT_ACTIVE)
-from sis_provisioner.exceptions import EmptyQueueException
-from restclients_core.exceptions import DataFailureException
-from datetime import datetime, timedelta, timezone
-from logging import getLogger
 
 logger = getLogger(__name__)
 enrollment_log_prefix = 'ADD ENROLLMENT:'
@@ -25,7 +26,7 @@ class EnrollmentManager(models.Manager):
     def queue_by_priority(self, priority=ImportResource.PRIORITY_DEFAULT):
         filter_limit = settings.SIS_IMPORT_LIMIT['enrollment']['default']
 
-        pks = super(EnrollmentManager, self).get_queryset().filter(
+        pks = super().get_queryset().filter(
             priority=priority, queue_id__isnull=True
         ).order_by(
             'last_modified'
@@ -37,20 +38,20 @@ class EnrollmentManager(models.Manager):
         imp = Import(priority=priority, csv_type='enrollment')
         imp.save()
 
-        super(EnrollmentManager, self).get_queryset().filter(
+        super().get_queryset().filter(
             pk__in=list(pks)).update(queue_id=imp.pk)
 
         return imp
 
     def queued(self, queue_id):
-        return super(EnrollmentManager, self).get_queryset().filter(
+        return super().get_queryset().filter(
             queue_id=queue_id)
 
     def dequeue(self, sis_import):
         Course.objects.dequeue(sis_import)
         if sis_import.is_imported():
             # Decrement the priority
-            super(EnrollmentManager, self).get_queryset().filter(
+            super().get_queryset().filter(
                 queue_id=sis_import.pk, priority__gt=Enrollment.PRIORITY_NONE
             ).update(
                 queue_id=None, priority=F('priority') - 1)
@@ -62,26 +63,19 @@ class EnrollmentManager(models.Manager):
     def purge_expired(self):
         retention_dt = datetime.now(timezone.utc) - timedelta(
             days=getattr(settings, 'ENROLLMENT_EVENT_RETENTION_DAYS', 180))
-        return super(EnrollmentManager, self).get_queryset().filter(
+        return super().get_queryset().filter(
             priority=Enrollment.PRIORITY_NONE,
             last_modified__lt=retention_dt).delete()
 
     def add_enrollment(self, enrollment_data):
         def _log(outcome, status, full_course_id, reg_id, duplicate_code, role,
                  last_modified, queue_id=''):
-            logger.info((
-                '{} {} status: {}, regid: {}, section: {}, '
-                'duplicate_code: {}, role: {}, last_modified {}, '
-                'queue_id: {}').format(
-                    enrollment_log_prefix,
-                    outcome,
-                    status,
-                    reg_id,
-                    full_course_id,
-                    duplicate_code,
-                    role,
-                    last_modified,
-                    queue_id))
+            logger.info(
+                f'{enrollment_log_prefix} {outcome} status: {status}, regid: '
+                f'{reg_id}, section: {full_course_id}, duplicate_code: '
+                f'{duplicate_code}, role: {role}, last_modified {last_modified}, '
+                f'queue_id: {queue_id}'
+            )
 
         section = enrollment_data.get('Section')
         reg_id = enrollment_data.get('UWRegID')
@@ -93,10 +87,10 @@ class EnrollmentManager(models.Manager):
         duplicate_code = enrollment_data.get('DuplicateCode', '')
         instructor_reg_id = enrollment_data.get('InstructorUWRegID', None)
 
-        course_id = '-'.join([section.term.canvas_sis_id(),
-                              section.curriculum_abbr.upper(),
-                              section.course_number,
-                              section.section_id.upper()])
+        course_id = (
+            f'{section.term.canvas_sis_id()}-{section.curriculum_abbr.upper()}-'
+            f'{section.course_number}-{section.section_id.upper()}'
+        )
 
         primary_course_id = None
         if section.is_primary_section:
@@ -104,7 +98,7 @@ class EnrollmentManager(models.Manager):
         else:
             primary_course_id = section.canvas_course_sis_id()
 
-        full_course_id = '-'.join([course_id, instructor_reg_id]) if (
+        full_course_id = f'{course_id}-{instructor_reg_id}' if (
             instructor_reg_id is not None) else course_id
 
         try:
@@ -135,8 +129,7 @@ class EnrollmentManager(models.Manager):
                     _log('UPDATE EXISTING', status, full_course_id, reg_id,
                          duplicate_code, role, last_modified)
                 else:
-                    _log('IGNORE (Out of order: {})'.format(
-                         enrollment.last_modified), status, full_course_id,
+                    _log(f'IGNORE (Out of order: {enrollment.last_modified})', status, full_course_id,
                          reg_id, duplicate_code, role, last_modified)
             else:
                 _log('IGNORE (Unprovisioned course)', status, full_course_id,
@@ -227,7 +220,7 @@ class InvalidEnrollmentManager(models.Manager):
     def queue_by_priority(self, priority=ImportResource.PRIORITY_DEFAULT):
         filter_limit = settings.SIS_IMPORT_LIMIT['inv_enrollment']['default']
 
-        pks = super(InvalidEnrollmentManager, self).get_queryset().filter(
+        pks = super().get_queryset().filter(
             priority=priority, queue_id__isnull=True
         ).order_by('pk').values_list('pk', flat=True)[:filter_limit]
 
@@ -237,13 +230,13 @@ class InvalidEnrollmentManager(models.Manager):
         imp = Import(priority=priority, csv_type='invalid_enrollment')
         imp.save()
 
-        super(InvalidEnrollmentManager, self).get_queryset().filter(
+        super().get_queryset().filter(
             pk__in=list(pks)).update(queue_id=imp.pk)
 
         return imp
 
     def queued(self, queue_id):
-        return super(InvalidEnrollmentManager, self).get_queryset().filter(
+        return super().get_queryset().filter(
             queue_id=queue_id)
 
     def dequeue(self, sis_import):
@@ -252,7 +245,7 @@ class InvalidEnrollmentManager(models.Manager):
                 queue_id=None, priority=InvalidEnrollment.PRIORITY_NONE)
 
     def add_enrollments(self):
-        check_roles = getattr(settings, 'ENROLLMENT_TYPES_INVALID_CHECK')
+        check_roles = settings.ENROLLMENT_TYPES_INVALID_CHECK
         for user in User.objects.get_invalid_enrollment_check_users():
             # Verify that the check conditions still exist
             if user.is_affiliate_user() or user.is_sponsored_user():
@@ -297,7 +290,7 @@ class InvalidEnrollment(ImportResource):
     queue_id = models.CharField(max_length=30, null=True)
 
     class Meta:
-        constraints = [
+        constraints = [  # noqa: RUF012
             models.UniqueConstraint(fields=['user', 'role', 'section_id'],
                                     name='unique_enrollment')
         ]

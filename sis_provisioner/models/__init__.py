@@ -2,18 +2,23 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
+import json
+import re
+from datetime import datetime, timezone
+from importlib import import_module
+from logging import getLogger
+
 from django.db import models
 from django.db.models import Q
 from django.utils.timezone import localtime
-from sis_provisioner.dao.canvas import (
-    sis_import_by_path, get_sis_import_status, delete_sis_import)
-from sis_provisioner.exceptions import MissingImportPathException
 from restclients_core.exceptions import DataFailureException
-from importlib import import_module
-from datetime import datetime, timezone
-from logging import getLogger
-import json
-import re
+
+from sis_provisioner.dao.canvas import (
+    delete_sis_import,
+    get_sis_import_status,
+    sis_import_by_path,
+)
+from sis_provisioner.exceptions import MissingImportPathException
 
 logger = getLogger(__name__)
 
@@ -67,7 +72,7 @@ class ImportResource(models.Model):
 
 class ImportManager(models.Manager):
     def find_by_requires_update(self):
-        return super(ImportManager, self).get_queryset().filter(
+        return super().get_queryset().filter(
             (Q(canvas_warnings__isnull=True) &
                 Q(canvas_errors__isnull=True)) | Q(monitor_status__gte=500),
             canvas_id__isnull=False,
@@ -113,7 +118,7 @@ class Import(models.Model):
     def type_name(self):
         model_cls = self.get_csv_type_display()
         if model_cls:
-            modname, _, clsname = model_cls.rpartition('.')
+            _mod, _sep, clsname = model_cls.rpartition('.')
             return clsname
 
     def json_data(self):
@@ -178,7 +183,7 @@ class Import(models.Model):
                 self.canvas_errors = json.dumps(sis_import.processing_errors)
 
         except (DataFailureException, KeyError) as ex:
-            logger.info('Monitor error: {}'.format(ex))
+            logger.info(f'Monitor error: {ex}')
             return
 
         if self.is_cleanly_imported():
@@ -209,7 +214,7 @@ class Import(models.Model):
             module = import_module(modname)
             return getattr(module, clsname)
         except ValueError as ex:
-            raise ImportError('Model "{}" not found: {}'.format(model_cls, ex))
+            raise ImportError(f'Model "{model_cls}" not found: {ex}')
 
     def queued_objects(self):
         return self.dependent_model().objects.queued(self.pk)
@@ -223,8 +228,8 @@ class Import(models.Model):
             try:
                 delete_sis_import(self.canvas_id)
             except DataFailureException as ex:
-                logger.info('PUT sis_import failed: {}'.format(ex))
-        return super(Import, self).delete(*args, **kwargs)
+                logger.info(f'PUT sis_import failed: {ex}')
+        return super().delete(*args, **kwargs)
 
     def _process_warnings(self, warnings):
         return [w for w in warnings if not re.search(

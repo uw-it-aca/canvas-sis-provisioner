@@ -2,14 +2,15 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from django.db import models
-from sis_provisioner.models import ImportResource
-from sis_provisioner.dao.term import (
-    get_term_by_year_and_quarter, term_date_overrides)
-from sis_provisioner.dao.canvas import update_term_overrides
-from restclients_core.exceptions import DataFailureException
 from datetime import datetime, timezone
 from logging import getLogger
+
+from django.db import models
+from restclients_core.exceptions import DataFailureException
+
+from sis_provisioner.dao.canvas import update_term_overrides
+from sis_provisioner.dao.term import get_term_by_year_and_quarter, term_date_overrides
+from sis_provisioner.models import ImportResource
 
 logger = getLogger(__name__)
 
@@ -28,7 +29,7 @@ class TermManager(models.Manager):
                 term.save()
 
             except DataFailureException as ex:
-                logger.info('Unable to set term overrides: {}'.format(ex))
+                logger.info(f'Unable to set term overrides: {ex}')
 
     def queued(self, queue_id):
         return super().get_queryset().filter(queue_id=queue_id)
