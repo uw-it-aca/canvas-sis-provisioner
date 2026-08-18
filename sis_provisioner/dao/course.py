@@ -2,19 +2,24 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from django.conf import settings
-from uw_sws.section import (
-    get_section_by_label, get_section_by_url, get_changed_sections_by_term,
-    get_sections_by_instructor_and_term)
-from uw_sws.registration import get_all_registrations_by_section
-from uw_sws.models import Section
-from uw_canvas.models import CanvasCourse, CanvasSection
-from restclients_core.exceptions import DataFailureException
-from sis_provisioner.exceptions import CoursePolicyException
-from sis_provisioner.dao import titleize
+import re
 from logging import getLogger
 from urllib.parse import unquote
-import re
+
+from django.conf import settings
+from restclients_core.exceptions import DataFailureException
+from uw_canvas.models import CanvasCourse, CanvasSection
+from uw_sws.models import Section
+from uw_sws.registration import get_all_registrations_by_section
+from uw_sws.section import (
+    get_changed_sections_by_term,
+    get_section_by_label,
+    get_section_by_url,  # noqa: F401
+    get_sections_by_instructor_and_term,  # noqa: F401
+)
+
+from sis_provisioner.dao import titleize
+from sis_provisioner.exceptions import CoursePolicyException
 
 logger = getLogger(__name__)
 
@@ -24,39 +29,37 @@ RE_ADHOC_COURSE_SIS_ID = re.compile(r"^course_\d+$")
 
 def valid_canvas_course_id(canvas_id):
     if (canvas_id is None or RE_CANVAS_ID.match(str(canvas_id)) is None):
-        raise CoursePolicyException("Invalid Canvas ID: {}".format(canvas_id))
+        raise CoursePolicyException(f"Invalid Canvas ID: {canvas_id}")
 
 
 def valid_course_sis_id(sis_id):
     if (sis_id is None or not len(sis_id)):
-        raise CoursePolicyException("Invalid course SIS ID: {}".format(sis_id))
+        raise CoursePolicyException(f"Invalid course SIS ID: {sis_id}")
 
 
 def valid_adhoc_course_sis_id(sis_id):
     if (sis_id is None or RE_ADHOC_COURSE_SIS_ID.match(sis_id) is None):
-        raise CoursePolicyException("Invalid course SIS ID: {}".format(sis_id))
+        raise CoursePolicyException(f"Invalid course SIS ID: {sis_id}")
 
 
 def valid_academic_course_sis_id(sis_id):
     if not CanvasCourse(sis_course_id=sis_id).is_academic_sis_id():
-        raise CoursePolicyException(
-            "Invalid academic course SIS ID: {}".format(sis_id))
+        raise CoursePolicyException(f"Invalid academic course SIS ID: {sis_id}")
 
 
 def valid_academic_section_sis_id(sis_id):
     if not CanvasSection(sis_section_id=sis_id).is_academic_sis_id():
-        raise CoursePolicyException(
-            "Invalid academic section SIS ID: {}".format(sis_id))
+        raise CoursePolicyException(f"Invalid academic section SIS ID: {sis_id}")
 
 
 def adhoc_course_sis_id(canvas_id):
     valid_canvas_course_id(canvas_id)
-    return "course_{}".format(canvas_id)
+    return f"course_{canvas_id}"
 
 
 def group_section_sis_id(course_sis_id):
     valid_course_sis_id(course_sis_id)
-    return "{}-groups".format(course_sis_id)
+    return f"{course_sis_id}-groups"
 
 
 def group_section_name():
@@ -73,9 +76,7 @@ def section_id_from_url(url):
     except ValueError:
         return None
 
-    return '{year}-{quarter}-{curr_abbr}-{course_num}-{section_id}'.format(
-        year=year, quarter=quarter.lower(), curr_abbr=curr_abbr.upper(),
-        course_num=course_num, section_id=section_id)
+    return f'{year}-{quarter.lower()}-{curr_abbr.upper()}-{course_num}-{section_id}'
 
 
 def section_label_from_section_id(section_id):
@@ -101,8 +102,8 @@ def valid_canvas_section(section):
     course_id = section.canvas_course_sis_id()
     if (hasattr(section, "primary_lms") and section.primary_lms and
             section.primary_lms != Section.LMS_CANVAS):
-        raise CoursePolicyException("Non-Canvas LMS '{}' for {}".format(
-            section.primary_lms, course_id))
+        raise CoursePolicyException(
+            f"Non-Canvas LMS '{section.primary_lms}' for {course_id}")
 
 
 def is_active_section(section):
@@ -121,31 +122,24 @@ def is_time_schedule_ready(section):
 
 
 def section_short_name(section):
-    return '{curr_abbr} {course_num} {section_id}'.format(
-        curr_abbr=section.curriculum_abbr,
-        course_num=section.course_number,
-        section_id=section.section_id)
+    return f'{section.curriculum_abbr} {section.course_number} {section.section_id}'
 
 
 def section_long_name(section):
-    name = '{curr_abbr} {course_num} {section_id} {quarter} {year}'.format(
-        curr_abbr=section.curriculum_abbr,
-        course_num=section.course_number,
-        section_id=section.section_id,
-        quarter=section.term.quarter[:2].capitalize(),
-        year=str(section.term.year)[-2:])
+    name = (
+        f'{section.curriculum_abbr} {section.course_number} {section.section_id} '
+        f'{section.term.quarter[:2].capitalize()} {str(section.term.year)[-2:]}'
+    )
 
     if (section.course_title_long is not None and
             len(section.course_title_long)):
-        name = '{name}: {title}'.format(
-            name=name, title=titleize(section.course_title_long))
+        name = f'{name}: {titleize(section.course_title_long)}'
 
     if section.is_independent_study:
         for person in section.get_instructors():
+            user_fullname = person.get_formatted_name('{first} {last}')
             if person.uwregid == section.independent_study_instructor_regid:
-                name = '{name} ({user_fullname})'.format(
-                    name=name,
-                    user_fullname=person.get_formatted_name('{first} {last}'))
+                name = f'{name} ({user_fullname})'
                 break
 
     return name
@@ -163,7 +157,10 @@ def get_section_by_id(section_id):
     return section
 
 
-def get_new_sections_by_term(changed_since_date, term, existing={}):
+def get_new_sections_by_term(changed_since_date, term, existing=None):
+    if existing is None:
+        existing = {}
+
     kwargs = {
         'future_terms': 0,
         'transcriptable_course': 'all',
@@ -176,30 +173,30 @@ def get_new_sections_by_term(changed_since_date, term, existing={}):
             changed_since_date, term, **kwargs):
 
         primary_id = None
-        course_id = '{term_id}-{curr_abbr}-{course_num}-{section_id}'.format(
-            term_id=section_ref.term.canvas_sis_id(),
-            curr_abbr=section_ref.curriculum_abbr.upper(),
-            course_num=section_ref.course_number,
-            section_id=section_ref.section_id.upper())
+        course_id = (
+            f'{section_ref.term.canvas_sis_id()}-'
+            f'{section_ref.curriculum_abbr.upper()}-'
+            f'{section_ref.course_number}-'
+            f'{section_ref.section_id.upper()}'
+        )
 
         if course_id not in existing:
             try:
                 label = section_ref.section_label()
                 section = get_section_by_label(label)
                 if not is_time_schedule_ready(section):
-                    logger.info('Course: SKIP {}, TS not ready'.format(label))
+                    logger.info(f'Course: SKIP {label}, TS not ready')
                     continue
             except DataFailureException as err:
-                logger.info('Course: SKIP {}, {}'.format(label, err))
+                logger.info(f'Course: SKIP {label}, {err}')
                 continue
             except ValueError as err:
-                logger.info('Course: SKIP, {}'.format(err))
+                logger.info(f'Course: SKIP, {err}')
                 continue
 
             if section.is_independent_study:
                 for instructor in section.get_instructors():
-                    ind_course_id = '{}-{}'.format(
-                        course_id, instructor.uwregid)
+                    ind_course_id = f'{course_id}-{instructor.uwregid}'
                     if ind_course_id not in existing:
                         sections.append({'course_id': ind_course_id,
                                          'primary_id': primary_id})
@@ -226,7 +223,7 @@ def get_registrations_by_section(section):
     for registration in registrations:
         uniques[registration.regid] = registration
 
-    return sorted(list(uniques.values()), key=lambda r: r.regid)
+    return sorted(uniques.values(), key=lambda r: r.regid)
 
 
 def canvas_xlist_id(section_list):

@@ -2,35 +2,37 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
+import json
+import zipfile
+from io import BytesIO
+from logging import getLogger
+
 from django.conf import settings
 from django.core.files.storage import default_storage
+from restclients_core.exceptions import DataFailureException
 from uw_canvas import Canvas
 from uw_canvas.accounts import Accounts
 from uw_canvas.admins import Admins
 from uw_canvas.courses import Courses
-from uw_canvas.sections import Sections
+from uw_canvas.developer_keys import DeveloperKeys
 from uw_canvas.enrollments import Enrollments
+from uw_canvas.external_tools import ExternalTools
+from uw_canvas.lti_registrations import LTIRegistrations
+from uw_canvas.models import CanvasEnrollment
+from uw_canvas.models import SISImport as SISImportModel
 from uw_canvas.reports import Reports
 from uw_canvas.roles import Roles
-from uw_canvas.users import Users
+from uw_canvas.sections import Sections
+from uw_canvas.sis_import import CSV_FILES, SISImport
 from uw_canvas.terms import Terms
-from uw_canvas.external_tools import ExternalTools
-from uw_canvas.developer_keys import DeveloperKeys
-from uw_canvas.lti_registrations import LTIRegistrations
-from uw_canvas.sis_import import SISImport, CSV_FILES
-from uw_canvas.models import CanvasEnrollment, SISImport as SISImportModel
-from restclients_core.exceptions import DataFailureException
+from uw_canvas.users import Users
+
 from sis_provisioner.dao.course import (
-    valid_academic_course_sis_id, valid_academic_section_sis_id,
-    adhoc_course_sis_id, group_section_sis_id)
-from sis_provisioner.dao.user import user_sis_id, user_integration_id
+    valid_academic_course_sis_id,
+    valid_academic_section_sis_id,
+)
+from sis_provisioner.dao.user import user_integration_id, user_sis_id
 from sis_provisioner.exceptions import CoursePolicyException
-from urllib3.exceptions import SSLError
-from logging import getLogger
-from csv import reader
-from io import BytesIO
-import zipfile
-import json
 
 logger = getLogger(__name__)
 
@@ -107,21 +109,21 @@ def update_developer_key(key_id, key_data):
     return DeveloperKeys().update_developer_key(key_id, key_data)
 
 
-def get_lti_registrations(params={}):
-    return LTIRegistrations(
-        per_page=100).get_registrations(params=params)
+def get_lti_registrations(params=None):
+    if params is None:
+        params = {}
+    return LTIRegistrations(per_page=100).get_registrations(params=params)
 
 
 def update_lti_registration(registration_id, update_data):
-    return LTIRegistrations().update_registration(
-        registration_id, update_data)
+    return LTIRegistrations().update_registration(registration_id, update_data)
 
 
 def get_course_roles_in_account(account_sis_id):
     if account_sis_id and account_sis_id.startswith('uwcourse:uweo'):
-        account_id = getattr(settings, 'CONTINUUM_CANVAS_ACCOUNT_ID')
+        account_id = settings.CONTINUUM_CANVAS_ACCOUNT_ID
     else:
-        account_id = getattr(settings, 'RESTCLIENTS_CANVAS_ACCOUNT_ID')
+        account_id = settings.RESTCLIENTS_CANVAS_ACCOUNT_ID
 
     return Roles().get_effective_course_roles_in_account(account_id)
 
@@ -134,7 +136,9 @@ def get_account_role_data(account_id):
     return json.dumps(role_data, sort_keys=True)
 
 
-def get_user_by_sis_id(sis_user_id, params={}):
+def get_user_by_sis_id(sis_user_id, params=None):
+    if params is None:
+        params = {}
     return Users().get_user_by_sis_id(sis_user_id, params=params)
 
 
@@ -171,9 +175,10 @@ def merge_all_users_for_person(person):
 
     for user in users_to_merge:
         canvas.merge_users(user, destination_user)
-        logger.info('Merged user {} ({}) into {} ({})'.format(
-            user.user_id, user.login_id, destination_user.user_id,
-            destination_user.login_id))
+        logger.info(
+            f'Merged user {user.user_id} ({user.login_id}) into '
+            f'{destination_user.user_id} ({destination_user.login_id})'
+        )
 
     current_login = None
     for login in canvas.get_user_logins(destination_user.user_id):
@@ -192,8 +197,10 @@ def merge_all_users_for_person(person):
         current_login.sis_user_id = user_sis_id(person)
         current_login.integration_id = user_integration_id(person)
         canvas.update_user_login(current_login)
-        logger.info('Updated login {} to sis_id {}'.format(
-            current_login.unique_id, current_login.sis_user_id))
+        logger.info(
+            f'Updated login {current_login.unique_id} to sis_id '
+            f'{current_login.sis_user_id}'
+        )
 
 
 def create_user(person):
@@ -208,11 +215,15 @@ def get_term_by_sis_id(term_sis_id):
     return Terms().get_term_by_sis_id(term_sis_id)
 
 
-def get_course_by_id(course_id, params={}):
+def get_course_by_id(course_id, params=None):
+    if params is None:
+        params = {}
     return Courses().get_course(course_id, params)
 
 
-def get_course_by_sis_id(course_sis_id, params={}):
+def get_course_by_sis_id(course_sis_id, params=None):
+    if params is None:
+        params = {}
     return Courses().get_course_by_sis_id(course_sis_id, params)
 
 
@@ -286,8 +297,10 @@ def enrollment_status_from_registration(registration):
         return ENROLLMENT_ACTIVE
 
     if registration.request_date is None:
-        logger.info('Missing request_date: {} {}'.format(
-            registration.section.section_label(), registration.person.uwregid))
+        logger.info(
+            f'Missing request_date: {registration.section.section_label()} '
+            f'{registration.person.uwregid}'
+        )
         return ENROLLMENT_DELETED
 
     if (registration.request_date > registration.section.term.census_day):
@@ -320,7 +333,10 @@ def get_sis_enrollments_for_user_in_course(user_sis_id, course_sis_id):
     return enrollments
 
 
-def get_active_sis_enrollments_for_user(user_sis_id, roles=[]):
+def get_active_sis_enrollments_for_user(user_sis_id, roles=None):
+    if roles is None:
+        roles = []
+
     canvas = Enrollments(per_page=100)
 
     params = {'state': [ENROLLMENT_ACTIVE]}
@@ -388,7 +404,7 @@ def get_unused_course_report_data(term_sis_id):
 
 
 def sis_import_by_path(csv_path, override_sis_stickiness=False):
-    dirs, files = default_storage.listdir(csv_path)
+    _dirs, files = default_storage.listdir(csv_path)
 
     archive = BytesIO()
     zip_file = zipfile.ZipFile(archive, 'w')

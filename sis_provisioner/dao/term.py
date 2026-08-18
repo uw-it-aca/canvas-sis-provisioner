@@ -2,14 +2,16 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
+from datetime import timedelta
+
 from django.conf import settings
+from uw_canvas.models import CanvasEnrollment
 from uw_sws import sws_now
 from uw_sws.term import (
-    get_term_by_year_and_quarter, get_term_after, get_term_before,
-    get_term_by_date)
-from uw_canvas.models import CanvasEnrollment
-from restclients_core.exceptions import DataFailureException
-from datetime import timedelta
+    get_term_after,
+    get_term_by_date,
+    get_term_by_year_and_quarter,  # noqa: F401
+)
 
 TERM_DATE_FORMAT = '%Y-%m-%dT00:00:00-0800'
 
@@ -50,8 +52,7 @@ def term_name(section):
         return getattr(settings, 'UWEO_INDIVIDUAL_START_TERM_NAME',
                        'UWEO Individual Start')
     else:
-        return '{quarter} {year}'.format(
-            quarter=section.term.quarter.capitalize(), year=section.term.year)
+        return f'{section.term.quarter.capitalize()} {section.term.year}'
 
 
 def course_end_date(section, account_id):
