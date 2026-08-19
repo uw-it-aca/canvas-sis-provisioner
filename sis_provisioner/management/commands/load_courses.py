@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from sis_provisioner.management.commands import SISProvisionerCommand
 from sis_provisioner.dao.term import get_all_active_terms, sws_now
+from sis_provisioner.management.commands import SISProvisionerCommand
 from sis_provisioner.models.course import Course
 
 

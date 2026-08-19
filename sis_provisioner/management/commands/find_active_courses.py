@@ -2,17 +2,15 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from django.core.management.base import BaseCommand
+import csv
+import re
+
 from django.conf import settings
+from django.core.management.base import BaseCommand
 from uw_canvas.reports import Reports
-from uw_canvas.courses import Courses
-from restclients_core.exceptions import DataFailureException
+
 from sis_provisioner.dao.course import valid_academic_course_sis_id
 from sis_provisioner.exceptions import CoursePolicyException
-from time import sleep
-import csv
-import sys
-import re
 
 
 class Command(BaseCommand):
@@ -37,7 +35,6 @@ class Command(BaseCommand):
         report_client.delete_report(user_report)
 
         ind_study_regexp = re.compile("-[A-F0-9]{32}$")
-        course_client = Courses()
 
         for row in csv.reader(sis_data):
             if not len(row):

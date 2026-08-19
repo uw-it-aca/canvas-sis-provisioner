@@ -1,13 +1,13 @@
 # Copyright 2026 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
-from sis_provisioner.management.commands import SISProvisionerCommand
-from sis_provisioner.dao.term import get_current_active_term, get_term_after
-from sis_provisioner.models.course import Course
-from sis_provisioner.exceptions import (
-    EmptyQueueException, MissingImportPathException)
-from sis_provisioner.builders.courses import CourseBuilder
 import traceback
+
+from sis_provisioner.builders.courses import CourseBuilder
+from sis_provisioner.dao.term import get_current_active_term, get_term_after
+from sis_provisioner.exceptions import EmptyQueueException, MissingImportPathException
+from sis_provisioner.management.commands import SISProvisionerCommand
+from sis_provisioner.models.course import Course
 
 
 class Command(SISProvisionerCommand):
@@ -42,7 +42,7 @@ class Command(SISProvisionerCommand):
         try:
             term = self.get_term(relative_term)
             imp = Course.objects.queue_by_priority(priority, term=term)
-        except EmptyQueueException as ex:
+        except EmptyQueueException:
             self.update_job()
             return
 
@@ -57,7 +57,7 @@ class Command(SISProvisionerCommand):
 
         try:
             imp.import_csv()
-        except MissingImportPathException as ex:
+        except MissingImportPathException:
             if not imp.csv_errors:
                 imp.delete()
 

@@ -3,9 +3,11 @@
 
 
 from logging import getLogger
+
+from restclients_core.exceptions import DataFailureException
+
 from sis_provisioner.management.commands import SISProvisionerCommand
 from sis_provisioner.models.account import Account
-from restclients_core.exceptions import DataFailureException
 
 
 class Command(SISProvisionerCommand):
@@ -16,4 +18,4 @@ class Command(SISProvisionerCommand):
             Account.objects.add_all_accounts()
             self.update_job()
         except DataFailureException as err:
-            getLogger(__name__).error('Account request failed: {}'.format(err))
+            getLogger(__name__).error(f'Account request failed: {err}')

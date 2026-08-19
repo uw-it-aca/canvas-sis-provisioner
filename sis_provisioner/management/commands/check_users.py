@@ -1,6 +1,7 @@
+import csv
+
 from django.core.management.base import BaseCommand
 from uw_pws import PWS
-import csv
 
 
 class Command(BaseCommand):

@@ -2,12 +2,13 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from django.core.management.base import BaseCommand, CommandError
-from django.conf import settings
-from sis_provisioner.dao.user import valid_reg_id, valid_gmail_id
-from sis_provisioner.exceptions import UserPolicyException
-from datetime import datetime, timedelta, timezone
 import csv
+from datetime import datetime, timedelta, timezone
+
+from django.core.management.base import BaseCommand
+
+from sis_provisioner.dao.user import valid_gmail_id, valid_reg_id
+from sis_provisioner.exceptions import UserPolicyException
 
 
 class Command(BaseCommand):
@@ -89,28 +90,22 @@ class Command(BaseCommand):
                         users_no_sisid += 1
 
         print('\n\n')
-        print('All users: {}'.format(users_all))
-        print('UW users: {}'.format(users_uw))
-        print('UW users with 0 enrollments: {}'.format(
-            users_uw_no_enrollments))
-        print('UW users with 0 logins: {}'.format(users_uw_login_never))
-        print('UW users who have not logged in the past year: {}'.format(
-            users_uw_login_one_year))
+        print(f'All users: {users_all}')
+        print(f'UW users: {users_uw}')
+        print(f'UW users with 0 enrollments: {users_uw_no_enrollments}')
+        print(f'UW users with 0 logins: {users_uw_login_never}')
+        print(f'UW users who have not logged in the past year: {users_uw_login_one_year}')
         print('\n\n')
-        print('Google users: {}'.format(users_google))
-        print('Google users with 0 enrollments: {}'.format(
-            users_google_no_enrollments))
-        print('Google users with 0 logins: {}'.format(
-            users_google_login_never))
-        print('Google users who have not logged in the past year: {}'.format(
-            users_google_login_one_year))
+        print(f'Google users: {users_google}')
+        print(f'Google users with 0 enrollments: {users_google_no_enrollments}')
+        print(f'Google users with 0 logins: {users_google_login_never}')
+        print(f'Google users who have not logged in the past year: {users_google_login_one_year}')
         print('\n\n')
-        print('No SIS ID users: {}'.format(users_no_sisid))
-        print('Bad SIS ID users: {}'.format(users_unknown))
+        print(f'No SIS ID users: {users_no_sisid}')
+        print(f'Bad SIS ID users: {users_unknown}')
         print('\n\n')
 
     def logged_in_past_year(self, last_access_str):
-        last_access_dt = datetime.strptime(last_access_str[:-6],
-                                           '%Y-%m-%dT%H:%M:%S')
-        return last_access_dt < (
-            datetime.now(timezone.utc) - timedelta(days=365))
+        last_access_dt = datetime.strptime(
+            last_access_str[:-6], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone.utc)
+        return last_access_dt < (datetime.now(timezone.utc) - timedelta(days=365))

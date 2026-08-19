@@ -2,13 +2,13 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from django.core.management.base import BaseCommand
-from django.conf import settings
-from sis_provisioner.dao.canvas import (
-    get_course_report_data, DataFailureException)
-from uw_canvas.collaborations import Collaborations
-from logging import getLogger
 import csv
+from logging import getLogger
+
+from django.core.management.base import BaseCommand
+from uw_canvas.collaborations import Collaborations
+
+from sis_provisioner.dao.canvas import DataFailureException, get_course_report_data
 
 logger = getLogger(__name__)
 
@@ -19,30 +19,29 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         client = Collaborations()
 
-        outpath = 'course-collaborations.csv'
-        outfile = open(outpath, 'w')
-        csv.register_dialect('unix_newline', lineterminator='\n')
-        writer = csv.writer(outfile, dialect='unix_newline')
-        writer.writerow([
-            'course_id', 'course_sis_id', 'collaboration_id',
-            'collaboration_type', 'document_id', 'url', 'title'])
-
         report_data = get_course_report_data()
-        header = report_data.pop(0)
-        for row in csv.reader(report_data):
-            if not len(row):
-                continue
+        _header = report_data.pop(0)
 
-            canvas_id = row[0]
-            course_sis_id = row[1]
-            try:
-                for col in client.get_collaborations_for_course(canvas_id):
-                    writer.writerow([
-                        canvas_id, course_sis_id, col.collaboration_id,
-                        col.collaboration_type, col.document_id, col.url,
-                        col.title])
-            except DataFailureException as ex:
-                logger.info(f'ERROR fetching collaborations, {ex}')
-                continue
+        outpath = 'course-collaborations.csv'
+        with open(outpath, 'w') as outfile:
+            csv.register_dialect('unix_newline', lineterminator='\n')
+            writer = csv.writer(outfile, dialect='unix_newline')
+            writer.writerow([
+                'course_id', 'course_sis_id', 'collaboration_id',
+                'collaboration_type', 'document_id', 'url', 'title'])
 
-        outfile.close()
+            for row in csv.reader(report_data):
+                if not len(row):
+                    continue
+
+                canvas_id = row[0]
+                course_sis_id = row[1]
+                try:
+                    for col in client.get_collaborations_for_course(canvas_id):
+                        writer.writerow([
+                            canvas_id, course_sis_id, col.collaboration_id,
+                            col.collaboration_type, col.document_id, col.url,
+                            col.title])
+                except DataFailureException as ex:
+                    logger.info(f'ERROR fetching collaborations, {ex}')
+                    continue
