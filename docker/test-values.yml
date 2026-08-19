@@ -23,30 +23,13 @@ gateway:
   hostnames:
     - test-apps.canvas.uw.edu
   maxRequestSize: 2e+7
-  rules:
-    - matches:
-        - path:
-            type: PathPrefix
-            value: /
-      timeouts:
-        request: 30s
-        backendRequest: 10s
-      backendRefs:
-        - name: canvas
-          kind: Service
-          port: 80
-    - matches:
-       - path:
-           type: RegularExpression
-           value: "^/(unknown-user|unauthorized-user)$"
-      filters:
-        - type: RequestRedirect
-          requestRedirect:
-            hostname: "test-login.canvas.uw.edu"
-            statusCode: 301
-            path:
-              type: ReplaceFullPath
-              replaceFullPath: "/{path}"
+  requestTimeouts:
+    frontEnd: 30s
+    backEnd: 10s
+  rewriteRedirect:
+    pathMatchRegex: "^/(unknown-user|unauthorized-user)$"
+    redirectHostname: test-login.canvas.uw.edu
+    redirectPath: "/{path}"
 
 lifecycle:
   enabled: true
