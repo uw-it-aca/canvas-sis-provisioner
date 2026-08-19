@@ -2,8 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from restclients_core.exceptions import DataFailureException
 from blti.views import RESTDispatch
+from restclients_core.exceptions import DataFailureException
+
 from sis_provisioner.dao.canvas import get_course_roles_in_account
 
 

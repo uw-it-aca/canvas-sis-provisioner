@@ -2,16 +2,19 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from sis_provisioner.events import SISProvisionerProcessor
-from sis_provisioner.dao.canvas import (
-    get_instructor_sis_import_role, ENROLLMENT_ACTIVE, ENROLLMENT_DELETED)
-from sis_provisioner.dao.course import is_time_schedule_ready
-from sis_provisioner.dao.term import (
-    get_term_by_year_and_quarter, is_active_term)
-from sis_provisioner.models.events import InstructorLog
+from dateutil.parser import parse as date_parse
 from restclients_core.exceptions import DataFailureException
 from uw_sws.models import Section
-from dateutil.parser import parse as date_parse
+
+from sis_provisioner.dao.canvas import (
+    ENROLLMENT_ACTIVE,
+    ENROLLMENT_DELETED,
+    get_instructor_sis_import_role,
+)
+from sis_provisioner.dao.course import is_time_schedule_ready
+from sis_provisioner.dao.term import get_term_by_year_and_quarter, is_active_term
+from sis_provisioner.events import SISProvisionerProcessor
+from sis_provisioner.models.events import InstructorLog
 
 log_prefix = 'INSTRUCTOR:'
 QUEUE_SETTINGS_NAME_ADD = 'INSTRUCTOR_ADD'
@@ -35,7 +38,7 @@ class InstructorProcessor(SISProvisionerProcessor):
             term = get_term_by_year_and_quarter(
                 section_data['Term']['Year'], section_data['Term']['Quarter'])
         except DataFailureException as err:
-            self._log('ERROR Term ({})'.format(err), None)
+            self._log(f'ERROR Term ({err})', None)
             return
 
         section = Section(
@@ -133,7 +136,7 @@ class InstructorProcessor(SISProvisionerProcessor):
                     else:
                         person = []
                         for k, v in instructor['Person'].items():
-                            person.append('[{}] = "{}"'.format(k, v))
+                            person.append(f'[{k}] = "{v}"')
 
                         self._log('IGNORE (Missing regid for {})'.format(
                             ', '.join(person)), section)
@@ -163,7 +166,7 @@ class InstructorAddProcessor(InstructorProcessor):
     _eventMessageVersion = '1'
 
     def __init__(self):
-        super(InstructorAddProcessor, self).__init__(
+        super().__init__(
             queue_settings_name=QUEUE_SETTINGS_NAME_ADD, is_encrypted=False)
 
     def load_instructors(self, section):
@@ -183,7 +186,7 @@ class InstructorDropProcessor(InstructorProcessor):
     _eventMessageVersion = '1'
 
     def __init__(self):
-        super(InstructorDropProcessor, self).__init__(
+        super().__init__(
             queue_settings_name=QUEUE_SETTINGS_NAME_DROP, is_encrypted=False)
 
     def load_instructors(self, section):

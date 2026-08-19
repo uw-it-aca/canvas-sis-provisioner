@@ -1,14 +1,12 @@
 # Copyright 2026 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
-
-import re
 import json
-import dateutil.parser
 from logging import getLogger
+
 from django.core.management import call_command
+
 from sis_provisioner.models import Import
-from sis_provisioner.models.user import User
 from sis_provisioner.views.admin import RESTDispatch
 
 logger = getLogger(__name__)
@@ -29,8 +27,7 @@ class ImportView(RESTDispatch):
             imp = Import.objects.get(id=import_id)
             return self.json_response(imp.json_data())
         except Import.DoesNotExist:
-            return self.error_response(
-                404, "Import {} not found".format(import_id))
+            return self.error_response(404, f"Import {import_id} not found")
         except ImportInvalidException as err:
             return self.error_response(400, err)
 
@@ -38,13 +35,11 @@ class ImportView(RESTDispatch):
         body = json.loads(request.read())
         mode = body.get('mode', None)
         if mode == 'group':
-            logger.info(
-                'imports ({}): POST: import_group'.format(request.user))
+            logger.info(f'imports ({request.user}): POST: import_group')
             call_command('import_groups')
             return self.json_response({"import": "started"})
         else:
-            logger.info(
-                'imports ({}): POST: unknown command'.format(request.user))
+            logger.info(f'imports ({request.user}): POST: unknown command')
             return self.error_response(400, "Unknown import mode")
 
     def delete(self, request, *args, **kwargs):
@@ -53,18 +48,17 @@ class ImportView(RESTDispatch):
             imp = Import.objects.get(id=import_id)
 
             logger.info(
-                'imports ({}): DELETE: type: {}, queue_id: {}, '
-                'post_status: {}, canvas_state: {}'.format(
-                    request.user, imp.csv_type, imp.pk, imp.post_status,
-                    imp.canvas_state))
+                f'imports ({request.user}): DELETE: type: {imp.csv_type}, '
+                f'queue_id: {imp.pk}, post_status: {imp.post_status}, '
+                f'canvas_state: {imp.canvas_state}'
+            )
 
             imp.delete()
 
             return self.json_response()
 
         except Import.DoesNotExist:
-            return self.error_response(
-                404, "Import {} not found".format(import_id))
+            return self.error_response(404, f"Import {import_id} not found")
         except ImportInvalidException as err:
             return self.error_response(400, err)
 

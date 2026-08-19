@@ -2,15 +2,17 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from django.test import TestCase
+from datetime import datetime, timezone
+from unittest import mock
+
 from django.db.models.query import QuerySet
+from django.test import TestCase
 from uw_pws import PWS
 from uw_pws.util import fdao_pws_override
+
 from sis_provisioner.exceptions import UserPolicyException
 from sis_provisioner.models import Import
 from sis_provisioner.models.user import User
-from datetime import datetime
-import mock
 
 
 @fdao_pws_override
@@ -26,18 +28,18 @@ class UserModelTest(TestCase):
 
     @mock.patch.object(QuerySet, 'update')
     def test_dequeue(self, mock_update):
-        dt = datetime.now()
-        r = User.objects.dequeue(Import(pk=1,
-                                        priority=User.PRIORITY_HIGH,
-                                        canvas_state='imported',
-                                        post_status=200,
-                                        canvas_progress=100,
-                                        monitor_date=dt))
+        dt = datetime.now(timezone.utc)
+        User.objects.dequeue(Import(pk=1,
+                                    priority=User.PRIORITY_HIGH,
+                                    canvas_state='imported',
+                                    post_status=200,
+                                    canvas_progress=100,
+                                    monitor_date=dt))
         mock_update.assert_called_with(priority=User.PRIORITY_DEFAULT,
                                        queue_id=None,
                                        provisioned_date=dt)
 
-        r = User.objects.dequeue(Import(pk=1, priority=User.PRIORITY_HIGH))
+        _r = User.objects.dequeue(Import(pk=1, priority=User.PRIORITY_HIGH))
         mock_update.assert_called_with(queue_id=None)
 
     def test_add_user(self):

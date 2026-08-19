@@ -2,10 +2,11 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
+import traceback
+
+from sis_provisioner.builders.accounts import AccountBuilder
 from sis_provisioner.management.commands import SISProvisionerCommand
 from sis_provisioner.models import Import
-from sis_provisioner.builders.accounts import AccountBuilder
-import traceback
 
 
 class Command(SISProvisionerCommand):

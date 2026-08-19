@@ -1,16 +1,18 @@
 # Copyright 2026 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
+# ruff: noqa
+
+import csv
+import sys
+from logging import getLogger
 
 from django.core.management.base import BaseCommand
-from sis_provisioner.models.course import Course
 from restclients_core.exceptions import DataFailureException
 from uw_canvas.enrollments import Enrollments
 from uw_gws import GWS
-from logging import getLogger
-import csv
-import sys
 
+from sis_provisioner.models.course import Course
 
 logger = getLogger(__name__)
 
@@ -61,17 +63,15 @@ class Command(BaseCommand):
                         seen.add(teacher.login_id)
                         if self._is_employee(teacher.login_id):
                             writer.writerow([teacher.name,
-                                             "{}@uw.edu".format(
-                                                 teacher.login_id)])
+                                             f"{teacher.login_id}@uw.edu"])
                         else:
-                            print("Separated Teacher: {}".format(
-                                teacher.login_id), file=sys.stderr)
+                            print(f"Separated Teacher: {teacher.login_id}", file=sys.stderr)
 
     def _is_employee(self, login_id):
         try:
             return self.gws.is_effective_member(EMPLOYEE_GROUP, login_id)
         except Exception as ex:
-            print("GWS exception: {}".format(ex), file=sys.stderr)
+            print(f"GWS exception: {ex}", file=sys.stderr)
 
     def _get_teachers(self, course):
         try:
@@ -79,8 +79,7 @@ class Command(BaseCommand):
                 course.canvas_course_id, {'type': 'TeacherEnrollment'})
         except DataFailureException as ex:
             if ex.status == 404:
-                print('enrollment: unknown course {} ({})'.format(
-                    course.course_id, course.canvas_course_id),
+                print(f'enrollment: unknown course {course.course_id} ({course.canvas_course_id})',
                       file=sys.stderr)
             else:
                 print('enrollment: exception referencing {} ({}): {}'.format(

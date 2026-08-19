@@ -1,17 +1,18 @@
 # Copyright 2026 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
+# ruff: noqa
+
+import csv
+from logging import getLogger
 
 from django.core.management.base import BaseCommand
+from restclients_core.exceptions import DataFailureException
 from uw_canvas.accounts import Accounts
 from uw_canvas.courses import Courses
-from restclients_core.exceptions import DataFailureException
+
 from sis_provisioner.csv.data import Collector
 from sis_provisioner.csv.format import CourseCSV
-from sis_provisioner.models import Import
-from sis_provisioner.models.course import Course
-from logging import getLogger
-import csv
 
 logger = getLogger(__name__)
 
@@ -48,8 +49,7 @@ class Command(BaseCommand):
                     targets[source_account_sis_id] = target_account_sis_id
                 except DataFailureException as ex:
                     logger.info(
-                        'Migration skipped for account {}: {}'.format(
-                            source_account_sis_id, ex))
+                        f'Migration skipped for account {source_account_sis_id}: {ex}')
                     continue
 
         csvdata = Collector()
@@ -61,8 +61,7 @@ class Command(BaseCommand):
                         'state': ['all'], 'include': ['term']})
             except DataFailureException as ex:
                 logger.info(
-                    'Migration skipped for account {}: {}'.format(
-                        account_sis_id, ex))
+                    f'Migration skipped for account {account_sis_id}: {ex}')
                 continue
 
             # For each course in the account, create a csv row using the target
@@ -76,20 +75,17 @@ class Command(BaseCommand):
                 if course.account_id not in source_account_ids:
                     missing_account_targets.add(course.account_id)
                     logger.info(
-                        'Migration skipped for course {}: Missing account in '
-                        'target {} for account {} in source {}'.format(
-                            course.course_id, target_account_id,
-                            course.account_id, account_sis_id))
+                        f'Migration skipped for course {course.course_id}: Missing account in '
+                        f'target {target_account_id} for account {course.account_id} in source {account_sis_id}')
                     continue
 
                 if sis_course_id is None or not len(sis_course_id):
-                    sis_course_id = 'course_{}'.format(course.course_id)
+                    sis_course_id = f'course_{course.course_id}'
                     try:
                         client.update_sis_id(course.course_id, sis_course_id)
                     except DataFailureException as ex:
                         logger.info(
-                            'Migration skipped for course {}: {}'.format(
-                                course.course_id, ex))
+                            f'Migration skipped for course {course.course_id}: {ex}')
                         continue
 
                 csvdata.add(CourseCSV(
@@ -103,8 +99,8 @@ class Command(BaseCommand):
         csv_path = csvdata.write_files()
         if csv_path:
             if len(missing_account_targets):
-                print('Not migrated: {}'.format(missing_account_targets))
-            print('SIS Import file path: {}'.format(csv_path))
+                print(f'Not migrated: {missing_account_targets}')
+            print(f'SIS Import file path: {csv_path}')
             # imp = Import(priority=Course.PRIORITY_DEFAULT, csv_type='course',
             #              csv_path=csv_path)
             # imp.save()

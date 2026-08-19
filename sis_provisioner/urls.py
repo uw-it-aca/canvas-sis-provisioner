@@ -4,28 +4,41 @@
 
 from django.urls import re_path
 from django.views.generic.base import TemplateView
+
 from sis_provisioner.views.admin import (
-    ImportStatus, ManageUsers, ManageCourses, ManageGroups, ManageAdmins,
-    ManageJobs, ManageExternalTools)
-from sis_provisioner.views.course import CourseView, CourseListView
+    ImportStatus,
+    ManageAdmins,
+    ManageCourses,
+    ManageExternalTools,
+    ManageGroups,
+    ManageJobs,
+    ManageUsers,
+)
+from sis_provisioner.views.astra import AccountSearch, AccountSoC, AdminSearch
+from sis_provisioner.views.canvas import (
+    CanvasAccountView,
+    CanvasCourseView,
+    CanvasStatus,
+)
+from sis_provisioner.views.course import CourseListView, CourseView
 from sis_provisioner.views.course.expiration import CourseExpirationView
 from sis_provisioner.views.enrollment import EnrollmentListView
-from sis_provisioner.views.group import GroupListView
-from sis_provisioner.views.user import (
-    UserView, UserMergeView, UserSessionsView, UserCourseView)
-from sis_provisioner.views.login import LoginValidationView
-from sis_provisioner.views.terms import TermListView
-from sis_provisioner.views.canvas import (
-    CanvasCourseView, CanvasAccountView, CanvasStatus)
-from sis_provisioner.views.imports import ImportView, ImportListView
-from sis_provisioner.views.jobs import JobView, JobListView
 from sis_provisioner.views.events import EventListView
-from sis_provisioner.views.astra import AdminSearch, AccountSearch, AccountSoC
-from sis_provisioner.views.external_tools import (
-    ExternalToolView, ExternalToolListView)
+from sis_provisioner.views.external_tools import ExternalToolListView, ExternalToolView
+from sis_provisioner.views.group import GroupListView
 from sis_provisioner.views.groups import GroupsLaunchView, GroupView
 from sis_provisioner.views.groups.roles import CanvasCourseRoles
 from sis_provisioner.views.groups.validate import GWSGroup, GWSGroupMembers
+from sis_provisioner.views.imports import ImportListView, ImportView
+from sis_provisioner.views.jobs import JobListView, JobView
+from sis_provisioner.views.login import LoginValidationView
+from sis_provisioner.views.terms import TermListView
+from sis_provisioner.views.user import (
+    UserCourseView,
+    UserMergeView,
+    UserSessionsView,
+    UserView,
+)
 
 urlpatterns = [
     re_path(r'^$', TemplateView.as_view(template_name='index.html')),

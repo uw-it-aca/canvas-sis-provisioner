@@ -2,18 +2,19 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
+from datetime import datetime, timedelta, timezone
+
+from django.conf import settings
 from django.db import models
 from django.db.models import F
-from django.conf import settings
 from django.utils.timezone import localtime
+
 from sis_provisioner.dao.astra import ASTRA
 from sis_provisioner.dao.canvas import get_account_role_data
+from sis_provisioner.exceptions import AccountPolicyException, EmptyQueueException
 from sis_provisioner.models import Import, ImportResource
 from sis_provisioner.models.account import Account
 from sis_provisioner.models.user import User
-from sis_provisioner.exceptions import (
-    AccountPolicyException, EmptyQueueException)
-from datetime import datetime, timedelta, timezone
 
 
 class AdminManager(models.Manager):
@@ -27,10 +28,10 @@ class AdminManager(models.Manager):
         if is_deleted:
             kwargs['is_deleted'] = True
 
-        return super(AdminManager, self).get_queryset().filter(**kwargs)
+        return super().get_queryset().filter(**kwargs)
 
     def queue_all(self):
-        pks = super(AdminManager, self).get_queryset().filter(
+        pks = super().get_queryset().filter(
             queue_id__isnull=True,
             account__is_deleted__isnull=True).values_list('pk', flat=True)
 
@@ -40,12 +41,12 @@ class AdminManager(models.Manager):
         imp = Import(priority=Admin.PRIORITY_DEFAULT, csv_type='admin')
         imp.save()
 
-        super(AdminManager, self).get_queryset().update(queue_id=imp.pk)
+        super().get_queryset().update(queue_id=imp.pk)
 
         return imp
 
     def queued(self, queue_id):
-        return super(AdminManager, self).get_queryset().filter(
+        return super().get_queryset().filter(
             queue_id=queue_id).order_by(F('is_deleted').desc(nulls_last=True))
 
     def dequeue(self, sis_import):
@@ -60,7 +61,7 @@ class AdminManager(models.Manager):
         """
         Mark all records deleted to catch ASTRA fallen
         """
-        super(AdminManager, self).get_queryset().filter(
+        super().get_queryset().filter(
             queue_id=queue_id).update(is_deleted=True)
 
     def finish_reconcile(self, queue_id):
@@ -69,12 +70,12 @@ class AdminManager(models.Manager):
         retention_dt = now_dt - timedelta(days=retention)
 
         # Set deleted date for admins who were just deleted
-        super(AdminManager, self).get_queryset().filter(
+        super().get_queryset().filter(
             queue_id=queue_id, is_deleted__isnull=False,
             deleted_date=None).update(deleted_date=now_dt)
 
         # Purge expired removed admins
-        super(AdminManager, self).get_queryset().filter(
+        super().get_queryset().filter(
             queue_id=queue_id, is_deleted__isnull=False,
             deleted_date__lt=retention_dt).delete()
 
@@ -101,7 +102,7 @@ class AdminManager(models.Manager):
             raise AccountPolicyException('Unknown account: "{}" ({})'.format(
                 kwargs.get('account_sis_id'), kwargs.get('canvas_id')))
 
-        admin, created = Admin.objects.get_or_create(
+        admin, _created = Admin.objects.get_or_create(
             net_id=kwargs['net_id'],
             reg_id=kwargs['reg_id'],
             role=kwargs['role'],
@@ -121,7 +122,7 @@ class AdminManager(models.Manager):
 
     def has_role_in_account(self, net_id, canvas_id, role):
         try:
-            admin = Admin.objects.get(
+            _admin = Admin.objects.get(
                 net_id=net_id, account__canvas_id=canvas_id, role=role,
                 deleted_date__isnull=True)
             return True
@@ -130,7 +131,7 @@ class AdminManager(models.Manager):
 
     def has_role(self, net_id, role):
         try:
-            admin = Admin.objects.get(
+            _admin = Admin.objects.get(
                 net_id=net_id, role=role, deleted_date__isnull=True,
                 account__is_deleted__isnull=True)
             return True
@@ -157,17 +158,13 @@ class AdminManager(models.Manager):
                 ancillary_account_id = canvas_account_id
 
             if (str(ancillary_account_id) == str(canvas_account_id) and
-                    data['canvas_role'] == admin.role):
-                if self.has_role(admin.user.login_id, parent_role):
-                    return True
+                    data['canvas_role'] == admin.role and
+                    self.has_role(admin.user.login_id, parent_role)):
+                return True
 
-        # Check for allowed admins not in ASTRA, or admins with a
-        # non-standard ancillary role
-        if (admin.user.login_id in getattr(
-                settings, 'ASTRA_ADMIN_EXCEPTIONS', [])):
-            return True
-
-        return False
+        # Check for allowed admins not in ASTRA, or admins with a non-standard
+        # ancillary role
+        return admin.user.login_id in getattr(settings, 'ASTRA_ADMIN_EXCEPTIONS', [])
 
 
 class Admin(ImportResource):
@@ -200,7 +197,7 @@ class Admin(ImportResource):
                 self.added_date is not None) else '',
             'provisioned_date': localtime(self.provisioned_date).strftime(
                 date_fmt) if (self.provisioned_date is not None) else '',
-            'is_deleted': True if self.is_deleted else False,
+            'is_deleted': bool(self.is_deleted),
             'deleted_date': localtime(self.deleted_date).strftime(
                 date_fmt) if (self.deleted_date is not None) else '',
             'queue_id': self.queue_id
@@ -213,7 +210,7 @@ class RoleCacheManager(models.Manager):
             account = Account.objects.get(canvas_id=account_id)
         except Account.DoesNotExist:
             raise AccountPolicyException(
-                'Unknown account: {}'.format(account_id))
+                f'Unknown account: {account_id}')
 
         serialized = get_account_role_data(account_id)
         new_cache = RoleCache(account=account, role_data=serialized)

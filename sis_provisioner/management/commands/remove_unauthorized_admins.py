@@ -2,13 +2,19 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
+from logging import getLogger
+
 from django.conf import settings
 from restclients_core.exceptions import DataFailureException
-from sis_provisioner.models.admin import Admin
+
 from sis_provisioner.dao.canvas import (
-    get_account_by_id, get_all_sub_accounts, get_admins, delete_admin)
+    delete_admin,
+    get_account_by_id,
+    get_admins,
+    get_all_sub_accounts,
+)
 from sis_provisioner.management.commands import SISProvisionerCommand
-from logging import getLogger
+from sis_provisioner.models.admin import Admin
 
 logger = getLogger(__name__)
 

@@ -2,18 +2,25 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
+import json
+import os
+import random
+import string
+from datetime import datetime, timezone
+
 from django.conf import settings
 from django.db import models
 from django.utils.timezone import localtime
-from sis_provisioner.models.account import Account
+
 from sis_provisioner.dao.canvas import (
-    get_account_by_id, get_sub_accounts, get_external_tools,
-    create_external_tool, update_external_tool, delete_external_tool)
-from datetime import datetime, timezone
-import string
-import random
-import json
-import os
+    create_external_tool,
+    delete_external_tool,
+    get_account_by_id,
+    get_external_tools,
+    get_sub_accounts,
+    update_external_tool,
+)
+from sis_provisioner.models.account import Account
 
 
 class BLTIKeyStore(models.Model):
@@ -27,14 +34,14 @@ class BLTIKeyStore(models.Model):
 
 class ExternalToolManager(models.Manager):
     def get_by_hostname(self, hostname):
-        return super(ExternalToolManager, self).get_queryset().filter(
+        return super().get_queryset().filter(
             config__contains=hostname)
 
     def import_all(self, changed_by='auto'):
         queue_id = os.getpid()
         ExternalTool.objects.all().update(queue_id=queue_id)
 
-        account_id = getattr(settings, 'RESTCLIENTS_CANVAS_ACCOUNT_ID')
+        account_id = settings.RESTCLIENTS_CANVAS_ACCOUNT_ID
         self.import_tools_in_account(account_id, changed_by)
 
         ExternalTool.objects.filter(queue_id=queue_id).delete()

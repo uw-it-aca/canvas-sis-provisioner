@@ -2,14 +2,15 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from django.test import TestCase, override_settings
-from uw_sws.util import fdao_sws_override
+from django.test import TestCase
+from restclients_core.exceptions import DataFailureException
 from uw_pws.util import fdao_pws_override
+from uw_sws.exceptions import InvalidCanvasIndependentStudyCourse
+from uw_sws.util import fdao_sws_override
+
 from sis_provisioner.builders import Builder
 from sis_provisioner.csv.data import Collector
 from sis_provisioner.exceptions import CoursePolicyException
-from restclients_core.exceptions import DataFailureException
-from uw_sws.exceptions import InvalidCanvasIndependentStudyCourse
 
 
 @fdao_sws_override

@@ -2,15 +2,18 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
+import traceback
+from datetime import datetime
+
+from sis_provisioner.builders.courses import UnusedCourseBuilder
+from sis_provisioner.dao.term import (
+    get_current_active_term,
+    get_term_before,
+    get_term_by_year_and_quarter,
+)
+from sis_provisioner.exceptions import EmptyQueueException, MissingImportPathException
 from sis_provisioner.management.commands import SISProvisionerCommand
 from sis_provisioner.models.course import UnusedCourse
-from sis_provisioner.exceptions import (
-    EmptyQueueException, MissingImportPathException)
-from sis_provisioner.dao.term import (
-    get_current_active_term, get_term_before, get_term_by_year_and_quarter)
-from sis_provisioner.builders.courses import UnusedCourseBuilder
-from datetime import datetime
-import traceback
 
 
 class Command(SISProvisionerCommand):
@@ -30,7 +33,7 @@ class Command(SISProvisionerCommand):
         else:
             curr_term = get_current_active_term()
 
-            if datetime.now().date() < curr_term.census_day:
+            if datetime.now().date() < curr_term.census_day:  # noqa: DTZ005
                 self.update_job()
                 return
 
@@ -53,7 +56,7 @@ class Command(SISProvisionerCommand):
 
         try:
             imp.import_csv()
-        except MissingImportPathException as ex:
+        except MissingImportPathException:
             if not imp.csv_errors:
                 imp.delete()
 

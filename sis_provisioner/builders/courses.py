@@ -2,20 +2,28 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from sis_provisioner.builders import Builder
-from sis_provisioner.csv.format import CourseCSV, SectionCSV, TermCSV, XlistCSV
-from sis_provisioner.dao.course import (
-    is_active_section, get_section_by_url, canvas_xlist_id, section_short_name,
-    section_id_from_url)
-from sis_provisioner.dao.canvas import (
-    get_section_by_sis_id, get_sis_sections_for_course, get_course_report_data,
-    get_unused_course_report_data)
-from sis_provisioner.models.course import Course
-from sis_provisioner.exceptions import CoursePolicyException
-from restclients_core.exceptions import DataFailureException
-from uw_sws.exceptions import InvalidCanvasIndependentStudyCourse
 import csv
 import re
+
+from restclients_core.exceptions import DataFailureException
+from uw_sws.exceptions import InvalidCanvasIndependentStudyCourse
+
+from sis_provisioner.builders import Builder
+from sis_provisioner.csv.format import CourseCSV, SectionCSV, TermCSV, XlistCSV
+from sis_provisioner.dao.canvas import (
+    get_section_by_sis_id,
+    get_sis_sections_for_course,
+    get_unused_course_report_data,
+)
+from sis_provisioner.dao.course import (
+    canvas_xlist_id,
+    get_section_by_url,
+    is_active_section,
+    section_id_from_url,
+    section_short_name,
+)
+from sis_provisioner.exceptions import CoursePolicyException
+from sis_provisioner.models.course import Course
 
 
 class CourseBuilder(Builder):
@@ -62,8 +70,8 @@ class CourseBuilder(Builder):
             return
 
         if not section.is_primary_section or section.is_independent_study:
-            raise CoursePolicyException("Not a primary section: {}".format(
-                section.section_label()))
+            raise CoursePolicyException(
+                f"Not a primary section: {section.section_label()}")
 
         if not self.data.add(CourseCSV(section=section)):
             return
@@ -75,19 +83,18 @@ class CourseBuilder(Builder):
         primary_instructors = section.get_instructors()
 
         if len(section.linked_section_urls):
-            dummy_section_id = '{}--'.format(course_id)
+            dummy_section_id = f'{course_id}--'
             try:
-                canvas_section = get_section_by_sis_id(dummy_section_id)
+                _canvas_section = get_section_by_sis_id(dummy_section_id)
                 # Section has linked sections, but was originally
                 # provisioned with a dummy section, which will be removed
-                self.logger.info(
-                    'Removed dummy section for {}'.format(course_id))
+                self.logger.info(f'Removed dummy section for {course_id}')
                 self.data.add(SectionCSV(
                     section_id=dummy_section_id,
                     course_id=course_id,
                     name=section_short_name(section),
                     status='deleted'))
-            except DataFailureException as ex:
+            except DataFailureException:
                 pass
 
             for url in section.linked_section_urls:
@@ -161,7 +168,7 @@ class CourseBuilder(Builder):
             except Course.DoesNotExist:
                 pass
 
-    def _process_linked_section(self, section, primary_instructors=[]):
+    def _process_linked_section(self, section, primary_instructors=None):
         """
         Generates the import data for a non-independent study linked section.
         Linked (secondary) sections are added to sections.
@@ -169,9 +176,13 @@ class CourseBuilder(Builder):
         if section is None:
             return
 
+        if primary_instructors is None:
+            primary_instructors = []
+
+
         if section.is_primary_section or section.is_independent_study:
             raise CoursePolicyException(
-                "Not a linked section: {}".format(section.section_label()))
+                f"Not a linked section: {section.section_label()}")
 
         if self.data.add(SectionCSV(section=section)):
             if is_active_section(section):
@@ -196,7 +207,7 @@ class CourseBuilder(Builder):
 
         if not section.is_independent_study:
             raise CoursePolicyException(
-                "Not an ind study section: {}".format(section.section_label()))
+                f"Not an ind study section: {section.section_label()}")
 
         match_independent_study = section.independent_study_instructor_regid
         for instructor in section.get_instructors():
@@ -226,7 +237,7 @@ class CourseBuilder(Builder):
         """
         if not section.is_primary_section or section.is_independent_study:
             raise CoursePolicyException(
-                "Not a primary section: {}".format(section.section_label()))
+                f"Not a primary section: {section.section_label()}")
 
         course_id = section.canvas_course_sis_id()
 
@@ -244,15 +255,12 @@ class CourseBuilder(Builder):
                 try:
                     joint_sections.append(get_section_by_url(url))
                 except Exception as err:
-                    self.logger.info("Unable to xlist section {}: {}".format(
-                        url, err))
+                    self.logger.info(f"Unable to xlist section {url}: {err}")
 
             try:
                 new_xlist_id = canvas_xlist_id(joint_sections)
             except Exception as err:
-                self.logger.info(
-                    "Unable to generate xlist_id for {}: {}".format(
-                        course_id, err))
+                self.logger.info(f"Unable to generate xlist_id for {course_id}: {err}")
 
         if existing_xlist_id is None and new_xlist_id is None:
             return
@@ -290,7 +298,7 @@ class UnusedCourseBuilder(Builder):
         self.queue_id = kwargs.get('queue_id')
         self.term_sis_id = kwargs.get('term_sis_id')
         report_data = get_unused_course_report_data(self.term_sis_id)
-        header = report_data.pop(0)
+        _header = report_data.pop(0)
         for row in csv.reader(report_data):
             if len(row):
                 self.items.append(row)

@@ -2,42 +2,41 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
+import re
+import string
+
 from django.conf import settings
 from uw_sws.campus import get_all_campuses
 from uw_sws.college import get_all_colleges
-from uw_sws.curriculum import get_curricula_by_department
 from uw_sws.department import get_departments_by_college
 from uw_sws.models import Curriculum
-from sis_provisioner.exceptions import AccountPolicyException
+
 from sis_provisioner.dao import titleize
-import string
-import re
+from sis_provisioner.exceptions import AccountPolicyException
 
 RE_CANVAS_ID = re.compile(r"^\d+$")
-RE_ACCOUNT_ID = re.compile(r"(?=.*[a-z])[\w\-:& ]", re.I)
+RE_ACCOUNT_ID = re.compile(r"(?=.*[a-z])[\w\-:& ]", re.IGNORECASE)
 CACHED_ACCOUNTS = {}
 CACHED_OVERRIDES = {}
 
 
 def valid_canvas_account_id(canvas_id):
     if (canvas_id is None or RE_CANVAS_ID.match(str(canvas_id)) is None):
-        raise AccountPolicyException("Invalid Canvas ID: {}".format(canvas_id))
+        raise AccountPolicyException(f"Invalid Canvas ID: {canvas_id}")
 
 
 def valid_account_id(account_id):
     if (account_id is None or RE_ACCOUNT_ID.match(str(account_id)) is None):
-        raise AccountPolicyException(
-            "Invalid account ID: {}".format(account_id))
+        raise AccountPolicyException(f"Invalid account ID: {account_id}")
 
 
 def valid_account_sis_id(account_id):
     if account_id is not None:
-        sis_root = getattr(settings, "SIS_IMPORT_ROOT_ACCOUNT_ID")
+        sis_root = settings.SIS_IMPORT_ROOT_ACCOUNT_ID
         if (account_id == sis_root or
-                re.match(r"^{}\:\w+".format(re.escape(sis_root)), account_id)):
+                re.match(rf"^{re.escape(sis_root)}\:\w+", account_id)):
             return
-    raise AccountPolicyException(
-        "Invalid account SIS ID: {}".format(account_id))
+    raise AccountPolicyException(f"Invalid account SIS ID: {account_id}")
 
 
 def valid_academic_account_sis_id(account_id):
@@ -49,13 +48,12 @@ def valid_academic_account_sis_id(account_id):
     except IndexError:
         pass
 
-    raise AccountPolicyException(
-        "Invalid academic account SIS ID: {}".format(account_id))
+    raise AccountPolicyException(f"Invalid academic account SIS ID: {account_id}")
 
 
 def adhoc_account_sis_id(canvas_id):
     valid_canvas_account_id(canvas_id)
-    return "account_{}".format(canvas_id)
+    return f"account_{canvas_id}"
 
 
 def account_sis_id(accounts):
@@ -84,7 +82,7 @@ def account_name(context):
         name = re.sub(r"(\(?(UW )?Bothell( Campus)?\)?|Bth)$", "", name)
         name = re.sub(r"(\(?(UW )?Tacoma( Campus)?\)?|T)$", "", name)
         name = re.sub(r"[\s-]+$", "", name)
-        name += " [{}]".format(context.label)
+        name += f" [{context.label}]"
 
     return name
 
@@ -92,8 +90,7 @@ def account_name(context):
 def account_id_for_section(section):
     global CACHED_ACCOUNTS, CACHED_OVERRIDES
     if not len(CACHED_ACCOUNTS):
-        from sis_provisioner.models.account import (
-            Curriculum, SubAccountOverride)
+        from sis_provisioner.models.account import Curriculum, SubAccountOverride
         CACHED_ACCOUNTS = Curriculum.objects.accounts_by_curricula()
         CACHED_OVERRIDES = SubAccountOverride.objects.overrides_by_course()
 
@@ -121,7 +118,7 @@ def account_id_for_section(section):
         account_id = CACHED_OVERRIDES[course_id]
 
     if account_id is None:
-        raise AccountPolicyException("No account_id for {}".format(course_id))
+        raise AccountPolicyException(f"No account_id for {course_id}")
 
     return account_id
 

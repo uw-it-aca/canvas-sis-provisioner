@@ -2,9 +2,11 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from django.test import TestCase
-from sis_provisioner.builders.enrollments import EnrollmentBuilder
 from datetime import datetime
+
+from django.test import TestCase
+
+from sis_provisioner.builders.enrollments import EnrollmentBuilder
 
 
 class EnrollmentBuilderTest(TestCase):

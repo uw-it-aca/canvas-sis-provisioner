@@ -4,7 +4,6 @@
 
 import re
 
-
 RE_WORD_BOUNDS = re.compile(r'(\s|-|\(|\)|\.|,|/|:|&|")')
 RE_TITLE_ABBR = re.compile(
     r'^(?:'

@@ -2,15 +2,21 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from sis_provisioner.events import SISProvisionerProcessor
-from sis_provisioner.models.events import EnrollmentLog
-from sis_provisioner.dao.canvas import (
-    get_student_sis_import_role, ENROLLMENT_ACTIVE, ENROLLMENT_DELETED)
-from sis_provisioner.dao.user import valid_reg_id
-from sis_provisioner.exceptions import (
-    InvalidLoginIdException, UnhandledActionCodeException)
-from uw_sws.models import Term, Section
 from dateutil.parser import parse as date_parse
+from uw_sws.models import Section, Term
+
+from sis_provisioner.dao.canvas import (
+    ENROLLMENT_ACTIVE,
+    ENROLLMENT_DELETED,
+    get_student_sis_import_role,
+)
+from sis_provisioner.dao.user import valid_reg_id
+from sis_provisioner.events import SISProvisionerProcessor
+from sis_provisioner.exceptions import (
+    InvalidLoginIdException,
+    UnhandledActionCodeException,
+)
+from sis_provisioner.models.events import EnrollmentLog
 
 log_prefix = 'ENROLLMENT:'
 QUEUE_SETTINGS_NAME = 'ENROLLMENT_V2'
@@ -34,7 +40,7 @@ class EnrollmentProcessor(SISProvisionerProcessor):
     _eventMessageVersion = '2'
 
     def __init__(self):
-        super(EnrollmentProcessor, self).__init__(
+        super().__init__(
             queue_settings_name=QUEUE_SETTINGS_NAME, is_encrypted=True)
 
     def process_message_body(self, json_data):
@@ -78,10 +84,10 @@ class EnrollmentProcessor(SISProvisionerProcessor):
                         'UWRegID' in event['Instructor']) else None
                 }
 
-                if 'Auditor' in event and event['Auditor']:
+                if event.get('Auditor'):
                     data['Role'] = 'Auditor'
 
-                if 'RequestDate' in event:
+                if event.get('RequestDate'):
                     data['RequestDate'] = date_parse(event['RequestDate'])
 
                 enrollments.append(data)

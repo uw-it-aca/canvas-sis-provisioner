@@ -2,14 +2,19 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from sis_provisioner.events import SISProvisionerProcessor, ProcessorException
-from sis_provisioner.models.events import GroupLog
-from sis_provisioner.events.group.dispatch import (
-    AffiliateLoginGroupDispatch, SponsoredLoginGroupDispatch,
-    StudentLoginGroupDispatch, UWGroupDispatch)
-from aws_message.crypto import aes128cbc, CryptoException
-from base64 import b64decode
 import json
+from base64 import b64decode
+
+from aws_message.crypto import CryptoException, aes128cbc
+
+from sis_provisioner.events import ProcessorException, SISProvisionerProcessor
+from sis_provisioner.events.group.dispatch import (
+    AffiliateLoginGroupDispatch,
+    SponsoredLoginGroupDispatch,
+    StudentLoginGroupDispatch,
+    UWGroupDispatch,
+)
+from sis_provisioner.models.events import GroupLog
 
 QUEUE_SETTINGS_NAME = 'GROUP'
 
@@ -25,7 +30,7 @@ class GroupProcessor(SISProvisionerProcessor):
     _eventMessageVersion = 'UWIT-1'
 
     def __init__(self):
-        super(GroupProcessor, self).__init__(
+        super().__init__(
             queue_settings_name=QUEUE_SETTINGS_NAME, is_encrypted=True)
 
     def validate_message_body(self, message):
@@ -56,21 +61,21 @@ class GroupProcessor(SISProvisionerProcessor):
     def _parse_signature(self, message):
         header = message['header']
 
-        to_sign = '{}\n'.format(header[u'contentType'])
+        to_sign = '{}\n'.format(header['contentType'])
         if 'keyId' in header:
-            to_sign += '{}\n{}\n'.format(header[u'iv'], header[u'keyId'])
+            to_sign += '{}\n{}\n'.format(header['iv'], header['keyId'])
         to_sign += (
             '{context}\n{msgid}\n{msgtype}\n{sender}\n{cert}\n'
             '{timestamp}\n{version}\n{body}\n').format(
-            context=header[u'messageContext'], msgid=header[u'messageId'],
-            msgtype=header[u'messageType'], sender=header[u'sender'],
-            cert=header[u'signingCertUrl'], timestamp=header[u'timestamp'],
-            version=header[u'version'], body=message['body'])
+            context=header['messageContext'], msgid=header['messageId'],
+            msgtype=header['messageType'], sender=header['sender'],
+            cert=header['signingCertUrl'], timestamp=header['timestamp'],
+            version=header['version'], body=message['body'])
 
         sig_conf = {
             'cert': {
                 'type': 'url',
-                'reference': header[u'signingCertUrl']
+                'reference': header['signingCertUrl']
             }
         }
 
@@ -80,7 +85,7 @@ class GroupProcessor(SISProvisionerProcessor):
         header = message['header']
         body = message['body']
         try:
-            if set(['keyId', 'iv']).issubset(header):
+            if {'keyId', 'iv'}.issubset(header):
                 key = header['keyId']
                 keys = self.settings.get('BODY_DECRYPT_KEYS', {})
 
@@ -89,12 +94,12 @@ class GroupProcessor(SISProvisionerProcessor):
                 body = cipher.decrypt(b64decode(body))
                 return body
 
-        except KeyError as ex:
-            raise ProcessorException('Invalid keyId: {}'.format(key))
+        except KeyError:
+            raise ProcessorException(f'Invalid keyId: {key}')
         except CryptoException as ex:
-            raise ProcessorException('Cannot decrypt: {}'.format(ex))
+            raise ProcessorException(f'Cannot decrypt: {ex}')
         except Exception as ex:
-            raise ProcessorException('Cannot read: {}'.format(ex))
+            raise ProcessorException(f'Cannot read: {ex}')
 
     def process_message_body(self, json_data):
         if json_data is not None:

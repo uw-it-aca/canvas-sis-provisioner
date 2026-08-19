@@ -2,19 +2,21 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
+import json
+from logging import getLogger
+
 from django.conf import settings
-from django.shortcuts import render
 from django.http import HttpResponse
+from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.views import View
-from sis_provisioner.dao.user import is_group_admin, valid_net_id, valid_reg_id
-from sis_provisioner.dao.term import get_current_active_term
-from sis_provisioner.models.admin import Admin
 from restclients_core.exceptions import DataFailureException
 from uw_saml.decorators import group_required
 from uw_saml.utils import get_user, is_member_of_group
-from logging import getLogger
-import json
+
+from sis_provisioner.dao.term import get_current_active_term
+from sis_provisioner.dao.user import is_group_admin, valid_net_id, valid_reg_id
+from sis_provisioner.models.admin import Admin
 
 logger = getLogger(__name__)
 
@@ -35,7 +37,7 @@ class AdminView(View):
             curr_year = term.year
             curr_quarter = term.quarter
         except DataFailureException as ex:
-            logger.info('GET active term failed: {}'.format(ex))
+            logger.info(f'GET active term failed: {ex}')
             curr_year = ''
             curr_quarter = ''
 
@@ -127,8 +129,10 @@ class ManageExternalTools(AdminView):
 
 class RESTDispatch(AdminView):
     @staticmethod
-    def error_response(status, message='', content={}):
-        content['error'] = '{}'.format(message)
+    def error_response(status, message='', content=None):
+        if content is None:
+            content = {}
+        content['error'] = f'{message}'
         return HttpResponse(json.dumps(content),
                             status=status,
                             content_type='application/json')
@@ -154,8 +158,10 @@ class RESTDispatch(AdminView):
 
 class OpenRESTDispatch(View):
     @staticmethod
-    def error_response(status, message='', content={}):
-        content['error'] = '{}'.format(message)
+    def error_response(status, message='', content=None):
+        if content is None:
+            content = {}
+        content['error'] = f'{message}'
         return HttpResponse(json.dumps(content),
                             status=status,
                             content_type='application/json')

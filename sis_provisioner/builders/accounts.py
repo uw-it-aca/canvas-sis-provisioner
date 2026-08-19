@@ -2,13 +2,19 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
+from django.conf import settings
+
 from sis_provisioner.builders import Builder
-from sis_provisioner.models.account import Curriculum
 from sis_provisioner.csv.format import AccountCSV
 from sis_provisioner.dao.account import (
-    get_all_campuses, get_all_colleges, get_curricula_by_department,
-    get_departments_by_college, account_sis_id, account_name)
-from django.conf import settings
+    account_name,
+    account_sis_id,
+    get_all_campuses,
+    get_all_colleges,
+    get_curricula_by_department,
+    get_departments_by_college,
+)
+from sis_provisioner.models.account import Curriculum
 
 
 class AccountBuilder(Builder):

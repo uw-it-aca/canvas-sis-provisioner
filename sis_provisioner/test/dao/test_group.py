@@ -2,16 +2,20 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
+from datetime import datetime, timezone
+from unittest import mock
+
 from django.test import TestCase, override_settings
+from uw_gws.models import GroupEntity
+from uw_gws.utilities import fdao_gws_override
+from uw_pws.util import fdao_pws_override
+
 from sis_provisioner.dao.group import *
 from sis_provisioner.exceptions import (
-    GroupPolicyException, GroupNotFoundException, DataFailureException)
-from datetime import datetime, timedelta
-from uw_gws.utilities import fdao_gws_override
-from uw_gws.models import GroupEntity
-from uw_pws.util import fdao_pws_override
-from datetime import timezone
-import mock
+    DataFailureException,
+    GroupNotFoundException,
+    GroupPolicyException,
+)
 
 
 @fdao_gws_override
@@ -36,26 +40,26 @@ class GroupPolicyTest(TestCase):
 class GetGroupTest(TestCase):
     @mock.patch.object(GWS, 'get_group_by_id')
     def test_get_group(self, mock_method):
-        r = get_group('javerage', '123')
+        _r = get_group('javerage', '123')
         mock_method.assert_called_with('123')
 
     @mock.patch.object(GWS, 'search_groups')
     def test_search_groups(self, mock_method):
-        r = search_groups('javerage')
+        _r = search_groups('javerage')
         mock_method.assert_called_with(scope='all')
 
-        r = search_groups('javerage', name='foo')
+        _r = search_groups('javerage', name='foo')
         mock_method.assert_called_with(name='foo*', scope='all')
 
-        r = search_groups('javerage', name='foo*')
+        _r = search_groups('javerage', name='foo*')
         mock_method.assert_called_with(name='foo*', scope='all')
 
     @mock.patch('sis_provisioner.dao.group.GWS')
     def test_gws_constructor(self, mock_object):
-        r = get_group('javerage', '123')
+        _r = get_group('javerage', '123')
         mock_object.assert_called_with(act_as='javerage')
 
-        r = search_groups('javerage')
+        _r = search_groups('javerage')
         mock_object.assert_called_with(act_as='javerage')
 
 
@@ -63,15 +67,15 @@ class GetGroupTest(TestCase):
 @fdao_pws_override
 class GroupModifiedTest(TestCase):
     def test_modified_group(self):
-        mtime = datetime.now()
+        mtime = datetime.now(timezone.utc)
         self.assertRaises(
             GroupNotFoundException, is_modified_group,
             'u_does_not_exist', mtime)
 
-        mtime = datetime(2000, 10, 10, 0, 0, 0).replace(tzinfo=timezone.utc)
+        mtime = datetime(2000, 10, 10, 0, 0, 0, tzinfo=timezone.utc)
         self.assertEqual(is_modified_group('u_acadev_tester', mtime), True)
 
-        mtime = datetime(2020, 10, 10, 0, 0, 0).replace(tzinfo=timezone.utc)
+        mtime = datetime(2020, 10, 10, 0, 0, 0, tzinfo=timezone.utc)
         self.assertEqual(is_modified_group('u_acadev_tester', mtime), False)
 
         mtime = None

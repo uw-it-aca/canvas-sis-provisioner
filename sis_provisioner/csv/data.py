@@ -2,20 +2,36 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from django.conf import settings
-from django.core.files.storage import default_storage
-from sis_provisioner.csv.format import (
-    UserHeader, AccountHeader, AdminHeader, TermHeader, CourseHeader,
-    SectionHeader, EnrollmentHeader, XlistHeader, UserCSV, AccountCSV,
-    AdminCSV, TermCSV, CourseCSV, SectionCSV, EnrollmentCSV, XlistCSV)
+import os
 from datetime import datetime
 from logging import getLogger
-import os
+
+from django.conf import settings
+from django.core.files.storage import default_storage
+
+from sis_provisioner.csv.format import (
+    AccountCSV,
+    AccountHeader,
+    AdminCSV,
+    AdminHeader,
+    CourseCSV,
+    CourseHeader,
+    EnrollmentCSV,
+    EnrollmentHeader,
+    SectionCSV,
+    SectionHeader,
+    TermCSV,
+    TermHeader,
+    UserCSV,
+    UserHeader,
+    XlistCSV,
+    XlistHeader,
+)
 
 logger = getLogger(__name__)
 
 
-class Collector(object):
+class Collector:
     def __init__(self):
         self._init_data()
 
@@ -63,8 +79,7 @@ class Collector(object):
         elif isinstance(formatter, XlistCSV):
             return self._add_xlist(formatter)
         else:
-            raise TypeError(
-                'Unknown CSVFormat class: {}'.format(type(formatter)))
+            raise TypeError(f'Unknown CSVFormat class: {type(formatter)}')
 
     def _add_account(self, formatter):
         if formatter.key not in self.account_ids:
@@ -128,7 +143,7 @@ class Collector(object):
         """
         filepath = None
         if self.has_data():
-            filepath = datetime.now().strftime('%Y/%m/%d/%H%M%S-%f')
+            filepath = datetime.now().strftime('%Y/%m/%d/%H%M%S-%f')  # noqa: DTZ005
             for csv_type in self.headers:
                 try:
                     data = list(getattr(self, csv_type).values())
@@ -151,7 +166,7 @@ class Collector(object):
             self._init_data()
 
         if getattr(settings, 'SIS_IMPORT_CSV_DEBUG', False):
-            logger.debug('CSV PATH: {}'.format(filepath))
+            logger.debug(f'CSV PATH: {filepath}')
             return None
         else:
             return filepath

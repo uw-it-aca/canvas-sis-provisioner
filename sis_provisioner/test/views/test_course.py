@@ -1,24 +1,25 @@
 # Copyright 2026 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
+from unittest import mock
+
 from django.conf import settings
-from django.test import TestCase, RequestFactory, override_settings
-from django.urls import reverse
 from django.contrib.auth.models import User as DjangoUser
 from django.contrib.sessions.middleware import SessionMiddleware
-from sis_provisioner.models.course import Course
-from sis_provisioner.models.user import User
-from sis_provisioner.views.course import CourseView
-from sis_provisioner.views.course.expiration import CourseExpirationView
-from sis_provisioner.views.canvas import CanvasCourseView
-from sis_provisioner.test.models.test_account import create_account
-from sis_provisioner.test.models.test_admin import create_admin
+from django.test import RequestFactory, TestCase, override_settings
+from django.urls import reverse
+from uw_canvas.utilities import fdao_canvas_override
+from uw_gws.utilities import fdao_gws_override
 from uw_pws.util import fdao_pws_override
 from uw_sws.util import fdao_sws_override
-from uw_gws.utilities import fdao_gws_override
-from uw_canvas.utilities import fdao_canvas_override
-from datetime import datetime
-import mock
+
+from sis_provisioner.models.course import Course
+from sis_provisioner.models.user import User
+from sis_provisioner.test.models.test_account import create_account
+from sis_provisioner.test.models.test_admin import create_admin
+from sis_provisioner.views.canvas import CanvasCourseView
+from sis_provisioner.views.course import CourseView
+from sis_provisioner.views.course.expiration import CourseExpirationView
 
 
 @fdao_pws_override

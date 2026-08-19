@@ -2,15 +2,24 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
+import re
+
+from blti.views import RESTDispatch
 from django.conf import settings
 from restclients_core.exceptions import DataFailureException
-from sis_provisioner.models.group import Group
+
 from sis_provisioner.dao.group import (
-    valid_group_id, get_effective_members, get_group, search_groups)
+    get_effective_members,
+    get_group,
+    search_groups,
+    valid_group_id,
+)
 from sis_provisioner.exceptions import (
-    GroupPolicyException, GroupNotFoundException, GroupUnauthorizedException)
-from blti.views import RESTDispatch
-import re
+    GroupNotFoundException,
+    GroupPolicyException,
+    GroupUnauthorizedException,
+)
+from sis_provisioner.models.group import Group
 
 
 class GWSDispatchException(Exception):
@@ -25,7 +34,7 @@ class GWSDispatch(RESTDispatch):
             return self.blti.user_login_id
         elif request.user.is_authenticated():
             return request.user.username
-        elif getattr(settings, 'BLTI_NO_AUTH') and getattr(settings, 'ACT_AS'):
+        elif settings.BLTI_NO_AUTH and settings.ACT_AS:
             return settings.ACT_AS
         else:
             raise GWSDispatchException('No Actas')
@@ -94,8 +103,7 @@ class GWSGroupMembers(GWSDispatch):
                 act_as = self.actas_from_request(request)
 
             (valid_members, invalid_members,
-                member_group_ids) = get_effective_members(group_id,
-                                                          act_as=act_as)
+                _member_group_ids) = get_effective_members(group_id, act_as=act_as)
 
             return self.json_response({
                 "membership": [member.name for member in valid_members],

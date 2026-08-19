@@ -18,6 +18,19 @@ ingress:
     nginx.ingress.kubernetes.io/server-snippet: |
       rewrite ^/(unknown-user|unauthorized-user)$ https://test-login.canvas.uw.edu/$1 permanent;
 
+gateway:
+  enabled: true
+  hostnames:
+    - test-apps.canvas.uw.edu
+  maxRequestSize: 2e+7
+  requestTimeouts:
+    frontEnd: 30s
+    backEnd: 10s
+  rewriteRedirect:
+    pathMatchRegex: "^/(unknown-user|unauthorized-user)$"
+    redirectHostname: test-login.canvas.uw.edu
+    redirectPath: "/{path}"
+
 lifecycle:
   enabled: true
   preStop:

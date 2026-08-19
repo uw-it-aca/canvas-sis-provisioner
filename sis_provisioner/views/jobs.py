@@ -2,11 +2,12 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
+import json
+from datetime import datetime, timezone
 from logging import getLogger
+
 from sis_provisioner.models import Job
 from sis_provisioner.views.admin import RESTDispatch, get_user
-from datetime import datetime, timezone
-import json
 
 logger = getLogger(__name__)
 
@@ -22,7 +23,7 @@ class JobView(RESTDispatch):
             job = Job.objects.get(id=job_id)
             return self.json_response(job.json_data())
         except Job.DoesNotExist:
-            return self.error_response(404, "Job %s not found" % job_id)
+            return self.error_response(404, f"Job {job_id} not found")
 
     def put(self, request, *args, **kwargs):
         if not self.can_manage_jobs(request):
@@ -39,14 +40,12 @@ class JobView(RESTDispatch):
                 job.changed_date = datetime.now(timezone.utc)
                 job.save()
 
-                logger.info('%s %s Job "%s"' % (
-                    job.changed_by,
-                    'enabled' if job.is_active else 'disabled',
-                    job.name))
+                status = 'enabled' if job.is_active else 'disabled'
+                logger.info(f'{job.changed_by} {status} Job "{job.name}"')
 
             return self.json_response({'job': job.json_data()})
         except Job.DoesNotExist:
-            return self.error_response(404, "Job %s not found" % job_id)
+            return self.error_response(404, f"Job {job_id} not found")
 
     def delete(self, request, *args, **kwargs):
         if not self.can_manage_jobs(request):
@@ -57,11 +56,11 @@ class JobView(RESTDispatch):
             job = Job.objects.get(id=job_id)
             job.delete()
 
-            logger.info('%s deleted Job "%s"' % (job.changed_by, job.name))
+            logger.info(f'{job.changed_by} deleted Job "{job.name}"')
 
             return self.json_response({'job': job.json_data()})
         except Job.DoesNotExist:
-            return self.error_response(404, "Job %s not found" % job_id)
+            return self.error_response(404, f"Job {job_id} not found")
 
 
 class JobListView(RESTDispatch):

@@ -2,10 +2,11 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from sis_provisioner.management.commands import SISProvisionerCommand
-from sis_provisioner.models.course import ExpiredCourse, Import
-from sis_provisioner.exceptions import EmptyQueueException
 from logging import getLogger
+
+from sis_provisioner.exceptions import EmptyQueueException
+from sis_provisioner.management.commands import SISProvisionerCommand
+from sis_provisioner.models.course import ExpiredCourse
 
 logger = getLogger(__name__)
 
@@ -22,7 +23,7 @@ class Command(SISProvisionerCommand):
         commit = options.get('commit')
         try:
             imp = ExpiredCourse.objects.queue_by_expiration()
-        except EmptyQueueException as ex:
+        except EmptyQueueException:
             self.update_job()
             return
 

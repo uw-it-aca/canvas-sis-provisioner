@@ -3,12 +3,12 @@
 
 
 from django.test import TestCase, override_settings
+
 from sis_provisioner.dao.astra import ASTRA
 from sis_provisioner.exceptions import ASTRAException
-from uw_canvas.utilities import fdao_canvas_override
 
 
-class MockSoC():
+class MockSoC:
     def __init__(self, *args, **kwargs):
         self._type = kwargs.get('type')
         self._code = kwargs.get('code')

@@ -2,23 +2,28 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
+from datetime import datetime, timedelta, timezone
+
+from django.conf import settings
 from django.db import models
 from django.db.models import F, Q
-from django.conf import settings
 from django.utils.timezone import localtime
+from restclients_core.exceptions import DataFailureException
+
+from sis_provisioner.dao.canvas import create_course, delete_course
+from sis_provisioner.dao.course import (
+    get_new_sections_by_term,
+    valid_academic_course_sis_id,
+    valid_canvas_course_id,
+    valid_canvas_section,
+    valid_course_sis_id,
+)
+from sis_provisioner.dao.term import get_current_active_term
+from sis_provisioner.exceptions import CoursePolicyException, EmptyQueueException
 from sis_provisioner.models import Import, ImportResource
 from sis_provisioner.models.group import Group
-from sis_provisioner.models.user import User
 from sis_provisioner.models.term import Term
-from sis_provisioner.dao.course import (
-    valid_canvas_course_id, valid_course_sis_id, valid_canvas_section,
-    valid_academic_course_sis_id, get_new_sections_by_term)
-from sis_provisioner.dao.canvas import create_course, delete_course
-from sis_provisioner.dao.term import get_current_active_term
-from sis_provisioner.exceptions import (
-    CoursePolicyException, EmptyQueueException)
-from restclients_core.exceptions import DataFailureException
-from datetime import datetime, timedelta, timezone
+from sis_provisioner.models.user import User
 
 
 class CourseManager(models.Manager):
@@ -61,7 +66,7 @@ class CourseManager(models.Manager):
     def create_user_course(self, sis_user_id, name, account_id=None,
                            sis_term_id=None):
         if not account_id:
-            account_id = getattr(settings, 'ADHOC_COURSE_DEFAULT_ACCOUNT_ID')
+            account_id = settings.ADHOC_COURSE_DEFAULT_ACCOUNT_ID
         if not sis_term_id:
             term = get_current_active_term()
             sis_term_id = term.canvas_sis_id()
@@ -179,8 +184,7 @@ class CourseManager(models.Manager):
                 course.provisioned_status = None
 
             except CoursePolicyException as err:
-                course.provisioned_status = 'Primary LMS: {} ({})'.format(
-                    section.primary_lms, err)
+                course.provisioned_status = f'Primary LMS: {section.primary_lms} ({err})'
 
             if section.is_withdrawn():
                 course.priority = Course.PRIORITY_NONE
@@ -191,11 +195,12 @@ class CourseManager(models.Manager):
 
     def add_all_courses_for_term(self, term):
         term_id = term.canvas_sis_id()
-        existing_course_ids = dict((c, p) for c, p in (
-            super().get_queryset().filter(
+        existing_course_ids = {
+            c: p for c, p in super().get_queryset().filter(
                 course_type=Course.SDB_TYPE,
                 course_id__startswith=term_id,
-            ).values_list('course_id', 'priority')))
+            ).values_list("course_id", "priority")
+        }
 
         last_search_date = datetime.now(timezone.utc)
         try:
@@ -286,10 +291,8 @@ class Course(ImportResource):
             (year, quarter, curr_abbr, course_num,
                 section_id) = self.course_id.split('-', 4)
             sws_url = (
-                "/restclients/view/sws/student/v5/course/{year},{quarter},"
-                "{curr_abbr},{course_num}/{section_id}.json").format(
-                    year=year, quarter=quarter, curr_abbr=curr_abbr,
-                    course_num=course_num, section_id=section_id)
+                f"/restclients/view/sws/student/v5/course/{year},{quarter},"
+                f"{curr_abbr},{course_num}/{section_id}.json")
         except ValueError:
             sws_url = None
 
@@ -302,7 +305,7 @@ class Course(ImportResource):
                 self.save()
                 return
 
-        raise CoursePolicyException("Invalid priority: '{}'".format(priority))
+        raise CoursePolicyException(f"Invalid priority: '{priority}'")
 
     @property
     def default_expiration_date(self):
@@ -311,7 +314,7 @@ class Course(ImportResource):
             now.year + self.RETENTION_LIFE_SPAN, self.RETENTION_EXPIRE_MONTH,
             self.RETENTION_EXPIRE_DAY, 12, 0, 0, tzinfo=timezone.utc)
         try:
-            (year, quarter, c, n, s) = self.course_id.split('-')
+            (year, quarter, _ca, _cn, _sid) = self.course_id.split('-')
             year = int(year) + self.RETENTION_LIFE_SPAN + (1 if (
                 quarter.lower() in ['summer', 'autumn']) else 0)
             expiration = expiration.replace(year=year)

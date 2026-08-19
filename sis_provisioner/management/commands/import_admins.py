@@ -2,13 +2,13 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
+import traceback
+from logging import getLogger
+
+from sis_provisioner.builders.admins import AdminBuilder
+from sis_provisioner.exceptions import EmptyQueueException, MissingImportPathException
 from sis_provisioner.management.commands import SISProvisionerCommand
 from sis_provisioner.models.admin import Admin
-from sis_provisioner.exceptions import (
-    EmptyQueueException, MissingImportPathException)
-from sis_provisioner.builders.admins import AdminBuilder
-from logging import getLogger
-import traceback
 
 logger = getLogger(__name__)
 
@@ -25,7 +25,7 @@ class Command(SISProvisionerCommand):
     def handle(self, *args, **options):
         try:
             imp = Admin.objects.queue_all()
-        except EmptyQueueException as ex:
+        except EmptyQueueException:
             self.update_job()
             return
 
@@ -42,13 +42,13 @@ class Command(SISProvisionerCommand):
         if options.get('commit'):
             try:
                 imp.import_csv()
-            except MissingImportPathException as ex:
+            except MissingImportPathException:
                 if not imp.csv_errors:
                     imp.delete()
         else:
-            logger.info('Import Admins CSV Path: {}'.format(imp.csv_path))
+            logger.info(f'Import Admins CSV Path: {imp.csv_path}')
             if imp.csv_errors:
-                logger.info('Import Admins Errors: {}'.format(imp.csv_errors))
+                logger.info(f'Import Admins Errors: {imp.csv_errors}')
             imp.delete()
 
         self.update_job()

@@ -1,16 +1,17 @@
 # Copyright 2026 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
-from django.core.management.base import BaseCommand
+import csv
+from logging import getLogger
+
 from django.conf import settings
-from uw_canvas.reports import Reports
-from uw_canvas.courses import Courses, COURSES_API
+from django.core.management.base import BaseCommand
 from restclients_core.exceptions import DataFailureException
+from uw_canvas.courses import COURSES_API, Courses
+from uw_canvas.reports import Reports
+
 from sis_provisioner.dao.course import valid_academic_course_sis_id
 from sis_provisioner.exceptions import CoursePolicyException
-from logging import getLogger
-import csv
-import os
 
 logger = getLogger(__name__)
 pretext = "ARCHIVED: "
@@ -67,7 +68,7 @@ class Command(BaseCommand):
                 url = COURSES_API.format(course_id)
                 body = {"course": {"name": new_long_name,
                                    "course_code": new_short_name}}
-                data = course_client._put_resource(url, body)
+                _data = course_client._put_resource(url, body)
                 logger.info(
                     f"Update course name for {sis_course_id}: {new_long_name}")
             except DataFailureException as ex:

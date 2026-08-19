@@ -3,26 +3,30 @@
 
 
 import json
-import datetime
 from logging import getLogger
 from urllib.parse import urlencode
+
 from django.conf import settings
-from django.utils.decorators import method_decorator
-from restclients_core.exceptions import (
-    InvalidNetID, InvalidRegID, DataFailureException)
-from uw_sws.registration import registration_res_url_prefix
+from restclients_core.exceptions import DataFailureException
 from uw_pws import PERSON_PREFIX
 from uw_saml.utils import get_user
-from sis_provisioner.exceptions import (
-    UserPolicyException, InvalidLoginIdException)
+from uw_sws.registration import registration_res_url_prefix
+
 from sis_provisioner.dao.canvas import (
-    get_user_by_sis_id, create_user, terminate_user_sessions,
-    get_all_users_for_person, merge_all_users_for_person)
-from sis_provisioner.dao.user import (
-    get_person_by_netid, get_person_by_regid, valid_reg_id, can_access_canvas)
+    get_all_users_for_person,
+    merge_all_users_for_person,
+    terminate_user_sessions,
+)
 from sis_provisioner.dao.term import get_current_active_term
-from sis_provisioner.models.user import User
+from sis_provisioner.dao.user import (
+    can_access_canvas,
+    get_person_by_netid,
+    get_person_by_regid,
+    valid_reg_id,
+)
+from sis_provisioner.exceptions import InvalidLoginIdException, UserPolicyException
 from sis_provisioner.models.course import Course
+from sis_provisioner.models.user import User
 from sis_provisioner.views.admin import RESTDispatch
 
 logger = getLogger(__name__)
@@ -79,8 +83,8 @@ class UserView(RESTDispatch):
             person = get_person_by_regid(reg_id)
             User.objects.update_priority(person, priority)
 
-            logger.info("{} set priority={} for user {}".format(
-                get_user(request), priority, reg_id))
+            logger.info(
+                f"{get_user(request)} set priority={priority} for user {reg_id}")
         except DataFailureException as ex:
             return self.error_response(ex.status, message=ex.msg)
 
@@ -91,14 +95,12 @@ class UserView(RESTDispatch):
             rep = json.loads(request.read())
             net_id = self.netid_from_request(rep)
             person = get_person_by_netid(net_id)
-            user = User.objects.add_user_by_netid(
+            _user = User.objects.add_user_by_netid(
                 person.uwnetid, priority=User.PRIORITY_IMMEDIATE)
             return self.response_for_person(person)
 
         except DataFailureException as err:
-            data = json.loads(err.msg)
-            return self.error_response(
-                400, "{} {}".format(err.status, err.msg))
+            return self.error_response(400, f"{err.status} {err.msg}")
         except Exception as err:
             return self.error_response(400, err)
 
@@ -151,8 +153,9 @@ class UserView(RESTDispatch):
 
             if can_view_source_data and user.sis_user_id:
                 user_data['person_url'] = (
-                    '/restclients/view/pws{api_path}/{uwregid}/full.json'
-                ).format(api_path=PERSON_PREFIX, uwregid=user.sis_user_id)
+                    f'/restclients/view/pws{PERSON_PREFIX}/'
+                    f'{user.sis_user_id}/full.json'
+                )
 
             user_data['can_update_sis_id'] = False
             user_data['can_terminate_user_sessions'] = (
@@ -222,8 +225,6 @@ class UserSessionsView(UserView):
 
 
 class UserCourseView(UserView):
-    http_method_names = ['post']
-
     def post(self, request, *args, **kwargs):
         if not self.can_create_user_course(request):
             return self.error_response(401, 'Unauthorized')
@@ -237,7 +238,7 @@ class UserCourseView(UserView):
             course = Course.objects.create_user_course(person.uwregid, name)
         except DataFailureException as ex:
             return self.error_response(ex.status, message=ex.msg)
-        except UserPolicyException as ex:
+        except UserPolicyException:
             return self.error_response(400, f'User not permitted: {login_id}')
 
         resp_data = course.json_data()

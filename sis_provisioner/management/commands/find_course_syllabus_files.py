@@ -2,15 +2,16 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from django.core.management.base import BaseCommand
-from django.core.files.storage import default_storage
-from uw_canvas.reports import Reports
-from uw_canvas.courses import Courses
-from uw_canvas.files import Files
-from uw_canvas.dao import CanvasFileDownload_DAO
-from logging import getLogger
 import csv
 import os
+from logging import getLogger
+
+from django.core.files.storage import default_storage
+from django.core.management.base import BaseCommand
+from uw_canvas.courses import Courses
+from uw_canvas.dao import CanvasFileDownload_DAO
+from uw_canvas.files import Files
+from uw_canvas.reports import Reports
 
 logger = getLogger(__name__)
 
@@ -49,7 +50,7 @@ class Command(BaseCommand):
         content_types = [
           'application/pdf',
           'application/msword',
-          'application/vnd.openxmlformats-officedocument.wordprocessingml.document'  # noqa
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
         ]
         course_params = {"include": ["syllabus_body"]}
         file_params = {'content_types': content_types, 'sort': 'updated_at'}

@@ -2,12 +2,12 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
+import traceback
+
+from sis_provisioner.builders.enrollments import InvalidEnrollmentBuilder
+from sis_provisioner.exceptions import EmptyQueueException, MissingImportPathException
 from sis_provisioner.management.commands import SISProvisionerCommand
 from sis_provisioner.models.enrollment import InvalidEnrollment
-from sis_provisioner.exceptions import (
-    EmptyQueueException, MissingImportPathException)
-from sis_provisioner.builders.enrollments import InvalidEnrollmentBuilder
-import traceback
 
 
 class Command(SISProvisionerCommand):
@@ -17,7 +17,7 @@ class Command(SISProvisionerCommand):
         priority = InvalidEnrollment.PRIORITY_DEFAULT
         try:
             imp = InvalidEnrollment.objects.queue_by_priority(priority)
-        except EmptyQueueException as ex:
+        except EmptyQueueException:
             self.update_job()
             return
 
@@ -31,7 +31,7 @@ class Command(SISProvisionerCommand):
 
         try:
             imp.import_csv()
-        except MissingImportPathException as ex:
+        except MissingImportPathException:
             if not imp.csv_errors:
                 imp.delete()
 

@@ -2,11 +2,13 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from sis_provisioner.management.commands import SISProvisionerCommand
-from django.utils.timezone import make_aware, localtime, get_default_timezone
-from sis_provisioner.models.course import Course
-from datetime import datetime, timedelta
 import re
+from datetime import datetime, timedelta
+
+from django.utils.timezone import get_default_timezone, localtime
+
+from sis_provisioner.management.commands import SISProvisionerCommand
+from sis_provisioner.models.course import Course
 
 
 class Command(SISProvisionerCommand):
@@ -18,8 +20,7 @@ class Command(SISProvisionerCommand):
                                         priority__gte=Course.PRIORITY_DEFAULT)
 
         retry_now_pattern = re.compile(r"500 (Timeout expired|DFDSRequest)")
-        last_check_time = make_aware(datetime.now() - timedelta(hours=24),
-                                     get_default_timezone())
+        last_check_time = datetime.now(get_default_timezone()) - timedelta(hours=24)
 
         for course in courses:
             if (course.provisioned_status is None or

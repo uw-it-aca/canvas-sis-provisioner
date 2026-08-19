@@ -2,10 +2,12 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
+from unittest import mock
+
 from django.test import TestCase
+
 from sis_provisioner.models.account import Account
 from sis_provisioner.models.admin import RoleCache
-import mock
 
 
 class RoleCacheModelTest(TestCase):

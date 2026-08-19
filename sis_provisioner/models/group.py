@@ -2,18 +2,19 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from django.db import models
-from django.db.models import F
-from django.conf import settings
-from django.utils.timezone import localtime
-from restclients_core.exceptions import DataFailureException
-from sis_provisioner.dao.group import is_modified_group
-from sis_provisioner.models import Import, ImportResource
-from sis_provisioner.models.user import User
-from sis_provisioner.exceptions import (
-    EmptyQueueException, GroupNotFoundException)
 from datetime import datetime, timezone
 from logging import getLogger
+
+from django.conf import settings
+from django.db import models
+from django.db.models import F
+from django.utils.timezone import localtime
+from restclients_core.exceptions import DataFailureException
+
+from sis_provisioner.dao.group import is_modified_group
+from sis_provisioner.exceptions import EmptyQueueException, GroupNotFoundException
+from sis_provisioner.models import Import, ImportResource
+from sis_provisioner.models.user import User
 
 logger = getLogger(__name__)
 
@@ -68,8 +69,7 @@ class GroupManager(models.Manager):
                     self.delete_group_not_found(group.group_id)
                 except DataFailureException as err:
                     is_mod = False
-                    logger.info('Group: SKIP {}, {}'.format(
-                        group.group_id, err))
+                    logger.info(f'Group: SKIP {group.group_id}, {err}')
 
                 if is_mod:
                     group.update_priority(group.PRIORITY_HIGH)
@@ -89,8 +89,7 @@ class GroupManager(models.Manager):
                                 self.delete_group_not_found(mgroup.group_id)
                             except DataFailureException as err:
                                 is_mod = False
-                                logger.info('Group: SKIP {}, {}'.format(
-                                    group.group_id, err))
+                                logger.info(f'Group: SKIP {group.group_id}, {err}')
 
                             if is_mod:
                                 group.update_priority(group.PRIORITY_HIGH)

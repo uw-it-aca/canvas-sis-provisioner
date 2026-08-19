@@ -2,18 +2,17 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from logging import getLogger
-from inspect import stack, getmodule
 import errno
 import os
+from inspect import getmodule, stack
+from logging import getLogger
 
 
 # modified from:
 # http://stackoverflow.com/questions/1444790/python-module-for-creating-pid-
 # based-lockfile
-class Pidfile():
-    def __init__(self, path=None, directory='/tmp', filename=None,
-                 logger=None):
+class Pidfile:
+    def __init__(self, path=None, directory='/tmp', filename=None, logger=None):
         caller = getmodule(stack()[1][0]).__name__
         if path:
             self.pidfile = path
@@ -21,7 +20,7 @@ class Pidfile():
             if not filename:
                 filename = caller.split('.')[-1]
 
-            self.pidfile = '{}/{}.pid'.format(directory, filename)
+            self.pidfile = f'{directory}/{filename}.pid'
 
         self.logger = logger if logger else getLogger(caller)
 
@@ -33,14 +32,12 @@ class Pidfile():
                 pid = self._check()
                 if pid:
                     self.pidfd = None
-                    msg = 'process already running pid = {} ({})'.format(
-                        pid, self.pidfile)
+                    msg = f'process already running pid = {pid} ({self.pidfile})'
                     self.logger.info(msg)
                     raise ProcessRunningException(msg)
                 else:
                     os.remove(self.pidfile)
-                    self.logger.info('removed stale lockfile {}'.format(
-                        self.pidfile))
+                    self.logger.info(f'removed stale lockfile {self.pidfile}')
                     self._create()
             else:
                 raise
@@ -84,9 +81,9 @@ class Pidfile():
                 os.kill(pid, 0)
                 return pid
             except ValueError:
-                self.logger.error('bad pid: {}'.format(pidstr))
+                self.logger.error(f'bad pid: {pid}')
             except OSError:
-                self.logger.error('cannot deliver signal to {}'.format(pid))
+                self.logger.error(f'cannot deliver signal to {pid}')
 
             return False
 

@@ -2,13 +2,13 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
+import traceback
+from logging import getLogger
+
+from sis_provisioner.builders.users import UserBuilder
+from sis_provisioner.exceptions import EmptyQueueException, MissingImportPathException
 from sis_provisioner.management.commands import SISProvisionerCommand
 from sis_provisioner.models.user import User
-from sis_provisioner.exceptions import (
-    EmptyQueueException, MissingImportPathException)
-from sis_provisioner.builders.users import UserBuilder
-from logging import getLogger
-import traceback
 
 logger = getLogger(__name__)
 
@@ -47,7 +47,7 @@ class Command(SISProvisionerCommand):
                 logger.info(f'SIS Import URL: {sis_import.post_url}, '
                             f'Headers: {sis_import.post_headers}')
 
-        except MissingImportPathException as ex:
+        except MissingImportPathException:
             if not imp.csv_errors:
                 imp.delete()
 
