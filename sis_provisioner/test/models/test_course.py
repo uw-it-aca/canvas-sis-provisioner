@@ -2,16 +2,18 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from django.test import TestCase
-from django.db.models.query import QuerySet
 from datetime import datetime, timezone
+from unittest import mock
+
+from django.db.models.query import QuerySet
+from django.test import TestCase
+from uw_pws.util import fdao_pws_override
+from uw_sws.util import fdao_sws_override
+
 from sis_provisioner.dao.course import get_section_by_id
+from sis_provisioner.exceptions import CoursePolicyException
 from sis_provisioner.models import Import
 from sis_provisioner.models.course import Course
-from sis_provisioner.exceptions import CoursePolicyException
-from uw_sws.util import fdao_sws_override
-from uw_pws.util import fdao_pws_override
-import mock
 
 
 @fdao_sws_override
@@ -120,12 +122,12 @@ class CourseModelTest(TestCase):
     def test_default_expiration_date(self):
         now = datetime.now(timezone.utc)
         year = now.year - 2
-        sis_id = '{}-summer-TRAIN-101-A'.format(year)
+        sis_id = f'{year}-summer-TRAIN-101-A'
         course = Course(course_type=Course.SDB_TYPE, course_id=sis_id)
         self.assertEqual(course.default_expiration_date.year,
                          year + course.RETENTION_LIFE_SPAN + 1)
 
-        sis_id = '{}-winter-TRAIN-101-A'.format(year)
+        sis_id = f'{year}-winter-TRAIN-101-A'
         course = Course(course_type=Course.SDB_TYPE, course_id=sis_id)
         self.assertEqual(course.default_expiration_date.year,
                          year + course.RETENTION_LIFE_SPAN)
@@ -156,16 +158,16 @@ class CourseModelTest(TestCase):
 
     @mock.patch.object(QuerySet, 'update')
     def test_dequeue(self, mock_update):
-        dt = datetime.now()
-        r = Course.objects.dequeue(Import(pk=1,
-                                          priority=Course.PRIORITY_HIGH,
-                                          canvas_state='imported',
-                                          post_status=200,
-                                          canvas_progress=100,
-                                          monitor_date=dt))
+        dt = datetime.now(timezone.utc)
+        Course.objects.dequeue(Import(pk=1,
+                                      priority=Course.PRIORITY_HIGH,
+                                      canvas_state='imported',
+                                      post_status=200,
+                                      canvas_progress=100,
+                                      monitor_date=dt))
         mock_update.assert_called_with(
             priority=Course.PRIORITY_DEFAULT, queue_id=None,
             provisioned_date=dt)
 
-        r = Course.objects.dequeue(Import(pk=1, priority=Course.PRIORITY_HIGH))
+        Course.objects.dequeue(Import(pk=1, priority=Course.PRIORITY_HIGH))
         mock_update.assert_called_with(queue_id=None)

@@ -3,12 +3,12 @@
 
 
 from django.test import TestCase, override_settings
-from sis_provisioner.dao.course import get_section_by_label
-from sis_provisioner.dao.account import *
-from sis_provisioner.exceptions import AccountPolicyException
-from uw_sws.models import Campus, College, Department, Curriculum
+from uw_sws.models import Campus, College, Curriculum, Department
 from uw_sws.util import fdao_sws_override
-from uw_pws.util import fdao_pws_override
+
+from sis_provisioner.dao.account import *
+from sis_provisioner.dao.course import get_section_by_label
+from sis_provisioner.exceptions import AccountPolicyException
 
 
 @fdao_sws_override

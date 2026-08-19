@@ -2,12 +2,14 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from django.test import TestCase
+from datetime import datetime, timezone
+from unittest import mock
+
 from django.db.models.query import QuerySet
+from django.test import TestCase
+
 from sis_provisioner.models import Import
 from sis_provisioner.models.group import Group
-from datetime import datetime, timezone
-import mock
 
 
 def create_group(course_id, group_id, role='teacher', added_by='javerage'):
@@ -44,8 +46,7 @@ class GroupModelTest(TestCase):
         r = Group.objects.find_by_search(course_id='123')
         self.assertEqual(r.count(), 2)
 
-        r = Group.objects.find_by_search(group_id='test_group_1',
-                                         role='teacher')
+        r = Group.objects.find_by_search(group_id='test_group_1', role='teacher')
         self.assertEqual(r.count(), 1)
 
     def test_get_active_by_course(self):
@@ -62,29 +63,29 @@ class GroupModelTest(TestCase):
 
     @mock.patch.object(QuerySet, 'update')
     def test_dequeue(self, mock_update):
-        dt = datetime.now()
-        r = Group.objects.dequeue(Import(pk=1,
-                                         priority=Group.PRIORITY_HIGH,
-                                         canvas_state='imported',
-                                         post_status=200,
-                                         canvas_progress=100,
-                                         monitor_date=dt))
+        dt = datetime.now(timezone.utc)
+        Group.objects.dequeue(Import(pk=1,
+                                     priority=Group.PRIORITY_HIGH,
+                                     canvas_state='imported',
+                                     post_status=200,
+                                     canvas_progress=100,
+                                     monitor_date=dt))
         mock_update.assert_called_with(
             priority=Group.PRIORITY_DEFAULT, queue_id=None,
             provisioned_date=dt)
 
-        r = Group.objects.dequeue(Import(pk=1, priority=Group.PRIORITY_HIGH))
+        Group.objects.dequeue(Import(pk=1, priority=Group.PRIORITY_HIGH))
         mock_update.assert_called_with(queue_id=None)
 
     @mock.patch.object(QuerySet, 'update')
     def test_dequeue_course(self, mock_update):
-        r = Group.objects.dequeue_course('123')
+        Group.objects.dequeue_course('123')
         mock_update.assert_called_with(
             priority=Group.PRIORITY_DEFAULT, queue_id=None)
 
     @mock.patch.object(QuerySet, 'update')
     def test_deprioritize_course(self, mock_update):
-        r = Group.objects.deprioritize_course('123')
+        Group.objects.deprioritize_course('123')
         mock_update.assert_called_with(priority=Group.PRIORITY_NONE,
                                        queue_id=None)
 
@@ -93,7 +94,7 @@ class GroupModelTest(TestCase):
     def test_delete_group_not_found(self, mock_update, mock_dt):
         mock_now = datetime(2015, 1, 23, 0, 0, 0, tzinfo=timezone.utc)
         mock_dt.now.return_value = mock_now
-        r = Group.objects.delete_group_not_found('u_does_not_exist')
+        Group.objects.delete_group_not_found('u_does_not_exist')
         mock_update.assert_called_with(
             is_deleted=True, deleted_by='gws',
             deleted_date=mock_now)

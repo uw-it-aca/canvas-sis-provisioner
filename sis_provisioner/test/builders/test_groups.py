@@ -3,6 +3,7 @@
 
 
 from django.test import TestCase
+
 from sis_provisioner.builders.groups import GroupBuilder, SetMember
 
 

@@ -6,12 +6,17 @@ from django.test import TestCase, override_settings
 from uw_pws import PWS
 from uw_pws.util import fdao_pws_override
 from uw_sws.util import fdao_sws_override
-from sis_provisioner.models.account import Curriculum
-from sis_provisioner.dao.course import (
-    get_section_by_label, get_registrations_by_section)
-from sis_provisioner.exceptions import (
-    CoursePolicyException, EnrollmentPolicyException, AccountPolicyException)
+
 from sis_provisioner.csv.format import *
+from sis_provisioner.dao.course import (
+    get_registrations_by_section,
+    get_section_by_label,
+)
+from sis_provisioner.exceptions import (
+    AccountPolicyException,
+    EnrollmentPolicyException,
+)
+from sis_provisioner.models.account import Curriculum
 
 
 class CSVHeaderTest(TestCase):
@@ -105,7 +110,7 @@ class CourseCSVTest(TestCase):
                 '2013-spring-TRAIN-101-A,TRAIN 101 A,TRAIN 101 A Sp 13: '
                 'Intro Train,,2013-spring,deleted,,\n'))
 
-        self.assertRaises(KeyError, CourseCSV, **{})
+        self.assertRaises(KeyError, CourseCSV)
 
 
 @fdao_sws_override
@@ -228,10 +233,9 @@ class EnrollmentCSVTest(TestCase):
 
         for user in section.get_instructors():
             self.assertEqual(
-                str(EnrollmentCSV(
-                    section=section, instructor=user, status='active')),
-                ',,{},teacher,,2013-spring-TRAIN-101-A--,active,\n'.format(
-                    user.uwregid))
+                str(EnrollmentCSV(section=section, instructor=user, status='active')),
+                f',,{user.uwregid},teacher,,2013-spring-TRAIN-101-A--,active,\n'
+            )
 
 
 @fdao_sws_override

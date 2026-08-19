@@ -3,9 +3,9 @@
 
 
 from django.test import TestCase, override_settings
-from django.db.models.query import QuerySet
-from sis_provisioner.models.account import Account
 from uw_canvas.models import CanvasAccount
+
+from sis_provisioner.models.account import Account
 
 
 def create_account(canvas_id, sis_id, account_name='Test',
