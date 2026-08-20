@@ -32,7 +32,7 @@ class ExternalToolView(RESTDispatch):
                 data['config']['shared_secret'] = shared_secret
 
         except ExternalTool.DoesNotExist:
-            return self.error_response(404, "ExternalTool {canvas_id} not found")
+            return self.error_response(404, f"ExternalTool {canvas_id} not found")
 
         return self.json_response({'external_tool': data})
 
