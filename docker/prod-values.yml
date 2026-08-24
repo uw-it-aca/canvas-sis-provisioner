@@ -42,7 +42,7 @@ gateway:
     frontEnd: 30s
     backEnd: 10s
   rewriteRedirect:
-    pathMatchRegex: "^/(unknown-user|unauthorized-user)$"
+    pathRegex: "^/(unknown-user|unauthorized-user)$"
     redirectHostname: login.canvas.uw.edu
     redirectPath: "/{path}"
 
