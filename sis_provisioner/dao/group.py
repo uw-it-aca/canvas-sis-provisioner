@@ -26,12 +26,12 @@ def valid_group_id(group_id):
     try:
         GWS()._valid_group_id(group_id)
     except InvalidGroupID:
-        raise GroupPolicyException("Invalid Group ID: {group_id}")
+        raise GroupPolicyException(f"Invalid Group ID: {group_id}")
 
     RE_GROUP_DISALLOWED = re.compile(r'^({}).*$'.format('|'.join(
         getattr(settings, 'DISALLOWED_UW_GROUPS', []))))
     if RE_GROUP_DISALLOWED.match(group_id):
-        raise GroupPolicyException("This group cannot be used in Canvas: {group_id}")
+        raise GroupPolicyException(f"This group cannot be used in Canvas: {group_id}")
 
 
 def is_modified_group(group_id, changed_since_dt):

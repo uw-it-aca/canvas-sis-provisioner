@@ -81,6 +81,7 @@ class CanvasAccountView(RESTDispatch):
         GET returns 200 with Canvas Course model
     """
     def get(self, request, *args, **kwargs):
+        host = getattr(settings, 'RESTCLIENTS_CANVAS_HOST', '')
         try:
             account = get_account_by_id(kwargs.get('account_id'))
             return self.json_response({
@@ -89,9 +90,7 @@ class CanvasAccountView(RESTDispatch):
                 'name': account.name,
                 'parent_account_id': account.parent_account_id,
                 'root_account_id': account.root_account_id,
-                'account_url': "{host}/accounts/{account_id}".format(
-                    host=getattr(settings, 'RESTCLIENTS_CANVAS_HOST', ''),
-                    account_id=account.account_id)
+                'account_url': f'{host}/accounts/{account.account_id}',
             })
 
         except Exception as e:
