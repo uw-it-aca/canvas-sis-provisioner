@@ -44,7 +44,6 @@ gateway:
   rewriteRedirect:
     pathRegex: "^/(unknown-user|unauthorized-user)$"
     redirectHostname: login.canvas.uw.edu
-    redirectPath: "/{path}"
 
 lifecycle:
   enabled: true
