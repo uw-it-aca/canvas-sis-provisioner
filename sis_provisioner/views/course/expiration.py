@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from logging import getLogger
 
 from django.utils.timezone import localtime
+from prometheus_client import Counter
 from uw_saml.utils import get_user
 
 from sis_provisioner.dao.course import (
@@ -20,6 +21,12 @@ from sis_provisioner.models.user import User
 from sis_provisioner.views.admin import AdminView, OpenRESTDispatch
 
 logger = getLogger(__name__)
+
+# prepare for prometheus observations
+prometheus_expiration_api_count = Counter(
+    'service_api_request_count',
+    'Canvas API course expiration request count',
+    ['service', 'service_api'])
 
 
 class CourseExpirationView(OpenRESTDispatch):
@@ -36,6 +43,8 @@ class CourseExpirationView(OpenRESTDispatch):
             course = Course.objects.get(**course_ref)
             expiration_date = course.expiration_date if (
                 course.expiration_date) else course.default_expiration_date
+
+            prometheus_expiration_api_count.labels('canvas', 'expiration').inc()
 
             return self.json_response({
                 "course_id": course_id,
