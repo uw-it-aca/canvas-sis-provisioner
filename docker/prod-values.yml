@@ -20,7 +20,7 @@ gateway:
   maxRequestSize: 1Mi
   requestTimeouts:
     frontEnd: 30s
-    backEnd: 10s
+    backEnd: 15s
   rewriteRedirect:
     pathRegex: "^/(unknown-user|unauthorized-user)$"
     redirectHostname: login.canvas.uw.edu
