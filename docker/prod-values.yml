@@ -13,26 +13,6 @@ targetAverageUtilization: 100
 affinity:
    podsSpanNodes: true
 
-ingress:
-  enabled: true
-  tls:
-    canvas:
-      secretName: apps.canvas.uw.edu-ingress-cert
-      hosts:
-        - apps.canvas.uw.edu
-  hosts:
-    canvas:
-      host: apps.canvas.uw.edu
-      paths:
-        - "/"
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "180"
-    nginx.ingress.kubernetes.io/client-body-buffer-size: "16K"
-    nginx.ingress.kubernetes.io/ssl-ciphers: "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-SHA256"
-    nginx.ingress.kubernetes.io/server-snippet: |
-      rewrite ^/(unknown-user|unauthorized-user)$ https://login.canvas.uw.edu/$1 permanent;
-
 gateway:
   enabled: true
   hostnames:
