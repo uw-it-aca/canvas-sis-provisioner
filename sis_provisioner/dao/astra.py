@@ -2,20 +2,25 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
+import http
+import re
+import socket
+import ssl
+from logging import getLogger
+from urllib.request import HTTPSHandler, build_opener
+
 from django.conf import settings
+from suds import WebFault
 from suds.client import Client
 from suds.transport.http import HttpTransport
-from suds import WebFault
-from urllib.request import build_opener, HTTPSHandler
+
 from sis_provisioner.dao.account import (
-    get_campus_by_label, get_college_by_label, get_department_by_label,
-    account_sis_id)
+    account_sis_id,
+    get_campus_by_label,
+    get_college_by_label,
+    get_department_by_label,
+)
 from sis_provisioner.exceptions import ASTRAException
-from logging import getLogger
-import socket
-import http
-import ssl
-import re
 
 logger = getLogger(__name__)
 RE_NONACADEMIC_CODE = re.compile(r'^canvas_([0-9]+)$')
@@ -67,16 +72,18 @@ class HTTPSTransportV3(HttpTransport):
             return url.open(u2request, timeout=tm)
 
 
-class ASTRA():
+class ASTRA:
     def __init__(self, *args, **kwargs):
-        self._client = Client(settings.ASTRA_WSDL,
-                              transport=HTTPSTransportV3())
+        self._client = Client(settings.ASTRA_WSDL, transport=HTTPSTransportV3())
 
-    def _request(self, method_name, params={}):
+    def _request(self, method_name, params=None):
+        if params is None:
+            params = {}
+
         try:
             return self._client.service['AuthzProvider'][method_name](params)
         except WebFault as ex:
-            raise ASTRAException('ASTRA: Request failed, {}'.format(ex))
+            raise ASTRAException(f'ASTRA: Request failed, {ex}')
 
     def get_version(self):
         return self._request('GetVersion')
@@ -99,14 +106,11 @@ class ASTRA():
             try:
                 # Sanity checks
                 if auth.role._code not in settings.ASTRA_ROLE_MAPPING:
-                    raise ASTRAException('Unknown Role Code {}'.format(
-                        auth.role._code))
+                    raise ASTRAException(f'Unknown Role Code {auth.role._code}')
                 if '_regid' not in auth.party:
-                    raise ASTRAException('Missing uwregid, {}'.format(
-                        auth.party))
+                    raise ASTRAException(f'Missing uwregid, {auth.party}')
                 if 'spanOfControlCollection' not in auth:
-                    raise ASTRAException('Missing SpanOfControl, {}'.format(
-                        auth.party))
+                    raise ASTRAException(f'Missing SpanOfControl, {auth.party}')
 
                 collection = auth.spanOfControlCollection
                 if ('spanOfControl' in collection and
@@ -127,7 +131,7 @@ class ASTRA():
                     sis_id = None
                     canvas_id = settings.RESTCLIENTS_CANVAS_ACCOUNT_ID
             except ASTRAException as err:
-                logger.error('ASTRA Data Error: {}'.format(err))
+                logger.error(f'ASTRA Data Error: {err}')
                 continue
 
             admins.append({
@@ -145,7 +149,7 @@ class ASTRA():
         m = RE_NONACADEMIC_CODE.match(code)
         if m is not None:
             return m.group(1)
-        raise ASTRAException('Unknown Non-Academic Code: {}'.format(code))
+        raise ASTRAException(f'Unknown Non-Academic Code: {code}')
 
     @staticmethod
     def _canvas_account_from_academic_soc(soc):
@@ -160,28 +164,28 @@ class ASTRA():
                 try:
                     id_parts.append(campus.label)
                 except AttributeError:
-                    raise ASTRAException('Unknown Campus: {}'.format(item))
+                    raise ASTRAException(f'Unknown Campus: {item}')
 
             elif itype == 'swscollege':
                 if campus is None:
-                    raise ASTRAException('Missing Campus, {}'.format(item))
+                    raise ASTRAException(f'Missing Campus, {item}')
                 college = get_college_by_label(campus, item._code)
                 try:
                     id_parts.append(college.name)
                 except AttributeError:
-                    raise ASTRAException('Unknown College: {}'.format(item))
+                    raise ASTRAException(f'Unknown College: {item}')
 
             elif itype == 'swsdepartment':
                 if campus is None or college is None:
-                    raise ASTRAException('Missing College, {}'.format(item))
+                    raise ASTRAException(f'Missing College, {item}')
                 dept = get_department_by_label(college, item._code)
                 try:
                     id_parts.append(dept.label)
                 except AttributeError:
-                    raise ASTRAException('Unknown Department: {}'.format(item))
+                    raise ASTRAException(f'Unknown Department: {item}')
 
             else:
-                raise ASTRAException('Unknown SoC type, {}'.format(item))
+                raise ASTRAException(f'Unknown SoC type, {item}')
 
         if not len(id_parts):
             raise ASTRAException('SoC empty list')

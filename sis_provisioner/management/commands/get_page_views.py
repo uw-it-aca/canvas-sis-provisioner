@@ -1,16 +1,14 @@
-# Copyright 2026 UW-IT, University of Washington
+# Copyright 2026 UWIT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
 
-from django.core.management.base import BaseCommand
-from django.conf import settings
-from uw_canvas.users import Users
-from dateutil.parser import parse
+import csv
 from datetime import timedelta, timezone
 from zoneinfo import ZoneInfo
-import argparse
-import csv
-import os
+
+from dateutil.parser import parse
+from django.core.management.base import BaseCommand
+from uw_canvas.users import Users
 
 LOCAL_TZ = ZoneInfo('America/Los_Angeles')
 
@@ -32,29 +30,26 @@ class Command(BaseCommand):
         if end_time < start_time:
             raise ValueError('End date is before start date')
 
-        filename = '{}-page-views-{}-{}.csv'.format(
-            login, start_time.date(), end_time.date())
-        outfile = open(filename, 'w')
-        csv.register_dialect('unix_newline', lineterminator='\n')
-        writer = csv.writer(outfile, dialect='unix_newline')
-        writer.writerow([
-            'datetime', 'user', 'remote_ip', 'user_agent', 'http_method',
-            'url', 'session_id', 'context_type', 'action', 'participated',
-            'contributed'])
-
-        canvas = Users(per_page=500)
-        page_views = canvas.get_user_page_views_by_sis_login_id(
-            login, start_time=start_time, end_time=end_time)
-
-        for pv in page_views:
-            dt = parse(pv['created_at']).replace(
-                tzinfo=timezone.utc).astimezone(LOCAL_TZ)
-            participated = 'yes' if pv['participated'] else ''
-            contributed = 'yes' if pv['contributed'] else ''
+        filename = f'{login}-page-views-{start_time.date()}-{end_time.date()}.csv'
+        with open(filename, 'w') as outfile:
+            csv.register_dialect('unix_newline', lineterminator='\n')
+            writer = csv.writer(outfile, dialect='unix_newline')
             writer.writerow([
-                dt.strftime('%Y-%m-%d %H:%M:%S'), login, pv['remote_ip'],
-                pv['user_agent'], pv['http_method'], pv['url'],
-                pv['session_id'], pv['context_type'], pv['action'],
-                participated, contributed])
+                'datetime', 'user', 'remote_ip', 'user_agent', 'http_method',
+                'url', 'session_id', 'context_type', 'action', 'participated',
+                'contributed'])
 
-        outfile.close()
+            canvas = Users(per_page=500)
+            page_views = canvas.get_user_page_views_by_sis_login_id(
+                login, start_time=start_time, end_time=end_time)
+
+            for pv in page_views:
+                dt = parse(pv['created_at']).replace(
+                    tzinfo=timezone.utc).astimezone(LOCAL_TZ)
+                participated = 'yes' if pv['participated'] else ''
+                contributed = 'yes' if pv['contributed'] else ''
+                writer.writerow([
+                    dt.strftime('%Y-%m-%d %H:%M:%S'), login, pv['remote_ip'],
+                    pv['user_agent'], pv['http_method'], pv['url'],
+                    pv['session_id'], pv['context_type'], pv['action'],
+                    participated, contributed])

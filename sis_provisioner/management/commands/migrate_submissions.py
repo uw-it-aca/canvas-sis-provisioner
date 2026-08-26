@@ -1,14 +1,14 @@
-# Copyright 2026 UW-IT, University of Washington
+# Copyright 2026 UWIT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
+# ruff: noqa
 
-from django.core.management.base import BaseCommand, CommandError
-from django.conf import settings
-from uw_canvas.submissions import Submissions
-from uw_canvas.courses import Courses
-from restclients_core.exceptions import DataFailureException
 import csv
-import sys
+
+from django.core.management.base import BaseCommand
+from restclients_core.exceptions import DataFailureException
+from uw_canvas.courses import Courses
+from uw_canvas.submissions import Submissions
 
 
 class Command(BaseCommand):

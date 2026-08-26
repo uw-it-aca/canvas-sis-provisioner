@@ -2,12 +2,18 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from django.test import TestCase, override_settings
-from sis_provisioner.events.group.dispatch import (
-    Dispatch, CourseGroupDispatch, LoginGroupDispatch,
-    StudentLoginGroupDispatch, AffiliateLoginGroupDispatch,
-    SponsoredLoginGroupDispatch)
 import xml.etree.ElementTree as ET
+
+from django.test import TestCase, override_settings
+
+from sis_provisioner.events.group.dispatch import (
+    AffiliateLoginGroupDispatch,
+    CourseGroupDispatch,
+    Dispatch,
+    LoginGroupDispatch,
+    SponsoredLoginGroupDispatch,
+    StudentLoginGroupDispatch,
+)
 
 
 class GroupDispatchTest(TestCase):

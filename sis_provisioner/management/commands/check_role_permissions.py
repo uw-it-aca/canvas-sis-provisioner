@@ -1,11 +1,13 @@
-# Copyright 2026 UW-IT, University of Washington
+# Copyright 2026 UWIT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
 
+from logging import getLogger
+
 from django.conf import settings
+
 from sis_provisioner.management.commands import SISProvisionerCommand
 from sis_provisioner.models.admin import RoleCache
-from logging import getLogger
 
 logger = getLogger(__name__)
 

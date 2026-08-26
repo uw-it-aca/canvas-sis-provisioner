@@ -1,9 +1,9 @@
-# Copyright 2026 UW-IT, University of Washington
+# Copyright 2026 UWIT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
 
-from sis_provisioner.management.commands import SISProvisionerCommand
 from sis_provisioner.dao.term import get_all_active_terms, sws_now
+from sis_provisioner.management.commands import SISProvisionerCommand
 from sis_provisioner.models.course import Course
 
 

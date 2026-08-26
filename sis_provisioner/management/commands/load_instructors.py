@@ -1,13 +1,16 @@
-# Copyright 2026 UW-IT, University of Washington
+# Copyright 2026 UWIT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
 
-from django.core.management.base import CommandError
-from sis_provisioner.management.commands import SISProvisionerCommand
-from sis_provisioner.events.instructor import (
-    InstructorAddProcessor, InstructorDropProcessor)
-from sis_provisioner.exceptions import EventException
 from aws_message.gather import Gather, GatherException
+from django.core.management.base import CommandError
+
+from sis_provisioner.events.instructor import (
+    InstructorAddProcessor,
+    InstructorDropProcessor,
+)
+from sis_provisioner.exceptions import EventException
+from sis_provisioner.management.commands import SISProvisionerCommand
 
 
 class Command(SISProvisionerCommand):
@@ -17,7 +20,7 @@ class Command(SISProvisionerCommand):
         try:
             InstructorAddProcessor().check_interval(acceptable_silence=24*60)
         except EventException as ex:
-            self.squawk('Warning: {}'.format(ex))
+            self.squawk(f'Warning: {ex}')
 
     def handle(self, *args, **options):
         try:

@@ -1,13 +1,14 @@
-# Copyright 2026 UW-IT, University of Washington
+# Copyright 2026 UWIT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
+# ruff: noqa
 
-from django.conf import settings
-from django.core.management.base import BaseCommand, CommandError
-from uw_canvas.external_tools import ExternalTools
+import json
 import os
 import sys
-import json
+
+from django.core.management.base import BaseCommand
+from uw_canvas.external_tools import ExternalTools
 
 
 class Command(BaseCommand):
@@ -40,7 +41,7 @@ class Command(BaseCommand):
             else:
                 self.load_lti(lticonf)
         except Exception as err:
-            print('ERROR: {}'.format(err), file=sys.stderr)
+            print(f'ERROR: {err}', file=sys.stderr)
 
     def load_lti(self, conf):
         canvas_account = conf.get('account_canvas_id')

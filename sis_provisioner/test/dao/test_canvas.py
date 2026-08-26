@@ -1,17 +1,19 @@
 # Copyright 2026 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
+# ruff: noqa: F841
+
+from unittest import mock
+from unittest.mock import ANY
 
 from django.test import TestCase, override_settings
-from sis_provisioner.dao.canvas import *
-from sis_provisioner.dao.course import get_section_by_label
 from uw_pws import PWS
 from uw_pws.util import fdao_pws_override
-from uw_sws.util import fdao_sws_override
 from uw_sws.models import Registration
-from datetime import datetime
-from unittest.mock import ANY
-import mock
+from uw_sws.util import fdao_sws_override
+
+from sis_provisioner.dao.canvas import *
+from sis_provisioner.dao.course import get_section_by_label
 
 
 class CanvasIDTest(TestCase):

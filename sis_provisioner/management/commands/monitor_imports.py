@@ -1,11 +1,13 @@
-# Copyright 2026 UW-IT, University of Washington
+# Copyright 2026 UWIT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
 
+from logging import getLogger
+
 from django.core.management.base import CommandError
+
 from sis_provisioner.management.commands import SISProvisionerCommand
 from sis_provisioner.models import Import
-from logging import getLogger
 
 logger = getLogger(__name__)
 
@@ -19,5 +21,5 @@ class Command(SISProvisionerCommand):
                 imp.update_import_status()
             self.update_job()
         except Exception as err:
-            logger.error("{}".format(err))
+            logger.error(f"{err}")
             raise CommandError(err)

@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from restclients_core.exceptions import DataFailureException
+from restclients_core.exceptions import DataFailureException  # noqa: F401
 
 
 class UserPolicyException(Exception):

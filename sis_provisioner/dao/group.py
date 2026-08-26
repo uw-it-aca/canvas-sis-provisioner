@@ -2,16 +2,22 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
+import re
+from datetime import timezone
+from logging import getLogger
+
 from django.conf import settings
 from uw_gws import GWS
 from uw_gws.exceptions import InvalidGroupID
+
 from sis_provisioner.dao.user import valid_net_id
 from sis_provisioner.exceptions import (
-    UserPolicyException, GroupPolicyException, GroupNotFoundException,
-    GroupUnauthorizedException, DataFailureException)
-from datetime import timezone
-from logging import getLogger
-import re
+    DataFailureException,
+    GroupNotFoundException,
+    GroupPolicyException,
+    GroupUnauthorizedException,
+    UserPolicyException,
+)
 
 logger = getLogger(__name__)
 
@@ -20,13 +26,12 @@ def valid_group_id(group_id):
     try:
         GWS()._valid_group_id(group_id)
     except InvalidGroupID:
-        raise GroupPolicyException("Invalid Group ID: {}".format(group_id))
+        raise GroupPolicyException(f"Invalid Group ID: {group_id}")
 
     RE_GROUP_DISALLOWED = re.compile(r'^({}).*$'.format('|'.join(
         getattr(settings, 'DISALLOWED_UW_GROUPS', []))))
     if RE_GROUP_DISALLOWED.match(group_id):
-        raise GroupPolicyException(
-            "This group cannot be used in Canvas: {}".format(group_id))
+        raise GroupPolicyException(f"This group cannot be used in Canvas: {group_id}")
 
 
 def is_modified_group(group_id, changed_since_dt):
@@ -36,8 +41,7 @@ def is_modified_group(group_id, changed_since_dt):
         return (member_mtime > changed_since_dt)
     except DataFailureException as err:
         if err.status == 404:
-            raise GroupNotFoundException(
-                "Group not found: {}".format(group_id))
+            raise GroupNotFoundException(f"Group not found: {group_id}")
         else:
             raise
 
@@ -67,7 +71,7 @@ def search_groups(act_as, **kwargs):
 def get_sis_import_members():
     gws = GWS()
     valid_members = {}
-    student_group_id = getattr(settings, 'STUDENT_AFFILIATION_GROUP')
+    student_group_id = settings.STUDENT_AFFILIATION_GROUP
 
     for group_id in getattr(settings, 'SIS_IMPORT_GROUPS', []):
         is_student = group_id == student_group_id
@@ -80,7 +84,7 @@ def get_sis_import_members():
                     # is a student
                     existing = valid_members.get(member.name)
                     if not (existing and existing.is_student):
-                        setattr(member, 'is_student', is_student)
+                        member.is_student = is_student
                         valid_members[member.name] = member
                 except UserPolicyException:
                     continue
@@ -101,8 +105,10 @@ def get_effective_members(group_id, act_as=None):
             valid_group_id(group_id)
 
             if group_id in seen_group_ids:
-                logger.info("Duplicate group: {}, Processed groups: {}".format(
-                    group_id, list(seen_group_ids)))
+                logger.info(
+                    f"Duplicate group: {group_id}, Processed groups: "
+                    f"{list(seen_group_ids)}"
+                )
                 return (valid_members, invalid_members, member_group_ids)
             seen_group_ids.add(group_id)
 
@@ -129,16 +135,14 @@ def get_effective_members(group_id, act_as=None):
         except DataFailureException as err:
             # Group not found or access denied is ok
             if err.status == 404:
-                raise GroupNotFoundException(
-                    "Group not found: {}".format(group_id))
+                raise GroupNotFoundException(f"Group not found: {group_id}")
             elif err.status == 401:
                 raise GroupUnauthorizedException(
-                    "Group not permitted for {}: {}".format(
-                        gws.act_as, group_id))
+                    f"Group not permitted for {gws.act_as}: {group_id}")
             else:
                 raise
 
-        except GroupPolicyException as err:
+        except GroupPolicyException:
             raise
 
         return (valid_members, invalid_members, member_group_ids)

@@ -2,13 +2,14 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from django.views import View
-from sis_provisioner.models.admin import Admin
-from sis_provisioner.models.account import Account
-from sis_provisioner.views.admin import RESTDispatch
-from logging import getLogger
 import re
+from logging import getLogger
 
+from django.views import View
+
+from sis_provisioner.models.account import Account
+from sis_provisioner.models.admin import Admin
+from sis_provisioner.views.admin import RESTDispatch
 
 logger = getLogger(__name__)
 
@@ -18,7 +19,6 @@ class AdminSearch(RESTDispatch):
         GET returns 200 with Admin models
     """
     def get(self, request, *args, **kwargs):
-        account = None
         admins = []
         for admin in list(Admin.objects.find_by_account(account=None)):
             admins.append(admin.json_data())
@@ -31,7 +31,7 @@ class AccountSearch(RESTDispatch):
         GET returns 200 with Account models
     """
     def __init__(self):
-        self._re_true = re.compile('^(1|true)$', re.I)
+        self._re_true = re.compile('^(1|true)$', re.IGNORECASE)
 
     def get(self, request, *args, **kwargs):
         account_type = request.GET.get('type')

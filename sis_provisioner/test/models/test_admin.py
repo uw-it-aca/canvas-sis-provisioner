@@ -2,26 +2,26 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
+import binascii
+import copy
+import os
+from datetime import datetime, timedelta, timezone
+
 from django.conf import settings
 from django.test import TestCase, override_settings
-from django.db.models.query import QuerySet
-from sis_provisioner.models.admin import Admin
-from sis_provisioner.exceptions import AccountPolicyException
-from sis_provisioner.test.models.test_account import create_account
-from uw_canvas.utilities import fdao_canvas_override
 from uw_canvas.admins import Admins as CanvasAdmins
-from datetime import datetime, timedelta, timezone
-import binascii
-import os
-import copy
+from uw_canvas.utilities import fdao_canvas_override
+
+from sis_provisioner.exceptions import AccountPolicyException
+from sis_provisioner.models.admin import Admin
+from sis_provisioner.test.models.test_account import create_account
 
 ACCOUNT_SIS_ID = 'uwcourse:seattle:nursing:nurs'
 ACCOUNT_ID = '789'
 
 
-def create_admin(
-        net_id, account, role='accountadmin',
-        reg_id=binascii.b2a_hex(os.urandom(16)).upper()):
+def create_admin(net_id, account, role='accountadmin'):
+    reg_id = binascii.b2a_hex(os.urandom(16)).upper()
     admin = Admin(net_id=net_id, reg_id=reg_id, account=account, role=role)
     admin.save()
     return admin
@@ -121,7 +121,7 @@ class AdminModelTest(TestCase):
     def test_has_role(self):
         self.assertEqual(Admin.objects.has_role('javerage', 'support'), False)
 
-        admin = create_admin('javerage', self.account2, role='support')
+        _admin = create_admin('javerage', self.account2, role='support')
         self.assertEqual(Admin.objects.has_role('javerage', 'support'), True)
 
         self.account2.is_deleted = True
@@ -131,9 +131,9 @@ class AdminModelTest(TestCase):
         self.assertEqual(Admin.objects.has_role('javerage', 'support'), False)
 
     def test_find_by_account(self):
-        admin1 = create_admin('javerage', self.account1)
+        _admin1 = create_admin('javerage', self.account1)
         admin2 = create_admin('jsmith', self.account2)
-        admin3 = create_admin('jjones', self.account2)
+        _admin3 = create_admin('jjones', self.account2)
 
         r = Admin.objects.find_by_account()
         self.assertEqual(len(r), 3)

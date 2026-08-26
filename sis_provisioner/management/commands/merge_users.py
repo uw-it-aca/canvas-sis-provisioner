@@ -1,10 +1,11 @@
-# Copyright 2026 UW-IT, University of Washington
+# Copyright 2026 UWIT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
 
 from django.core.management.base import BaseCommand
-from sis_provisioner.dao.user import get_person_by_regid
+
 from sis_provisioner.dao.canvas import merge_all_users_for_person
+from sis_provisioner.dao.user import get_person_by_regid
 
 
 class Command(BaseCommand):

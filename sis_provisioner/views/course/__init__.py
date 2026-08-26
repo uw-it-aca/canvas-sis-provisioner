@@ -2,19 +2,23 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from sis_provisioner.dao.course import (
-    get_sections_by_instructor_and_term, valid_academic_course_sis_id,
-    valid_adhoc_course_sis_id, valid_canvas_course_id)
-from sis_provisioner.dao.term import get_term_by_year_and_quarter
-from sis_provisioner.dao.user import get_person_by_netid, get_person_by_regid
-from sis_provisioner.models.group import Group
-from sis_provisioner.models.course import Course
-from sis_provisioner.views.admin import RESTDispatch
-from sis_provisioner.exceptions import CoursePolicyException
-from uw_saml.utils import get_user
-from logging import getLogger
 import json
 import re
+from logging import getLogger
+
+from uw_saml.utils import get_user
+
+from sis_provisioner.dao.course import (
+    get_sections_by_instructor_and_term,
+    valid_academic_course_sis_id,
+    valid_adhoc_course_sis_id,
+    valid_canvas_course_id,
+)
+from sis_provisioner.dao.term import get_term_by_year_and_quarter
+from sis_provisioner.dao.user import get_person_by_netid, get_person_by_regid
+from sis_provisioner.exceptions import CoursePolicyException
+from sis_provisioner.models.course import Course
+from sis_provisioner.views.admin import RESTDispatch
 
 logger = getLogger(__name__)
 
@@ -58,16 +62,15 @@ class CourseView(RESTDispatch):
         try:
             new_values = json.loads(body)
         except Exception as err:
-            return self.error_response(400, "Unable to parse JSON: {}".format(
-                err))
+            return self.error_response(400, f"Unable to parse JSON: {err}")
 
         try:
             # only priority PUTable right now
             priority = new_values.get('priority', '').lower()
             course.update_priority(priority)
 
-            logger.info('{} set priority={} for course {}'.format(
-                get_user(request), priority, course_id))
+            logger.info(
+                f'{get_user(request)} set priority={priority} for course {course_id}')
 
             json_data = course.json_data(
                 include_sws_url=self.can_view_source_data(request))
@@ -107,13 +110,13 @@ class CourseListView(RESTDispatch):
             {
                 'term': 'quarter',
                 'test': re.compile(
-                    r'^(?:winter|spring|summer|autumn)+$', re.I).match,
+                    r'^(?:winter|spring|summer|autumn)+$', re.IGNORECASE).match,
                 'required': True,
                 'case': 'lower'
             },
             {
                 'term': 'curriculum_abbreviation',
-                'test': re.compile(r'^[a-z &]+$', re.I).match,
+                'test': re.compile(r'^[a-z &]+$', re.IGNORECASE).match,
                 'case': 'upper'
             },
             {
@@ -122,7 +125,7 @@ class CourseListView(RESTDispatch):
             },
             {
                 'term': 'section',
-                'test': re.compile(r'^[a-z][a-z0-9]?$', re.I).match,
+                'test': re.compile(r'^[a-z][a-z0-9]?$', re.IGNORECASE).match,
                 'case': 'upper'
             }
         ]
@@ -139,7 +142,7 @@ class CourseListView(RESTDispatch):
             if re.match(r'^[0-9]+$', str(queue_id)):
                 filt_kwargs = {'queue_id': queue_id}
             else:
-                err = 'invalid queue_id: {}'.format(queue_id)
+                err = f'Invalid queue_id: {queue_id}'
                 logger.error(err)
                 return self.error_response(400, err)
         else:
@@ -164,7 +167,7 @@ class CourseListView(RESTDispatch):
 
                 return self.json_response(json_rep)
             except Exception as err:
-                logger.error('Course search fail: {}'.format(err))
+                logger.error(f'Course search fail: {err}')
                 return self.error_response(400, err)
 
         net_id = None
@@ -184,7 +187,7 @@ class CourseListView(RESTDispatch):
         except CourseInvalidException as err:
             return self.error_response(400, err)
         except Exception as err:
-            logger.error('Course filter fail: {}'.format(err))
+            logger.error(f'Course filter fail: {err}')
             return self.error_response(400, err)
 
         if (net_id is not None or reg_id is not None) and len(course_list):
@@ -201,14 +204,14 @@ class CourseListView(RESTDispatch):
                 valid = []
                 for section in get_sections_by_instructor_and_term(
                         instructor, term):
-                    valid.append('-'.join([
-                        section.term.canvas_sis_id(),
-                        section.curriculum_abbr.upper(),
-                        section.course_number,
-                        section.section_id.upper()]))
+                    valid.append(
+                       f'{section.term.canvas_sis_id()}-'
+                       f'{section.curriculum_abbr.upper()}-'
+                       f'{section.course_number}-{section.section_id.upper()}'
+                    )
 
             except Exception as err:
-                logger.error('Section search fail: {}'.format(err))
+                logger.error(f'Section search fail: {err}')
                 return self.error_response(400, err)
 
         include_sws_url = self.can_view_source_data(request)
@@ -246,5 +249,4 @@ class CourseListView(RESTDispatch):
         return values
 
     def _is_true(self, val):
-        return True if (
-            val == '1' or re.match(r'^(yes|true)$', val, re.I)) else False
+        return bool(val == '1' or re.match(r'^(yes|true)$', val, re.IGNORECASE))

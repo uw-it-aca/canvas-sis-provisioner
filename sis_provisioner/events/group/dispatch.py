@@ -2,21 +2,23 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
+import re
+import xml.etree.ElementTree as ET
+from logging import getLogger
+
 from django.conf import settings
+from restclients_core.exceptions import DataFailureException
+
 from sis_provisioner.dao.user import valid_net_id
 from sis_provisioner.exceptions import UserPolicyException
 from sis_provisioner.models.group import Group, GroupMemberGroup
 from sis_provisioner.models.user import User
-from restclients_core.exceptions import DataFailureException
-import xml.etree.ElementTree as ET
-from logging import getLogger
-import re
 
 log_prefix = 'GROUP:'
 re_parser = re.compile(r'^.*(<group.*/group>).*$', re.MULTILINE | re.DOTALL)
 
 
-class Dispatch(object):
+class Dispatch:
     """
     Base class for dispatching on actions within a UW GWS Event
     """
@@ -39,32 +41,27 @@ class Dispatch(object):
                 'no-action': self.no_action
             }[action](group, self._parse(message))
         except KeyError:
-            self._log.info('{} UNKNOWN {} for {}'.format(
-                log_prefix, action, group))
+            self._log.info(f'{log_prefix} UNKNOWN {action} for {group}')
             return 0
 
     def update_members(self, group_id, message):
-        self._log.info('{} IGNORE update-members for {}'.format(
-            log_prefix, group_id))
+        self._log.info(f'{log_prefix} IGNORE update-members for {group_id}')
         return 0
 
     def put_group(self, group_id, message):
-        self._log.info('{} IGNORE put-group {}'.format(log_prefix, group_id))
+        self._log.info(f'{log_prefix} IGNORE put-group {group_id}')
         return 0
 
     def delete_group(self, group_id, message):
-        self._log.info('{} IGNORE delete-group {}'.format(
-            log_prefix, group_id))
+        self._log.info(f'{log_prefix} IGNORE delete-group {group_id}')
         return 0
 
     def put_members(self, group_id, message):
-        self._log.info('{} IGNORE put-members for {}'.format(
-            log_prefix, group_id))
+        self._log.info(f'{log_prefix} IGNORE put-members for {group_id}')
         return 0
 
     def change_subject_name(self, group_id, message):
-        self._log.info('{} IGNORE change-subject-name for {}'.format(
-            log_prefix, group_id))
+        self._log.info(f'{log_prefix} IGNORE change-subject-name for {group_id}')
         return 0
 
     def no_action(self, group_id, message):
@@ -115,8 +112,7 @@ class UWGroupDispatch(Dispatch):
                         mgroup.root_group_id):
                     group.update_priority(group.PRIORITY_HIGH)
 
-            self._log.info('{} UPDATE membership for {}'.format(
-                log_prefix, group_id))
+            self._log.info(f'{log_prefix} UPDATE membership for {group_id}')
 
         return member_count
 
@@ -134,7 +130,7 @@ class UWGroupDispatch(Dispatch):
                     mgroup.root_group_id):
                 group.update_priority(group.PRIORITY_IMMEDIATE)
 
-        self._log.info('{} DELETE {}'.format(log_prefix, group_id))
+        self._log.info(f'{log_prefix} DELETE {group_id}')
 
         return 1
 
@@ -148,8 +144,7 @@ class UWGroupDispatch(Dispatch):
         GroupMemberGroup.objects.update_group_id(old_name, new_name)
         GroupMemberGroup.objects.update_root_group_id(old_name, new_name)
 
-        self._log.info('{} UPDATE change-subject-name {} to {}'.format(
-            log_prefix, old_name, new_name))
+        self._log.info(f'{log_prefix} UPDATE change-subject-name {old_name} to {new_name}')
 
         return 1
 
@@ -162,8 +157,7 @@ class LoginGroupDispatch(Dispatch):
         return group_id == self.group()
 
     def _log_update(self):
-        self._log.info('{} UPDATE membership for {}'.format(
-            log_prefix, self.group()))
+        self._log.info(f'{log_prefix} UPDATE membership for {self.group()}')
 
     def _add_user(self, net_id, flag_user=False):
         try:
@@ -172,14 +166,11 @@ class LoginGroupDispatch(Dispatch):
                 user.invalid_enrollment_check_required = True
                 user.save()
                 self._log.info(
-                    '{} FLAG {} in {} for invalid enrollment check'.format(
-                        log_prefix, net_id, self.group()))
+                    f'{log_prefix} FLAG {net_id} in {self.group()} for invalid enrollment check')
         except UserPolicyException as ex:
-            self._log.info('{} IGNORE member {}: {}'.format(
-                log_prefix, net_id, ex))
+            self._log.info(f'{log_prefix} IGNORE member {net_id}: {ex}')
         except DataFailureException as ex:
-            self._log.info('{} ERROR adding member {}: {}'.format(
-                log_prefix, net_id, ex))
+            self._log.info(f'{log_prefix} ERROR adding member {net_id}: {ex}')
 
     @staticmethod
     def _valid_member(net_id):
@@ -192,7 +183,7 @@ class LoginGroupDispatch(Dispatch):
 
 class AffiliateLoginGroupDispatch(LoginGroupDispatch):
     def group(self):
-        return getattr(settings, 'ALLOWED_CANVAS_AFFILIATE_USERS')
+        return settings.ALLOWED_CANVAS_AFFILIATE_USERS
 
     def update_members(self, group_id, message):
         member_count = 0
@@ -215,7 +206,7 @@ class AffiliateLoginGroupDispatch(LoginGroupDispatch):
 
 class SponsoredLoginGroupDispatch(LoginGroupDispatch):
     def group(self):
-        return getattr(settings, 'ALLOWED_CANVAS_SPONSORED_USERS')
+        return settings.ALLOWED_CANVAS_SPONSORED_USERS
 
     def update_members(self, group_id, message):
         member_count = 0
@@ -237,7 +228,7 @@ class SponsoredLoginGroupDispatch(LoginGroupDispatch):
 
 class StudentLoginGroupDispatch(LoginGroupDispatch):
     def group(self):
-        return getattr(settings, 'ALLOWED_CANVAS_STUDENT_USERS')
+        return settings.ALLOWED_CANVAS_STUDENT_USERS
 
     def update_members(self, group_id, message):
         member_count = 0
@@ -275,11 +266,9 @@ class CourseGroupDispatch(Dispatch):
 
     def update_members(self, group, message):
         # body contains list of members to be added or removed
-        self._log.info('{} IGNORE course group update: {}'.format(
-            log_prefix, self._course_sis_id))
+        self._log.info(f'{log_prefix} IGNORE course group update: {self._course_sis_id}')
         return 0
 
     def put_group(self, group_id, message):
-        self._log.info('{} IGNORE course group put-group: {}'.format(
-            log_prefix, group_id))
+        self._log.info(f'{log_prefix} IGNORE course group put-group: {group_id}')
         return 0

@@ -2,21 +2,31 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from sis_provisioner.dao.course import (
-    valid_academic_course_sis_id, valid_adhoc_course_sis_id,
-    valid_canvas_course_id)
-from sis_provisioner.models.course import Course
-from sis_provisioner.models.user import User
-from sis_provisioner.views.admin import OpenRESTDispatch, AdminView
-from sis_provisioner.exceptions import CoursePolicyException
-from uw_saml.utils import get_user
-from django.utils.timezone import localtime
-from django.conf import settings
+import json
 from datetime import datetime, timezone
 from logging import getLogger
-import json
+
+from django.utils.timezone import localtime
+from prometheus_client import Counter
+from uw_saml.utils import get_user
+
+from sis_provisioner.dao.course import (
+    valid_academic_course_sis_id,
+    valid_adhoc_course_sis_id,
+    valid_canvas_course_id,
+)
+from sis_provisioner.exceptions import CoursePolicyException
+from sis_provisioner.models.course import Course
+from sis_provisioner.models.user import User
+from sis_provisioner.views.admin import AdminView, OpenRESTDispatch
 
 logger = getLogger(__name__)
+
+# prepare for prometheus observations
+prometheus_expiration_api_count = Counter(
+    'service_api_request_count',
+    'Canvas API course expiration request count',
+    ['service', 'service_api'])
 
 
 class CourseExpirationView(OpenRESTDispatch):
@@ -34,6 +44,8 @@ class CourseExpirationView(OpenRESTDispatch):
             expiration_date = course.expiration_date if (
                 course.expiration_date) else course.default_expiration_date
 
+            prometheus_expiration_api_count.labels('canvas', 'expiration').inc()
+
             return self.json_response({
                 "course_id": course_id,
                 "expiration_date": localtime(
@@ -41,7 +53,7 @@ class CourseExpirationView(OpenRESTDispatch):
                         expiration_date is not None) else None})
 
         except CoursePolicyException as ex:
-            return self.error_response(404, "{}".format(ex))
+            return self.error_response(404, f"{ex}")
         except Course.DoesNotExist:
             return self.error_response(404, "Course not found")
 
@@ -61,7 +73,7 @@ class CourseExpirationView(OpenRESTDispatch):
             user = User.objects.get(net_id=login_name)
 
         except CoursePolicyException as ex:
-            return self.error_response(400, "{}".format(ex))
+            return self.error_response(400, f"{ex}")
         except Course.DoesNotExist:
             return self.error_response(404, "Course not found")
         except User.DoesNotExist:
@@ -70,8 +82,7 @@ class CourseExpirationView(OpenRESTDispatch):
         try:
             put_data = json.loads(request.body)
         except Exception as ex:
-            return self.error_response(400, "Unable to parse JSON: {}".format(
-                ex))
+            return self.error_response(400, f"Unable to parse JSON: {ex}")
 
         exp = course.default_expiration_date
         course.expiration_date = exp.replace(year=exp.year + 1)
@@ -80,8 +91,7 @@ class CourseExpirationView(OpenRESTDispatch):
         course.expiration_exc_desc = put_data.get('expiration_exc_desc')
         course.save()
 
-        logger.info('Course {} exception granted by {}'.format(
-            course_id, login_name))
+        logger.info(f'Course {course_id} exception granted by {login_name}')
 
         return self.json_response(course.json_data())
 
@@ -99,7 +109,7 @@ class CourseExpirationView(OpenRESTDispatch):
                 raise CoursePolicyException('Section expiration not permitted')
 
         except CoursePolicyException as ex:
-            return self.error_response(400, "{}".format(ex))
+            return self.error_response(400, f"{ex}")
         except Course.DoesNotExist:
             return self.error_response(404, "Course not found")
 
@@ -109,8 +119,7 @@ class CourseExpirationView(OpenRESTDispatch):
         course.expiration_exc_desc = None
         course.save()
 
-        logger.info('Course {} exception cleared by {}'.format(
-            course_id, login_name))
+        logger.info(f'Course {course_id} exception cleared by {login_name}')
 
         return self.json_response(course.json_data())
 

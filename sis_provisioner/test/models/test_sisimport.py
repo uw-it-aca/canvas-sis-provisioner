@@ -2,10 +2,12 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
+from datetime import datetime
+from unittest import mock
+
 from django.test import TestCase
+
 from sis_provisioner.models import Import, ImportResource
-from datetime import datetime, timezone
-import mock
 
 
 class ImportModelTest(TestCase):
@@ -110,12 +112,10 @@ class ImportModelTest(TestCase):
         mock_delete.assert_not_called()
 
     def test_json_data(self):
-        added_date = datetime.fromisoformat("2018-05-20T13:01:30.122394-07:00")
         kwargs = {
             "id": 11,
             "csv_type": "user",
             "csv_path": None,
-            "added_date": None,
             "priority": 2,
             "override_sis_stickiness": True,
             "csv_errors": {},
@@ -125,7 +125,7 @@ class ImportModelTest(TestCase):
             "canvas_warnings": {},
             "canvas_errors": None,
             "canvas_id": 12345,
-            "added_date": added_date,
+            "added_date": datetime.fromisoformat("2018-05-20T13:01:30.122394-07:00"),
         }
         imp = Import(**kwargs)
         self.assertEqual(imp.json_data(), {

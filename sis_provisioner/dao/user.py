@@ -2,21 +2,26 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from django.conf import settings
-from uw_pws import PWS
-from uw_gws import GWS
-from uw_gws.models import GroupEntity
-from uw_gws.exceptions import InvalidGroupID
-from restclients_core.exceptions import DataFailureException
-from sis_provisioner.exceptions import (
-    UserPolicyException, MissingLoginIdException, TemporaryNetidException,
-    InvalidLoginIdException)
 import re
 
-RE_ADMIN_NETID = re.compile(r"^[a-z]adm_[a-z][a-z0-9]{0,7}$", re.I)
-RE_APPLICATION_NETID = re.compile(r"^a_[\w]{1,18}$", re.I)
+from django.conf import settings
+from restclients_core.exceptions import DataFailureException
+from uw_gws import GWS
+from uw_gws.exceptions import InvalidGroupID
+from uw_gws.models import GroupEntity
+from uw_pws import PWS
+
+from sis_provisioner.exceptions import (
+    InvalidLoginIdException,
+    MissingLoginIdException,
+    TemporaryNetidException,
+    UserPolicyException,
+)
+
+RE_ADMIN_NETID = re.compile(r"^[a-z]adm_[a-z][a-z0-9]{0,7}$", re.IGNORECASE)
+RE_APPLICATION_NETID = re.compile(r"^a_[\w]{1,18}$", re.IGNORECASE)
 RE_TEMPORARY_NETID = re.compile(
-    r"^(?:wire|event|lib|lawlib|uwctc)[0-9]{4,}$", re.I)
+    r"^(?:wire|event|lib|lawlib|uwctc)[0-9]{4,}$", re.IGNORECASE)
 RE_CANVAS_ID = re.compile(r"^\d+$")
 
 
@@ -76,20 +81,19 @@ def valid_gmail_id(login_id):
         (username, domain) = login_id.lower().split("@")
         username = username.split("+", 1)[0].replace(".", "")
         if not len(username):
-            raise InvalidLoginIdException(
-                "Invalid username: {}".format(login_id))
+            raise InvalidLoginIdException(f"Invalid username: {login_id}")
     except Exception:
-        raise InvalidLoginIdException("Invalid username: {}".format(login_id))
+        raise InvalidLoginIdException(f"Invalid username: {login_id}")
 
     if domain not in ['gmail.com', 'google.com', 'googlemail.com']:
-        raise InvalidLoginIdException("Invalid domain: {}".format(login_id))
+        raise InvalidLoginIdException(f"Invalid domain: {login_id}")
 
-    return "{}@{}".format(username, domain)
+    return f"{username}@{domain}"
 
 
 def valid_canvas_user_id(canvas_id):
     if (RE_CANVAS_ID.match(str(canvas_id)) is None):
-        raise UserPolicyException("Invalid Canvas ID: {}".format(canvas_id))
+        raise UserPolicyException(f"Invalid Canvas ID: {canvas_id}")
 
 
 def user_sis_id(user):
@@ -109,7 +113,7 @@ def user_integration_id(user):
 
 def user_email(user):
     if hasattr(user, 'uwnetid') and user.uwnetid is not None:
-        return '{}@uw.edu'.format(user.uwnetid)
+        return f'{user.uwnetid}@uw.edu'
     elif hasattr(user, 'email'):
         return user.email  # CanvasUser
     else:

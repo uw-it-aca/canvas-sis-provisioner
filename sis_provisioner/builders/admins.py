@@ -2,12 +2,14 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
+from logging import getLogger
+
 from django.conf import settings
+
 from sis_provisioner.builders import Builder
 from sis_provisioner.csv.format import AdminCSV
-from sis_provisioner.dao.user import get_person_by_regid, DataFailureException
+from sis_provisioner.dao.user import DataFailureException, get_person_by_regid
 from sis_provisioner.exceptions import UserPolicyException
-from logging import getLogger
 
 logger = getLogger('sis_provisioner.dao.astra')
 
@@ -42,8 +44,9 @@ class AdminBuilder(Builder):
 
         except (DataFailureException, UserPolicyException) as err:
             logger.info(
-                'SKIP ADMIN "{}", account: "{}", role: "{}", {}'.format(
-                    admin.net_id, account_id, role, err))
+                f'SKIP ADMIN "{admin.net_id}", account: "{account_id}", '
+                f'role: "{role}", {err}'
+            )
             return
 
         if str(admin.canvas_id) == settings.RESTCLIENTS_CANVAS_ACCOUNT_ID:
@@ -52,12 +55,14 @@ class AdminBuilder(Builder):
         self.data.add(AdminCSV(
             person.uwregid, account_id, role, status=status))
 
-        logger.info('{} ADMIN "{}", account: "{}", role: "{}"'.format(
-            action, person.uwnetid, account_id, role))
+        logger.info(
+            f'{action} ADMIN "{person.uwnetid}", account: "{account_id}", '
+            f'role: "{role}"'
+        )
 
         if admin.role in settings.ANCILLARY_CANVAS_ROLES:
             self._add_active_ancillary(admin)
-            status = 'active' if self._is_active_ancillary(admin) else 'deleted'  # noqa
+            status = 'active' if self._is_active_ancillary(admin) else 'deleted'
             action = 'ADD' if self._is_active_ancillary(admin) else 'REMOVE'
 
             ancillary_role = settings.ANCILLARY_CANVAS_ROLES.get(
@@ -72,5 +77,7 @@ class AdminBuilder(Builder):
                 person.uwregid, ancillary_account_id, ancillary_role,
                 status=status))
 
-            logger.info('{} ADMIN "{}", account: "{}", role "{}"'.format(
-                action, person.uwnetid, ancillary_account_id, ancillary_role))
+            logger.info(
+                f'{action} ADMIN "{person.uwnetid}", account: '
+                f'"{ancillary_account_id}", role "{ancillary_role}"'
+            )

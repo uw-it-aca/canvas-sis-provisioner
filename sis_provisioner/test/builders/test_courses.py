@@ -2,9 +2,11 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
+from unittest import mock
+
 from django.test import TestCase
+
 from sis_provisioner.builders.courses import CourseBuilder, UnusedCourseBuilder
-import mock
 
 
 class CourseBuilderTest(TestCase):

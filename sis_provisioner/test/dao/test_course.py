@@ -2,15 +2,17 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
+from datetime import datetime, timezone
+from unittest import mock
+
 from django.test import TestCase, override_settings
-from uw_sws.models import Term, Section
-from uw_sws.util import fdao_sws_override
-from uw_pws.util import fdao_pws_override
 from restclients_core.exceptions import DataFailureException
-from sis_provisioner.exceptions import CoursePolicyException
+from uw_pws.util import fdao_pws_override
+from uw_sws.models import Section, Term
+from uw_sws.util import fdao_sws_override
+
 from sis_provisioner.dao.course import *
-from datetime import datetime
-import mock
+from sis_provisioner.exceptions import CoursePolicyException
 
 
 @fdao_sws_override
@@ -308,7 +310,7 @@ class XlistSectionTest(TestCase):
 class NewSectionQueryTest(TestCase):
     @mock.patch('sis_provisioner.dao.course.get_changed_sections_by_term')
     def test_changed_sections_by_term(self, mock_fn):
-        r = get_new_sections_by_term('2013-12-12', 'abc')
+        _r = get_new_sections_by_term('2013-12-12', 'abc')
         mock_fn.assert_called_with(
             '2013-12-12', 'abc',
             delete_flag=[Section.DELETE_FLAG_ACTIVE,
@@ -317,9 +319,8 @@ class NewSectionQueryTest(TestCase):
             transcriptable_course='all')
 
     def test_new_sections_by_term(self):
-        changed_date = datetime(2013, 12, 12).date()
+        changed_date = datetime(2013, 12, 12, tzinfo=timezone.utc).date()
         term = Term(quarter="winter", year=2013)
-        existing = {}
 
         # 404, no resource
         self.assertRaises(

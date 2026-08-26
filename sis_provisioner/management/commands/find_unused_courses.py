@@ -1,12 +1,15 @@
-# Copyright 2026 UW-IT, University of Washington
+# Copyright 2026 UWIT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
 
-from django.core.management.base import BaseCommand
 from django.conf import settings
-from sis_provisioner.dao.term import (
-    get_term_by_year_and_quarter, get_current_active_term)
+from django.core.management.base import BaseCommand
+
 from sis_provisioner.builders.courses import UnusedCourseBuilder
+from sis_provisioner.dao.term import (
+    get_current_active_term,
+    get_term_by_year_and_quarter,
+)
 
 
 class Command(BaseCommand):

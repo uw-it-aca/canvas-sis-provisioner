@@ -1,19 +1,18 @@
-# Copyright 2026 UW-IT, University of Washington
+# Copyright 2026 UWIT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
 
-from django.core.management.base import BaseCommand, CommandError
+import re
+import sys
+
+import unicodecsv as csv
 from django.conf import settings
-from uw_canvas.external_tools import ExternalTools
+from django.core.management.base import BaseCommand
+from restclients_core.exceptions import DataFailureException
 from uw_canvas import Canvas
 from uw_canvas.accounts import Accounts
 from uw_canvas.courses import Courses
-from restclients_core.exceptions import DataFailureException
-from optparse import make_option
-import re
-import sys
-import unicodecsv as csv
-
+from uw_canvas.external_tools import ExternalTools
 
 default_account = settings.RESTCLIENTS_CANVAS_ACCOUNT_ID
 
@@ -26,7 +25,7 @@ class Command(BaseCommand):
             '-a', '--account', action='store', dest='account_id',
             default=default_account,
             help=('show external tools in account by id or '
-                  'sis_id (default: {})').format(default_account))
+                  f'sis_id (default: {default_account})'))
         parser.add_argument(
             '-r', '--recurse', action='store_true', dest='recurse',
             default=False, help='recurse through subaccounts')
@@ -72,7 +71,7 @@ class Command(BaseCommand):
 
         except DataFailureException as err:
             if err.status == 404:
-                print('Unknown Sub-Account \"%s\"' % (options['account_id']),
+                print(f'Unknown Sub-Account: {options["account_id"]}',
                       file=sys.stderr)
 
     def report_external_tools(self, account):
@@ -98,8 +97,8 @@ class Command(BaseCommand):
 
         if self._options['recurse']:
             subaccounts = self._accounts.get_sub_accounts(account.account_id)
-            for account in subaccounts:
-                self.report_external_tools(account)
+            for acct in subaccounts:
+                self.report_external_tools(acct)
 
     def _print_tools(self, tools, account, course=None):
         if len(tools):
@@ -110,7 +109,7 @@ class Command(BaseCommand):
             for tool in tools:
                 tool_types = []
                 for tt in ['account', 'course', 'user']:
-                    if tool.get("{}_navigation".format(tt)):
+                    if tool.get(f"{tt}_navigation"):
                         tool_types.append(tt)
 
                 tool_type = ' & '.join(tool_types)
@@ -131,7 +130,7 @@ class Command(BaseCommand):
                         url = tools.get_sessionless_launch_url_from_account(
                             tool['id'], account.account_id)
                         line.append(url['url'])
-                    except DataFailureException as ex:
+                    except DataFailureException:
                         line.append('')
 
                 self._writer.writerow(line)

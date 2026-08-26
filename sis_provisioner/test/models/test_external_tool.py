@@ -2,13 +2,14 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from django.test import TestCase, override_settings
-from sis_provisioner.models.external_tools import (
-    ExternalTool, ExternalToolManager)
-from sis_provisioner.test.models.test_account import create_account
-from datetime import datetime, timezone
 import json
-import mock
+from datetime import datetime, timezone
+from unittest import mock
+
+from django.test import TestCase, override_settings
+
+from sis_provisioner.models.external_tools import ExternalTool, ExternalToolManager
+from sis_provisioner.test.models.test_account import create_account
 
 
 @override_settings(RESTCLIENTS_CANVAS_ACCOUNT_ID='1',
@@ -20,11 +21,9 @@ class ExternalToolModelTest(TestCase):
         self.tool1 = ExternalTool(
             account=self.account1,
             canvas_id='123',
-            config=json.dumps({
-                'name': 'Test1', 'consumer_key': 'xx'}),
+            config=json.dumps({'name': 'Test1', 'consumer_key': 'xx'}),
             changed_by='user123',
-            changed_date=datetime(2000, 10, 10, 0, 0, 0).replace(
-                tzinfo=timezone.utc)
+            changed_date=datetime(2000, 10, 10, 0, 0, 0, tzinfo=timezone.utc)
         )
         self.tool1.save()
 
@@ -44,7 +43,7 @@ class ExternalToolModelTest(TestCase):
 
     @mock.patch.object(ExternalToolManager, 'import_tools_in_account')
     def test_import_all(self, mock_method):
-        r = ExternalTool.objects.import_all()
+        ExternalTool.objects.import_all()
         mock_method.assert_called_with('1', 'auto')
 
     @mock.patch('sis_provisioner.models.external_tools.create_external_tool')

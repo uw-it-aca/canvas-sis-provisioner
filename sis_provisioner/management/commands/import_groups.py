@@ -1,13 +1,13 @@
-# Copyright 2026 UW-IT, University of Washington
+# Copyright 2026 UWIT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
 
+import traceback
+
+from sis_provisioner.builders.groups import GroupBuilder
+from sis_provisioner.exceptions import EmptyQueueException, MissingImportPathException
 from sis_provisioner.management.commands import SISProvisionerCommand
 from sis_provisioner.models.group import Group
-from sis_provisioner.exceptions import (
-    EmptyQueueException, MissingImportPathException)
-from sis_provisioner.builders.groups import GroupBuilder
-import traceback
 
 
 class Command(SISProvisionerCommand):
@@ -38,7 +38,7 @@ class Command(SISProvisionerCommand):
 
         try:
             imp.import_csv()
-        except MissingImportPathException as ex:
+        except MissingImportPathException:
             if not imp.csv_errors:
                 imp.delete()
 

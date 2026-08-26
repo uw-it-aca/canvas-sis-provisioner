@@ -1,15 +1,15 @@
-# Copyright 2026 UW-IT, University of Washington
+# Copyright 2026 UWIT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
 
-from django.test.utils import override_settings
-from sis_provisioner.management.commands import SISProvisionerCommand
-from sis_provisioner.dao.canvas import (
-    get_lti_registrations, update_lti_registration)
-from restclients_core.exceptions import DataFailureException
 import json
 from logging import getLogger
 
+from django.test.utils import override_settings
+from restclients_core.exceptions import DataFailureException
+
+from sis_provisioner.dao.canvas import get_lti_registrations, update_lti_registration
+from sis_provisioner.management.commands import SISProvisionerCommand
 
 logger = getLogger(__name__)
 
@@ -17,7 +17,7 @@ logger = getLogger(__name__)
 class Command(SISProvisionerCommand):
     help = "Update LTI URLs for non-production Canvas instances"
 
-    BLTI_HOSTS = [
+    BLTI_HOSTS = [  # noqa: RUF012
         # canvas
         ('https://apps.canvas.uw.edu',
          'https://test-apps.canvas.uw.edu'),

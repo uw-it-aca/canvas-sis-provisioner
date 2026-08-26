@@ -3,19 +3,23 @@
 
 
 from django.test import TestCase, override_settings
+from restclients_core.exceptions import DataFailureException
 from uw_canvas.users import Users as CanvasUsers
 from uw_canvas.utilities import fdao_canvas_override
+from uw_gws.utilities import fdao_gws_override
 from uw_pws import PWS
 from uw_pws.util import fdao_pws_override
-from uw_gws.utilities import fdao_gws_override
-from restclients_core.exceptions import DataFailureException
+
 from sis_provisioner.dao.user import *
 from sis_provisioner.exceptions import (
-    UserPolicyException, MissingLoginIdException, InvalidLoginIdException,
-    TemporaryNetidException)
+    InvalidLoginIdException,
+    MissingLoginIdException,
+    TemporaryNetidException,
+    UserPolicyException,
+)
 
 
-class InvalidPerson(object):
+class InvalidPerson:
     pass
 
 
@@ -256,7 +260,7 @@ class RegidPolicyTest(TestCase):
 
 class GmailPolicyTest(TestCase):
     default_user = "johnsmith@gmail.com"
-    valid_users = [
+    valid_users = [  # noqa: RUF012
         "JohnSmith@gmail.com",
         "johnsmith@GMail.com",
         "john.smith@gmail.com",
@@ -265,7 +269,7 @@ class GmailPolicyTest(TestCase):
         ".john.smith@gmail.com",
     ]
 
-    invalid_users = [
+    invalid_users = [  # noqa: RUF012
         "john@smith@gmail.com",
         "+johnsmith@gmail.com",
         "+@gmail.com",
@@ -281,8 +285,7 @@ class GmailPolicyTest(TestCase):
 
         for user in self.valid_users:
             self.assertEqual(
-                valid_gmail_id(user), self.default_user,
-                "Valid user: {}".format(user))
+                valid_gmail_id(user), self.default_user, f"Valid user: {user}")
 
         for user in self.invalid_users:
             self.assertRaises(InvalidLoginIdException, valid_gmail_id, user)

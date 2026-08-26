@@ -1,18 +1,20 @@
-# Copyright 2026 UW-IT, University of Washington
+# Copyright 2026 UWIT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
 
-from django.core.management.base import BaseCommand
-from django.core.mail import mail_admins
-from sis_provisioner.models import Job
-from logging import getLogger
-from datetime import datetime, timedelta, timezone
 import sys
+from datetime import datetime, timedelta, timezone
+from logging import getLogger
+
+from django.core.mail import mail_admins
+from django.core.management.base import BaseCommand
+
+from sis_provisioner.models import Job
 
 
 class SISProvisionerCommand(BaseCommand):
     def __init__(self, *args, **kwargs):
-        super(SISProvisionerCommand, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         if not self.is_active_job():
             sys.exit(0)
@@ -31,7 +33,7 @@ class SISProvisionerCommand(BaseCommand):
             job.changed_date = datetime.now(timezone.utc)
             job.save()
 
-        return True if job.is_active else False
+        return bool(job.is_active)
 
     def update_job(self):
         job = Job.objects.get(name=self.name_from_argv())
@@ -40,7 +42,6 @@ class SISProvisionerCommand(BaseCommand):
 
     def health_check(self):
         """Override to sanity check specific job environment"""
-        pass
 
     def squawk(self, message="Problem with Provisioning Job"):
         now = datetime.now(timezone.utc)
@@ -50,13 +51,11 @@ class SISProvisionerCommand(BaseCommand):
                 (now - job.last_status_date) > timedelta(hours=1)):
             try:
                 mail_admins(
-                    'Provisioning job "{}" may be having issues'.format(
-                        job.title), message, fail_silently=True)
+                    f'Provisioning job "{job.title}" may be having issues', message, fail_silently=True)
                 job.last_status_date = now
             except Exception as err:
                 self.log.error(
-                    'Cannot email admins "{}", Error Message: "{}"'.format(
-                        err, message))
+                    f'Cannot email admins "{err}", Error Message: "{message}"')
 
         job.save()
 

@@ -1,11 +1,12 @@
-# Copyright 2026 UW-IT, University of Washington
+# Copyright 2026 UWIT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
 
+import traceback
+
+from sis_provisioner.builders.accounts import AccountBuilder
 from sis_provisioner.management.commands import SISProvisionerCommand
 from sis_provisioner.models import Import
-from sis_provisioner.builders.accounts import AccountBuilder
-import traceback
 
 
 class Command(SISProvisionerCommand):

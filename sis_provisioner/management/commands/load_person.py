@@ -1,12 +1,13 @@
-# Copyright 2026 UW-IT, University of Washington
+# Copyright 2026 UWIT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
 
+from aws_message.gather import Gather, GatherException
 from django.core.management.base import CommandError
-from sis_provisioner.management.commands import SISProvisionerCommand
+
 from sis_provisioner.events.person import PersonProcessor
 from sis_provisioner.exceptions import EventException
-from aws_message.gather import Gather, GatherException
+from sis_provisioner.management.commands import SISProvisionerCommand
 
 
 class Command(SISProvisionerCommand):
@@ -16,7 +17,7 @@ class Command(SISProvisionerCommand):
         try:
             PersonProcessor().check_interval()
         except EventException as ex:
-            self.squawk('Warning: {}'.format(ex))
+            self.squawk(f'Warning: {ex}')
 
     def handle(self, *args, **options):
         try:

@@ -1,14 +1,15 @@
 # Copyright 2026 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
+import json
+import re
+from logging import getLogger
+
+from restclients_core.exceptions import DataFailureException
 
 from sis_provisioner.models.account import Account
 from sis_provisioner.models.external_tools import ExternalTool
 from sis_provisioner.views.admin import RESTDispatch, get_user
-from restclients_core.exceptions import DataFailureException
-from logging import getLogger
-import json
-import re
 
 logger = getLogger(__name__)
 
@@ -31,8 +32,7 @@ class ExternalToolView(RESTDispatch):
                 data['config']['shared_secret'] = shared_secret
 
         except ExternalTool.DoesNotExist:
-            return self.error_response(
-                404, "ExternalTool {} not found".format(canvas_id))
+            return self.error_response(404, f"ExternalTool {canvas_id} not found")
 
         return self.json_response({'external_tool': data})
 
@@ -45,22 +45,22 @@ class ExternalToolView(RESTDispatch):
             json_data = json.loads(request.body).get('external_tool', {})
             self._validate(json_data)
         except Exception as ex:
-            logger.error('PUT ExternalTool error: {}'.format(ex))
+            logger.error(f'PUT ExternalTool error: {ex}')
             return self.error_response(400, ex)
 
         try:
             external_tool = ExternalTool.objects.update_tool(
                 canvas_id, json_data['config'], get_user(request))
 
-            logger.info('{} updated ExternalTool {}'.format(
-                external_tool.changed_by, external_tool.canvas_id))
+            logger.info(
+                f'{external_tool.changed_by} updated ExternalTool '
+                f'{external_tool.canvas_id}'
+            )
 
         except ExternalTool.DoesNotExist:
-            return self.error_response(
-                404, "ExternalTool {} not found".format(canvas_id))
+            return self.error_response(404, f"ExternalTool {canvas_id} not found")
         except DataFailureException as err:
-            return self.error_response(500, "{}: {}".format(
-                err.status, err.msg))
+            return self.error_response(500, f"{err.status}: {err.msg}")
 
         return self.json_response({
             'external_tool': external_tool.json_data()})
@@ -73,7 +73,7 @@ class ExternalToolView(RESTDispatch):
             json_data = json.loads(request.body).get('external_tool', {})
             self._validate(json_data)
         except Exception as ex:
-            logger.error('POST ExternalTool error: {}'.format(ex))
+            logger.error(f'POST ExternalTool error: {ex}')
             return self.error_response(400, ex)
 
         account_id = json_data['account_id']
@@ -81,15 +81,15 @@ class ExternalToolView(RESTDispatch):
             external_tool = ExternalTool.objects.create_tool(
                 account_id, json_data['config'], get_user(request))
 
-            logger.info('{} created ExternalTool {}'.format(
-                external_tool.changed_by, external_tool.canvas_id))
+            logger.info(
+                f'{external_tool.changed_by} created ExternalTool '
+                f'{external_tool.canvas_id}'
+            )
 
         except Account.DoesNotExist:
-            return self.error_response(
-                400, "Unknown account_id {}".format(account_id))
+            return self.error_response(400, f"Unknown account_id {account_id}")
         except DataFailureException as err:
-            return self.error_response(500, "{}: {}".format(
-                err.status, err.msg))
+            return self.error_response(500, f"{err.status}: {err.msg}")
 
         return self.json_response({
             'external_tool': external_tool.json_data()})
@@ -100,22 +100,22 @@ class ExternalToolView(RESTDispatch):
 
         canvas_id = kwargs['canvas_id']
         try:
+            external_tool = ExternalTool.objects.get(canvas_id=canvas_id)
             ExternalTool.objects.delete_tool(canvas_id)
         except ExternalTool.DoesNotExist:
-            return self.error_response(
-                404, "ExternalTool {} not found".format(canvas_id))
+            return self.error_response(404, f"ExternalTool {canvas_id} not found")
         except DataFailureException as err:
             if err.status == 404:
                 pass
             else:
-                return self.error_response(
-                    500, "{}: {}".format(err.status, err.msg))
+                return self.error_response(500, f"{err.status}: {err.msg}")
 
-        logger.info('{} deleted ExternalTool "{}"'.format(
-            external_tool.changed_by, external_tool.canvas_id))
+        logger.info(
+            f'{external_tool.changed_by} deleted ExternalTool '
+            f'"{external_tool.canvas_id}"'
+        )
 
-        return self.json_response({
-            'external_tool': external_tool.json_data()})
+        return self.json_response({'external_tool': external_tool.json_data()})
 
     def _validate(self, json_data):
         account_id = json_data.get('account_id', None)

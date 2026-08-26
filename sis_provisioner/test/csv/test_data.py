@@ -2,16 +2,20 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
+from unittest import mock
+
 from django.test import TestCase, override_settings
 from uw_pws import PWS
 from uw_pws.util import fdao_pws_override
 from uw_sws.util import fdao_sws_override
-from sis_provisioner.models.account import Curriculum
-from sis_provisioner.dao.course import (
-    get_section_by_label, get_registrations_by_section)
+
 from sis_provisioner.csv.data import Collector
 from sis_provisioner.csv.format import *
-import mock
+from sis_provisioner.dao.course import (
+    get_registrations_by_section,
+    get_section_by_label,
+)
+from sis_provisioner.models.account import Curriculum
 
 
 class InvalidFormat(CSVFormat):

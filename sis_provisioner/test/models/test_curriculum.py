@@ -3,6 +3,7 @@
 
 
 from django.test import TestCase
+
 from sis_provisioner.models.account import Curriculum
 
 

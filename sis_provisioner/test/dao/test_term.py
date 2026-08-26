@@ -1,13 +1,16 @@
 # Copyright 2026 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
+# ruff: noqa: DTZ001
+
+from datetime import datetime
 
 from django.test import TestCase, override_settings
-from sis_provisioner.dao.term import *
-from sis_provisioner.dao.course import get_section_by_label
-from uw_sws.util import fdao_sws_override
 from uw_pws.util import fdao_pws_override
-from datetime import datetime
+from uw_sws.util import fdao_sws_override
+
+from sis_provisioner.dao.course import get_section_by_label
+from sis_provisioner.dao.term import *
 
 
 @fdao_sws_override
@@ -18,12 +21,10 @@ class ActiveTermTest(TestCase):
             get_current_active_term(datetime(2013, 7, 15)).term_label(),
             '2013,summer')
         self.assertEqual(
-            get_current_active_term(
-                datetime(2013, 8, 27, hour=15)).term_label(),
+            get_current_active_term(datetime(2013, 8, 27, hour=15)).term_label(),
             '2013,summer')
         self.assertEqual(
-            get_current_active_term(
-                datetime(2013, 8, 27, hour=19)).term_label(),
+            get_current_active_term(datetime(2013, 8, 27, hour=19)).term_label(),
             '2013,autumn')
 
     def test_all_active_terms(self):
@@ -39,8 +40,10 @@ class ActiveTermTest(TestCase):
 
     def test_is_active_term(self):
         term = get_current_active_term(datetime(2013, 7, 15))
-        self.assertTrue(is_active_term(term, dt=datetime(2013, 7, 15)))
-        self.assertFalse(is_active_term(term, dt=datetime(2013, 8, 28)))
+        self.assertTrue(
+            is_active_term(term, dt=datetime(2013, 7, 15)))
+        self.assertFalse(
+            is_active_term(term, dt=datetime(2013, 8, 28)))
 
 
 @fdao_sws_override

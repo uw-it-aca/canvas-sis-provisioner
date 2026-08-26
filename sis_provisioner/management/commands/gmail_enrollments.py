@@ -1,11 +1,11 @@
-# Copyright 2026 UW-IT, University of Washington
+# Copyright 2026 UWIT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
+# ruff: noqa
 
-from django.core.management.base import BaseCommand, CommandError
-from uw_canvas.users import Users
-from restclients_core.exceptions import DataFailureException
 import csv
+
+from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):

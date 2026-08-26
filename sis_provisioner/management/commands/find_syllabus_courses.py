@@ -1,18 +1,19 @@
-# Copyright 2026 UW-IT, University of Washington
+# Copyright 2026 UWIT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
 
-from django.core.management.base import BaseCommand
-from django.conf import settings
-from uw_canvas.reports import Reports
-from uw_canvas.courses import Courses
-from restclients_core.exceptions import DataFailureException
-from sis_provisioner.exceptions import CoursePolicyException
-from sis_provisioner.dao.course import valid_academic_course_sis_id
-from time import sleep
 import csv
-import sys
 import re
+from time import sleep
+
+from django.conf import settings
+from django.core.management.base import BaseCommand
+from restclients_core.exceptions import DataFailureException
+from uw_canvas.courses import Courses
+from uw_canvas.reports import Reports
+
+from sis_provisioner.dao.course import valid_academic_course_sis_id
+from sis_provisioner.exceptions import CoursePolicyException
 
 
 class Command(BaseCommand):
@@ -78,6 +79,6 @@ class Command(BaseCommand):
             ]
 
             print(csv_line)
-            print("Remaining: {}".format(row_count - curr_row))
+            print(f"Remaining: {row_count - curr_row}")
             print(csv_line)
             sleep(1)

@@ -1,14 +1,18 @@
-# Copyright 2026 UW-IT, University of Washington
+# Copyright 2026 UWIT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
-from sis_provisioner.management.commands import SISProvisionerCommand
-from sis_provisioner.dao.canvas import (
-    get_course_report_data, get_course_by_id, DataFailureException)
-from sis_provisioner.dao.course import valid_academic_course_sis_id
-from sis_provisioner.models.course import Course
-from sis_provisioner.exceptions import CoursePolicyException
-from logging import getLogger
 import csv
+from logging import getLogger
+
+from sis_provisioner.dao.canvas import (
+    DataFailureException,
+    get_course_by_id,
+    get_course_report_data,
+)
+from sis_provisioner.dao.course import valid_academic_course_sis_id
+from sis_provisioner.exceptions import CoursePolicyException
+from sis_provisioner.management.commands import SISProvisionerCommand
+from sis_provisioner.models.course import Course
 
 logger = getLogger(__name__)
 
@@ -30,7 +34,7 @@ class Command(SISProvisionerCommand):
         logger.debug(f'Term: {term_sis_id}, Commit: {commit}')
 
         report_data = get_course_report_data(term_sis_id)
-        header = report_data.pop(0)
+        _header = report_data.pop(0)
         for row in csv.reader(report_data):
             if not len(row):
                 continue

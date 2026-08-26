@@ -1,18 +1,18 @@
-# Copyright 2026 UW-IT, University of Washington
+# Copyright 2026 UWIT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
 
+import re
+
 from django.core.management.base import BaseCommand
+
+from sis_provisioner.csv.data import Collector
+from sis_provisioner.csv.format import CourseCSV, EnrollmentCSV, UserCSV
+from sis_provisioner.dao.canvas import ENROLLMENT_ACTIVE, get_instructor_sis_import_role
 from sis_provisioner.dao.user import get_person_by_netid
-from sis_provisioner.dao.canvas import (
-    get_instructor_sis_import_role, ENROLLMENT_ACTIVE)
 from sis_provisioner.exceptions import UserPolicyException
 from sis_provisioner.models import Import
 from sis_provisioner.models.course import Course
-from sis_provisioner.csv.data import Collector
-from sis_provisioner.csv.format import UserCSV, EnrollmentCSV, CourseCSV
-from datetime import date
-import re
 
 
 class Command(BaseCommand):

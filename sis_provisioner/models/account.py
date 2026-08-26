@@ -2,16 +2,23 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from django.db import models, IntegrityError
-from django.db.models import Q
-from django.conf import settings
-from sis_provisioner.dao.account import (
-    valid_academic_account_sis_id, adhoc_account_sis_id)
-from sis_provisioner.dao.canvas import (
-    get_account_by_id, get_all_sub_accounts, update_account_sis_id)
-from sis_provisioner.models import ImportResource
-from sis_provisioner.exceptions import AccountPolicyException
 from logging import getLogger
+
+from django.conf import settings
+from django.db import IntegrityError, models
+from django.db.models import Q
+
+from sis_provisioner.dao.account import (
+    adhoc_account_sis_id,
+    valid_academic_account_sis_id,
+)
+from sis_provisioner.dao.canvas import (
+    get_account_by_id,
+    get_all_sub_accounts,
+    update_account_sis_id,
+)
+from sis_provisioner.exceptions import AccountPolicyException
+from sis_provisioner.models import ImportResource
 
 logger = getLogger(__name__)
 
@@ -24,7 +31,7 @@ class AccountManager(models.Manager):
         if is_deleted:
             kwargs['is_deleted'] = True
 
-        return super(AccountManager, self).get_queryset().filter(**kwargs)
+        return super().get_queryset().filter(**kwargs)
 
     def find_by_soc(self, account_type=''):
         t = account_type.lower()
@@ -43,14 +50,14 @@ class AccountManager(models.Manager):
             q = (Q(account_type=Account.ADHOC_TYPE) |
                  Q(account_type=Account.TEST_TYPE))
 
-        return super(AccountManager, self).get_queryset().filter(q)
+        return super().get_queryset().filter(q)
 
     def add_all_accounts(self):
         account = get_account_by_id(settings.RESTCLIENTS_CANVAS_ACCOUNT_ID)
         accounts = get_all_sub_accounts(account.account_id)
         accounts.append(account)
 
-        super(AccountManager, self).get_queryset().update(is_deleted=True)
+        super().get_queryset().update(is_deleted=True)
 
         for account in accounts:
             self.add_account(account)
@@ -63,7 +70,7 @@ class AccountManager(models.Manager):
             try:
                 valid_academic_account_sis_id(account.sis_account_id)
                 account_type = Account.SDB_TYPE
-            except AccountPolicyException as ex:
+            except AccountPolicyException:
                 pass
         else:
             account = update_account_sis_id(
@@ -85,8 +92,7 @@ class AccountManager(models.Manager):
             a.save()
         except IntegrityError as err:
             logger.error(
-                'ADD ACCOUNT FAIL: canvas_id: {}, sis_id: {}, {}'.format(
-                    account.account_id, account.sis_account_id, err))
+                f'ADD ACCOUNT FAIL: canvas_id: {account.account_id}, sis_id: {account.sis_account_id}, {err}')
 
         return a
 
@@ -141,12 +147,10 @@ class Account(models.Model):
             'name': self.account_name,
             'short_name': self.account_short_name,
             'account_type': self.account_type,
-            'canvas_url': '{host}/accounts/{account_id}'.format(
-                host=settings.RESTCLIENTS_CANVAS_HOST,
-                account_id=self.canvas_id),
+            'canvas_url': f'{settings.RESTCLIENTS_CANVAS_HOST}/accounts/{self.canvas_id}',
             'added_date': self.added_date.isoformat() if (
                 self.added_date is not None) else '',
-            'is_deleted': True if self.is_deleted else False
+            'is_deleted': bool(self.is_deleted)
         }
 
     def soc_json_data(self):
@@ -161,7 +165,7 @@ class Account(models.Model):
             type_name = 'Test-Account'
 
         return {
-            'id': 'canvas_{}'.format(self.canvas_id),
+            'id': f'canvas_{self.canvas_id}',
             'type': type_name,
             'description': self.account_name,
             'short_description': self.account_short_name
@@ -170,9 +174,10 @@ class Account(models.Model):
 
 class SubAccountOverrideManager(models.Manager):
     def overrides_by_course(self):
-        return dict((course_id, account) for course_id, account in (
-            super(SubAccountOverrideManager, self).get_queryset().values_list(
-                'course_id', 'subaccount_id')))
+        return {
+            course_id: acct for course_id, acct in super().get_queryset().values_list(
+                "course_id", "subaccount_id")
+        }
 
 
 class SubAccountOverride(models.Model):
@@ -185,15 +190,16 @@ class SubAccountOverride(models.Model):
 
 class CurriculumManager(models.Manager):
     def queued(self, queue_id):
-        return super(CurriculumManager, self).get_queryset()
+        return super().get_queryset()
 
     def dequeue(self, sis_import):
         pass
 
     def accounts_by_curricula(self):
-        return dict((curr, account) for curr, account in (
-            super(CurriculumManager, self).get_queryset().values_list(
-                'curriculum_abbr', 'subaccount_id')))
+        return {
+            curr: acct for curr, acct in super().get_queryset().values_list(
+                "curriculum_abbr", "subaccount_id")
+        }
 
 
 class Curriculum(ImportResource):
