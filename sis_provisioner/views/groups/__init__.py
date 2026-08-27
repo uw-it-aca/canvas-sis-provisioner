@@ -163,7 +163,7 @@ class GroupView(RESTDispatch):
 
     def _prepare_course(self):
         try:
-            sis_id = self._valid_course_id(self.blti.canvas_course_id)
+            sis_id = self._valid_course_id(self.blti.course_sis_id)
         except CoursePolicyException:
             sis_id = adhoc_course_sis_id(self.blti.canvas_course_id)
 
