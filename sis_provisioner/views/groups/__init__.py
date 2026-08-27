@@ -65,7 +65,14 @@ class GroupView(RESTDispatch):
 
     def post(self, request, *args, **kwargs):
         try:
-            _canvas_id, course_id, group_id, role = self._validate_post(request)
+            # Validate group and role first
+            values = json.loads(request.read())
+            group_id = self._valid_group_id(values.get('group_id').strip())
+            role = self._valid_role(values.get('role'))
+
+            # Create a course model if needed, add sis_id in canvas
+            course_id = self._prepare_course()
+
             group = Group.objects.get(course_id=course_id,
                                       group_id=group_id,
                                       role=role)
@@ -158,17 +165,13 @@ class GroupView(RESTDispatch):
 
         return self.json_response({'groups': groups})
 
-    def _validate_post(self, request):
-        values = json.loads(request.read())
-        return (
-            self._valid_canvas_id(values.get('canvas_id')),
-            self._valid_course_id(values.get('course_id'), values.get('canvas_id')),
-            self._valid_group_id(values.get('group_id').strip()),
-            self._valid_role(values.get('role'))
-        )
+    def _prepare_course(self):
+        try:
+            sis_id = self._valid_course_id()
+        except CoursePolicyException:
+            sis_id = adhoc_course_sis_id(self.blti.canvas_course_id)
 
-    def _valid_course_id(self, sis_id, canvas_id):
-        valid_course_sis_id(sis_id)
+        # Ensure the model is ready for sis imports
         try:
             course = Course.objects.get(course_id=sis_id)
             if course.priority == Course.PRIORITY_NONE:
@@ -178,16 +181,21 @@ class GroupView(RESTDispatch):
             course = Course(
                 course_id=sis_id,
                 course_type=Course.ADHOC_TYPE,
-                canvas_course_id=canvas_id,
+                canvas_course_id=self.blti.canvas_course_id,
                 term_id='',
                 added_date=datetime.now(timezone.utc),
                 priority=Course.PRIORITY_DEFAULT,
             )
             course.save()
 
-            update_course_sis_id(canvas_id, sis_id)
+            # Add the sis_id to the course in canvas
+            update_course_sis_id(self.blti.canvas_course_id, sis_id)
 
-        return course.course_id
+        return sis_id
+
+    def _valid_course_id(self):
+        valid_course_sis_id(self.blti.course_sis_id)
+        return self.blti.course_sis_id
 
     def _valid_group_id(self, group_id):
         valid_group_id(group_id)
@@ -197,10 +205,6 @@ class GroupView(RESTDispatch):
         if role is not None and len(role):
             return role
         raise ValidationError(f"Invalid Role: {role}")
-
-    def _valid_canvas_id(self, course_id):
-        valid_canvas_course_id(course_id)
-        return course_id
 
     def _valid_model_id(self, model_id):
         re_model_id = re.compile(r"^\d+$")
