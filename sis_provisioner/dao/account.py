@@ -8,6 +8,7 @@ import string
 from django.conf import settings
 from uw_sws.campus import get_all_campuses
 from uw_sws.college import get_all_colleges
+from uw_sws.curriculum import get_curricula_by_department  # noqa: F401
 from uw_sws.department import get_departments_by_college
 from uw_sws.models import Curriculum
 
