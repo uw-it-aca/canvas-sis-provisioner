@@ -12,11 +12,7 @@ from django.core.exceptions import ValidationError
 from django.http import HttpResponse
 
 from sis_provisioner.dao.canvas import update_course_sis_id
-from sis_provisioner.dao.course import (
-    adhoc_course_sis_id,
-    valid_canvas_course_id,
-    valid_course_sis_id,
-)
+from sis_provisioner.dao.course import adhoc_course_sis_id, valid_course_sis_id
 from sis_provisioner.dao.group import valid_group_id
 from sis_provisioner.exceptions import (
     CoursePolicyException,
