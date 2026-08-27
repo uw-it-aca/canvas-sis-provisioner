@@ -11,13 +11,14 @@ from blti.views import BLTILaunchView, RESTDispatch
 from django.core.exceptions import ValidationError
 from django.http import HttpResponse
 
-from sis_provisioner.dao.course import (
-    adhoc_course_sis_id,
-    valid_canvas_course_id,
-    valid_course_sis_id,
-)
+from sis_provisioner.dao.canvas import update_course_sis_id
+from sis_provisioner.dao.course import adhoc_course_sis_id, valid_course_sis_id
 from sis_provisioner.dao.group import valid_group_id
-from sis_provisioner.exceptions import CoursePolicyException, GroupPolicyException
+from sis_provisioner.exceptions import (
+    CoursePolicyException,
+    DataFailureException,
+    GroupPolicyException,
+)
 from sis_provisioner.models.course import Course
 from sis_provisioner.models.group import Group, GroupMemberGroup
 
@@ -60,7 +61,14 @@ class GroupView(RESTDispatch):
 
     def post(self, request, *args, **kwargs):
         try:
-            course_id, _canvas_id, group_id, role = self._validate_post(request)
+            # Validate group and role first
+            values = json.loads(request.read())
+            group_id = self._valid_group_id(values.get('group_id').strip())
+            role = self._valid_role(values.get('role'))
+
+            # Create a course model if needed, add sis_id in canvas
+            course_id = self._prepare_course()
+
             group = Group.objects.get(course_id=course_id,
                                       group_id=group_id,
                                       role=role)
@@ -72,7 +80,7 @@ class GroupView(RESTDispatch):
                 group.added_date = datetime.now(timezone.utc)
             else:
                 return self.error_response(
-                    400, 'Group {group_id} has duplicate role in course')
+                    400, f'Group {group_id} has duplicate role in course')
 
         except Group.DoesNotExist:
             try:
@@ -83,12 +91,14 @@ class GroupView(RESTDispatch):
             except GroupPolicyException as ex:
                 logger.info(f'POST policy error: {ex}')
                 return self.error_response(403, ex)
-        except (CoursePolicyException, GroupPolicyException,
-                ValidationError) as ex:
+        except (CoursePolicyException, GroupPolicyException, ValidationError) as ex:
             logger.info(f'POST error: {ex}')
             return self.error_response(400, ex)
+        except DataFailureException as ex:
+            logger.info(f'POST error: {ex}')
+            return self.error_response(543, ex)
 
-        group.priority = Course.PRIORITY_IMMEDIATE
+        group.priority = Group.PRIORITY_IMMEDIATE
         group.added_by = self.blti.user_login_id
         group.save()
 
@@ -100,7 +110,7 @@ class GroupView(RESTDispatch):
             group = Group.objects.get(id=id)
             group.is_deleted = True
             group.deleted_date = datetime.now(timezone.utc)
-            group.priority = Course.PRIORITY_IMMEDIATE
+            group.priority = Group.PRIORITY_IMMEDIATE
             group.deleted_by = self.blti.user_login_id
             group.save()
 
@@ -151,29 +161,37 @@ class GroupView(RESTDispatch):
 
         return self.json_response({'groups': groups})
 
-    def _validate_post(self, request):
-        values = json.loads(request.read())
-        return (
-            self._valid_course_id(values.get('course_id')),
-            self._valid_canvas_id(values.get('canvas_id')),
-            self._valid_group_id(values.get('group_id').strip()),
-            self._valid_role(values.get('role'))
-        )
+    def _prepare_course(self):
+        try:
+            sis_id = self._valid_course_id()
+        except CoursePolicyException:
+            sis_id = adhoc_course_sis_id(self.blti.canvas_course_id)
 
-    def _valid_course_id(self, sis_id):
-        valid_course_sis_id(sis_id)
+        # Ensure the model is ready for sis imports
         try:
             course = Course.objects.get(course_id=sis_id)
+            if course.priority == Course.PRIORITY_NONE:
+                course.priority = Course.PRIORITY_DEFAULT
+                course.save()
         except Course.DoesNotExist:
             course = Course(
                 course_id=sis_id,
                 course_type=Course.ADHOC_TYPE,
+                canvas_course_id=self.blti.canvas_course_id,
                 term_id='',
                 added_date=datetime.now(timezone.utc),
-                priority=Course.PRIORITY_NONE)
+                priority=Course.PRIORITY_DEFAULT,
+            )
             course.save()
 
-        return course.course_id
+            # Add the sis_id to the course in canvas
+            update_course_sis_id(self.blti.canvas_course_id, sis_id)
+
+        return sis_id
+
+    def _valid_course_id(self):
+        valid_course_sis_id(self.blti.course_sis_id)
+        return self.blti.course_sis_id
 
     def _valid_group_id(self, group_id):
         valid_group_id(group_id)
@@ -183,10 +201,6 @@ class GroupView(RESTDispatch):
         if role is not None and len(role):
             return role
         raise ValidationError(f"Invalid Role: {role}")
-
-    def _valid_canvas_id(self, course_id):
-        valid_canvas_course_id(course_id)
-        return course_id
 
     def _valid_model_id(self, model_id):
         re_model_id = re.compile(r"^\d+$")
