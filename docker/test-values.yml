@@ -61,13 +61,16 @@ daemon:
 
 certs:
   mounted: true
-  certPath: /certs/test-apps.canvas.uw.edu-ic.cert
-  keyPath: /certs/test-apps.canvas.uw.edu-ic.key
-  secretName: test-apps.canvas.uw.edu-ic-certs
+  certPath: /certs/test-apps.canvas.uw.edu-uwca.cert
+  keyPath: /certs/test-apps.canvas.uw.edu-uwca.key
+  secretName: test-apps.canvas.uw.edu-uwca-certs
 
 environmentVariables:
   - name: ENV
     value: test
+
+  - name: OPENSSL_CONF
+    value: /ssl/openssl.cnf
 
   - name: PWS_ENV
     value: EVAL
@@ -195,18 +198,19 @@ externalSecrets:
           property: private-key-1.key
         - name: public-key-1.key
           property: public-key-1.key
-    - name: test-apps.canvas.uw.edu-ic-certs
-      externalKey: canvas/test/ic-certs
+    - name: test-apps.canvas.uw.edu-uwca-certs
+      externalKey: canvas/test/uwca-certs
       data:
-        - name: test-apps.canvas.uw.edu-ic.cert
-          property: test-apps.canvas.uw.edu-ic.cert
-        - name: test-apps.canvas.uw.edu-ic.key
-          property: test-apps.canvas.uw.edu-ic.key
+        - name: test-apps.canvas.uw.edu-uwca.cert
+          property: test-apps.canvas.uw.edu-uwca.cert
+        - name: test-apps.canvas.uw.edu-uwca.key
+          property: test-apps.canvas.uw.edu-uwca.key
     - name: test-apps.canvas.uw.edu-uw-idp-cert
       externalKey: idp-cert
       data:
         - name: uw-idp-cert
           property: cert
+
 environmentVariablesSecrets:
   djangoSecret:
     name: DJANGO_SECRET
@@ -320,10 +324,6 @@ environmentVariablesSecrets:
     name: STORAGE_PROJECT_ID
     secretName: test-apps.canvas.uw.edu-shared-secrets
     secretKey: storage-project-id
-  samlSPCert:
-    name: SP_CERT
-    secretName: test-apps.canvas.uw.edu-ic-certs
-    secretKey: test-apps.canvas.uw.edu-ic.cert
   samlIDPCert:
     name: IDP_CERT
     secretName: test-apps.canvas.uw.edu-uw-idp-cert
@@ -341,6 +341,13 @@ podVolumes:
         name: lti-tool-config
     mount:
       mountPath: /lti/config
+    containers: [base]
+  openssl-config:
+    volume:
+      configMap:
+        name: openssl-conf
+    mount:
+      mountPath: /ssl
     containers: [base]
 
 configmaps:
@@ -380,3 +387,14 @@ configmaps:
           "deployment_ids": ["215873:82ea3323587ae330766ae046461fd35c747ed747"]
         }]
       }
+  openssl-conf:
+    openssl.cnf: |
+      # Downgrade openssl security level to support UWCA certificates with Ubuntu 24.04
+      openssl_conf = default_conf
+      [ default_conf ]
+      ssl_conf = ssl_sect
+      [ssl_sect]
+      system_default = system_default_sect
+      [system_default_sect]
+      MinProtocol = TLSv1.2
+      CipherString = DEFAULT:@SECLEVEL=1
