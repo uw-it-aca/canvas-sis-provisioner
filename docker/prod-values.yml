@@ -392,13 +392,16 @@ daemon:
 
 certs:
   mounted: true
-  certPath: /certs/apps.canvas.uw.edu-ic.cert
-  keyPath: /certs/apps.canvas.uw.edu-ic.key
-  secretName: apps.canvas.uw.edu-ic-certs
+  certPath: /certs/apps.canvas.uw.edu-uwca.cert
+  keyPath: /certs/apps.canvas.uw.edu-uwca.key
+  secretName: apps.canvas.uw.edu-uwca-certs
 
 environmentVariables:
   - name: ENV
     value: prod
+
+  - name: OPENSSL_CONF
+    value: /ssl/openssl.cnf
 
   - name: PWS_ENV
     value: PROD
@@ -528,13 +531,13 @@ externalSecrets:
           property: private-key-1.key
         - name: public-key-1.key
           property: public-key-1.key
-    - name: apps.canvas.uw.edu-ic-certs
-      externalKey: canvas/prod/ic-certs
+    - name: apps.canvas.uw.edu-uwca-certs
+      externalKey: canvas/prod/uwca-certs
       data:
-        - name: apps.canvas.uw.edu-ic.cert
-          property: apps.canvas.uw.edu-ic.cert
-        - name: apps.canvas.uw.edu-ic.key
-          property: apps.canvas.uw.edu-ic.key
+        - name: apps.canvas.uw.edu-uwca.cert
+          property: apps.canvas.uw.edu-uwca.cert
+        - name: apps.canvas.uw.edu-uwca.key
+          property: apps.canvas.uw.edu-uwca.key
     - name: apps.canvas.uw.edu-uw-idp-cert
       externalKey: idp-cert
       data:
@@ -654,10 +657,6 @@ environmentVariablesSecrets:
     name: STORAGE_PROJECT_ID
     secretName: apps.canvas.uw.edu-shared-secrets
     secretKey: storage-project-id
-  samlSPCert:
-    name: SP_CERT
-    secretName: apps.canvas.uw.edu-ic-certs
-    secretKey: apps.canvas.uw.edu-ic.cert
   samlIDPCert:
     name: IDP_CERT
     secretName: apps.canvas.uw.edu-uw-idp-cert
@@ -665,8 +664,11 @@ environmentVariablesSecrets:
 
 mountedSecrets:
   enabled: true
-  mountPath: /lti/keys
-  secretName: apps.canvas.uw.edu-lti-keys
+  items:
+    - mountPath: /lti/keys
+    - secretName: apps.canvas.uw.edu-lti-keys
+    - mountPath: /ssl
+      secretName: test-apps.canvas.uw.edu-openssl-conf
 
 podVolumes:
   lti-tool-config:
