@@ -223,6 +223,7 @@ externalSecrets:
       data:
         - name: uw-idp-cert
           property: cert
+
 environmentVariablesSecrets:
   djangoSecret:
     name: DJANGO_SECRET
@@ -336,10 +337,6 @@ environmentVariablesSecrets:
     name: STORAGE_PROJECT_ID
     secretName: test-apps.canvas.uw.edu-shared-secrets
     secretKey: storage-project-id
-  samlSPCert:
-    name: SP_CERT
-    secretName: test-apps.canvas.uw.edu-uwca-certs
-    secretKey: test-apps.canvas.uw.edu-uwca.cert
   samlIDPCert:
     name: IDP_CERT
     secretName: test-apps.canvas.uw.edu-uw-idp-cert
