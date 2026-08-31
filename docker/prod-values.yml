@@ -543,6 +543,11 @@ externalSecrets:
       data:
         - name: uw-idp-cert
           property: cert
+    - name: test-apps.canvas.uw.edu-openssl-conf
+      externalKey: openssl-conf
+      data:
+        - name: openssl.cnf
+          property: openssl.cnf
 
 environmentVariablesSecrets:
   djangoSecret:
