@@ -681,7 +681,6 @@ podVolumes:
         name: openssl-conf
     mount:
       mountPath: /ssl
-    containers: [base]
 
 configmaps:
   lti-tool-config:
