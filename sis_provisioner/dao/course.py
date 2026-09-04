@@ -165,8 +165,7 @@ def get_new_sections_by_term(changed_since_date, term, existing=None):
         'future_terms': 0,
         'transcriptable_course': 'all',
         'include_secondaries': 'on',
-        'delete_flag': [Section.DELETE_FLAG_ACTIVE,
-                        Section.DELETE_FLAG_SUSPENDED]
+        'delete_flag': f'{Section.DELETE_FLAG_ACTIVE},{Section.DELETE_FLAG_SUSPENDED}',
     }
     sections = []
     for section_ref in get_changed_sections_by_term(
