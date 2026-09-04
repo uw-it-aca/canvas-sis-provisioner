@@ -313,9 +313,9 @@ class NewSectionQueryTest(TestCase):
         _r = get_new_sections_by_term('2013-12-12', 'abc')
         mock_fn.assert_called_with(
             '2013-12-12', 'abc',
-            delete_flag=[Section.DELETE_FLAG_ACTIVE,
-                         Section.DELETE_FLAG_SUSPENDED],
-            future_terms=0, include_secondaries='on',
+            delete_flag=f'{Section.DELETE_FLAG_ACTIVE},{Section.DELETE_FLAG_SUSPENDED}',
+            future_terms=0,
+            include_secondaries='on',
             transcriptable_course='all')
 
     def test_new_sections_by_term(self):
