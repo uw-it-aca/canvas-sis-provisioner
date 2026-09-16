@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import csv
+from datetime import datetime, timezone
 from logging import getLogger
 
 from sis_provisioner.dao.canvas import (
@@ -41,6 +42,7 @@ class Command(SISProvisionerCommand):
 
             canvas_course_id = row[0] or None
             course_sis_id = row[1] or None
+            course_name = row[4] or None
             term_sis_id = row[8] or 'default'
             needs_save = False
 
@@ -63,6 +65,13 @@ class Command(SISProvisionerCommand):
                     course.course_id = course_sis_id
                     needs_save = True
 
+                if course.course_name != course_name:
+                    logger.info(f'Change course_name, '
+                                f'Old: {course.course_name}, '
+                                f'New: {course_name}')
+                    course.course_name = course_name
+                    needs_save = True
+
                 if course.term_id != term_sis_id:
                     logger.info(f'Change term_sis_id, '
                                 f'Old: {course.term_id}, '
@@ -73,6 +82,9 @@ class Command(SISProvisionerCommand):
                 if course.archived_date is not None:
                     logger.info(f'Course is not archived, '
                                 f'{canvas_course_id}, {course_sis_id}')
+                    course.expiration_date = datetime(
+                        course.archived_date.year + 1, Course.RETENTION_EXPIRE_MONTH,
+                        Course.RETENTION_EXPIRE_DAY, 12, 0, 0, tzinfo=timezone.utc)
                     course.archived_date = None
                     needs_save = True
 

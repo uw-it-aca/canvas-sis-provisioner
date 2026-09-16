@@ -329,10 +329,8 @@ $(document).ready(function () {
                 search_term = 'course ID ' + course_id;
             }
         } else if (form.attr('href') === '#search-tab-canvasurl') {
-            canvas_url = $.trim($('#canvasURL').val());
-            canvas_id_match = canvas_url.match(/^https:\/\/[\w\W]+\/courses\/(\d+)([\/\?].*)?$/);
-            if (canvas_id_match) {
-                canvas_id = canvas_id_match[1];
+            canvas_id = $.trim($('#canvasURL').val());
+            if (canvas_id !== '') {
                 url = '/api/v1/course/' + encodeURIComponent(canvas_id);
                 search_term = 'Canvas Course ID ' + canvas_id;
             }
