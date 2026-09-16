@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-import certifi
 import http
 import re
 import socket
@@ -10,6 +9,7 @@ import ssl
 from logging import getLogger
 from urllib.request import HTTPSHandler, build_opener
 
+import certifi
 from django.conf import settings
 from suds import WebFault
 from suds.client import Client
