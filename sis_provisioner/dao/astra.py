@@ -34,9 +34,9 @@ class HTTPSConnectionClientCertV3(http.client.HTTPSConnection):
 
     @property
     def _ssl_context(self):
-        ctx = ssl.SSLContext()
+        ctx = ssl.SSLContext(protocol=ssl.PROTOCOL_TLSv1_2)
         ctx.load_cert_chain(certfile=self.cert_file, keyfile=self.key_file)
-        ctx.set_ciphers('HIGH:!DH:!aNULL')
+        ctx.set_ciphers('DEFAULT:!aNULL:!eNULL:!MD5:!3DES:!DES:!RC4:!IDEA:!SEED:!aDSS:!SRP:!PSK')
         return ctx
 
     def connect(self):
@@ -44,7 +44,7 @@ class HTTPSConnectionClientCertV3(http.client.HTTPSConnection):
         if self._tunnel_host:
             self.sock = sock
             self._tunnel()
-        self.sock = self._ssl_context.wrap_socket(sock)
+        self.sock = self._ssl_context.wrap_socket(sock, server_hostname=self.host)
 
 
 class HTTPSClientAuthHandler(HTTPSHandler):
