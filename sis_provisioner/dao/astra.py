@@ -34,9 +34,13 @@ class HTTPSConnectionClientCertV3(http.client.HTTPSConnection):
 
     @property
     def _ssl_context(self):
-        ctx = ssl.SSLContext(protocol=ssl.PROTOCOL_TLSv1_2)
+        ctx = ssl.SSLContext(protocol=ssl.PROTOCOL_TLS_CLIENT)
+        ctx.tls_version = ssl.PROTOCOL_TLSv1_2
+        ctx.min_version = ssl.TLSVersion.TLSv1_2
+        ctx.max_version = ssl.TLSVersion.TLSv1_3
+        ctx.verify_mode = ssl.CERT_REQUIRED
+        ctx.load_verify_locations(cafile=certifi.where())
         ctx.load_cert_chain(certfile=self.cert_file, keyfile=self.key_file)
-        ctx.set_ciphers('DEFAULT:!aNULL:!eNULL:!MD5:!3DES:!DES:!RC4:!IDEA:!SEED:!aDSS:!SRP:!PSK')
         return ctx
 
     def connect(self):
