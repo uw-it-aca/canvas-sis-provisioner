@@ -9,6 +9,7 @@ import ssl
 from logging import getLogger
 from urllib.request import HTTPSHandler, build_opener
 
+import certifi
 from django.conf import settings
 from suds import WebFault
 from suds.client import Client
@@ -34,9 +35,13 @@ class HTTPSConnectionClientCertV3(http.client.HTTPSConnection):
 
     @property
     def _ssl_context(self):
-        ctx = ssl.SSLContext()
+        ctx = ssl.SSLContext(protocol=ssl.PROTOCOL_TLS_CLIENT)
+        ctx.tls_version = ssl.PROTOCOL_TLSv1_2
+        ctx.min_version = ssl.TLSVersion.TLSv1_2
+        ctx.max_version = ssl.TLSVersion.TLSv1_3
+        ctx.verify_mode = ssl.CERT_REQUIRED
+        ctx.load_verify_locations(cafile=certifi.where())
         ctx.load_cert_chain(certfile=self.cert_file, keyfile=self.key_file)
-        ctx.set_ciphers('HIGH:!DH:!aNULL')
         return ctx
 
     def connect(self):
@@ -44,7 +49,7 @@ class HTTPSConnectionClientCertV3(http.client.HTTPSConnection):
         if self._tunnel_host:
             self.sock = sock
             self._tunnel()
-        self.sock = self._ssl_context.wrap_socket(sock)
+        self.sock = self._ssl_context.wrap_socket(sock, server_hostname=self.host)
 
 
 class HTTPSClientAuthHandler(HTTPSHandler):
