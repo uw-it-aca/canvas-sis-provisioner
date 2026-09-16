@@ -258,6 +258,7 @@ class Course(ImportResource):
     canvas_course_id = models.CharField(max_length=10, null=True,
                                         db_index=True)
     course_type = models.CharField(max_length=16, choices=TYPE_CHOICES)
+    course_name = models.CharField(max_length=256, null=True)
     term_id = models.CharField(max_length=30, db_index=True)
     primary_id = models.CharField(max_length=80, null=True)
     xlist_id = models.CharField(max_length=80, null=True)
