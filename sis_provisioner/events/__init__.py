@@ -8,9 +8,11 @@ from base64 import b64decode
 from logging import getLogger
 from math import floor
 from time import time
+from urllib.parse import urlparse, urlunparse
 
 from aws_message.crypto import CryptoException, Signature, aes128cbc
 from aws_message.processor import MessageBodyProcessor, ProcessorException
+from django.conf import settings
 from prometheus_client import Counter
 from restclients_core.exceptions import DataFailureException
 from uw_kws import KWS
@@ -24,6 +26,12 @@ prometheus_canvas_events = Counter(
     'canvas_event_count',
     'Canvas Event Counter',
     ['source'])
+
+
+def fix_key_url(url):
+    old_parsed = urlparse(url)
+    new_parsed = urlparse(settings.RESTCLIENTS_KWS_HOST)
+    return urlunparse(old_parsed._replace(netloc=new_parsed.netloc))
 
 
 class SISProvisionerProcessor(MessageBodyProcessor):
@@ -96,7 +104,7 @@ class SISProvisionerProcessor(MessageBodyProcessor):
             kws = KWS()
             key = None
             if 'KeyURL' in header:
-                key = kws.get_key(url=header['KeyURL'])
+                key = kws.get_key(url=fix_key_url(header['KeyURL']))
             elif 'KeyId' in self._header:
                 key = kws.get_key(key_id=self._header['KeyId'])
             else:
