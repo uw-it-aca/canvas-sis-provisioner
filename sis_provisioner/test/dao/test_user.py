@@ -260,7 +260,7 @@ class RegidPolicyTest(TestCase):
 
 class GmailPolicyTest(TestCase):
     default_user = "johnsmith@gmail.com"
-    valid_users = [  # noqa: RUF012
+    valid_users = [
         "JohnSmith@gmail.com",
         "johnsmith@GMail.com",
         "john.smith@gmail.com",
@@ -269,7 +269,7 @@ class GmailPolicyTest(TestCase):
         ".john.smith@gmail.com",
     ]
 
-    invalid_users = [  # noqa: RUF012
+    invalid_users = [
         "john@smith@gmail.com",
         "+johnsmith@gmail.com",
         "+@gmail.com",

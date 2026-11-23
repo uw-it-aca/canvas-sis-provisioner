@@ -143,7 +143,7 @@ class Collector:
         """
         filepath = None
         if self.has_data():
-            filepath = datetime.now().strftime('%Y/%m/%d/%H%M%S-%f')  # noqa: DTZ005
+            filepath = datetime.now().strftime('%Y/%m/%d/%H%M%S-%f')
             for csv_type in self.headers:
                 try:
                     data = list(getattr(self, csv_type).values())

@@ -150,11 +150,11 @@ class InvalidEnrollmentBuilder(Builder):
                 if inv_enrollment.deleted_date is not None:
                     inv_enrollment.restored_date = now
 
-            elif inv_enrollment.user.is_student_user():
-                if inv_enrollment.found_date < grace_dt:
-                    status = ENROLLMENT_DELETED
-                    inv_enrollment.deleted_date = now
-                    inv_enrollment.restored_date = None
+            elif (inv_enrollment.user.is_student_user() and
+                    inv_enrollment.found_date < grace_dt):
+                status = ENROLLMENT_DELETED
+                inv_enrollment.deleted_date = now
+                inv_enrollment.restored_date = None
 
             if status is not None:
                 person = get_person_by_regid(inv_enrollment.user.reg_id)

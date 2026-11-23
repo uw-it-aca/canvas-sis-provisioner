@@ -33,7 +33,7 @@ class Command(SISProvisionerCommand):
         else:
             curr_term = get_current_active_term()
 
-            if datetime.now().date() < curr_term.census_day:  # noqa: DTZ005
+            if datetime.now().date() < curr_term.census_day:
                 self.update_job()
                 return
 
