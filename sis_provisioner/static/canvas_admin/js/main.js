@@ -1408,7 +1408,7 @@ $(document).ready(function () {
     }
 
     function initializeUserSearchEvents() {
-        var container = $('#user-search');
+        var container = $('#user_search_result');
 
         container.on('click', 'button.create-course', openCreateUserCourse);
         container.on('click', 'button.terminate-sessions', function (e) {
