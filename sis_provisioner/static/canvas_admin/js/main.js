@@ -477,7 +477,9 @@ $(document).ready(function () {
         $('div#user_search_result div').removeClass('waiting').html(tpl(data));
     }
 
-    $('#user_search_button').click(function () {
+    $('#user_search').on('submit', function (e) {
+        e.preventDefault();
+
         var result_div = $('div#user_search_result div'),
             user_id = $.trim($('#userID').val());
 
