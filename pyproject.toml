@@ -1,0 +1,88 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "canvas-sis-provisioner"
+dynamic = ["version"]
+description = "An application that manages SIS imports to Canvas"
+readme = "README.md"
+license = "Apache-2.0"
+authors = [
+    {name = "UWIT Student & Educational Technology Services", email = "aca-it@uw.edu"}
+]
+classifiers = [
+    "Environment :: Web Environment",
+    "Framework :: Django",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+]
+dependencies = [
+    "django~=5.2",
+    "django-compressor",
+    "django-user-agents",
+    "python-dateutil",
+    "django-pyscss>=2.0",
+    "beautifulsoup4",
+    "suds-py3~=1.4",
+    "django-blti~=3.0",
+    "django-cors-headers",
+    "aws-message-client~=1.6",
+    "djangorestframework~=3.14",
+    "django-storages[google]",
+    "uw-memcached-clients~=1.0",
+    "uw-restclients-core~=1.4",
+    "uw-restclients-sws~=2.5",
+    "uw-restclients-pws~=2.1",
+    "uw-restclients-gws~=2.3",
+    "uw-restclients-kws~=1.1",
+    "uw-restclients-canvas~=1.2",
+    "uw-restclients-django-utils~=2.3",
+    "django-supporttools~=3.6",
+    "uw-django-saml2~=1.8",
+    "prometheus-client>=0.7,<1.0",
+    "psycopg[c]",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff",
+]
+
+[tool.setuptools]
+packages = ["sis_provisioner"]
+include-package-data = true
+
+[tool.setuptools.dynamic]
+version = {file = "sis_provisioner/VERSION"}
+
+[tool.ruff]
+line-length = 88
+exclude = [
+    "sis_provisioner/migrations/*",
+    "sis_provisioner/test/dao/test_notification.py",
+]
+
+[tool.ruff.lint]
+ignore = [
+    "BLE001",
+    "RUF012",
+    "S110",
+    "TRY002",
+    "UP017",
+]
+
+[tool.coverage.run]
+source = ["sis_provisioner"]
+parallel = true
+omit = [
+     "sis_provisioner/migrations/*",
+     "sis_provisioner/test/*"
+]
+
+[tool.coverage.paths]
+source = [
+    "sis_provisioner/",
+    "/app/sis_provisioner/",
+]

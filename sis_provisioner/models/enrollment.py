@@ -290,7 +290,7 @@ class InvalidEnrollment(ImportResource):
     queue_id = models.CharField(max_length=30, null=True)
 
     class Meta:
-        constraints = [  # noqa: RUF012
+        constraints = [
             models.UniqueConstraint(fields=['user', 'role', 'section_id'],
                                     name='unique_enrollment')
         ]

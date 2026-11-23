@@ -17,7 +17,7 @@ logger = getLogger(__name__)
 class Command(SISProvisionerCommand):
     help = "Update LTI URLs for non-production Canvas instances"
 
-    BLTI_HOSTS = [  # noqa: RUF012
+    BLTI_HOSTS = [
         # canvas
         ('https://apps.canvas.uw.edu',
          'https://test-apps.canvas.uw.edu'),

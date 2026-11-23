@@ -23,8 +23,8 @@ logger = getLogger(__name__)
 
 
 class LoginValidationView(APIView):
-    authentication_classes = [TokenAuthentication]  # noqa: RUF012
-    permission_classes = [IsAuthenticated]  # noqa: RUF012
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
         try:

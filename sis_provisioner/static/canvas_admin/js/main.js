@@ -477,7 +477,9 @@ $(document).ready(function () {
         $('div#user_search_result div').removeClass('waiting').html(tpl(data));
     }
 
-    $('#user_search_button').click(function () {
+    $('#user-search').on('submit', function (e) {
+        e.preventDefault();
+
         var result_div = $('div#user_search_result div'),
             user_id = $.trim($('#userID').val());
 
@@ -1406,7 +1408,7 @@ $(document).ready(function () {
     }
 
     function initializeUserSearchEvents() {
-        var container = $('#user-search');
+        var container = $('#user_search_result');
 
         container.on('click', 'button.create-course', openCreateUserCourse);
         container.on('click', 'button.terminate-sessions', function (e) {
