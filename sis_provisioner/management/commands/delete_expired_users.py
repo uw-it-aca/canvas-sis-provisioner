@@ -1,13 +1,9 @@
 # Copyright 2026 UWIT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
-
-import csv
-
 from logging import getLogger
 
 from django.core.management.base import BaseCommand
-from uw_canvas.users import Users
 
 logger = getLogger(__name__)
 
