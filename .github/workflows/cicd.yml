@@ -87,8 +87,6 @@ jobs:
         uses: uw-it-aca/actions/python-linters@main
         with:
           app_name: ${DJANGO_APP}
-          exclude_paths: 'migrations'
-          ignore: 'BLE001,S110,TRY002'
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4

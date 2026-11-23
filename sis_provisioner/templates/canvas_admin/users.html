@@ -21,15 +21,15 @@
   <br/>
   <div class="clearfix">
     <h3>Search Users</h3>
-    <div id="user-search" class="form-inline">
+    <form id="user-search" class="form-inline">
       <label for="userID">UWNetID or UWRegID:</label>
-        <input class="validate valid-nonnull valid-require form-control" id="userID" placeholder="javerage" size="40" type="text">
-        <button class="btn" type="button" id="user_search_button">Find User</button>
+      <input class="valid-nonnull valid-require form-control" id="userID" placeholder="javerage" size="40" type="text">
+      <button class="btn" type="submit" id="user_search_button">Find User</button>
+    </form>
 
-        <h3>Results</h3>
-        <div id="user_search_result">
-          <div>Search Results Displayed Here</div>
-        </div>
+    <h3>Results</h3>
+    <div id="user_search_result">
+      <div>Search Results Displayed Here</div>
     </div>
   </div>
 </div>
