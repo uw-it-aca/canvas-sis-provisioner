@@ -70,6 +70,7 @@ ignore = [
     "RUF012",
     "S110",
     "TRY002",
+    "UP017",
 ]
 
 [tool.coverage.run]
